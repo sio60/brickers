@@ -79,7 +79,37 @@ jobs:
             echo "🚀 Starting deployment on EC2..."
             cd ~/brickers
             
-            echo "📦 Pulling latest images from Docker Hub..."
+            echo "� Creating .env file..."
+            cat <<EOF > .env
+            DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+            
+            MONGO_USER=${{ secrets.MONGO_USER }}
+            MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }}
+            MONGO_HOST=${{ secrets.MONGO_HOST }}
+            MONGO_PORT=${{ secrets.MONGO_PORT }}
+            MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }}
+            
+            AI_PORT=${{ secrets.AI_PORT }}
+            AI_MONGODB_URI=${{ secrets.AI_MONGODB_URI }}
+            AI_MONGODB_NAME=${{ secrets.AI_MONGODB_NAME }}
+            AI_PARTS_COLLECTION=${{ secrets.AI_PARTS_COLLECTION }}
+            AI_VECTOR_INDEX=${{ secrets.AI_VECTOR_INDEX }}
+            AI_VECTOR_FIELD=${{ secrets.AI_VECTOR_FIELD }}
+            AI_EMBEDDING_DIMS=${{ secrets.AI_EMBEDDING_DIMS }}
+            
+            KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
+            KAKAO_ADMIN_KEY=${{ secrets.KAKAO_ADMIN_KEY }}
+            
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }}
+            GOOGLE_LOCAL_REDIRECT_URI=${{ secrets.GOOGLE_LOCAL_REDIRECT_URI }}
+            
+            BACKEND_PORT=${{ secrets.BACKEND_PORT }}
+            FRONTEND_PORT=${{ secrets.FRONTEND_PORT }}
+            EOF
+            
+            echo "�📦 Pulling latest images from Docker Hub..."
             docker-compose pull
             
             echo "🔁 Restarting containers..."
