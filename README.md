@@ -49,4 +49,4 @@
 
 ---
 
-© 2024 Brick Generator Project. All rights reserved.
+© 2026 Brick Generator Project. All rights reserved.
