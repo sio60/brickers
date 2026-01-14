@@ -47,6 +47,3 @@
 | **데이터 파일** | LDR, 3D Model | 이미지 가이드 |
 | **부품 리스트** | 전문 BOM (Excel/CSV) | 장바구니 구매 링크 |
 
----
-
-© 2026 Brick Generator Project. All rights reserved.
