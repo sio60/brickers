@@ -8,9 +8,22 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Clean up disk space
+        run: |
+          echo "=== Before cleanup ==="
+          df -h
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo docker system prune -af || true
+          echo "=== After cleanup ==="
+          df -h
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -19,80 +32,60 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and Push Backend
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./backend
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/brickers-backend:latest
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/brickers-backend:latest
+            ${{ secrets.DOCKER_USERNAME }}/brickers-backend:${{ github.sha }}
+          provenance: false
+          no-cache: true
 
       - name: Build and Push Frontend
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./frontend
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/brickers-frontend:latest
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/brickers-frontend:latest
+            ${{ secrets.DOCKER_USERNAME }}/brickers-frontend:${{ github.sha }}
+          provenance: false
+          no-cache: true
 
       - name: Build and Push AI
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./ai
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/brickers-ai:latest
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/brickers-ai:latest
+            ${{ secrets.DOCKER_USERNAME }}/brickers-ai:${{ github.sha }}
+          provenance: false
+          no-cache: true
 
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@master
+      - name: Deploy on EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            set -e
+            echo "🚀 Starting deployment on EC2..."
             cd ~/brickers
-            git pull origin feature/ci-cd-setup
             
-            # .env 파일 생성 (Secrets 활용, heredoc 방식)
-            cat <<EOF > .env
-            MONGO_USER=${{ secrets.MONGO_USER }}
-            MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }}
-            MONGO_HOST=${{ secrets.MONGO_HOST }}
-            MONGO_PORT=${{ secrets.MONGO_PORT }}
-            MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }}
-            BASE_URL=${{ secrets.BASE_URL }}
+            echo "📦 Pulling latest images from Docker Hub..."
+            docker compose pull
             
-            AI_PORT=${{ secrets.AI_PORT }}
-            AI_PARTS_COLLECTION=${{ secrets.AI_PARTS_COLLECTION }}
-            AI_VECTOR_INDEX=${{ secrets.AI_VECTOR_INDEX }}
-            AI_VECTOR_FIELD=${{ secrets.AI_VECTOR_FIELD }}
-            AI_EMBEDDING_DIMS=${{ secrets.AI_EMBEDDING_DIMS }}
-            AI_MONGODB_URI=${{ secrets.AI_MONGODB_URI }}
-            AI_MONGODB_NAME=${{ secrets.AI_MONGODB_NAME }}
+            echo "🔁 Restarting containers..."
+            docker compose up -d
             
-            KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
-            KAKAO_ADMIN_KEY=${{ secrets.KAKAO_ADMIN_KEY }}
-            
-            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-            GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }}
-            GOOGLE_LOCAL_REDIRECT_URI=${{ secrets.GOOGLE_LOCAL_REDIRECT_URI }}
-            
-            BACKEND_PORT=${{ secrets.BACKEND_PORT }}
-            FRONTEND_PORT=${{ secrets.FRONTEND_PORT }}
-            
-            # Docker Hub Settings
-            DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
-            EOF
-            
-            # 최신 docker-compose.yml 가져오기
-            # (이미 위에서 git pull을 수행했으므로 생략 가능하나 명시적으로 확인)
-            
-            # Docker Hub에서 최신 이미지 가져오기
-            docker-compose pull
-            
-            # 컨테이너 재시작
-            docker-compose up -d
-            
-            # 불필요한 이미지 정리
+            echo "🧹 Cleaning up unused images..."
             docker image prune -f
+            
+            echo "✅ Deployment completed successfully!"
