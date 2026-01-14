@@ -102,3 +102,13 @@ data/
 .idea/
 *.swp
 *.tmp
+
+####################################
+# Gradle / Java
+####################################
+.gradle/
+gradle/
+gradlew
+gradlew.bat
+*.iml
+HELP.md
