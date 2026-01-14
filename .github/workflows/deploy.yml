@@ -1,0 +1,98 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/brickers-backend:latest
+
+      - name: Build and Push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/brickers-frontend:latest
+
+      - name: Build and Push AI
+        uses: docker/build-push-action@v5
+        with:
+          context: ./ai
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/brickers-ai:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/brickers
+            git pull origin feature/ci-cd-setup
+            
+            # .env 파일 생성 (Secrets 활용, heredoc 방식)
+            cat <<EOF > .env
+            MONGO_USER=${{ secrets.MONGO_USER }}
+            MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }}
+            MONGO_HOST=${{ secrets.MONGO_HOST }}
+            MONGO_PORT=${{ secrets.MONGO_PORT }}
+            MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }}
+            BASE_URL=${{ secrets.BASE_URL }}
+            
+            AI_PORT=${{ secrets.AI_PORT }}
+            AI_PARTS_COLLECTION=${{ secrets.AI_PARTS_COLLECTION }}
+            AI_VECTOR_INDEX=${{ secrets.AI_VECTOR_INDEX }}
+            AI_VECTOR_FIELD=${{ secrets.AI_VECTOR_FIELD }}
+            AI_EMBEDDING_DIMS=${{ secrets.AI_EMBEDDING_DIMS }}
+            AI_MONGODB_URI=${{ secrets.AI_MONGODB_URI }}
+            AI_MONGODB_NAME=${{ secrets.AI_MONGODB_NAME }}
+            
+            KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
+            KAKAO_ADMIN_KEY=${{ secrets.KAKAO_ADMIN_KEY }}
+            
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }}
+            GOOGLE_LOCAL_REDIRECT_URI=${{ secrets.GOOGLE_LOCAL_REDIRECT_URI }}
+            
+            BACKEND_PORT=${{ secrets.BACKEND_PORT }}
+            FRONTEND_PORT=${{ secrets.FRONTEND_PORT }}
+            
+            # Docker Hub Settings
+            DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+            EOF
+            
+            # 최신 docker-compose.yml 가져오기
+            # (이미 위에서 git pull을 수행했으므로 생략 가능하나 명시적으로 확인)
+            
+            # Docker Hub에서 최신 이미지 가져오기
+            docker-compose pull
+            
+            # 컨테이너 재시작
+            docker-compose up -d
+            
+            # 불필요한 이미지 정리
+            docker image prune -f

@@ -1,0 +1,112 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.env
+.env*
+####################################
+# Python
+####################################
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+
+####################################
+# Virtual Environments
+####################################
+.env
+.env.*
+!.env.example
+
+venv/
+.venv/
+ENV/
+env/
+.brickers-ai/
+
+####################################
+# Conda
+####################################
+*.conda
+*.condarc
+conda-meta/
+
+####################################
+# FastAPI / Uvicorn
+####################################
+*.log
+
+####################################
+# VS Code
+####################################
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+
+####################################
+# OS (Windows)
+####################################
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+####################################
+# Node / Frontend (혹시 대비)
+####################################
+node_modules/
+dist/
+build/
+.cache/
+
+####################################
+# MongoDB / Data
+####################################
+*.bson
+*.jsonl
+dump/
+data/
+
+####################################
+# Jupyter (혹시 쓸 경우)
+####################################
+.ipynb_checkpoints/
+
+####################################
+# Misc
+####################################
+.DS_Store
+.idea/
+*.swp
+*.tmp
+# allow frontend src data (keep demoBrickPlan.ts etc.)
+!frontend/src/data/
+!frontend/src/data/**
+# LDraw library (huge) - never commit
+frontend/public/ldraw/
+frontend/public/ldraw/**
+frontend/public/LDraw/
+frontend/public/LDraw/**
