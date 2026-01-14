@@ -3,11 +3,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MONGODB_URI = os.getenv("MONGODB_URI", "")
-MONGODB_DB = os.getenv("MONGODB_DB", "brickers")
+# MongoDB connection from shared environment or constructed URI
+# Docker 내부 통신용 URI 구조: mongodb://user:pass@host:port/db?authSource=admin
+MONGODB_URI = os.getenv("AI_MONGODB_URI") # 전체 URI가 필요할 경우
+MONGODB_DB = os.getenv("AI_MONGODB_NAME")
 
-PARTS_COLLECTION = os.getenv("PARTS_COLLECTION", "ldraw_parts")
-ATLAS_VECTOR_INDEX_PARTS = os.getenv("ATLAS_VECTOR_INDEX_PARTS", "idx_parts_vec")
+# AI Specific settings
+PARTS_COLLECTION = os.getenv("AI_PARTS_COLLECTION")
+ATLAS_VECTOR_INDEX_PARTS = os.getenv("AI_VECTOR_INDEX")
 
-VECTOR_FIELD = os.getenv("VECTOR_FIELD", "embedding")
-EMBEDDING_DIMS = int(os.getenv("EMBEDDING_DIMS", "512"))
+VECTOR_FIELD = os.getenv("AI_VECTOR_FIELD")
+EMBEDDING_DIMS = int(os.getenv("AI_EMBEDDING_DIMS", "512"))
