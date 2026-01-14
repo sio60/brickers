@@ -80,10 +80,10 @@ jobs:
             cd ~/brickers
             
             echo "📦 Pulling latest images from Docker Hub..."
-            docker compose pull
+            docker-compose pull
             
             echo "🔁 Restarting containers..."
-            docker compose up -d
+            docker-compose up -d
             
             echo "🧹 Cleaning up unused images..."
             docker image prune -f
