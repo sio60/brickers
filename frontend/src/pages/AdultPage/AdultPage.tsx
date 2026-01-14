@@ -9,6 +9,7 @@ import "./AdultPage.css";
 
 // ✅ LDR 테스트 뷰어를 만들었으면 사용 (없으면 이 import 지워도 됨)
 import LdrViewer from "./components/LdrViewer/LdrViewer";
+import adultBg from "../../assets/adult_bg.png";
 
 type ViewMode = "brickplan" | "ldr";
 
@@ -18,11 +19,18 @@ export default function AdultPage() {
 
   const plan = useMemo(() => demoBrickPlan, []);
 
-  // LDR 파일 위치: frontend/public/ldraw/models/car.ldr
+  // Ensure this path matches exactly where the file is in the public directory
   const ldrUrl = "/ldraw/models/car.ldr";
 
   return (
-    <div className="adultPage">
+    <div
+      className="adultPage"
+      style={{
+        backgroundImage: `url(${adultBg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
       <div className="adultPage__left">
         {/* 상단 토글 */}
         <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>

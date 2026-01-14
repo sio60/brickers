@@ -108,7 +108,12 @@ HELP.md
 ####################################
 # LDraw
 ####################################
-*.ldr
+# ldraw 폴더 전체는 무조건 ignore
+frontend/public/ldraw/**
+
+# ✅ 하지만 샘플 모델(ldr)만 예외로 추적
+!frontend/public/ldraw/models/
+!frontend/public/ldraw/models/car.ldr
 
 ####################################
 # Misc
