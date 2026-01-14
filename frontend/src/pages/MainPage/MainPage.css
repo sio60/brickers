@@ -1,11 +1,17 @@
 .mainpageBody {
-  min-height: calc(100vh - 72px); /* 헤더 높이랑 맞춤 */
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   padding: 24px;
   box-sizing: border-box;
 }
+
 .mainScreen {
-  height: calc(100vh - 72px); /* 헤더 높이랑 맞춤 */
+  height: 100vh;
   width: 100%;
+  padding-top: 72px;
+  /* 헤더 공간 확보 */
+  box-sizing: border-box;
+  overflow: hidden;
+  /* 스크롤 방지 */
 }

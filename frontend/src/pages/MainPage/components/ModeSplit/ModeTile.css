@@ -6,14 +6,18 @@
   background: transparent;
   cursor: pointer;
   overflow: hidden;
-    isolation: isolate;
+  isolation: isolate;
 }
-.modeTile { z-index: 1; }
+
+.modeTile {
+  z-index: 1;
+}
 
 /* ✅ 텍스트는 딤 위로 */
 .modeTile__content {
   z-index: 6;
 }
+
 /* ✅ 대각선: 우상단(100,0) → 좌하단(0,100)
    - adult: 좌상단 삼각형
    - kids : 우하단 삼각형
@@ -50,7 +54,8 @@
   inset: 0;
   z-index: 2;
 
-  background: rgba(0, 0, 0, 0.22); /* 0.18~0.28 사이 취향 */
+  background: rgba(0, 0, 0, 0.6);
+  /* 메인처럼 어둡게 */
 }
 
 .modeTile:hover {
@@ -59,15 +64,16 @@
 
 .modeTile__content {
   position: absolute;
-  z-index: 3;
-
+  z-index: 6;
+  /* ✅ seam 위로 */
   color: #fff;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.55);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
   display: flex;
   flex-direction: column;
   gap: 6px;
   max-width: min(420px, 70%);
 }
+
 
 /* ✅ 어덜트: 좌상단(로고 쪽) */
 .modeTile__content--adult {
