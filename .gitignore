@@ -102,3 +102,11 @@ data/
 .idea/
 *.swp
 *.tmp
+# allow frontend src data (keep demoBrickPlan.ts etc.)
+!frontend/src/data/
+!frontend/src/data/**
+# LDraw library (huge) - never commit
+frontend/public/ldraw/
+frontend/public/ldraw/**
+frontend/public/LDraw/
+frontend/public/LDraw/**
