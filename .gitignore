@@ -110,3 +110,8 @@ frontend/public/ldraw/
 frontend/public/ldraw/**
 frontend/public/LDraw/
 frontend/public/LDraw/**
+
+####################################
+# LDraw
+####################################
+.ldr
