@@ -102,3 +102,4 @@ data/
 .idea/
 *.swp
 *.tmp
+*.ldr
