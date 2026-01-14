@@ -1,60 +1,161 @@
-import { Canvas, useLoader } from "@react-three/fiber";
+// LdrViewer.tsx
+import { Canvas } from "@react-three/fiber";
 import { Bounds, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
-import { useEffect } from "react";
-import { LDrawLoader } from "three/examples/jsm/loaders/LDrawLoader.js";
+import { useEffect, useMemo, useState } from "react";
+
+import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
+import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 
 type Props = {
-  url: string; // ex) "/ldraw/models/car.ldr"
+  /** ex) "/ldraw/models/car.ldr" */
+  url: string;
+  /** default: "/ldraw/" (must contain LDConfig.ldr, parts/, p/) */
+  partsLibraryPath?: string;
+  /** default: "/ldraw/LDConfig.ldr" */
+  ldconfigUrl?: string;
 };
 
-/**
- * LDraw(.ldr/.dat) -> Three.js Group 로드 + 자동 카메라 fit
- * 요구사항:
- * public/ldraw/
- *  - LDConfig.ldr
- *  - parts/
- *  - p/
- *  - models/car.ldr
- */
-function LdrModel({ url }: Props) {
-  // ✅ 어떤 파트(.dat)가 로드 실패하는지 콘솔에 찍기
-  useEffect(() => {
-    const mgr = THREE.DefaultLoadingManager;
-    const prevOnError = mgr.onError;
+function disposeObject3D(root: THREE.Object3D) {
+  root.traverse((obj: any) => {
+    if (obj.geometry) obj.geometry.dispose?.();
 
-    mgr.onError = (path) => {
+    // material can be Material | Material[]
+    const mat = obj.material;
+    if (Array.isArray(mat)) mat.forEach((m) => m?.dispose?.());
+    else mat?.dispose?.();
+
+    if (obj.texture) obj.texture.dispose?.();
+  });
+}
+
+// ✅ gkjohnson's library is often used for three.js LDraw examples as it is a complete mirror
+const CDN_BASE = "https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/";
+
+function LdrModel({
+  url,
+  partsLibraryPath = CDN_BASE,
+  ldconfigUrl = `${CDN_BASE}LDConfig.ldr`, // Note: Case sensitive on GitHub
+}: Props) {
+  const loader = useMemo(() => {
+    THREE.Cache.enabled = true;
+
+    const manager = new THREE.LoadingManager();
+
+    // ✅ IMPORTANT: LDraw refs often contain backslashes like "s\\xxxx.dat"
+    manager.setURLModifier((u) => {
+      let url = u.replace(/\\/g, "/");
+
+      // 1. If using CDN and missing 'parts/' or 'p/', inject it based on heuristics
+      if (
+        url.includes("ldraw-parts-library") &&
+        !url.includes("/parts/") &&
+        !url.includes("/p/") &&
+        !url.includes("LDConfig.ldr") // Don't touch config
+      ) {
+        if (url.endsWith(".dat")) {
+          const filename = url.split("/").pop() || "";
+
+          // Heuristic: 
+          // Parts usually start with digits.
+          // Primitives (p/) usually start with letters or '4-4' type patterns.
+          // 's/' folder content is usually subparts found in 'parts/s/'? No, usually 'parts/s/' exists.
+
+          // gkjohnson mirror structure:
+          // /ldraw/parts/
+          // /ldraw/p/
+
+          const isPart = /^[0-9]/.test(filename);
+
+          if (isPart) {
+            url = url.replace("/ldraw/", "/ldraw/parts/");
+          } else {
+            // Assume primitive
+            url = url.replace("/ldraw/", "/ldraw/p/");
+          }
+        }
+      }
+
+      return url;
+    });
+
+    manager.onError = (path) => {
       console.error("[LDraw] failed to load:", path);
     };
 
-    return () => {
-      mgr.onError = prevOnError;
-    };
-  }, []);
+    const l = new LDrawLoader(manager);
+    l.setPartsLibraryPath(partsLibraryPath);
+    l.smoothNormals = true;
 
-  const group = useLoader(LDrawLoader as any, url, (loader: any) => {
-    loader.setPartsLibraryPath("/ldraw/");
-    loader.preloadMaterials("/ldraw/LDConfig.ldr");
-    loader.smoothNormals = true;
+    // ✅ Conditional lines: pass the CLASS (constructor), not an instance
+    // (types differ by three version, so cast to any to avoid TS red underline)
+    try {
+      (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any);
+    } catch {
+      // some three builds might not have this; safe to ignore
+    }
 
-    // ✅ 최신 three에서 필수: "인스턴스"가 아니라 "생성자(클래스)"를 넣어야 함
-    loader.setConditionalLineMaterial(THREE.LineBasicMaterial);
-  });
+    return l;
+  }, [partsLibraryPath]);
 
-  // ✅ 로드 후 라인(윤곽) 머티리얼이 너무 진하면 살짝 낮춤
+  const [group, setGroup] = useState<THREE.Group | null>(null);
+
   useEffect(() => {
-    group.traverse((obj: any) => {
-      const mat = obj.material;
-      if (!mat) return;
+    let cancelled = false;
+    let prev: THREE.Group | null = null;
 
-      if (mat instanceof THREE.LineBasicMaterial) {
-        mat.transparent = true;
-        mat.opacity = 0.25;
-        mat.depthTest = true;
-        mat.needsUpdate = true;
+    (async () => {
+      setGroup(null);
+
+      // ✅ preload materials (LDConfig)
+      await loader.preloadMaterials(ldconfigUrl);
+
+      const g = await loader.loadAsync(url);
+      if (cancelled) {
+        disposeObject3D(g);
+        return;
       }
+
+      // ✅ make outline lines softer (ONLY for lines)
+      g.traverse((obj: any) => {
+        // Fix rotation: LDraw is Y-down, Three.js is Y-up. 
+        // Often LDraw models come in upside down relative to standard cameras.
+        // We can rotate the whole group, but let's just create the group with rotation.
+        // Actually, let's fix the object rotation here if needed, or better, in the <primitive> prop.
+
+        const mat = obj.material;
+        if (!mat) return;
+
+        const tweak = (m: any) => {
+          // Only make LINES transparent, not the bricks themselves
+          if (m.isLineBasicMaterial) {
+            m.transparent = true;
+            m.opacity = 0.25;
+            m.depthTest = true;
+            m.needsUpdate = true;
+          }
+        };
+
+        if (Array.isArray(mat)) mat.forEach(tweak);
+        else tweak(mat);
+      });
+
+      // LDraw models generally need 180 deg rotation on X to be upright in Three.js default axes
+      g.rotation.x = Math.PI;
+
+      prev = g;
+      setGroup(g);
+    })().catch((e) => {
+      console.error("[LDraw] load failed:", e);
     });
-  }, [group]);
+
+    return () => {
+      cancelled = true;
+      if (prev) disposeObject3D(prev);
+    };
+  }, [url, ldconfigUrl, loader]);
+
+  if (!group) return null;
 
   return (
     <Bounds fit clip observe margin={1.2}>
@@ -63,7 +164,7 @@ function LdrModel({ url }: Props) {
   );
 }
 
-export default function LdrViewer({ url }: Props) {
+export default function LdrViewer(props: Props) {
   return (
     <div
       style={{
@@ -79,7 +180,7 @@ export default function LdrViewer({ url }: Props) {
         <ambientLight intensity={0.9} />
         <directionalLight position={[200, 300, 200]} intensity={1.1} />
 
-        <LdrModel url={url} />
+        <LdrModel {...props} />
 
         <OrbitControls enableDamping />
       </Canvas>
