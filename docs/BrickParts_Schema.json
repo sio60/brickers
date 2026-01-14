@@ -1,0 +1,185 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BrickParts Schema",
+  "description": "Brick CoScientist 프로젝트용 브릭 파츠 스키마 v1.0",
+  "version": "1.0.0",
+  "author": "성빈",
+  "lastUpdated": "2026-01-14",
+
+  "definitions": {
+    "Vector3": {
+      "type": "object",
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "z": { "type": "number" }
+      },
+      "required": ["x", "y", "z"]
+    },
+
+    "StudPosition": {
+      "type": "object",
+      "description": "스터드 위치 (파츠 로컬 좌표 기준)",
+      "properties": {
+        "x": { "type": "integer", "description": "스터드 X 인덱스 (0부터)" },
+        "z": { "type": "integer", "description": "스터드 Z 인덱스 (0부터)" }
+      },
+      "required": ["x", "z"]
+    },
+
+    "PartCategory": {
+      "type": "string",
+      "enum": ["brick", "plate", "slope", "slope_inverted", "tile", "special"]
+    },
+
+    "SafetyLevel": {
+      "type": "string",
+      "enum": ["all", "age_7_plus", "age_10_plus"],
+      "description": "all: 모든 연령, age_7_plus: 7세 이상, age_10_plus: 10세 이상"
+    },
+
+    "PartDefinition": {
+      "type": "object",
+      "properties": {
+        "partId": {
+          "type": "string",
+          "description": "LDraw Design ID (예: 3001)"
+        },
+        "name": {
+          "type": "string",
+          "description": "파츠 이름 (예: Brick 2x4)"
+        },
+        "nameKo": {
+          "type": "string",
+          "description": "한글 이름 (예: 2x4 브릭)"
+        },
+        "category": {
+          "$ref": "#/definitions/PartCategory"
+        },
+        "size": {
+          "type": "object",
+          "description": "파츠 크기 (스터드 단위)",
+          "properties": {
+            "width": { "type": "integer", "minimum": 1 },
+            "height": { "type": "integer", "minimum": 1 },
+            "depth": { "type": "integer", "minimum": 1 }
+          },
+          "required": ["width", "height", "depth"]
+        },
+        "dimensionsLDU": {
+          "type": "object",
+          "description": "LDraw 단위 크기",
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "z": { "type": "number" }
+          },
+          "required": ["x", "y", "z"]
+        },
+        "studsTop": {
+          "type": "array",
+          "description": "상단 스터드 위치 배열",
+          "items": { "$ref": "#/definitions/StudPosition" }
+        },
+        "studsBottom": {
+          "type": "array",
+          "description": "하단 연결부 위치 배열",
+          "items": { "$ref": "#/definitions/StudPosition" }
+        },
+        "weight": {
+          "type": "number",
+          "description": "상대적 무게 (1x1 브릭 = 1.0 기준)"
+        },
+        "safetyLevel": {
+          "$ref": "#/definitions/SafetyLevel"
+        },
+        "ldrawFile": {
+          "type": "string",
+          "description": "LDraw 파일명 (예: 3001.dat)"
+        }
+      },
+      "required": ["partId", "name", "category", "size", "dimensionsLDU", "ldrawFile", "safetyLevel"]
+    },
+
+    "PlacedBrick": {
+      "type": "object",
+      "description": "배치된 브릭 정보",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "배치된 브릭 고유 ID"
+        },
+        "partId": {
+          "type": "string",
+          "description": "파츠 Design ID"
+        },
+        "position": {
+          "$ref": "#/definitions/Vector3",
+          "description": "위치 (LDU 단위)"
+        },
+        "rotation": {
+          "type": "integer",
+          "enum": [0, 90, 180, 270],
+          "description": "Y축 회전 (도)"
+        },
+        "colorCode": {
+          "type": "integer",
+          "description": "LDraw 색상 코드"
+        },
+        "layer": {
+          "type": "integer",
+          "description": "레이어 인덱스 (0부터, 아래→위)"
+        }
+      },
+      "required": ["id", "partId", "position", "rotation", "colorCode", "layer"]
+    },
+
+    "BrickModel": {
+      "type": "object",
+      "description": "브릭 모델 전체 데이터",
+      "properties": {
+        "modelId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["adult", "kids"]
+        },
+        "targetAge": {
+          "type": "string",
+          "enum": ["4-6", "7-9", "10-12", "adult"],
+          "description": "Kids 모드일 때 대상 연령"
+        },
+        "dimensions": {
+          "type": "object",
+          "description": "모델 전체 크기 (스터드 단위)",
+          "properties": {
+            "width": { "type": "integer" },
+            "height": { "type": "integer" },
+            "depth": { "type": "integer" }
+          }
+        },
+        "bricks": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/PlacedBrick" }
+        },
+        "totalParts": {
+          "type": "integer"
+        },
+        "stabilityScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "required": ["modelId", "name", "mode", "bricks"]
+    }
+  }
+}
