@@ -1,0 +1,62 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/brickers
+            git pull origin main
+            
+            # .env 파일 생성 (Secrets 활용, heredoc 방식)
+            cat <<EOF > .env
+            MONGO_USER=${{ secrets.MONGO_USER }}
+            MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }}
+            MONGO_HOST=${{ secrets.MONGO_HOST }}
+            MONGO_PORT=${{ secrets.MONGO_PORT }}
+            MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }}
+            BASE_URL=${{ secrets.BASE_URL }}
+            
+            AI_PORT=${{ secrets.AI_PORT }}
+            AI_PARTS_COLLECTION=${{ secrets.AI_PARTS_COLLECTION }}
+            AI_VECTOR_INDEX=${{ secrets.AI_VECTOR_INDEX }}
+            AI_VECTOR_FIELD=${{ secrets.AI_VECTOR_FIELD }}
+            AI_PORT=${{ secrets.AI_PORT }}
+            AI_PARTS_COLLECTION=${{ secrets.AI_PARTS_COLLECTION }}
+            AI_VECTOR_INDEX=${{ secrets.AI_VECTOR_INDEX }}
+            AI_VECTOR_FIELD=${{ secrets.AI_VECTOR_FIELD }}
+            AI_EMBEDDING_DIMS=${{ secrets.AI_EMBEDDING_DIMS }}
+            AI_MONGODB_URI=${{ secrets.AI_MONGODB_URI }}
+            AI_MONGODB_NAME=${{ secrets.AI_MONGODB_NAME }}
+            
+            KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
+            KAKAO_ADMIN_KEY=${{ secrets.KAKAO_ADMIN_KEY }}
+            
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }}
+            GOOGLE_LOCAL_REDIRECT_URI=${{ secrets.GOOGLE_LOCAL_REDIRECT_URI }}
+            
+            BACKEND_PORT=${{ secrets.BACKEND_PORT }}
+            FRONTEND_PORT=${{ secrets.FRONTEND_PORT }}
+            
+            # Docker Hub Settings
+            DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+            EOF
+            
+            docker-compose down
+            docker-compose up -d --build
