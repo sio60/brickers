@@ -1,6 +1,7 @@
 services:
   backend:
-    build: ./backend
+    # build: ./backend  <-- 로컬 빌드 대신 이미지 사용
+    image: ${DOCKER_USERNAME}/brickers-backend:latest
     container_name: brickers-backend
     ports:
       - "${BACKEND_PORT}:8080"
@@ -23,7 +24,8 @@ services:
       - brickers-network
 
   frontend:
-    build: ./frontend
+    # build: ./frontend
+    image: ${DOCKER_USERNAME}/brickers-frontend:latest
     container_name: brickers-frontend
     ports:
       - "${FRONTEND_PORT}:80"
@@ -34,7 +36,8 @@ services:
       - brickers-network
 
   ai:
-    build: ./ai
+    # build: ./ai
+    image: ${DOCKER_USERNAME}/brickers-ai:latest
     container_name: brickers-ai
     ports:
       - "${AI_PORT}:8000"

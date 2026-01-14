@@ -35,7 +35,13 @@ jobs:
             AI_PARTS_COLLECTION=${{ secrets.AI_PARTS_COLLECTION }}
             AI_VECTOR_INDEX=${{ secrets.AI_VECTOR_INDEX }}
             AI_VECTOR_FIELD=${{ secrets.AI_VECTOR_FIELD }}
+            AI_PORT=${{ secrets.AI_PORT }}
+            AI_PARTS_COLLECTION=${{ secrets.AI_PARTS_COLLECTION }}
+            AI_VECTOR_INDEX=${{ secrets.AI_VECTOR_INDEX }}
+            AI_VECTOR_FIELD=${{ secrets.AI_VECTOR_FIELD }}
             AI_EMBEDDING_DIMS=${{ secrets.AI_EMBEDDING_DIMS }}
+            AI_MONGODB_URI=${{ secrets.AI_MONGODB_URI }}
+            AI_MONGODB_NAME=${{ secrets.AI_MONGODB_NAME }}
             
             KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
             KAKAO_ADMIN_KEY=${{ secrets.KAKAO_ADMIN_KEY }}
@@ -47,6 +53,9 @@ jobs:
             
             BACKEND_PORT=${{ secrets.BACKEND_PORT }}
             FRONTEND_PORT=${{ secrets.FRONTEND_PORT }}
+            
+            # Docker Hub Settings
+            DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
             EOF
             
             docker-compose down
