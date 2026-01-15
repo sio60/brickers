@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
+import { verifyPhysicality } from "../../../../api/physicalTest";
 
 type Props = {
   url: string; // "/ldraw/models/car.ldr"
@@ -110,7 +111,7 @@ function LdrModel({
 
     try {
       (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any);
-    } catch {}
+    } catch { }
 
     return l;
   }, [partsLibraryPath]);
@@ -813,6 +814,47 @@ export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props)
             }}
           >
             설명서 보기
+          </button>
+
+          <button
+            type="button"
+            onClick={async () => {
+              if (generating) return;
+              try {
+                // 1. 현재 URL의 파일을 Blob으로 가져오기
+                const res = await fetch(url);
+                if (!res.ok) throw new Error("파일 로드 실패");
+                const blob = await res.blob();
+                const file = new File([blob], "model.ldr", { type: "text/plain" });
+
+                // 2. 서버로 전송
+                alert("물리 테스트를 시작합니다...");
+                const result = await verifyPhysicality(file);
+
+                // 3. 결과 표시
+                if (result.is_valid) {
+                  alert(`✅ 테스트 통과!\n안전성 점수: ${result.score}`);
+                } else {
+                  const issues = result.evidence.map(e => `[${e.severity}] ${e.message}`).join("\n");
+                  alert(`⚠️ 테스트 실패 (점수: ${result.score})\n\n${issues}`);
+                }
+              } catch (e) {
+                alert(`오류 발생: ${e}`);
+              }
+            }}
+            disabled={generating}
+            style={{
+              padding: "8px 10px",
+              borderRadius: 10,
+              border: "1px solid rgba(0,0,0,0.15)",
+              background: "#ff4d4f",
+              color: "#fff",
+              cursor: "pointer",
+              fontWeight: 900,
+              whiteSpace: "nowrap",
+            }}
+          >
+            물리 테스트
           </button>
         </div>
       )}

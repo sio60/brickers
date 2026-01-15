@@ -52,78 +52,69 @@ class LdrLoader:
                     
                     dims = get_part_dims(part_id)
                     if not dims:
-                        # Use default size (1x1x1) instead of skipping
-                        # This maintains structural connectivity
-                        print(f"Warning: Unknown part ID '{part_id}', using default size 1x1x1.")
-                        dims = (1, 1, 1.0)
-                        
-                    width_studs, depth_studs, height_bricks = dims
+                        # Use default 1x1x1 (20x24x20 LDU, origin top-center-ish)
+                        dims = (-10.0, 0.0, -10.0, 10.0, 24.0, 10.0)
+
+                    # Unpack 6-tuple from part_library
+                    min_x_ldu, min_y_ldu, min_z_ldu, max_x_ldu, max_y_ldu, max_z_ldu = dims
+
+                    # 1. Define corners in Part's Local Space
+                    # LDraw Axes: X=Right, Y=Down, Z=Forward
+                    corners = [
+                        np.array([min_x_ldu, min_y_ldu, min_z_ldu]),
+                        np.array([min_x_ldu, min_y_ldu, max_z_ldu]),
+                        np.array([min_x_ldu, max_y_ldu, min_z_ldu]),
+                        np.array([min_x_ldu, max_y_ldu, max_z_ldu]),
+                        np.array([max_x_ldu, min_y_ldu, min_z_ldu]),
+                        np.array([max_x_ldu, min_y_ldu, max_z_ldu]),
+                        np.array([max_x_ldu, max_y_ldu, min_z_ldu]),
+                        np.array([max_x_ldu, max_y_ldu, max_z_ldu]),
+                    ]
                     
-                    # Convert Units
-                    # 1 Stud = 20 LDU
-                    # 1 Brick Height = 24 LDU
+                    # 2. Transform corners to Global LDraw Space (Rotate + Translate)
+                    final_corners_ldraw = []
+                    pos_vec = np.array([ldraw_x, ldraw_y, ldraw_z])
                     
-                    # Transform Position to Model System (Studs for X/Y, BrickHeight for Z)
-                    # Model X = LDraw X / 20
-                    # Model Y (Depth) = LDraw Z / 20  <-- We map LDraw Z to Model Y
-                    # Model Z (Height) = -LDraw Y / 24 <-- LDraw Y is down positive, so -Y is up.
+                    for c in corners:
+                         # Apply Rotation (Matrix * Vector)
+                         rc = rot_matrix.dot(c)
+                         # Apply Translation
+                         final_corners_ldraw.append(rc + pos_vec)
+
+                    # 3. Find Global Extents
+                    g_min_x = min(c[0] for c in final_corners_ldraw)
+                    g_max_x = max(c[0] for c in final_corners_ldraw)
+                    g_min_y = min(c[1] for c in final_corners_ldraw)
+                    g_max_y = max(c[1] for c in final_corners_ldraw)
+                    g_min_z = min(c[2] for c in final_corners_ldraw)
+                    g_max_z = max(c[2] for c in final_corners_ldraw)
                     
-                    model_x = ldraw_x / 20.0
-                    model_depth_y = ldraw_z / 20.0
-                    model_z = -ldraw_y / 24.0
+                    # 4. Convert to Model System
+                    # LDraw X -> Model X (1/20)
+                    # LDraw Z -> Model Y (Depth) (1/20)
+                    # LDraw Y -> Model Z (Height) (-1/24)
                     
-                    # Handle Rotation (Simple Axis Aligned)
-                    # If rotated 90 deg around vertical axis (LDraw Y axis), swap width/depth.
-                    # LDraw Y axis is the up/down axis.
-                    # Check rotation of the X-basis vector (first column of matrix approx?)
-                    # Or transform a logical vector (1,0,0) and see where it lands.
+                    model_min_x = g_min_x / 20.0
+                    model_max_x = g_max_x / 20.0
                     
-                    # Local width vector (1, 0, 0)
-                    local_w = np.array([1, 0, 0])
-                    rotated_w = rot_matrix.dot(local_w)
+                    model_min_y = g_min_z / 20.0
+                    model_max_y = g_max_z / 20.0
                     
-                    # If rotated_w has strong Z component (Model Y), then width and depth are swapped in projection
-                    # LDraw Axes: 
-                    # X (side), Y (up/down), Z (front/back)
+                    model_min_z = -g_max_y / 24.0 # Inverted
+                    model_max_z = -g_min_y / 24.0
                     
-                    # If X-axis vector points to Z after rotation, then dimensions are swapped relative to world X/Z
-                    final_width = width_studs
-                    final_depth = depth_studs
-                    
-                    if abs(rotated_w[2]) > 0.9: # Rotated 90 degrees around Y
-                        final_width, final_depth = final_depth, final_width
-                        
-                    # Calculate 'Corner' position
-                    # LDraw position is usually the Center of the connection stud surface? 
-                    # Or center of part?
-                    # Most bricks: Origin is center of top studs or bottom tubes.
-                    # For 3001 (2x4): Origin is center.
-                    # Hence (x,y) in model is usually center-based. 
-                    # But our `Brick` model assumes (x,y,z) is MIN CORNER (bottom-left-front)?
-                    # let's check `models.py`.
-                    # Brick.center_of_mass = x + width/2 ...
-                    # So Brick.x is min corner.
-                    
-                    # Convert COM/Center to Min Corner
-                    min_x = model_x - (final_width / 2.0)
-                    min_y = model_depth_y - (final_depth / 2.0)
-                    
-                    # LDraw Y origin is usually at the typical 'ground' level of the brick or top?
-                    # Standard brick origin is at the bottom center. (Usually)
-                    # So Model Z is bottom z.
-                    # Check this assumption with LDraw standard.
-                    # Actually standard parts origin varies.
-                    # Assuming Bottom Center for standard bricks.
-                    min_z = model_z # already bottom if origin is bottom.
+                    final_width = model_max_x - model_min_x
+                    final_depth = model_max_y - model_min_y
+                    final_height = model_max_z - model_min_z
                     
                     brick = Brick(
                         id=f"{part_id}_{len(bricks)}",
-                        x=min_x,
-                        y=min_y,
-                        z=min_z,
+                        x=model_min_x,
+                        y=model_min_y,
+                        z=model_min_z,
                         width=final_width,
                         depth=final_depth,
-                        height=height_bricks
+                        height=final_height
                     )
                     bricks.append(brick)
         
