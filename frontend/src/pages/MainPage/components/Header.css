@@ -25,12 +25,17 @@
   cursor: pointer;
 }
 
-.header__login-btn {
+.header__actions {
   position: absolute;
   right: 24px;
   top: 50%;
   transform: translateY(-50%);
+  display: flex;
+  gap: 12px;
+}
 
+.header__login-btn,
+.header__upgrade-btn {
   background: black;
   color: white;
   border: none;
@@ -40,6 +45,16 @@
   font-size: 20px;
   letter-spacing: 1px;
   cursor: pointer;
+}
+
+.header__upgrade-btn {
+  background: white;
+  color: black;
+  border: 2px solid black;
+}
+
+.header__upgrade-btn:hover {
+  background: #f0f0f0;
 }
 
 .header__login-btn:hover {

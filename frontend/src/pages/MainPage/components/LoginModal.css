@@ -1,0 +1,93 @@
+.loginModalOverlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.loginModal {
+    background: white;
+    padding: 40px;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes modalPop {
+    0% {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.loginModal__title {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 48px;
+    color: #000;
+    margin: 0 0 32px 0;
+    letter-spacing: 2px;
+}
+
+.loginModal__button {
+    width: 100%;
+    height: 56px;
+    border-radius: 12px;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+    margin-bottom: 16px;
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.loginModal__button:active {
+    transform: scale(0.98);
+}
+
+.loginModal__button:last-child {
+    margin-bottom: 0;
+}
+
+.loginModal__paramName {
+    flex: 1;
+    text-align: center;
+}
+
+.loginModal__icon {
+    width: 24px;
+    height: 24px;
+    position: absolute;
+    left: 20px;
+    object-fit: contain;
+}
+
+/* Kakao Style */
+.loginModal__button--kakao {
+    background-color: #fee500;
+    color: #000000 85%;
+}
+
+/* Google Style */
+.loginModal__button--google {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #dadce0;
+}

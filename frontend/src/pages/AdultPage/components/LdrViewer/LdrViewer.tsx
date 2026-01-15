@@ -47,6 +47,22 @@ function splitLdrawStepsToCumulative(text: string) {
   return cumulative.length ? cumulative : [text];
 }
 
+// ✅ "1 ..." 라인(=부품 추가) 기준 누적 텍스트 배열
+function splitLdrawPartsToCumulative(text: string) {
+  const lines = text.split(/\r?\n/);
+  const acc: string[] = [];
+  const frames: string[] = [];
+
+  for (const line of lines) {
+    acc.push(line);
+    if (/^1\s+/.test(line)) {
+      frames.push(acc.join("\n"));
+    }
+  }
+
+  return frames.length ? frames : [text];
+}
+
 // ✅ gkjohnson mirror CDN
 const CDN_BASE =
   "https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/";
@@ -136,7 +152,10 @@ function LdrModel({
           }
 
           // 표면을 플랫하게(컬러 유지)
-          if (blueprintMode && (m.isMeshStandardMaterial || m.isMeshPhongMaterial)) {
+          if (
+            blueprintMode &&
+            (m.isMeshStandardMaterial || m.isMeshPhongMaterial)
+          ) {
             if ("metalness" in m) m.metalness = 0;
             if ("roughness" in m) m.roughness = 1;
             if ("shininess" in m) m.shininess = 0;
@@ -174,15 +193,26 @@ function LdrModel({
 }
 
 type View = "viewer" | "instruction";
+type BuildMode = "step" | "part"; // ✅ 층별 / 브릭 한개씩
 
 export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props) {
-  const [steps, setSteps] = useState<string[]>([]);
+  // ✅ 프레임 2종
+  const [stepFrames, setStepFrames] = useState<string[]>([]);
+  const [partFrames, setPartFrames] = useState<string[]>([]);
+  const [buildMode, setBuildMode] = useState<BuildMode>("step");
+
   const [stepIndex, setStepIndex] = useState(0);
 
   const [view, setView] = useState<View>("viewer");
   const [blueprintMode, setBlueprintMode] = useState(true); // 설명서용 기본 ON
 
-  // 썸네일(각 step 캡처) 저장
+  // ✅ 설명서(thumb) 생성 중에는 렌더를 stepFrames로 강제 (설명서가 깨지지 않게)
+  const [forceStepRender, setForceStepRender] = useState(false);
+
+  const activeFrames = buildMode === "step" ? stepFrames : partFrames;
+  const framesForRender = forceStepRender ? stepFrames : activeFrames;
+
+  // 썸네일(각 step 캡처) 저장 (항상 STEP 기준)
   const [thumbs, setThumbs] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
 
@@ -200,21 +230,27 @@ export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props)
       readyResolverRef.current = resolve;
     });
 
-  // 1) 원본 ldr fetch -> step 분해
+  // 1) 원본 ldr fetch -> step/part 둘 다 분해
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
       const res = await fetch(url);
-      if (!res.ok) throw new Error(`fetch failed: ${res.status} ${res.statusText}`);
+      if (!res.ok)
+        throw new Error(`fetch failed: ${res.status} ${res.statusText}`);
 
       const text = await res.text();
-      const cumulative = splitLdrawStepsToCumulative(text);
+
+      const stepCumulative = splitLdrawStepsToCumulative(text);
+      const partCumulative = splitLdrawPartsToCumulative(text);
 
       if (cancelled) return;
 
-      setSteps(cumulative);
-      setThumbs(new Array(cumulative.length).fill(""));
+      setStepFrames(stepCumulative);
+      setPartFrames(partCumulative);
+
+      // ✅ thumbs는 설명서용이라 step 기준으로만
+      setThumbs(new Array(stepCumulative.length).fill(""));
       setStepIndex(0);
     })().catch((e) => console.error("[LDraw] fetch failed:", e));
 
@@ -223,11 +259,21 @@ export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props)
     };
   }, [url]);
 
-  // 2) stepIndex 바뀌면 Blob URL 생성 -> stepUrl 갱신
+  // 2) mode 바뀌면 index가 범위를 넘지 않게 보정
   useEffect(() => {
-    if (!steps.length) return;
+    const max = Math.max(0, activeFrames.length - 1);
+    setStepIndex((i) => Math.min(i, max));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buildMode, activeFrames.length]);
 
-    const text = steps[stepIndex] ?? steps[0];
+  // 3) stepIndex 바뀌면 Blob URL 생성 -> stepUrl 갱신 (현재 렌더 프레임 기준)
+  useEffect(() => {
+    if (!framesForRender.length) return;
+
+    const max = Math.max(0, framesForRender.length - 1);
+    const safeIndex = Math.min(stepIndex, max);
+
+    const text = framesForRender[safeIndex] ?? framesForRender[0];
     const blob = new Blob([text], { type: "text/plain" });
     const blobUrl = URL.createObjectURL(blob);
 
@@ -235,7 +281,7 @@ export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props)
     prevBlobUrlRef.current = blobUrl;
 
     setStepUrl(blobUrl);
-  }, [steps, stepIndex]);
+  }, [framesForRender, stepIndex]);
 
   // 언마운트 cleanup
   useEffect(() => {
@@ -244,7 +290,7 @@ export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props)
     };
   }, []);
 
-  const max = Math.max(0, steps.length - 1);
+  const max = Math.max(0, activeFrames.length - 1);
 
   const downloadPng = () => {
     const gl = glRef.current;
@@ -253,7 +299,7 @@ export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props)
     const dataUrl = gl.domElement.toDataURL("image/png");
     const a = document.createElement("a");
     a.href = dataUrl;
-    a.download = `ldr-step-${stepIndex + 1}.png`;
+    a.download = `ldr-${buildMode}-${stepIndex + 1}.png`;
     a.click();
   };
 
@@ -269,36 +315,39 @@ export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props)
     });
   };
 
-  // ✅ 모든 step 썸네일 자동 생성 (설명서 페이지용)
+  // ✅ 모든 step 썸네일 자동 생성 (설명서 페이지용) — 항상 STEP 기준
   const generateAllThumbs = async () => {
-    if (!steps.length) return;
+    if (!stepFrames.length) return;
 
     setGenerating(true);
+
+    // ✅ 설명서 생성 중에는 렌더를 stepFrames로 강제
+    setForceStepRender(true);
 
     // 설명서 느낌을 위해 도면모드 강제 ON
     const prevBp = blueprintMode;
     setBlueprintMode(true);
 
-    for (let i = 0; i < steps.length; i++) {
-      // 이미 있으면 스킵
+    // ✅ step 기준으로만 생성
+    for (let i = 0; i < stepFrames.length; i++) {
       if (thumbs[i]) continue;
 
       const ready = waitForModelReady();
       setStepIndex(i);
       await ready;
 
-      // 한 프레임/약간의 여유(렌더 안정)
       await new Promise((r) => setTimeout(r, 60));
-
       captureThumbAt(i);
     }
 
     setGenerating(false);
     setBlueprintMode(prevBp);
+
+    // ✅ 원래 렌더 모드로 복귀
+    setForceStepRender(false);
   };
 
   const openInstruction = async () => {
-    // 썸네일 전부 뽑고 설명서 뷰로
     await generateAllThumbs();
     setView("instruction");
   };
@@ -312,14 +361,13 @@ export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props)
   };
 
   // =========================
-  // ✅ Instruction Sheet UI
+  // ✅ Instruction Sheet UI (STEP 기준)
   // =========================
   const InstructionSheet = () => {
     const coverImg = thumbs[thumbs.length - 1]; // 완성컷처럼 사용
     const left = thumbs.slice(0, Math.ceil(thumbs.length / 2));
     const right = thumbs.slice(Math.ceil(thumbs.length / 2));
 
-    // 콜아웃(예시): 마지막 2개 step을 작은 박스에 표시
     const callA = thumbs[Math.max(0, thumbs.length - 2)];
     const callB = thumbs[Math.max(0, thumbs.length - 1)];
 
@@ -352,8 +400,12 @@ export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props)
               border: "2px solid rgba(0,0,0,0.12)",
             }}
           >
-            <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.8 }}>LEGO</div>
-            <div style={{ fontWeight: 900, fontSize: 18, marginTop: 6 }}>6+</div>
+            <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.8 }}>
+              LEGO
+            </div>
+            <div style={{ fontWeight: 900, fontSize: 18, marginTop: 6 }}>
+              6+
+            </div>
             <div style={{ fontWeight: 900, fontSize: 18 }}>40375</div>
 
             <div
@@ -419,8 +471,10 @@ export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props)
                       minHeight: 210,
                       display: "grid",
                       placeItems: "center",
+                      cursor: "pointer",
                     }}
                     onClick={() => {
+                      setBuildMode("step");
                       setStepIndex(stepNo - 1);
                       setView("viewer");
                     }}
@@ -451,7 +505,9 @@ export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props)
                         }}
                       />
                     ) : (
-                      <div style={{ fontWeight: 900, opacity: 0.5 }}>Step {stepNo}</div>
+                      <div style={{ fontWeight: 900, opacity: 0.5 }}>
+                        Step {stepNo}
+                      </div>
                     )}
                   </div>
                 );
@@ -467,8 +523,10 @@ export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props)
                       minHeight: 210,
                       display: "grid",
                       placeItems: "center",
+                      cursor: "pointer",
                     }}
                     onClick={() => {
+                      setBuildMode("step");
                       setStepIndex(stepNo - 1);
                       setView("viewer");
                     }}
@@ -499,7 +557,9 @@ export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props)
                         }}
                       />
                     ) : (
-                      <div style={{ fontWeight: 900, opacity: 0.5 }}>Step {stepNo}</div>
+                      <div style={{ fontWeight: 900, opacity: 0.5 }}>
+                        Step {stepNo}
+                      </div>
                     )}
                   </div>
                 );
@@ -519,20 +579,57 @@ export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props)
             >
               <div style={{ fontWeight: 900, marginBottom: 8 }}>Sub Steps</div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "40px 1fr", gap: 10, alignItems: "center" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "40px 1fr",
+                  gap: 10,
+                  alignItems: "center",
+                }}
+              >
                 <div style={{ fontWeight: 900, fontSize: 18 }}>1</div>
-                <div style={{ background: "#fff", borderRadius: 12, border: "1px solid rgba(0,0,0,0.12)", padding: 8 }}>
+                <div
+                  style={{
+                    background: "#fff",
+                    borderRadius: 12,
+                    border: "1px solid rgba(0,0,0,0.12)",
+                    padding: 8,
+                  }}
+                >
                   {callA ? (
-                    <img src={callA} alt="sub-1" style={{ width: "100%", height: 90, objectFit: "contain" }} />
+                    <img
+                      src={callA}
+                      alt="sub-1"
+                      style={{
+                        width: "100%",
+                        height: 90,
+                        objectFit: "contain",
+                      }}
+                    />
                   ) : (
                     <div style={{ fontWeight: 900, opacity: 0.5 }}>-</div>
                   )}
                 </div>
 
                 <div style={{ fontWeight: 900, fontSize: 18 }}>2</div>
-                <div style={{ background: "#fff", borderRadius: 12, border: "1px solid rgba(0,0,0,0.12)", padding: 8 }}>
+                <div
+                  style={{
+                    background: "#fff",
+                    borderRadius: 12,
+                    border: "1px solid rgba(0,0,0,0.12)",
+                    padding: 8,
+                  }}
+                >
                   {callB ? (
-                    <img src={callB} alt="sub-2" style={{ width: "100%", height: 90, objectFit: "contain" }} />
+                    <img
+                      src={callB}
+                      alt="sub-2"
+                      style={{
+                        width: "100%",
+                        height: 90,
+                        objectFit: "contain",
+                      }}
+                    />
                   ) : (
                     <div style={{ fontWeight: 900, opacity: 0.5 }}>-</div>
                   )}
@@ -578,7 +675,7 @@ export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props)
       {view === "instruction" && <InstructionSheet />}
 
       {/* ✅ 하단 컨트롤 */}
-      {steps.length > 0 && view === "viewer" && (
+      {activeFrames.length > 0 && view === "viewer" && (
         <div
           style={{
             position: "absolute",
@@ -596,6 +693,28 @@ export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props)
             backdropFilter: "blur(6px)",
           }}
         >
+          {/* ✅ 층별/브릭 1개 토글 */}
+          <button
+            type="button"
+            onClick={() => {
+              setStepIndex(0);
+              setBuildMode((m) => (m === "step" ? "part" : "step"));
+            }}
+            disabled={generating}
+            style={{
+              padding: "8px 10px",
+              borderRadius: 10,
+              border: "1px solid rgba(0,0,0,0.15)",
+              background: "rgba(0,0,0,0.08)",
+              cursor: "pointer",
+              fontWeight: 900,
+              whiteSpace: "nowrap",
+            }}
+            title="0 STEP 기준(층별) / 1 라인 기준(브릭 한개씩)"
+          >
+            {buildMode === "step" ? "브릭 한개씩" : "층별 보기"}
+          </button>
+
           <button
             type="button"
             onClick={() => setStepIndex((s) => Math.max(0, s - 1))}
@@ -613,7 +732,8 @@ export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props)
           </button>
 
           <div style={{ fontWeight: 900, fontSize: 13, whiteSpace: "nowrap" }}>
-            Step {stepIndex + 1} / {steps.length}
+            {buildMode === "step" ? "Step" : "Part"} {stepIndex + 1} /{" "}
+            {activeFrames.length}
             {generating ? " (설명서 생성 중...)" : ""}
           </div>
 
