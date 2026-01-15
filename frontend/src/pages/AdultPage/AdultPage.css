@@ -11,14 +11,7 @@
   isolation: isolate;
 }
 
-/* 어두운 오버레이 */
-.adultPage::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: -1;
-}
+
 
 .adultPage__left {
   min-width: 0;
