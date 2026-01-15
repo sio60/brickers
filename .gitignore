@@ -122,3 +122,4 @@ frontend/public/ldraw/**
 .idea/
 *.swp
 *.tmp
+frontend/complete/
