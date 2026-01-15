@@ -25,6 +25,7 @@ type BrickProps = {
     rotation: [number, number, number];
     scale: number;
     shape: ShapeType;
+    entryDirection?: "top" | "sides" | "float";
 };
 
 // Stud geometry helpers
@@ -35,23 +36,49 @@ const Stud = ({ position, color }: { position: [number, number, number]; color: 
     </mesh>
 );
 
-function Brick({ position: initialPos, color, rotation: initialRot, scale, shape }: BrickProps) {
+function Brick({ position: initialPos, color, rotation: initialRot, scale, shape, entryDirection = "top" }: BrickProps) {
     const meshRef = useRef<THREE.Mesh>(null);
 
     // Physics state
-    // Start high up for the drop effect
-    const position = useRef(new THREE.Vector3(initialPos[0], initialPos[1] + 25, initialPos[2]));
-    const velocity = useRef(new THREE.Vector3(0, -randomRange(0.1, 0.3), 0)); // Initial drop speed
+    const isSides = entryDirection === "sides";
+    const isFloat = entryDirection === "float";
+
+    // Initialize position based on entry direction
+    const position = useRef(useMemo(() => {
+        if (isSides) {
+            const side = Math.random() > 0.5 ? 1 : -1;
+            return new THREE.Vector3(side * 35, randomRange(-5, 15), initialPos[2]);
+        }
+        if (isFloat) {
+            // Start at the target position directly
+            return new THREE.Vector3(initialPos[0], initialPos[1], initialPos[2]);
+        }
+        // Default "top": start high up
+        return new THREE.Vector3(initialPos[0], initialPos[1] + 25, initialPos[2]);
+    }, [initialPos, isSides, isFloat]));
+
+    const velocity = useRef(useMemo(() => {
+        if (isSides) {
+            const xDir = position.current.x > 0 ? -1 : 1;
+            return new THREE.Vector3(
+                xDir * randomRange(0.2, 0.5), // Fly inwards
+                randomRange(0.2, 0.5),        // Clean arc up
+                0
+            );
+        }
+        if (isFloat) {
+            // Gentle drift
+            return new THREE.Vector3(randomRange(-0.02, 0.02), randomRange(0.01, 0.05), randomRange(-0.02, 0.02));
+        }
+        // Default "top": drop down
+        return new THREE.Vector3(0, -randomRange(0.1, 0.3), 0);
+    }, [isSides, isFloat]));
+
     const angularVelocity = useRef(new THREE.Vector3(randomRange(-0.1, 0.1), randomRange(-0.1, 0.1), randomRange(-0.1, 0.1)));
 
-    // We need to track rotation state somewhere to apply physics
-    // Current mesh rotation is not enough if we want to separate "velocity" logic? 
-    // Actually we can just read/write mesh rotation. But for consistency let's use a ref or just modify mesh directly.
-    // The previous code used meshRef.current.rotation directly in useFrame, which is fine.
-    // But we need to set initial rotation.
-
     // State machine: 'falling' | 'floating'
-    const isFalling = useRef(true);
+    // If float mode, we start in floating state immediately
+    const isFalling = useRef(!isFloat);
 
     useFrame((_, delta) => {
         if (!meshRef.current) return;
@@ -87,7 +114,7 @@ function Brick({ position: initialPos, color, rotation: initialRot, scale, shape
                 angVel.z = randomRange(-0.2, 0.2);
 
                 // Check if stopped bouncing
-                if (Math.abs(vel.y) < 0.1) {
+                if (Math.abs(vel.y) < 0.1 && Math.abs(vel.x) < 0.1) {
                     isFalling.current = false;
                     // Give a gentle "float" velocity to start zero-g mode
                     vel.set(randomRange(-0.02, 0.02), randomRange(0.01, 0.05), randomRange(-0.02, 0.02));
@@ -140,7 +167,6 @@ function Brick({ position: initialPos, color, rotation: initialRot, scale, shape
                         <Stud position={[-0.5, 0.6, 0.25]} color={color} />
                         <Stud position={[0.5, 0.6, -0.25]} color={color} />
                         <Stud position={[-0.5, 0.6, -0.25]} color={color} />
-                        {/* Extra studs for 2x geometry if needed, let's keep it simple 2x2 arrangement spread out or 4x2 */}
                     </>
                 );
             case "cylinder": // Tall Cylinder
@@ -185,7 +211,7 @@ function Brick({ position: initialPos, color, rotation: initialRot, scale, shape
     );
 }
 
-export default function Background3D() {
+export default function Background3D({ entryDirection = "top" }: { entryDirection?: "top" | "sides" | "float" }) {
     const brickCount = 40;
     const shapes: ShapeType[] = ["standard", "long", "cylinder", "circle"];
     const randomShape = () => shapes[Math.floor(Math.random() * shapes.length)];
@@ -217,7 +243,7 @@ export default function Background3D() {
                 <directionalLight position={[-5, 5, 5]} intensity={1} />
 
                 {bricks.map((props) => (
-                    <Brick {...props} />
+                    <Brick {...props} entryDirection={entryDirection} />
                 ))}
 
                 <Environment preset="city" />
