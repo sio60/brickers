@@ -1,10 +1,8 @@
+
 import "./LoginModal.css";
 import kakaoIcon from "../../../assets/kakao.png";
 import googleIcon from "../../../assets/google.png";
-
-// 백엔드 OAuth2 로그인 URL
-const BACKEND_KAKAO_LOGIN = "http://localhost:8080/auth/kakao";
-const BACKEND_GOOGLE_LOGIN = "http://localhost:8080/auth/google";
+import { getKakaoAuthorizeUrl } from "../../../config/kakao";
 
 type Props = {
     isOpen: boolean;
@@ -15,13 +13,12 @@ export default function LoginModal({ isOpen, onClose }: Props) {
     if (!isOpen) return null;
 
     const handleKakaoLogin = () => {
-        // 백엔드 OAuth2 카카오 로그인으로 이동
-        window.location.href = BACKEND_KAKAO_LOGIN;
+        window.location.href = getKakaoAuthorizeUrl();
     };
 
     const handleGoogleLogin = () => {
-        // 백엔드 OAuth2 구글 로그인으로 이동
-        window.location.href = BACKEND_GOOGLE_LOGIN;
+        // Placeholder for Google Login
+        console.log("Google Login Clicked");
     };
 
     return (
