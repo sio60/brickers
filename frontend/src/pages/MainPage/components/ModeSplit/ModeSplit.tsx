@@ -14,7 +14,7 @@ export default function ModeSplit() {
       <div className="modeSplit__controls">
         <ModeTile
           variant="adult"
-          title="ADULTS MODE"
+          title="PRO MODE"
           subtitle="정밀 · 검증 · 고급 설정"
           onClick={() => navigate("/adult")}
         />
