@@ -3,7 +3,6 @@ import { useRef, useState } from "react";
 
 import kidBg from "../../assets/kid_bg.png";
 import dino from "../../assets/di.png";
-import kidsMode from "../../assets/kids_mode.png";
 
 export default function KidsPage() {
   const inputRef = useRef<HTMLInputElement | null>(null);
