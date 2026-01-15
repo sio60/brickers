@@ -1,0 +1,91 @@
+@font-face {
+    font-family: 'KblJumpCondensed';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2601-5@1.0/KBLJump_EB_CondensedTTF.woff2') format('woff2');
+    font-weight: normal;
+    font-display: swap;
+}
+
+.kidsAgeSelection {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    /* Background managed by 3D component */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.kidsAgeSelection__title {
+    font-family: 'KblJumpCondensed', sans-serif;
+    font-size: 64px;
+    color: #000;
+    margin-bottom: 60px;
+    letter-spacing: 2px;
+    z-index: 10;
+}
+
+.kidsAgeSelection__buttons {
+    display: flex;
+    gap: 24px;
+    z-index: 10;
+}
+
+.kidsAgeBtn {
+    width: 280px;
+    height: 200px;
+    border-radius: 12px;
+    border: 3px solid #000;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    transition: transform 0.2s;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(12px);
+    padding: 24px;
+    position: relative;
+}
+
+.kidsAgeBtn:hover {
+    transform: translateY(-4px);
+}
+
+.kidsAgeBtn__label {
+    font-family: 'KblJumpCondensed', sans-serif;
+    font-size: 64px;
+    font-weight: 400;
+    margin-bottom: 0;
+    color: #000;
+    letter-spacing: 1px;
+}
+
+/* 3~5세 (Pastel Sky Blue) */
+.kidsAgeBtn--blue:hover {
+    background: #A5D8FF;
+}
+
+.kidsAgeBtn--blue:hover .kidsAgeBtn__label {
+    color: #fff;
+}
+
+/* 6~7세 (Pastel Lime Green) */
+.kidsAgeBtn--red:hover {
+    background: #D9F99D;
+}
+
+.kidsAgeBtn--red:hover .kidsAgeBtn__label {
+    color: #fff;
+}
+
+/* 8~10세 (Pastel Purple) */
+.kidsAgeBtn--green:hover {
+    background: #E9D5FF;
+}
+
+.kidsAgeBtn--green:hover .kidsAgeBtn__label {
+    color: #fff;
+}
