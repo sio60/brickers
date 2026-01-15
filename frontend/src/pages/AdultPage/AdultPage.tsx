@@ -9,7 +9,6 @@ import "./AdultPage.css";
 
 // ✅ LDR 테스트 뷰어를 만들었으면 사용 (없으면 이 import 지워도 됨)
 import LdrViewer from "./components/LdrViewer/LdrViewer";
-import adultBg from "../../assets/adult_bg.png";
 
 type ViewMode = "brickplan" | "ldr";
 
@@ -26,12 +25,10 @@ export default function AdultPage() {
     <div
       className="adultPage"
       style={{
-        backgroundImage: `url(${adultBg})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundColor: "#fff",
       }}
     >
-      <div className="adultPage__left">
+      <div className="adultPage__left" style={{ paddingTop: 80 }}>
         {/* 상단 토글 */}
         <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
           <button
