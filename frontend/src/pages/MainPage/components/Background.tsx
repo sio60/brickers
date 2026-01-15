@@ -1,4 +1,4 @@
-import bg from "../../../assets/bg.png";
+import bg from "../../../assets/kid_bg.png"; 
 
 type Props = {
   children: React.ReactNode;
