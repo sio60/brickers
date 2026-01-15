@@ -26,26 +26,35 @@
       calc(100% - var(--d)) 0%);
 
   /* 내부 블러: 약하게 */
-  backdrop-filter: blur(1.9px);
-  -webkit-backdrop-filter: blur(1.9px);
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
 
   /* 가장자리 페더링: 선이 너무 튀지 않게만 살짝 */
-  filter: blur(1.9px);
+  filter: blur(1.5px);
 
   background: transparent;
 }
 
 
 
-.modeSplit__char {
+.modeSplit__controls {
   position: absolute;
+  top: 50%;
   left: 50%;
-  top: 65%;
   transform: translate(-50%, -50%);
-  width: clamp(300px, 60vw, 1520px);
-  height: auto;
-  z-index: 6;
+  width: 100%;
+
+  display: flex;
+  justify-content: center;
+  gap: 300px;
+  align-items: center;
+  /* Vertical center aligning */
+
+  z-index: 10;
   pointer-events: none;
-  user-select: none;
-  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.35));
+}
+
+.modeSplit__controls>* {
+  pointer-events: auto;
+  /* Enable clicks on buttons */
 }

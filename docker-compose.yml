@@ -29,6 +29,9 @@ services:
     container_name: brickers-frontend
     ports:
       - "${FRONTEND_PORT}:80"
+      - "443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - backend
       - ai
