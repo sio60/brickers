@@ -14,6 +14,9 @@ export default function Header() {
         onClick={() => navigate("/")}
         style={{ cursor: "pointer" }}
       />
+      <button className="header__login-btn" onClick={() => navigate("/login")}>
+        LOGIN
+      </button>
     </header>
   );
 }

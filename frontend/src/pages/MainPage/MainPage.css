@@ -9,8 +9,7 @@
 .mainScreen {
   height: 100vh;
   width: 100%;
-  padding-top: 72px;
-  /* 헤더 공간 확보 */
+  padding-top: 0;
   box-sizing: border-box;
   overflow: hidden;
   /* 스크롤 방지 */

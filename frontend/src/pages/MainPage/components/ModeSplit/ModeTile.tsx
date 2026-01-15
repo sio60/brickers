@@ -2,26 +2,31 @@ import "./ModeTile.css";
 
 type Props = {
   variant: "kids" | "adult";
-  title: string;
+  title?: string;
   subtitle?: string;
-  bgImage: string;
+  logo?: string;
   onClick: () => void;
 };
 
-export default function ModeTile({ variant, title, subtitle, bgImage, onClick }: Props) {
+export default function ModeTile({ variant, title, subtitle, logo, onClick }: Props) {
   return (
     <button
       type="button"
       className={`modeTile modeTile--${variant}`}
       onClick={onClick}
-      aria-label={title}
+      aria-label={title || "mode select"}
     >
-      <div className="modeTile__bg" style={{ backgroundImage: `url(${bgImage})` }} />
-      <div className="modeTile__overlay" />
+      {/* Background is now global 3D */}
 
       <div className={`modeTile__content modeTile__content--${variant}`}>
-        <div className="modeTile__title">{title}</div>
-        {subtitle && <div className="modeTile__subtitle">{subtitle}</div>}
+        {logo ? (
+          <img src={logo} alt={title} className="modeTile__logo" />
+        ) : (
+          <>
+            <div className="modeTile__title">{title}</div>
+            {subtitle && <div className="modeTile__subtitle">{subtitle}</div>}
+          </>
+        )}
       </div>
     </button>
   );

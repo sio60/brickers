@@ -1,102 +1,69 @@
 .modeTile {
-  position: absolute;
-  inset: 0;
-  border: 0;
+  position: relative;
+  /* Reset absolute */
+  width: 400px;
+  height: 260px;
+  border-radius: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
   padding: 0;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px);
   cursor: pointer;
   overflow: hidden;
   isolation: isolate;
-}
-
-.modeTile {
-  z-index: 1;
-}
-
-/* ✅ 텍스트는 딤 위로 */
-.modeTile__content {
-  z-index: 6;
-}
-
-/* ✅ 대각선: 우상단(100,0) → 좌하단(0,100)
-   - adult: 좌상단 삼각형
-   - kids : 우하단 삼각형
-*/
-.modeTile--adult {
-  /* 좌상단 영역 */
-  clip-path: polygon(0 0, 100% 0, 0 100%);
-}
-
-.modeTile--kids {
-  /* 우하단 영역 */
-  clip-path: polygon(100% 0, 100% 100%, 0 100%);
-}
-
-.modeTile__bg {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-
-  background-size: cover;
-  background-position: center;
-  transform: scale(1);
-  transition: transform 240ms ease;
-  will-change: transform;
-}
-
-.modeTile:hover .modeTile__bg {
-  transform: scale(1.06);
-}
-
-
-.modeTile__overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-
-  background: rgba(0, 0, 0, 0.6);
-  /* 메인처럼 어둡게 */
+  transition: transform 0.2s, background 0.2s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .modeTile:hover {
-  z-index: 3;
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+  z-index: 10;
 }
 
+/* Internal content centering */
 .modeTile__content {
   position: absolute;
-  z-index: 6;
-  /* ✅ seam 위로 */
-  color: #fff;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55);
+  inset: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  max-width: min(420px, 70%);
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  color: #111;
+  padding: 24px;
 }
 
+/* Specific tweaks if needed, but general style applies to both */
+.modeTile--adult {}
 
-/* ✅ 어덜트: 좌상단(로고 쪽) */
-.modeTile__content--adult {
-  top: 28px;
-  left: 28px;
-  text-align: left;
-  align-items: flex-start;
-}
+.modeTile--kids {}
 
-/* ✅ 키즈: 우하단(로고 반대편) */
-.modeTile__content--kids {
-  bottom: 28px;
-  right: 28px;
-  text-align: right;
-  align-items: flex-end;
+.modeTile__logo {
+  max-width: 280px;
+  max-height: 160px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
 }
 
 .modeTile__title {
-  font-size: 32px;
-  font-weight: 900;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 64px;
+  /* Increased size */
+  font-weight: 400;
+  /* Regular weight for Bebas Neue */
+  font-style: normal;
+  color: #111;
+  letter-spacing: 2px;
+  /* Slight spacing matches the font well */
 }
 
 .modeTile__subtitle {
-  font-size: 14px;
-  opacity: 0.95;
+  font-size: 12px;
+  opacity: 0.7;
+  display: none;
+  /* Hide subtitle for cleaner small button look, or keep if fits */
 }

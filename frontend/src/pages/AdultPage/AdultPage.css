@@ -4,8 +4,7 @@
   display: grid;
   grid-template-columns: 1fr 360px;
   gap: 16px;
-  padding: 88px 16px 16px;
-  /* Header 72px + 16px gap */
+  padding: 16px;
   box-sizing: border-box;
 
   position: relative;
