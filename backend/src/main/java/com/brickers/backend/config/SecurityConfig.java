@@ -13,17 +13,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
-/**
- * Spring Security 설정
- * OAuth2 소셜 로그인 (카카오, 구글) 지원
- * 
- * 로그인 엔드포인트:
- * - 카카오: /auth/kakao
- * - 구글: /auth/google
- * 
- * 로그인 성공 시 프론트엔드로 리다이렉트:
- * - http://localhost:3000/auth/success
- */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -34,31 +23,26 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // CORS 설정
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // CSRF 비활성화 (REST API)
                 .csrf(csrf -> csrf.disable())
 
-                // 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/auth/**", "/api/**").permitAll()
-                        .requestMatchers("/oauth2/**", "/login/**", "/logout").permitAll()
+                        .requestMatchers("/", "/auth/**", "/api/**", "/oauth2/**", "/login/**", "/logout", "/error")
+                        .permitAll()
                         .anyRequest().permitAll())
 
-                // OAuth2 로그인 설정
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(authorization -> authorization.baseUri("/auth"))
                         .redirectionEndpoint(redirection -> redirection.baseUri("/auth/*/callback"))
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                        // 로그인 성공 시 프론트엔드로 리다이렉트
-                        .defaultSuccessUrl("http://localhost:3000/auth/success", true)
-                        .failureUrl("http://localhost:3000/auth/failure"))
 
-                // 로그아웃 설정
+                        // ✅ Vite dev server 기준으로 수정
+                        .defaultSuccessUrl("http://localhost:5173/auth/success", true)
+                        .failureUrl("http://localhost:5173/auth/failure"))
+
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("http://localhost:3000")
+                        .logoutSuccessUrl("http://localhost:5173")
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID"));
 
@@ -68,9 +52,16 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+        // ✅ 여기가 핵심: 5173 허용
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5173"
+        // 필요하면 "http://localhost:3000"도 같이 넣어도 됨
+        ));
+
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("Set-Cookie", "Authorization")); // 선택(토큰 헤더 쓸 때 유용)
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
