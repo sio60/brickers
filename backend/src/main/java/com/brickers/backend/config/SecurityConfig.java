@@ -20,49 +20,39 @@ public class SecurityConfig {
 
         private final CustomOAuth2UserService customOAuth2UserService;
 
-        @Bean
-        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-                http
-                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                                .csrf(csrf -> csrf.disable())
-
-                                .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers("/", "/auth/**", "/api/**", "/oauth2/**", "/login/**",
-                                                                "/logout", "/error")
-                                                .permitAll()
-                                                .anyRequest().permitAll())
-
-                                .oauth2Login(oauth2 -> oauth2
-                                                .authorizationEndpoint(authorization -> authorization.baseUri("/auth"))
-                                                .redirectionEndpoint(
-                                                                redirection -> redirection.baseUri("/auth/*/callback"))
-                                                .userInfoEndpoint(userInfo -> userInfo
-                                                                .userService(customOAuth2UserService))
-
-                                                // ✅ Vite dev server 기준으로 수정
-                                                .defaultSuccessUrl("http://localhost:5173/auth/success", true)
-                                                .failureUrl("http://localhost:5173/auth/failure"))
-
-                                .logout(logout -> logout
-                                                .logoutUrl("/logout")
-                                                .logoutSuccessUrl("http://localhost:5173")
-                                                .invalidateHttpSession(true)
-                                                .deleteCookies("JSESSIONID"));
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/", "/error", "/favicon.ico", "/auth/**").permitAll()
+                .requestMatchers("/api/auth/me").permitAll() // ✅ 로그인 안 된 상태에서도 호출은 되어야 함 (authenticated: false 응답용)
+                .anyRequest().authenticated())
+            .oauth2Login(oauth2 -> oauth2
+                .authorizationEndpoint(auth -> auth.baseUri("/auth"))
+                .redirectionEndpoint(red -> red.baseUri("/auth/*/callback"))
+                .userInfoEndpoint(user -> user.userService(customOAuth2UserService))
+                .defaultSuccessUrl("http://localhost:5173/auth/success", true)
+                .failureUrl("http://localhost:5173/auth/failure"))
+            .logout(logout -> logout
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("http://localhost:5173")
+                .deleteCookies("JSESSIONID"));
 
                 return http.build();
         }
 
-        @Bean
-        public CorsConfigurationSource corsConfigurationSource() {
-                CorsConfiguration configuration = new CorsConfiguration();
-                configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
-                configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                configuration.setAllowedHeaders(List.of("*"));
-                configuration.setExposedHeaders(List.of("Set-Cookie", "Authorization")); // 선택(토큰 헤더 쓸 때 유용)
-                configuration.setAllowCredentials(true);
-
-                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-                source.registerCorsConfiguration("/**", configuration);
-                return source;
-        }
+    
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:5173")); // ✅ Vite 포트 확인
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true); // ✅ 쿠키 전송 필수
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
 }

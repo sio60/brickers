@@ -18,6 +18,7 @@ export default function App() {
         <Route path="/auth/failure" element={<AuthFailure />} />
       </Route>
 
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
