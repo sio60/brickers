@@ -6,32 +6,96 @@ on:
       - main
 
 jobs:
-  deploy:
+  build-and-push:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@master
+      - name: Clean up disk space
+        run: |
+          echo "=== Before cleanup ==="
+          df -h
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo docker system prune -af || true
+          echo "=== After cleanup ==="
+          df -h
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/brickers-backend:latest
+            ${{ secrets.DOCKER_USERNAME }}/brickers-backend:${{ github.sha }}
+          provenance: false
+          no-cache: true
+
+      - name: Build and Push Frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/brickers-frontend:latest
+            ${{ secrets.DOCKER_USERNAME }}/brickers-frontend:${{ github.sha }}
+          provenance: false
+          no-cache: true
+          build-args: |
+            VITE_KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
+            VITE_KAKAO_REDIRECT_URI=${{ secrets.VITE_KAKAO_REDIRECT_URI }}
+
+
+      - name: Build and Push AI
+        uses: docker/build-push-action@v6
+        with:
+          context: ./ai
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/brickers-ai:latest
+            ${{ secrets.DOCKER_USERNAME }}/brickers-ai:${{ github.sha }}
+          provenance: false
+          no-cache: true
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy on EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            set -e
+            echo "🚀 Starting deployment on EC2..."
             cd ~/brickers
-            git pull origin main
             
-            # .env 파일 생성 (Secrets 활용, heredoc 방식)
+            echo "� Creating .env file..."
             cat <<EOF > .env
+            DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+            
             MONGO_USER=${{ secrets.MONGO_USER }}
             MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }}
             MONGO_HOST=${{ secrets.MONGO_HOST }}
             MONGO_PORT=${{ secrets.MONGO_PORT }}
             MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }}
-            BASE_URL=${{ secrets.BASE_URL }}
             
             AI_PORT=${{ secrets.AI_PORT }}
+            AI_MONGODB_URI=${{ secrets.AI_MONGODB_URI }}
+            AI_MONGODB_NAME=${{ secrets.AI_MONGODB_NAME }}
             AI_PARTS_COLLECTION=${{ secrets.AI_PARTS_COLLECTION }}
             AI_VECTOR_INDEX=${{ secrets.AI_VECTOR_INDEX }}
             AI_VECTOR_FIELD=${{ secrets.AI_VECTOR_FIELD }}
@@ -49,5 +113,13 @@ jobs:
             FRONTEND_PORT=${{ secrets.FRONTEND_PORT }}
             EOF
             
-            docker-compose down
-            docker-compose up -d --build
+            echo "�📦 Pulling latest images from Docker Hub..."
+            docker-compose pull
+            
+            echo "🔁 Restarting containers..."
+            docker-compose up -d
+            
+            echo "🧹 Cleaning up unused images..."
+            docker image prune -f
+            
+            echo "✅ Deployment completed successfully!"
