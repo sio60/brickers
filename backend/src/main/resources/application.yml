@@ -10,7 +10,7 @@ spring:
 
   data:
     mongodb:
-      uri: ${PRIMARY_MONGODB_URI}
+      # uri: ${PRIMARY_MONGODB_URI}
       auto-index-creation: true
 
   security:
