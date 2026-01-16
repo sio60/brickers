@@ -1,39 +1,33 @@
 server:
   port: 8080
 
-# spring-dotenv 설정: src/.env 파일 로드
-env:
-  directory: src
-
 spring:
   application:
     name: brickers-api
+  
+  config:
+    import: "optional:file:.env[.properties]"
 
-  # MongoDB 로컬 설정 (Spring Boot 4.0+)
-  mongodb:
-    uri: mongodb://${env.MONGO_USER}:${env.MONGO_PASSWORD}@${env.MONGO_HOST}:27017/${env.MONGO_DB_NAME}?authSource=admin
-
-  # Spring Data MongoDB 설정
   data:
     mongodb:
+      uri: ${PRIMARY_MONGODB_URI}
       auto-index-creation: true
 
-  # OAuth2 설정
   security:
     oauth2:
       client:
         registration:
           google:
-            client-id: ${env.GOOGLE_CLIENT_ID}
-            client-secret: ${env.GOOGLE_CLIENT_SECRET}
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
             scope: profile, email
-            redirect-uri: "${env.LOCAL_BASE_URL}/auth/google/callback"
+            redirect-uri: "${LOCAL_BASE_URL:http://localhost:8080}/auth/google/callback"
           kakao:
-            client-id: ${env.KAKAO_CLIENT_ID}
-            client-secret: ${env.KAKAO_CLIENT_SECRET}
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
-            redirect-uri: "${env.LOCAL_BASE_URL}/auth/kakao/callback"
+            redirect-uri: "${LOCAL_BASE_URL:http://localhost:8080}/auth/kakao/callback"
             scope: profile_nickname, profile_image, account_email
             client-name: Kakao
         provider:
@@ -43,15 +37,13 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
-# JWT 설정
 jwt:
-  secret: ${env.JWT_SECRET}
-  access-expiration: ${env.JWT_ACCESS_EXPIRATION:3600000}
-  refresh-expiration: ${env.JWT_REFRESH_EXPIRATION:604800000}
+  secret: ${JWT_SECRET}
+  access-expiration: ${JWT_ACCESS_EXPIRATION:3600000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
 logging:
   level:
     "[org.springframework.data.mongodb.core.MongoTemplate]": DEBUG
     "[org.springframework.security]": DEBUG
     "[org.springframework.security.oauth2]": DEBUG
-

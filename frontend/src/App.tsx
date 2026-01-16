@@ -16,10 +16,10 @@ export default function App() {
         <Route path="/kids/main" element={<KidsPage />} />
         <Route path="/adult" element={<AdultPage />} />
 
-        {/* 인증 관련 라우트 */}
         <Route path="/auth/success" element={<AuthSuccess />} />
         <Route path="/auth/failure" element={<AuthFailure />} />
       </Route>
+
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
