@@ -3,7 +3,6 @@ import MainPage from "./pages/MainPage/MainPage";
 import KidsPage from "./pages/KidsPage/KidsPage";
 import AdultPage from "./pages/AdultPage/AdultPage";
 import Layout from "./Layout";
-import KakaoCallback from "./pages/Auth/KakaoCallback";
 import AuthSuccess from "./pages/Auth/AuthSuccess";
 import AuthFailure from "./pages/Auth/AuthFailure";
 
@@ -15,7 +14,6 @@ export default function App() {
         <Route path="/kids" element={<KidsPage />} />
         <Route path="/adult" element={<AdultPage />} />
 
-        <Route path="/auth/kakao/callback" element={<KakaoCallback />} />
         <Route path="/auth/success" element={<AuthSuccess />} />
         <Route path="/auth/failure" element={<AuthFailure />} />
       </Route>
