@@ -123,3 +123,5 @@ frontend/public/ldraw/**
 *.swp
 *.tmp
 frontend/complete/
+.env.local
+.env.*.local
