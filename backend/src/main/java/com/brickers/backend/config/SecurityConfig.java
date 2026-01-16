@@ -18,54 +18,51 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomOAuth2UserService customOAuth2UserService;
+        private final CustomOAuth2UserService customOAuth2UserService;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+                http
+                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                                .csrf(csrf -> csrf.disable())
 
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/auth/**", "/api/**", "/oauth2/**", "/login/**", "/logout", "/error")
-                        .permitAll()
-                        .anyRequest().permitAll())
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers("/", "/auth/**", "/api/**", "/oauth2/**", "/login/**",
+                                                                "/logout", "/error")
+                                                .permitAll()
+                                                .anyRequest().permitAll())
 
-                .oauth2Login(oauth2 -> oauth2
-                        .authorizationEndpoint(authorization -> authorization.baseUri("/auth"))
-                        .redirectionEndpoint(redirection -> redirection.baseUri("/auth/*/callback"))
-                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                                .oauth2Login(oauth2 -> oauth2
+                                                .authorizationEndpoint(authorization -> authorization.baseUri("/auth"))
+                                                .redirectionEndpoint(
+                                                                redirection -> redirection.baseUri("/auth/*/callback"))
+                                                .userInfoEndpoint(userInfo -> userInfo
+                                                                .userService(customOAuth2UserService))
 
-                        // ✅ Vite dev server 기준으로 수정
-                        .defaultSuccessUrl("http://localhost:5173/auth/success", true)
-                        .failureUrl("http://localhost:5173/auth/failure"))
+                                                // ✅ Vite dev server 기준으로 수정
+                                                .defaultSuccessUrl("http://localhost:5173/auth/success", true)
+                                                .failureUrl("http://localhost:5173/auth/failure"))
 
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("http://localhost:5173")
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID"));
+                                .logout(logout -> logout
+                                                .logoutUrl("/logout")
+                                                .logoutSuccessUrl("http://localhost:5173")
+                                                .invalidateHttpSession(true)
+                                                .deleteCookies("JSESSIONID"));
 
-        return http.build();
-    }
+                return http.build();
+        }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration configuration = new CorsConfiguration();
+                configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
+                configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                configuration.setAllowedHeaders(List.of("*"));
+                configuration.setExposedHeaders(List.of("Set-Cookie", "Authorization")); // 선택(토큰 헤더 쓸 때 유용)
+                configuration.setAllowCredentials(true);
 
-        // ✅ 여기가 핵심: 5173 허용
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:5173"
-        // 필요하면 "http://localhost:3000"도 같이 넣어도 됨
-        ));
-
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setExposedHeaders(List.of("Set-Cookie", "Authorization")); // 선택(토큰 헤더 쓸 때 유용)
-        configuration.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", configuration);
+                return source;
+        }
 }

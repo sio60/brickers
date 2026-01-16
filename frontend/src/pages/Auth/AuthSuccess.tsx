@@ -1,32 +1,27 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "./AuthContext";
 
 export default function AuthSuccess() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const { refresh } = useAuth();
 
-    useEffect(() => {
-        console.log("Login Success! Checking session...");
+  useEffect(() => {
+    (async () => {
+      // ✅ 백엔드 세션 쿠키 기반으로 실제 로그인 확인 + 유저 저장
+      await refresh();
 
-        // 1. 세션 확인 (백엔드 호출)
-        fetch("/auth/me") // Proxy 설정이 되어있다고 가정 (안되어있으면 http://localhost:8080/auth/me)
-            .then(res => res.json())
-            .then(data => {
-                console.log("Logged in user:", data);
-                // 2. 1초 뒤 메인으로 이동
-                setTimeout(() => {
-                    navigate("/", { replace: true });
-                }, 1000);
-            })
-            .catch(err => {
-                console.error("Session check failed:", err);
-                navigate("/", { replace: true });
-            });
-    }, [navigate]);
+      // ✅ 로그인 누른 그 페이지로 복귀
+      const lastPage = sessionStorage.getItem("lastPage") || "/";
+      sessionStorage.removeItem("lastPage");
 
-    return (
-        <div style={{ padding: "50px", textAlign: "center" }}>
-            <h2>로그인 성공! 🎉</h2>
-            <p>메인 페이지로 이동합니다...</p>
-        </div>
-    );
+      navigate(lastPage, { replace: true });
+    })();
+  }, [navigate, refresh]);
+
+  return (
+    <div style={{ padding: 24, textAlign: "center" }}>
+      <p>로그인 성공! 이동 중...</p>
+    </div>
+  );
 }
