@@ -48,11 +48,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch(`${API_BASE}/logout`, { method: "POST", credentials: "include" });
+      await fetch(`${API_BASE}/logout`, {
+        method: "POST",
+        credentials: "include", // ⭐ 필수
+      });
     } finally {
-      setUser(null);
-      sessionStorage.clear();
-      window.location.href = "/";
+      setUser(null);           // 프론트 상태 초기화
+      sessionStorage.clear();  // lastPage 등 제거
+      window.location.href = "/"; // 홈으로
     }
   };
 

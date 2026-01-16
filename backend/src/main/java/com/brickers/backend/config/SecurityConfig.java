@@ -38,7 +38,10 @@ public class SecurityConfig {
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("http://localhost:5173")
-                .deleteCookies("JSESSIONID"));
+                .invalidateHttpSession(true)      // ⭐ 세션 무효화
+                .clearAuthentication(true)        // ⭐ 인증 정보 제거
+                .deleteCookies("JSESSIONID")       // ⭐ 쿠키 삭제
+        );
 
                 return http.build();
         }
