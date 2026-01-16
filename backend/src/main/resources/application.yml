@@ -9,10 +9,13 @@ spring:
     import: "optional:file:.env[.properties]"
 
   data:
-    mongodb:
-      # uri: ${PRIMARY_MONGODB_URI}
-      auto-index-creation: true
-
+    data:
+      mongodb:
+        host: ${MONGO_HOST}    
+        port: ${MONGO_PORT}      
+        database: ${MONGO_DB_NAME} 
+        username: ${MONGO_USER}   
+        password: ${MONGO_PASSWORD}
   security:
     oauth2:
       client:
