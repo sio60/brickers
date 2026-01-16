@@ -4,7 +4,7 @@ server:
 spring:
   application:
     name: brickers-api
-  
+
   config:
     import: "optional:file:.env[.properties]"
 
@@ -36,6 +36,9 @@ spring:
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
+
+app:
+  front-base-url: ${FRONT_BASE_URL:http://localhost:5173}
 
 jwt:
   secret: ${JWT_SECRET}
