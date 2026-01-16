@@ -12,6 +12,7 @@ ENV VITE_KAKAO_REDIRECT_URI=$VITE_KAKAO_REDIRECT_URI
 
 RUN npm run build
 
+
 # Run stage
 FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
