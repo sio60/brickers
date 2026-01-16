@@ -1,4 +1,11 @@
 html, body, #root {
+  width: 100%;
   height: 100%;
   margin: 0;
+  overflow: hidden; /* ✅ 전역 스크롤 차단 */
 }
+
+* { box-sizing: border-box; }
+
+/* ✅ Canvas가 inline이면 아래쪽에 2~4px 틈 생겨서 스크롤 생길 수 있음 */
+canvas { display: block; }

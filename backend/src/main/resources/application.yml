@@ -1,8 +1,17 @@
-port: 8080
+server:
+  port: 8080
 
 spring:
   application:
     name: brickers-api
+  
+  config:
+    import: "optional:file:.env[.properties]"
+
+  data:
+    mongodb:
+      # uri: ${PRIMARY_MONGODB_URI}
+      auto-index-creation: true
 
   security:
     oauth2:
@@ -12,13 +21,14 @@ spring:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
             scope: profile, email
-            redirect-uri: ${GOOGLE_LOCAL_REDIRECT_URI} # 로컬 테스트용 (서버에선 Env값 변경 필요)
+            redirect-uri: "${LOCAL_BASE_URL:http://localhost:8080}/auth/google/callback"
           kakao:
             client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
-            redirect-uri: "${BASE_URL}/login/oauth2/code/kakao"
-            scope: profile_nickname, profile_image
+            redirect-uri: "${LOCAL_BASE_URL:http://localhost:8080}/auth/kakao/callback"
+            scope: profile_nickname, profile_image, account_email
             client-name: Kakao
         provider:
           kakao:
@@ -27,12 +37,13 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
-  data:
-    mongodb:
-      uri: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_HOST}:27017/${MONGO_DB_NAME}?authSource=admin
-      
-      auto-index-creation: true
+jwt:
+  secret: ${JWT_SECRET}
+  access-expiration: ${JWT_ACCESS_EXPIRATION:3600000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
 logging:
   level:
-    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+    "[org.springframework.data.mongodb.core.MongoTemplate]": DEBUG
+    "[org.springframework.security]": DEBUG
+    "[org.springframework.security.oauth2]": DEBUG

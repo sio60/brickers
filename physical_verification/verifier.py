@@ -28,23 +28,65 @@ class PhysicalVerifier:
 
     def _are_connected(self, b1: Brick, b2: Brick) -> bool:
         """Check if two bricks touch."""
-        # Check Z proximity (touching vertically)
-        z_touch = np.isclose(b1.z + b1.height, b2.z) or np.isclose(b2.z + b2.height, b1.z)
-        if not z_touch:
-             # Check lateral neighbors (touching horizontally)
-             # Logic: Intervals overlap in other dimensions and touch in one
-             # Currently focusing on vertical connectivity for stability mostly, 
-             # but full connectivity needs lateral too.
-             # Simplified: just check if bounding boxes intersect/touch
-             pass # TODO: Implement full AABB touch check
+        TOL = 0.05
+
+        # 0. Intersection (Parts inside each other, e.g. Tyre on Rim)
+        # Check if they share volume
+        intersect_x = max(0, min(b1.x + b1.width, b2.x + b2.width) - max(b1.x, b2.x))
+        intersect_y = max(0, min(b1.y + b1.depth, b2.y + b2.depth) - max(b1.y, b2.y))
+        intersect_z = max(0, min(b1.z + b1.height, b2.z + b2.height) - max(b1.z, b2.z))
         
-        # Simplified Vertical Touch Logic for now:
-        # If b2 is on top of b1 (b1.top == b2.bottom) AND xy overlap > 0
-        if np.isclose(b1.z + b1.height, b2.z):
-            return self._compute_overlap_area(b1, b2) > 0
-        if np.isclose(b2.z + b2.height, b1.z):
-            return self._compute_overlap_area(b2, b1) > 0
+        # If significant volume intersection, they are connected
+        if intersect_x > TOL and intersect_y > TOL and intersect_z > TOL:
+             return True
+
+        # 1. Vertical Touch (Z-stacking)
+        vertical_touch = (abs((b1.z + b1.height) - b2.z) < TOL) or (abs((b2.z + b2.height) - b1.z) < TOL)
+        if vertical_touch:
+             if self._compute_overlap_area(b1, b2) > 0:
+                 return True
+
+        # 2. Lateral Touch (Horizontal connectivity)
+        # Check Z overlap first
+        z_overlap_start = max(b1.z, b2.z)
+        z_overlap_end = min(b1.z + b1.height, b2.z + b2.height)
+        z_overlap = z_overlap_end - z_overlap_start
+        
+        if z_overlap > TOL: # Significant Z overlap (> 0.05)
+             # Check X-touch (touching on Left/Right faces)
+             # Overlap in Y?
+             y_overlap_start = max(b1.y, b2.y)
+             y_overlap_end = min(b1.y + b1.depth, b2.y + b2.depth)
+             if (y_overlap_end - y_overlap_start) > TOL:
+                 # Touching in X?
+                 x_touch = (abs((b1.x + b1.width) - b2.x) < TOL) or (abs((b2.x + b2.width) - b1.x) < TOL)
+                 if x_touch: return True
+                    
+        # 3. Snap Tolerance (Magnet Mode for imperfect LDraw)
+        # If Horizontal Overlap is significant (> 0.5 * min_area), allow Vertical Gap up to 1.0 Brick
+        dx = min(b1.x + b1.width, b2.x + b2.width) - max(b1.x, b2.x)
+        dy = min(b1.y + b1.depth, b2.y + b2.depth) - max(b1.y, b2.y)
+        
+        if dx > 0.05 and dy > 0.05:
+            overlap_area = dx * dy
+            min_area = min(b1.width * b1.depth, b2.width * b2.depth)
             
+            # If overlap area is significant (e.g. > 10% of smaller brick or absolute > 0.5 stud)
+            if overlap_area > 0.5:
+                # Check Vertical Gap
+                gap = min(abs(b1.z - (b2.z + b2.height)), abs(b2.z - (b1.z + b1.height)))
+                if gap < 1.0: # Allow up to 1 brick gap (e.g. 0.833)
+                    return True
+
+        # Check Y-touch (touching on Front/Back faces)
+        # Overlap in X?
+        x_overlap_start = max(b1.x, b2.x)
+        x_overlap_end = min(b1.x + b1.width, b2.x + b2.width)
+        if (x_overlap_end - x_overlap_start) > TOL:
+            # Touching in Y?
+            if (abs((b1.y + b1.depth) - b2.y) < TOL) or (abs((b2.y + b2.depth) - b1.y) < TOL):
+                return True
+                     
         return False
 
     def _compute_overlap_area(self, b1: Brick, b2: Brick) -> float:
@@ -83,11 +125,50 @@ class PhysicalVerifier:
         floating_nodes = all_nodes - connected_to_ground
         
         if floating_nodes:
+            print("\n--- FLOATING BRICK DIAGNOSTICS ---")
+            bricks = self.plan.get_all_bricks()
+            for fid in floating_nodes:
+                fb = self.plan.bricks[fid]
+                print(f"\n[DIAGNOSTIC] Brick {fid} at ({fb.x:.2f}, {fb.y:.2f}, {fb.z:.2f}) H={fb.height:.2f}")
+                
+                # Check near bricks
+                for other in bricks:
+                     if other.id == fid: continue
+                     
+                     # Check Vertical Gap
+                     gap_below = fb.z - (other.z + other.height)
+                     if abs(gap_below) < 1.0:
+                         print(f"  -> Near BELOW: {other.id} Top={other.z + other.height:.2f} (Gap={gap_below:.4f})")
+                         
+                         # Check Horizontal Overlap
+                         dx = min(fb.x + fb.width, other.x + other.width) - max(fb.x, other.x)
+                         dy = min(fb.y + fb.depth, other.y + other.depth) - max(fb.y, other.y)
+                         if dx > 0.05 and dy > 0.05:
+                             print(f"     [Horizontal Overlap OK] dx={dx:.2f}, dy={dy:.2f}")
+                             # If gap is small, why not connected?
+                             if abs(gap_below) < 0.05:
+                                 print(f"     [Vertical Touch OK] Should be connected! Graph edge missing?")
+                             else:
+                                 print(f"     [Vertical Gap FAIL] Gap {gap_below:.4f} > 0.05")
+                         else:
+                             print(f"     [Horizontal Overlap FAIL] dx={dx:.2f}, dy={dy:.2f}")
+                     
+                     # Check Intersection
+                     ix = min(fb.x + fb.width, other.x + other.width) - max(fb.x, other.x)
+                     iy = min(fb.y + fb.depth, other.y + other.depth) - max(fb.y, other.y)
+                     iz = min(fb.z + fb.height, other.z + other.height) - max(fb.z, other.z)
+                     
+                     if ix > 0.05 and iy > 0.05 and iz > 0.05:
+                         print(f"  -> INTERSECT: {other.id} overlaps by ({ix:.2f}, {iy:.2f}, {iz:.2f})")
+            print("----------------------------------\n")
             result.add_hard_fail(Evidence(
                 type="FLOATING",
                 severity="CRITICAL",
                 brick_ids=list(floating_nodes),
-                message=f"Found {len(floating_nodes)} floating bricks not connected to ground."
+                message=f"Found {len(floating_nodes)} floating bricks. Details: " + ", ".join(
+                    [f"{bid}(Pos:{self.plan.bricks[bid].x:.2f},{self.plan.bricks[bid].y:.2f},{self.plan.bricks[bid].z:.2f} Size:{self.plan.bricks[bid].width:.2f}x{self.plan.bricks[bid].depth:.2f}x{self.plan.bricks[bid].height:.2f})" 
+                     for bid in floating_nodes]
+                )
             ))
 
     def verify_stability(self, result: VerificationResult, strict_mode: bool = False):
