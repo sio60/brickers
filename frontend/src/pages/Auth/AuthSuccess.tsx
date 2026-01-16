@@ -1,29 +1,27 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "./AuthContext";
 
-/**
- * OAuth2 로그인 성공 후 처리
- * - 로그인 상태 저장
- * - 이전 페이지로 리다이렉트
- */
 export default function AuthSuccess() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const { refresh } = useAuth();
 
-    useEffect(() => {
-        // 로그인 상태 저장
-        sessionStorage.setItem("isLoggedIn", "true");
+  useEffect(() => {
+    (async () => {
+      // ✅ 백엔드 세션 쿠키 기반으로 실제 로그인 확인 + 유저 저장
+      await refresh();
 
-        // 이전 페이지로 리다이렉트 (없으면 홈으로)
-        const lastPage = sessionStorage.getItem("lastPage") || "/";
-        sessionStorage.removeItem("lastPage");
+      // ✅ 로그인 누른 그 페이지로 복귀
+      const lastPage = sessionStorage.getItem("lastPage") || "/";
+      sessionStorage.removeItem("lastPage");
 
-        console.log("로그인 성공! 이전 페이지로 이동:", lastPage);
-        navigate(lastPage, { replace: true });
-    }, [navigate]);
+      navigate(lastPage, { replace: true });
+    })();
+  }, [navigate, refresh]);
 
-    return (
-        <div style={{ padding: 24, textAlign: "center" }}>
-            <p>로그인 성공! 잠시 후 이동합니다...</p>
-        </div>
-    );
+  return (
+    <div style={{ padding: 24, textAlign: "center" }}>
+      <p>로그인 성공! 이동 중...</p>
+    </div>
+  );
 }
