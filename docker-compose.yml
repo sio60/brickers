@@ -17,8 +17,7 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
       - GOOGLE_LOCAL_REDIRECT_URI=${GOOGLE_LOCAL_REDIRECT_URI}
-    depends_on:
-      - mongodb
+
     networks:
       - brickers-network
 
@@ -52,6 +51,3 @@ services:
 networks:
   brickers-network:
     driver: bridge
-
-volumes:
-  mongodb_data:
