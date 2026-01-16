@@ -1,27 +1,28 @@
+// src/pages/Auth/AuthSuccess.tsx
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
 export default function AuthSuccess() {
-  const navigate = useNavigate();
   const { refresh } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    (async () => {
-      // ✅ 백엔드 세션 쿠키 기반으로 실제 로그인 확인 + 유저 저장
+    const handleSuccess = async () => {
+      // ✅ 1. 서버 세션 정보를 프론트 상태로 동기화
       await refresh();
-
-      // ✅ 로그인 누른 그 페이지로 복귀
+      // ✅ 2. 저장해둔 마지막 페이지 혹은 홈으로 이동
       const lastPage = sessionStorage.getItem("lastPage") || "/";
-      sessionStorage.removeItem("lastPage");
-
       navigate(lastPage, { replace: true });
-    })();
-  }, [navigate, refresh]);
+    };
 
+    handleSuccess();
+  }, [refresh, navigate]);
+
+  
   return (
-    <div style={{ padding: 24, textAlign: "center" }}>
-      <p>로그인 성공! 이동 중...</p>
+    <div style={{ textAlign: "center", marginTop: "100px" }}>
+      <h2>로그인 성공! 잠시 후 이동합니다...</h2>
     </div>
   );
 }
