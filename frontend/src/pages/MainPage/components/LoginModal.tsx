@@ -4,7 +4,7 @@ import kakaoIcon from "../../../assets/kakao.png";
 import googleIcon from "../../../assets/google.png";
 
 // ✅ 백엔드 베이스 URL (권장: .env.local에 VITE_API_BASE_URL 넣기)
-const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || "http://localhost:8080";
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || "http://localhost:8080" || "https://brickers.shop";
 
 // ✅ 백엔드 OAuth2 로그인 URL
 const BACKEND_KAKAO_LOGIN = `${API_BASE}/auth/kakao`;
