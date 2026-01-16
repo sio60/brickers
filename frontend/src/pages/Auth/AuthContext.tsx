@@ -13,7 +13,9 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+
+// ✅ 배포에서 env 안 박혀있으면 ""로 처리 => same-origin 프록시에서 안전
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<OAuthUser | null>(null);
@@ -21,7 +23,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = async () => {
     try {
-      // ✅ 백엔드 RequestMapping 주소와 정확히 일치시켜야 404가 안 남
       const res = await fetch(`${API_BASE}/api/auth/me`, {
         credentials: "include",
       });
@@ -43,6 +44,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = (provider: Provider) => {
     const lastPage = window.location.pathname + window.location.search;
     sessionStorage.setItem("lastPage", lastPage);
+
+    // ✅ 여기서 API_BASE가 localhost면 그대로 localhost로 튐 → 배포 env 반드시 세팅!
     window.location.href = `${API_BASE}/auth/${provider}`;
   };
 
@@ -50,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await fetch(`${API_BASE}/logout`, {
         method: "POST",
-        credentials: "include", // ⭐ 필수
+        credentials: "include",
       });
     } finally {
       setUser(null);           // 프론트 상태 초기화
@@ -59,15 +62,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    refresh();
+  }, []);
 
-  const value = useMemo(() => ({
-    user, isAuthenticated: !!user, isLoading, refresh, login, logout
-  }), [user, isLoading]);
+  const value = useMemo(
+    () => ({
+      user,
+      isAuthenticated: !!user,
+      isLoading,
+      refresh,
+      login,
+      logout,
+    }),
+    [user, isLoading]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
