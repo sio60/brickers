@@ -17,6 +17,8 @@ from ai.db import get_db
 # ✅ bbox 계산 모듈 import
 from ai.vectordb.bbox_calc import update_all_parts_bbox
 
+# ✅ embedding 계산 모듈 import
+from ai.vectordb.embedder import update_all_parts_embeddings
 
 
 # =========================
@@ -59,6 +61,11 @@ def ensure_indexes() -> None:
     col_parts.create_index([("partPath", ASCENDING)], unique=True, name="uq_partPath")
     col_models.create_index([("modelPath", ASCENDING)], unique=True, name="uq_modelPath")
     col_alias.create_index([("fromPath", ASCENDING)], unique=True, name="uq_fromPath")
+
+    # (선택) 검색/필터링 자주 쓰면 추가 추천
+    col_parts.create_index([("partFile", ASCENDING)], name="ix_partFile")
+    col_parts.create_index([("partType", ASCENDING), ("primitiveLevel", ASCENDING)], name="ix_partType_level")
+    col_parts.create_index([("category", ASCENDING)], name="ix_category")
 
 
 def sha1_file(path: Path) -> str:
@@ -306,7 +313,7 @@ def ingest_parts() -> Dict[str, int]:
 
 
 # =========================
-# Models ingest (기존 그대로)
+# Models ingest
 # =========================
 def scan_model_files() -> List[Tuple[Path, str]]:
     root = LDRAW_BASE / "models"
@@ -398,7 +405,11 @@ def ingest_models(store_text: bool = False) -> Dict[str, int]:
 # =========================
 # Main
 # =========================
-def ingest_all(store_model_text: bool = False, compute_bbox: bool = True) -> Dict:
+def ingest_all(
+    store_model_text: bool = False,
+    compute_bbox: bool = True,
+    compute_embedding: bool = True,
+) -> Dict:
     parts = ingest_parts()
     models = ingest_models(store_text=store_model_text)
 
@@ -407,10 +418,20 @@ def ingest_all(store_model_text: bool = False, compute_bbox: bool = True) -> Dic
         # ✅ sha1 동일 + bbox 존재하면 자동 스킵
         bbox_summary = update_all_parts_bbox(only_missing_or_changed=True)
 
-    return {"parts": parts, "models": models, "bbox": bbox_summary}
+    embed_summary = None
+    if compute_embedding:
+        # ✅ embedding 없거나, sha1/텍스트 해시 바뀐 애만 자동 업데이트 (embedder.py에서 처리)
+        embed_summary = update_all_parts_embeddings(only_missing_or_changed=True)
+
+    return {
+        "parts": parts,
+        "models": models,
+        "bbox": bbox_summary,
+        "embedding": embed_summary,
+    }
 
 
 if __name__ == "__main__":
     ensure_indexes()
-    summary = ingest_all(store_model_text=False, compute_bbox=True)
+    summary = ingest_all(store_model_text=False, compute_bbox=True, compute_embedding=True)
     print("[done]", summary)

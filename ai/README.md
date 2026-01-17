@@ -10,4 +10,10 @@ ingest_ldraw.py = ldraw parts를 mongo에 import하는 스크립트
 내부 데이터 35000개가량이라 오래 걸림
 
 
-python -m ai.vectordb.ingest_ldraw
+/brickers에서 실행 python -m ai.vectordb.ingest_ldraw 
+[parts.scan] 35109 files
+[parts.progress] 2000/35109 뜨면서 
+
+[done] {'parts': {'files': 35109, 'moved': 1354}, 'models': {'files': 2}, 'bbox': {'scanned': 35109, 'updated': 0, 'skipped': 35109}, 'embedding': {'scanned': 35109, 'targets': 
+35109, 'updated': 35109, 'dims': 384}}
+나오면 성공
