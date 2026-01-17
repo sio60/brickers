@@ -6,23 +6,26 @@ import dino from "../../assets/di.png";
 
 export default function KidsPage() {
   const inputRef = useRef<HTMLInputElement | null>(null);
+
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
+  const [resultUrl, setResultUrl] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const openPicker = () => inputRef.current?.click();
 
   const setSelectedFile = (f: File) => {
-    // 이미지 파일만
     if (!f.type.startsWith("image/")) return;
 
     setFile(f);
+    setErrorMsg(null);
+    setResultUrl(null);
 
-    // 이전 미리보기 해제
     if (previewUrl) URL.revokeObjectURL(previewUrl);
-
-    const url = URL.createObjectURL(f);
-    setPreviewUrl(url);
+    setPreviewUrl(URL.createObjectURL(f));
   };
 
   const onChangeFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,26 +45,53 @@ export default function KidsPage() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setFile(null);
     setPreviewUrl(null);
+    setResultUrl(null);
+    setErrorMsg(null);
     if (inputRef.current) inputRef.current.value = "";
   };
 
-  const onGenerate = () => {
+  const onGenerate = async () => {
     if (!file) return;
-    // TODO: 여기서 업로드/3D 변환 요청 붙이면 됨
-    console.log("upload file:", file);
+
+    try {
+      setIsGenerating(true);
+      setErrorMsg(null);
+      setResultUrl(null);
+
+      const form = new FormData();
+      form.append("file", file);
+
+      const res = await fetch("/api/kids/render", {
+        method: "POST",
+        body: form,
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const t = await res.text().catch(() => "");
+        throw new Error(`요청 실패 (${res.status}) ${t}`);
+      }
+
+      const data = await res.json();
+      if (!data?.imageUrl) throw new Error("imageUrl 응답이 없음");
+
+      // ✅ 배포/로컬 안전: 절대경로 + 캐시버스트
+      const absolute = new URL(data.imageUrl, window.location.origin).toString();
+      const busted =
+        absolute + (absolute.includes("?") ? "&" : "?") + "t=" + Date.now();
+
+      setResultUrl(busted);
+    } catch (e: any) {
+      setErrorMsg(e?.message ?? "생성 실패");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
-    <div
-      className="kidsPage"
-      style={{
-        backgroundImage: `url(${kidBg})`,
-      }}
-    >
-      {/* 왼쪽 빼곰 공룡 */}
+    <div className="kidsPage" style={{ backgroundImage: `url(${kidBg})` }}>
       <img className="kidsPage__dino" src={dino} alt="dino" />
 
-      {/* 중앙 */}
       <div className="kidsPage__center">
         <div
           className={`kidsUpload ${dragOver ? "kidsUpload--drag" : ""}`}
@@ -94,11 +124,7 @@ export default function KidsPage() {
               className="kidsUpload__previewWrap"
               onClick={(e) => e.stopPropagation()}
             >
-              <img
-                className="kidsUpload__preview"
-                src={previewUrl}
-                alt="preview"
-              />
+              <img className="kidsUpload__preview" src={previewUrl} alt="preview" />
               <div className="kidsUpload__meta">
                 <div className="kidsUpload__filename">{file?.name}</div>
                 <button
@@ -113,15 +139,27 @@ export default function KidsPage() {
           )}
         </div>
 
-        {/* ✅ 업로드 박스 바로 아래 버튼 */}
         <button
           className="kidsPage__cta"
           type="button"
-          disabled={!file}
+          disabled={!file || isGenerating}
           onClick={onGenerate}
         >
-          생성하기
+          {isGenerating ? "생성 중..." : "생성하기"}
         </button>
+
+        {errorMsg && <div className="kidsPage__error">{errorMsg}</div>}
+
+        {resultUrl && (
+          <div className="kidsResult">
+            <img
+              className="kidsResult__img"
+              src={resultUrl}
+              alt="result"
+              onError={() => setErrorMsg("결과 이미지 로드 실패(서빙/경로 확인)")}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
