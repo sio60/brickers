@@ -1,3 +1,4 @@
+# ai/vectordb/ingest_ldraw.py
 from __future__ import annotations
 
 import re
@@ -12,6 +13,10 @@ from pymongo.collection import Collection
 
 from ai import config
 from ai.db import get_db
+
+# ✅ bbox 계산 모듈 import
+from ai.vectordb.bbox_calc import update_all_parts_bbox
+
 
 
 # =========================
@@ -47,22 +52,12 @@ def get_col(name: str) -> Collection:
 
 
 def ensure_indexes() -> None:
-    """
-    ✅ 중복 방지용 유니크 인덱스 생성
-    - 컬렉션 비운 상태에서 먼저 생성하면 가장 깔끔함
-    - 이미 존재하면 그대로 넘어감
-    """
     col_parts = get_col(PARTS_COLLECTION)
     col_models = get_col(MODELS_COLLECTION)
     col_alias = get_col(ALIASES_COLLECTION)
 
-    # parts: partPath 유니크
     col_parts.create_index([("partPath", ASCENDING)], unique=True, name="uq_partPath")
-
-    # models: modelPath 유니크
     col_models.create_index([("modelPath", ASCENDING)], unique=True, name="uq_modelPath")
-
-    # aliases: fromPath 유니크
     col_alias.create_index([("fromPath", ASCENDING)], unique=True, name="uq_fromPath")
 
 
@@ -83,9 +78,6 @@ def basename_lower(s: str) -> str:
 
 
 def ensure_dat_ext(name_or_path: str) -> str:
-    """
-    movedTo, refs 토큰이 '8\\stud12' 처럼 .dat가 없을 때 보정
-    """
     x = basename_lower(name_or_path)
     if "." not in x:
         return x + ".dat"
@@ -112,13 +104,6 @@ class PartKind:
 
 
 def classify_part(part_path: str) -> PartKind:
-    """
-    parts/xxx.dat        -> part
-    parts/s/xxx.dat      -> subpart
-    p/xxx.dat            -> primitive
-    p/8/xxx.dat          -> primitive(level=8)
-    p/48/xxx.dat         -> primitive(level=48)
-    """
     pp = part_path.lower()
     if pp.startswith("parts/s/"):
         return PartKind("subpart", None)
@@ -145,10 +130,6 @@ def walk_files(root: Path, exts: Set[str]) -> List[Path]:
 # Parts ingest
 # =========================
 def scan_parts_files() -> List[Tuple[Path, str]]:
-    """
-    returns (filepath, partPath)
-    partPath 기준으로 upsert => 폴더별 중복 덮어쓰기 방지
-    """
     roots = [LDRAW_BASE / "parts", LDRAW_BASE / "p"]
     pairs: List[Tuple[Path, str]] = []
     for r in roots:
@@ -175,7 +156,7 @@ def parse_part_dat(fp: Path) -> Dict:
             if moved_to is None:
                 m = MOVED_RE.match(line)
                 if m:
-                    moved_to = ensure_dat_ext(m.group(1))  # ✅ .dat 보정
+                    moved_to = ensure_dat_ext(m.group(1))
 
             if org is None:
                 m = ORG_RE.match(line)
@@ -278,7 +259,6 @@ def ingest_parts() -> Dict[str, int]:
             "updatedAt": now,
         }
 
-        # ✅ 항상 upsert + update
         ops_parts.append(
             UpdateOne(
                 {"partPath": part_path},
@@ -326,92 +306,7 @@ def ingest_parts() -> Dict[str, int]:
 
 
 # =========================
-# Resolve indexes for models
-# =========================
-def build_part_indexes() -> Tuple[Dict[str, List[str]], Set[str]]:
-    col_parts = get_col(PARTS_COLLECTION)
-    file_to_paths: Dict[str, List[str]] = {}
-    all_paths: Set[str] = set()
-
-    cursor = col_parts.find({}, {"partFile": 1, "partPath": 1})
-    for d in cursor:
-        pf = (d.get("partFile") or "").lower()
-        pp = (d.get("partPath") or "").lower()
-        if not pf or not pp:
-            continue
-        file_to_paths.setdefault(pf, []).append(pp)
-        all_paths.add(pp)
-
-    return file_to_paths, all_paths
-
-
-def build_alias_file_map() -> Dict[str, str]:
-    col_alias = get_col(ALIASES_COLLECTION)
-    mp: Dict[str, str] = {}
-    cursor = col_alias.find({}, {"fromFile": 1, "toFile": 1, "from": 1, "to": 1})
-    for d in cursor:
-        frm = (d.get("fromFile") or d.get("from") or "").lower()
-        to = (d.get("toFile") or d.get("to") or "").lower()
-        if frm and to:
-            mp[ensure_dat_ext(frm)] = ensure_dat_ext(to)
-    return mp
-
-
-def choose_best_path(candidates: List[str]) -> Optional[str]:
-    if not candidates:
-        return None
-
-    def rank(p: str) -> int:
-        if p.startswith("parts/") and not p.startswith("parts/s/"):
-            return 1
-        if p.startswith("parts/s/"):
-            return 2
-        if p.startswith("p/48/"):
-            return 3
-        if p.startswith("p/8/"):
-            return 4
-        if p.startswith("p/"):
-            return 5
-        return 99
-
-    return sorted(candidates, key=rank)[0]
-
-
-def resolve_ref_to_partpath(
-    ref_token_raw: str,
-    file_to_paths: Dict[str, List[str]],
-    all_paths: Set[str],
-    alias_map: Dict[str, str],
-) -> Tuple[Optional[str], str]:
-    token = norm_slash(ref_token_raw).lower()
-
-    if token.startswith("48/"):
-        guessed = f"p/48/{ensure_dat_ext(token)}"
-        if guessed in all_paths:
-            return guessed, "hint:48"
-    if token.startswith("8/"):
-        guessed = f"p/8/{ensure_dat_ext(token)}"
-        if guessed in all_paths:
-            return guessed, "hint:8"
-    if token.startswith("s/"):
-        guessed = f"parts/s/{ensure_dat_ext(token)}"
-        if guessed in all_paths:
-            return guessed, "hint:s"
-
-    base_file = ensure_dat_ext(token)
-    if base_file in alias_map:
-        base_file = alias_map[base_file]
-
-    candidates = file_to_paths.get(base_file, [])
-    chosen = choose_best_path(candidates)
-    if chosen:
-        return chosen, "byFile"
-
-    return None, "notFound"
-
-
-# =========================
-# Models ingest
+# Models ingest (기존 그대로)
 # =========================
 def scan_model_files() -> List[Tuple[Path, str]]:
     root = LDRAW_BASE / "models"
@@ -459,44 +354,23 @@ def ingest_models(store_text: bool = False) -> Dict[str, int]:
         return {"files": 0}
 
     col_models = get_col(MODELS_COLLECTION)
-
-    file_to_paths, all_paths = build_part_indexes()
-    alias_map = build_alias_file_map()
-
     ops: List[UpdateOne] = []
+
     print(f"[models.scan] {len(files)} files")
 
     for idx, (fp, model_path) in enumerate(files, 1):
         parsed = parse_model_ldr(fp)
 
-        resolved_bom: Dict[str, int] = {}
-        missing: List[Dict[str, str]] = []
-        resolve_map: List[Dict[str, str]] = []
-
-        for tok in parsed["refTokens"]:
-            resolved, reason = resolve_ref_to_partpath(tok, file_to_paths, all_paths, alias_map)
-            if resolved:
-                resolved_bom[resolved] = resolved_bom.get(resolved, 0) + 1
-                resolve_map.append({"ref": norm_slash(tok), "resolved": resolved, "reason": reason})
-            else:
-                missing.append({"ref": norm_slash(tok), "reason": reason})
-
         doc = {
             "modelPath": model_path,
             "modelFile": fp.name,
             "ext": fp.suffix.lower(),
-
             "refTokens": [norm_slash(x) for x in parsed["refTokens"]],
-            "resolvedBOM": resolved_bom,
-            "missingParts": missing,
-            "resolveMap": resolve_map,
-
             "stats": parsed["stats"],
             "sha1": sha1_file(fp),
             "source": {"base": str(LDRAW_BASE), "file": str(fp)},
             "updatedAt": now,
         }
-
         if store_text:
             doc["text"] = fp.read_text(encoding="utf-8", errors="ignore")
 
@@ -524,15 +398,19 @@ def ingest_models(store_text: bool = False) -> Dict[str, int]:
 # =========================
 # Main
 # =========================
-def ingest_all(store_model_text: bool = False) -> Dict[str, Dict[str, int]]:
+def ingest_all(store_model_text: bool = False, compute_bbox: bool = True) -> Dict:
     parts = ingest_parts()
     models = ingest_models(store_text=store_model_text)
-    return {"parts": parts, "models": models}
+
+    bbox_summary = None
+    if compute_bbox:
+        # ✅ sha1 동일 + bbox 존재하면 자동 스킵
+        bbox_summary = update_all_parts_bbox(only_missing_or_changed=True)
+
+    return {"parts": parts, "models": models, "bbox": bbox_summary}
 
 
 if __name__ == "__main__":
-    # ✅ 컬렉션 비운 상태라면 실행 전에 인덱스부터 만들어두기
     ensure_indexes()
-
-    summary = ingest_all(store_model_text=False)
+    summary = ingest_all(store_model_text=False, compute_bbox=True)
     print("[done]", summary)
