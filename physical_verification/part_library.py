@@ -184,7 +184,9 @@ def get_part_dims(part_id: str):
     
     if not bbox:
         # Fallback to 1x1x1 if file not found
-        # print(f"Part file not found: {filename}, using default.")
+
+        
+        # print(f"Part file not found: {filename}, using default BRICK dimensions.")
         return None
         
     min_x, min_y, min_z, max_x, max_y, max_z = bbox
