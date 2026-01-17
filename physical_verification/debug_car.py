@@ -9,8 +9,8 @@ from verifier import PhysicalVerifier
 from models import VerificationResult, Evidence
 
 def debug_car():
-    # Path to car.ldr
-    car_path = r"c:\Users\301\Desktop\brickers\frontend\public\ldraw\models\car.ldr"
+    # Path to green_supercar.ldr (known faulty model)
+    car_path = r"c:\Users\301\Desktop\brickers\green_supercar.ldr"
     
     print(f"Loading {car_path}...")
     loader = LdrLoader()
@@ -18,8 +18,15 @@ def debug_car():
     print(f"Loaded {len(plan.bricks)} bricks.")
 
     verifier = PhysicalVerifier(plan)
-    
-    # 1. Check Connectivity Graph
+
+    print("\n--- [DEBUG] Loaded Bricks Coordinates ---")
+    all_bricks = plan.get_all_bricks()
+    # Sort by Z (Height) to see layers
+    all_bricks.sort(key=lambda b: b.z)
+    for b in all_bricks[:50]: # Too many bricks, show first 50 (bottom layers)
+         print(f"ID: {b.id}, Pos: ({b.x:.2f}, {b.y:.2f}, {b.z:.2f}), Size: {b.width:.2f}x{b.depth:.2f}x{b.height:.2f}")
+    print("... (showing first 50 only) ...")
+    print("-----------------------------------------\n")
     print(f"Graph Nodes: {verifier.graph.number_of_nodes()}")
     print(f"Graph Edges: {verifier.graph.number_of_edges()}")
     

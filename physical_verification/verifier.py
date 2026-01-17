@@ -75,7 +75,10 @@ class PhysicalVerifier:
             if overlap_area > 0.5:
                 # Check Vertical Gap
                 gap = min(abs(b1.z - (b2.z + b2.height)), abs(b2.z - (b1.z + b1.height)))
-                if gap < 1.0: # Allow up to 1 brick gap (e.g. 0.833)
+                if gap < 0.1: # Strict tolerance: Must be very close (was 1.0 which allowed huge gaps)
+                    # [DEBUG] 로그 출력: 왜 연결되었다고 판단했는지
+                    if gap > 0.001: 
+                        print(f"[DEBUG-CONNECT] B1({b1.id}) & B2({b2.id}) CONNECTED via Snap! Gap={gap:.4f}, Area={overlap_area:.2f}")
                     return True
 
         # Check Y-touch (touching on Front/Back faces)
@@ -340,14 +343,56 @@ class PhysicalVerifier:
         if not result.is_valid: 
             return result # Stop if floating (critical)
             
-        # 2. Stability (Global Gravity)
+        # 2. Collision (New! Check for impossible overlaps)
+        self.verify_collision(result)
+        if not result.is_valid:
+            print("\n[STOP] Critical Collisions Detected. Halting.")
+            return result
+
+        # 3. Stability (Global Gravity)
         self.verify_stability(result)
+
+    def verify_collision(self, result: VerificationResult):
+        """
+        Checks if bricks are intersecting significantly (impossible physics).
+        Allow small overlaps for studs/holes (approx 10-15% volume or absolute threshold).
+        """
+        bricks = self.plan.get_all_bricks()
+        collision_count = 0
         
-        # 3. Connection Strength (Local Joint)
-        strict_mode = (mode == "KIDS")
-        self.verify_connection_strength(result, strict_mode=strict_mode)
+        # Optimize: Check N^2 is slow, but acceptable for <1000 bricks
+        for i, b1 in enumerate(bricks):
+            for b2 in bricks[i+1:]:
+                # Quick AABB check
+                if (b1.x + b1.width <= b2.x or b2.x + b2.width <= b1.x or
+                    b1.y + b1.depth <= b2.y or b2.y + b2.depth <= b1.y or
+                    b1.z + b1.height <= b2.z or b2.z + b2.height <= b1.z):
+                    continue
+                
+                # Calculate Intersection Volume
+                ix = min(b1.x + b1.width, b2.x + b2.width) - max(b1.x, b2.x)
+                iy = min(b1.y + b1.depth, b2.y + b2.depth) - max(b1.y, b2.y)
+                iz = min(b1.z + b1.height, b2.z + b2.height) - max(b1.z, b2.z)
+                
+                if ix > 0.05 and iy > 0.05 and iz > 0.05:
+                    intersect_vol = ix * iy * iz
+                    vol1 = b1.width * b1.depth * b1.height
+                    vol2 = b2.width * b2.depth * b2.height
+                    
+                    # Ratio relative to smaller brick
+                    min_vol = min(vol1, vol2)
+                    ratio = intersect_vol / min_vol if min_vol > 0 else 0
+                    
+                    # Threshold: 15% overlap allowed (for studs/imperfections)
+                    if ratio > 0.15: 
+                         collision_count += 1
+                         msg = f"Collision detected between {b1.id} and {b2.id} (Overlap: {ratio*100:.1f}%)"
+                         # Limit evidences to avoid spamming
+                         if collision_count <= 5: 
+                             result.add_hard_fail(Evidence("COLLISION", "CRITICAL", [b1.id, b2.id], msg))
         
-        # 4. Overhang (Local Gravity)
-        self.verify_overhang(result, mode=mode)
+        if collision_count > 0:
+            msg = f"Found {collision_count} heavy collisions. Model is physically impossible."
+            result.add_hard_fail(Evidence("COLLISION", "CRITICAL", [], msg))
         
-        return result
+
