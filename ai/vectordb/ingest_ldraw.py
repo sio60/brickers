@@ -1,32 +1,71 @@
+# ai/vectordb/ingest_ldraw.py
 from __future__ import annotations
 
 import re
 import hashlib
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple, Set
 
-from pymongo import UpdateOne
+from pymongo import UpdateOne, ASCENDING
 from pymongo.collection import Collection
 
 from ai import config
 from ai.db import get_db
 
+# ✅ bbox 계산 모듈 import
+from ai.vectordb.bbox_calc import update_all_parts_bbox
 
-# ✅ 네 외부 폴더 경로
-LDRAW_ROOT = Path(r"C:\complete\ldraw\parts")
-ALLOWED_EXT = {".dat"}
-
-BULK_SIZE = 1000  # 500~2000 추천
+# ✅ embedding 계산 모듈 import
+from ai.vectordb.embedder import update_all_parts_embeddings
 
 
-# ---- regex ----
+# =========================
+# Config
+# =========================
+LDRAW_BASE = Path(r"C:\complete\ldraw")
+
+PARTS_COLLECTION = config.PARTS_COLLECTION      # e.g. ldraw_parts
+ALIASES_COLLECTION = "ldraw_aliases"
+MODELS_COLLECTION = "ldraw_models"
+
+BULK_SIZE = 1000
+ALLOWED_PART_EXT = {".dat"}
+ALLOWED_MODEL_EXT = {".ldr"}  # models는 보통 .ldr 중심
+
+
+# =========================
+# Regex
+# =========================
 MOVED_RE = re.compile(r"^0\s+~Moved\s+to\s+(\S+)", re.IGNORECASE)
 ORG_RE = re.compile(r"^0\s+!LDRAW_ORG\s+(.+)$", re.IGNORECASE)
 NAME_RE = re.compile(r"^0\s+Name:\s*(.+)$", re.IGNORECASE)
 AUTHOR_RE = re.compile(r"^0\s+Author:\s*(.+)$", re.IGNORECASE)
 CATEGORY_RE = re.compile(r"^0\s+!CATEGORY\s+(.+)$", re.IGNORECASE)
 KEYWORDS_RE = re.compile(r"^0\s+!KEYWORDS\s+(.+)$", re.IGNORECASE)
+
+
+# =========================
+# DB / Helpers
+# =========================
+def get_col(name: str) -> Collection:
+    return get_db()[name]
+
+
+def ensure_indexes() -> None:
+    col_parts = get_col(PARTS_COLLECTION)
+    col_models = get_col(MODELS_COLLECTION)
+    col_alias = get_col(ALIASES_COLLECTION)
+
+    col_parts.create_index([("partPath", ASCENDING)], unique=True, name="uq_partPath")
+    col_models.create_index([("modelPath", ASCENDING)], unique=True, name="uq_modelPath")
+    col_alias.create_index([("fromPath", ASCENDING)], unique=True, name="uq_fromPath")
+
+    # (선택) 검색/필터링 자주 쓰면 추가 추천
+    col_parts.create_index([("partFile", ASCENDING)], name="ix_partFile")
+    col_parts.create_index([("partType", ASCENDING), ("primitiveLevel", ASCENDING)], name="ix_partType_level")
+    col_parts.create_index([("category", ASCENDING)], name="ix_category")
 
 
 def sha1_file(path: Path) -> str:
@@ -37,146 +76,199 @@ def sha1_file(path: Path) -> str:
     return h.hexdigest()
 
 
-def normalize_part_file(token: str) -> str:
-    t = token.strip().replace("\\", "/")
-    return t.split("/")[-1].lower()
+def norm_slash(s: str) -> str:
+    return s.strip().replace("\\", "/").strip()
 
 
-def part_id_from_file(part_file: str) -> str:
-    pf = normalize_part_file(part_file)
-    return pf[:-4] if pf.endswith(".dat") else pf
+def basename_lower(s: str) -> str:
+    return norm_slash(s).split("/")[-1].lower()
+
+
+def ensure_dat_ext(name_or_path: str) -> str:
+    x = basename_lower(name_or_path)
+    if "." not in x:
+        return x + ".dat"
+    return x
+
+
+def relpath_lower(p: Path) -> str:
+    return p.relative_to(LDRAW_BASE).as_posix().lower()
 
 
 def parse_keywords(s: str) -> List[str]:
-    # KEYWORDS 라인이 보통 "a, b, c" 형태라서 콤마 split
-    items = [x.strip() for x in s.split(",")]
-    return [x for x in items if x]
+    return [x.strip() for x in s.split(",") if x.strip()]
 
 
-def get_parts_collection() -> Collection:
-    # ✅ 너희 .env에서 PARTS_COLLECTION=ldraw_parts 로 이미 맞춰둠
-    return get_db()[config.PARTS_COLLECTION]
+def part_id_from_file(part_file: str) -> str:
+    pf = basename_lower(part_file)
+    return pf[:-4] if pf.endswith(".dat") else pf
 
 
-def get_aliases_collection() -> Collection:
-    return get_db()["ldraw_aliases"]
+@dataclass
+class PartKind:
+    partType: str
+    primitiveLevel: Optional[int]
 
 
-def walk_files(root: Path) -> List[Path]:
-    files: List[Path] = []
-    for p in root.rglob("*"):
-        if p.is_file() and p.suffix.lower() in ALLOWED_EXT:
-            files.append(p)
-    return files
+def classify_part(part_path: str) -> PartKind:
+    pp = part_path.lower()
+    if pp.startswith("parts/s/"):
+        return PartKind("subpart", None)
+    if pp.startswith("p/48/"):
+        return PartKind("primitive", 48)
+    if pp.startswith("p/8/"):
+        return PartKind("primitive", 8)
+    if pp.startswith("p/"):
+        return PartKind("primitive", None)
+    return PartKind("part", None)
 
 
-def ingest() -> Dict[str, int]:
-    if not LDRAW_ROOT.exists():
-        raise RuntimeError(f"LDRAW_ROOT not found: {LDRAW_ROOT}")
+def walk_files(root: Path, exts: Set[str]) -> List[Path]:
+    if not root.exists():
+        return []
+    out: List[Path] = []
+    for fp in root.rglob("*"):
+        if fp.is_file() and fp.suffix.lower() in exts:
+            out.append(fp)
+    return out
 
+
+# =========================
+# Parts ingest
+# =========================
+def scan_parts_files() -> List[Tuple[Path, str]]:
+    roots = [LDRAW_BASE / "parts", LDRAW_BASE / "p"]
+    pairs: List[Tuple[Path, str]] = []
+    for r in roots:
+        for fp in walk_files(r, ALLOWED_PART_EXT):
+            pairs.append((fp, relpath_lower(fp)))
+    return pairs
+
+
+def parse_part_dat(fp: Path) -> Dict:
+    org = name = author = category = None
+    keywords: List[str] = []
+    moved_to: Optional[str] = None
+    refs: List[str] = []
+
+    stats = {"lines": 0, "type0": 0, "type1": 0, "type2": 0, "type3": 0, "type4": 0, "other": 0}
+
+    with fp.open("r", encoding="utf-8", errors="ignore") as f:
+        for raw in f:
+            line = raw.strip()
+            if not line:
+                continue
+            stats["lines"] += 1
+
+            if moved_to is None:
+                m = MOVED_RE.match(line)
+                if m:
+                    moved_to = ensure_dat_ext(m.group(1))
+
+            if org is None:
+                m = ORG_RE.match(line)
+                if m:
+                    org = m.group(1).strip()
+
+            if name is None:
+                m = NAME_RE.match(line)
+                if m:
+                    name = m.group(1).strip()
+
+            if author is None:
+                m = AUTHOR_RE.match(line)
+                if m:
+                    author = m.group(1).strip()
+
+            if category is None:
+                m = CATEGORY_RE.match(line)
+                if m:
+                    category = m.group(1).strip()
+
+            m = KEYWORDS_RE.match(line)
+            if m:
+                keywords.extend(parse_keywords(m.group(1)))
+
+            if line.startswith("0 "):
+                stats["type0"] += 1
+            elif line.startswith("1 "):
+                stats["type1"] += 1
+                toks = line.split()
+                if len(toks) >= 15:
+                    refs.append(ensure_dat_ext(toks[-1]))
+            elif line.startswith("2 "):
+                stats["type2"] += 1
+            elif line.startswith("3 "):
+                stats["type3"] += 1
+            elif line.startswith("4 "):
+                stats["type4"] += 1
+            else:
+                stats["other"] += 1
+
+    return {
+        "org": org,
+        "name": name,
+        "author": author,
+        "category": category,
+        "keywords": sorted(set([k for k in keywords if k])),
+        "movedTo": moved_to,
+        "refs": sorted(set(refs)),
+        "stats": stats,
+    }
+
+
+def ingest_parts() -> Dict[str, int]:
     now = datetime.utcnow()
-    files = walk_files(LDRAW_ROOT)
-    print(f"[scan] {len(files)} dat files from {LDRAW_ROOT}")
+    files = scan_parts_files()
+    if not files:
+        raise RuntimeError("No parts .dat found under parts/ or p/")
 
-    col_parts = get_parts_collection()
-    col_alias = get_aliases_collection()
+    col_parts = get_col(PARTS_COLLECTION)
+    col_alias = get_col(ALIASES_COLLECTION)
 
     ops_parts: List[UpdateOne] = []
     ops_alias: List[UpdateOne] = []
     moved_count = 0
 
-    for idx, fp in enumerate(files, 1):
+    print(f"[parts.scan] {len(files)} files")
+
+    for idx, (fp, part_path) in enumerate(files, 1):
         part_file = fp.name.lower()
         part_id = part_id_from_file(part_file)
+        kind = classify_part(part_path)
 
-        org: Optional[str] = None
-        name: Optional[str] = None
-        author: Optional[str] = None
-        category: Optional[str] = None
-        keywords: List[str] = []
-        moved_to: Optional[str] = None
-        refs: List[str] = []
-
-        stats = {"lines": 0, "type0": 0, "type1": 0, "type2": 0, "type3": 0, "type4": 0, "other": 0}
-
-        with fp.open("r", encoding="utf-8", errors="ignore") as f:
-            for raw in f:
-                line = raw.strip()
-                if not line:
-                    continue
-
-                stats["lines"] += 1
-
-                if moved_to is None:
-                    m = MOVED_RE.match(line)
-                    if m:
-                        moved_to = normalize_part_file(m.group(1))
-
-                if org is None:
-                    m = ORG_RE.match(line)
-                    if m:
-                        org = m.group(1).strip()
-
-                if name is None:
-                    m = NAME_RE.match(line)
-                    if m:
-                        name = m.group(1).strip()
-
-                if author is None:
-                    m = AUTHOR_RE.match(line)
-                    if m:
-                        author = m.group(1).strip()
-
-                if category is None:
-                    m = CATEGORY_RE.match(line)
-                    if m:
-                        category = m.group(1).strip()
-
-                m = KEYWORDS_RE.match(line)
-                if m:
-                    keywords.extend(parse_keywords(m.group(1)))
-
-                # line type stats + refs
-                if line.startswith("0 "):
-                    stats["type0"] += 1
-                elif line.startswith("1 "):
-                    stats["type1"] += 1
-                    toks = line.split()
-                    if len(toks) >= 15:
-                        refs.append(normalize_part_file(toks[-1]))
-                elif line.startswith("2 "):
-                    stats["type2"] += 1
-                elif line.startswith("3 "):
-                    stats["type3"] += 1
-                elif line.startswith("4 "):
-                    stats["type4"] += 1
-                else:
-                    stats["other"] += 1
-
-        keywords = sorted(list(set([k for k in keywords if k])))
-        refs = sorted(list(set(refs)))
+        parsed = parse_part_dat(fp)
+        moved_to = parsed["movedTo"]
 
         doc = {
+            "partPath": part_path,
             "partFile": part_file,
             "partId": part_id,
-            "canonicalFile": moved_to or part_file,  # moved면 일단 to로 넣고, 최종 resolve는 aliases 기반으로 후처리 가능
-            "org": org,
-            "name": name,
-            "author": author,
-            "category": category,
-            "keywords": keywords,
+
+            "partType": kind.partType,
+            "primitiveLevel": kind.primitiveLevel,
+
+            "org": parsed["org"],
+            "name": parsed["name"],
+            "author": parsed["author"],
+            "category": parsed["category"],
+            "keywords": parsed["keywords"],
+
             "isRedirect": bool(moved_to),
             "movedTo": moved_to,
-            "refs": refs,
-            "stats": stats,
+            "canonicalFile": moved_to or part_file,
+
+            "refs": parsed["refs"],
+            "stats": parsed["stats"],
+
             "sha1": sha1_file(fp),
-            "source": {"root": str(LDRAW_ROOT)},
+            "source": {"base": str(LDRAW_BASE), "file": str(fp)},
             "updatedAt": now,
         }
 
         ops_parts.append(
             UpdateOne(
-                {"partFile": part_file},
+                {"partPath": part_path},
                 {"$set": doc, "$setOnInsert": {"createdAt": now}},
                 upsert=True,
             )
@@ -186,14 +278,21 @@ def ingest() -> Dict[str, int]:
             moved_count += 1
             ops_alias.append(
                 UpdateOne(
-                    {"from": part_file},
-                    {"$set": {"from": part_file, "to": moved_to, "reason": "moved", "updatedAt": now},
-                     "$setOnInsert": {"createdAt": now}},
+                    {"fromPath": part_path},
+                    {
+                        "$set": {
+                            "fromPath": part_path,
+                            "fromFile": part_file,
+                            "toFile": moved_to,
+                            "reason": "moved",
+                            "updatedAt": now,
+                        },
+                        "$setOnInsert": {"createdAt": now},
+                    },
                     upsert=True,
                 )
             )
 
-        # bulk flush
         if len(ops_parts) >= BULK_SIZE:
             col_parts.bulk_write(ops_parts, ordered=False)
             ops_parts.clear()
@@ -203,16 +302,136 @@ def ingest() -> Dict[str, int]:
             ops_alias.clear()
 
         if idx % 2000 == 0:
-            print(f"[progress] {idx}/{len(files)}")
+            print(f"[parts.progress] {idx}/{len(files)}")
 
     if ops_parts:
         col_parts.bulk_write(ops_parts, ordered=False)
     if ops_alias:
         col_alias.bulk_write(ops_alias, ordered=False)
 
-    return {"files": len(files), "moved": moved_count, "collection": f"{config.MONGODB_DB}.{config.PARTS_COLLECTION}"}
+    return {"files": len(files), "moved": moved_count}
+
+
+# =========================
+# Models ingest
+# =========================
+def scan_model_files() -> List[Tuple[Path, str]]:
+    root = LDRAW_BASE / "models"
+    pairs: List[Tuple[Path, str]] = []
+    for fp in walk_files(root, ALLOWED_MODEL_EXT):
+        pairs.append((fp, relpath_lower(fp)))
+    return pairs
+
+
+def parse_model_ldr(fp: Path) -> Dict:
+    ref_tokens: List[str] = []
+    stats = {"lines": 0, "type0": 0, "type1": 0, "type2": 0, "type3": 0, "type4": 0, "other": 0}
+
+    with fp.open("r", encoding="utf-8", errors="ignore") as f:
+        for raw in f:
+            line = raw.strip()
+            if not line:
+                continue
+            stats["lines"] += 1
+
+            if line.startswith("0 "):
+                stats["type0"] += 1
+            elif line.startswith("1 "):
+                stats["type1"] += 1
+                toks = line.split()
+                if len(toks) >= 15:
+                    ref_tokens.append(toks[-1])
+            elif line.startswith("2 "):
+                stats["type2"] += 1
+            elif line.startswith("3 "):
+                stats["type3"] += 1
+            elif line.startswith("4 "):
+                stats["type4"] += 1
+            else:
+                stats["other"] += 1
+
+    return {"refTokens": ref_tokens, "stats": stats}
+
+
+def ingest_models(store_text: bool = False) -> Dict[str, int]:
+    now = datetime.utcnow()
+    files = scan_model_files()
+    if not files:
+        print("[models.scan] no model files found, skip.")
+        return {"files": 0}
+
+    col_models = get_col(MODELS_COLLECTION)
+    ops: List[UpdateOne] = []
+
+    print(f"[models.scan] {len(files)} files")
+
+    for idx, (fp, model_path) in enumerate(files, 1):
+        parsed = parse_model_ldr(fp)
+
+        doc = {
+            "modelPath": model_path,
+            "modelFile": fp.name,
+            "ext": fp.suffix.lower(),
+            "refTokens": [norm_slash(x) for x in parsed["refTokens"]],
+            "stats": parsed["stats"],
+            "sha1": sha1_file(fp),
+            "source": {"base": str(LDRAW_BASE), "file": str(fp)},
+            "updatedAt": now,
+        }
+        if store_text:
+            doc["text"] = fp.read_text(encoding="utf-8", errors="ignore")
+
+        ops.append(
+            UpdateOne(
+                {"modelPath": model_path},
+                {"$set": doc, "$setOnInsert": {"createdAt": now}},
+                upsert=True,
+            )
+        )
+
+        if len(ops) >= BULK_SIZE:
+            col_models.bulk_write(ops, ordered=False)
+            ops.clear()
+
+        if idx % 200 == 0:
+            print(f"[models.progress] {idx}/{len(files)}")
+
+    if ops:
+        col_models.bulk_write(ops, ordered=False)
+
+    return {"files": len(files)}
+
+
+# =========================
+# Main
+# =========================
+def ingest_all(
+    store_model_text: bool = False,
+    compute_bbox: bool = True,
+    compute_embedding: bool = True,
+) -> Dict:
+    parts = ingest_parts()
+    models = ingest_models(store_text=store_model_text)
+
+    bbox_summary = None
+    if compute_bbox:
+        # ✅ sha1 동일 + bbox 존재하면 자동 스킵
+        bbox_summary = update_all_parts_bbox(only_missing_or_changed=True)
+
+    embed_summary = None
+    if compute_embedding:
+        # ✅ embedding 없거나, sha1/텍스트 해시 바뀐 애만 자동 업데이트 (embedder.py에서 처리)
+        embed_summary = update_all_parts_embeddings(only_missing_or_changed=True)
+
+    return {
+        "parts": parts,
+        "models": models,
+        "bbox": bbox_summary,
+        "embedding": embed_summary,
+    }
 
 
 if __name__ == "__main__":
-    summary = ingest()
+    ensure_indexes()
+    summary = ingest_all(store_model_text=False, compute_bbox=True, compute_embedding=True)
     print("[done]", summary)

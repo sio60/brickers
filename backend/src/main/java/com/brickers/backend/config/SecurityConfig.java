@@ -19,7 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomOAuth2UserService customOAuth2UserService;
+        private final CustomOAuth2UserService customOAuth2UserService;
 
     /**
      * ✅ 프론트 베이스 URL (로컬/배포 분리)
@@ -49,12 +49,13 @@ public class SecurityConfig {
             )
             .logout(logout -> logout
                 .logoutUrl("/logout")
+                .invalidateHttpSession(true)      // ⭐ 세션 무효화
+                .clearAuthentication(true)        // ⭐ 인증 정보 제거
+                .deleteCookies("JSESSIONID")       // ⭐ 쿠키 삭제
                 .logoutSuccessUrl(frontBaseUrl)
-                .deleteCookies("JSESSIONID")
             );
-
-        return http.build();
-    }
+                return http.build();
+        }
 
     /**
      * ✅ CORS: 로컬 + 배포 도메인 둘 다 허용

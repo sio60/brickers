@@ -30,3 +30,4 @@ def _require(name: str, v: str | None) -> str:
 
 MONGODB_URI = _require("MONGODB_URI", MONGODB_URI)
 ATLAS_VECTOR_INDEX_PARTS = _require("ATLAS_VECTOR_INDEX_PARTS", ATLAS_VECTOR_INDEX_PARTS)
+HF_EMBED_MODEL = os.getenv("HF_EMBED_MODEL", "intfloat/multilingual-e5-small")
