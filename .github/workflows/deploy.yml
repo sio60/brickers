@@ -56,18 +56,6 @@ jobs:
             VITE_KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
             VITE_KAKAO_REDIRECT_URI=${{ secrets.VITE_KAKAO_REDIRECT_URI }}
 
-
-      - name: Build and Push AI
-        uses: docker/build-push-action@v6
-        with:
-          context: ./ai
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/brickers-ai:latest
-            ${{ secrets.DOCKER_USERNAME }}/brickers-ai:${{ github.sha }}
-          provenance: false
-          no-cache: true
-
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
