@@ -93,7 +93,7 @@ def create_house():
     return BrickModel(
         model_id="house_proper",
         name="House Proper Build",
-        mode="adult",
+        mode="pro",
         bricks=bricks
     )
 

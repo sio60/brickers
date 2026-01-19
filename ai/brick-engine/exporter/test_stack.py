@@ -60,7 +60,7 @@ def test_simple_stack():
     return BrickModel(
         model_id="stack_test",
         name="Simple Stack Test",
-        mode="adult",
+        mode="pro",
         bricks=bricks
     )
 
@@ -94,7 +94,7 @@ def test_wall_connection():
     return BrickModel(
         model_id="wall_test",
         name="Wall Connection Test",
-        mode="adult",
+        mode="pro",
         bricks=bricks
     )
 
@@ -132,7 +132,7 @@ def test_slope_on_brick():
     return BrickModel(
         model_id="slope_test",
         name="Slope Test",
-        mode="adult",
+        mode="pro",
         bricks=bricks
     )
 
