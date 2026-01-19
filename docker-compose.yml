@@ -28,25 +28,11 @@ services:
       - "${FRONTEND_PORT}:80"
     depends_on:
       - backend
-      - ai
+
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
     networks:
       - brickers-network
-
-  ai:
-    image: ${DOCKER_USERNAME}/brickers-ai:latest
-    container_name: brickers-ai
-    ports:
-      - "${AI_PORT}:8000"
-    environment:
-      - MONGO_URI=${AI_MONGODB_URI}
-      - MONGO_DB_NAME=${AI_MONGODB_NAME}
-      - AI_PARTS_COLLECTION=${AI_PARTS_COLLECTION}
-      - AI_VECTOR_INDEX=${AI_VECTOR_INDEX}
-      - AI_VECTOR_FIELD=${AI_VECTOR_FIELD}
-      - AI_EMBEDDING_DIMS=${AI_EMBEDDING_DIMS}
-    networks:
-      - brickers-network
-
 
 networks:
   brickers-network:
