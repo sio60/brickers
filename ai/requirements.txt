@@ -7,3 +7,7 @@ google-genai
 torch
 transformers
 sentencepiece
+python-multipart
+numpy
+scipy
+networkx
