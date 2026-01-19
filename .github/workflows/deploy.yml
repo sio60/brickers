@@ -100,7 +100,10 @@ jobs:
             AI_VECTOR_INDEX=${{ secrets.AI_VECTOR_INDEX }}
             AI_VECTOR_FIELD=${{ secrets.AI_VECTOR_FIELD }}
             AI_EMBEDDING_DIMS=${{ secrets.AI_EMBEDDING_DIMS }}
-            
+                        VITE_API_BASE_URL
+            VITE_KAKAO_CLIENT_ID=${{ secrets.VITE_KAKAO_CLIENT_ID }}
+            VITE_KAKAO_REDIRECT_URI=${{ secrets.VITE_KAKAO_REDIRECT_URI }}
+            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
             KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
             KAKAO_ADMIN_KEY=${{ secrets.KAKAO_ADMIN_KEY }}
             
@@ -108,7 +111,6 @@ jobs:
             GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
             GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }}
             GOOGLE_LOCAL_REDIRECT_URI=${{ secrets.GOOGLE_LOCAL_REDIRECT_URI }}
-            
             BACKEND_PORT=${{ secrets.BACKEND_PORT }}
             FRONTEND_PORT=${{ secrets.FRONTEND_PORT }}
             EOF
