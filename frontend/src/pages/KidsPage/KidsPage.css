@@ -210,3 +210,23 @@
   object-fit: contain;
   background: rgba(0, 0, 0, 0.04);
 }
+.kidsUpload__toggle {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.kidsUpload__toggleBtn {
+  border: 1px solid rgba(0,0,0,0.2);
+  background: rgba(255,255,255,0.75);
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.kidsUpload__toggleBtn.isActive {
+  background: rgba(0,0,0,0.75);
+  color: white;
+  border-color: rgba(0,0,0,0.75);
+}

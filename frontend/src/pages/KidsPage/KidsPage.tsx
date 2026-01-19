@@ -15,6 +15,9 @@ export default function KidsPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // ✅ 결과/원본 보기 토글
+  const [showResult, setShowResult] = useState(true);
+
   const openPicker = () => inputRef.current?.click();
 
   const setSelectedFile = (f: File) => {
@@ -23,6 +26,7 @@ export default function KidsPage() {
     setFile(f);
     setErrorMsg(null);
     setResultUrl(null);
+    setShowResult(true);
 
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(URL.createObjectURL(f));
@@ -47,6 +51,7 @@ export default function KidsPage() {
     setPreviewUrl(null);
     setResultUrl(null);
     setErrorMsg(null);
+    setShowResult(true);
     if (inputRef.current) inputRef.current.value = "";
   };
 
@@ -75,19 +80,23 @@ export default function KidsPage() {
       const data = await res.json();
       if (!data?.imageUrl) throw new Error("imageUrl 응답이 없음");
 
-      // ✅ Proxy 이슈 회피를 위해 8080 포트로 직접 연결 시도
       const backendOrigin = "http://localhost:8080";
       const absolute = new URL(data.imageUrl, backendOrigin).toString();
       const busted =
         absolute + (absolute.includes("?") ? "&" : "?") + "t=" + Date.now();
 
       setResultUrl(busted);
+      setShowResult(true); // ✅ 생성 후 결과 자동 표시
     } catch (e: any) {
       setErrorMsg(e?.message ?? "생성 실패");
     } finally {
       setIsGenerating(false);
     }
   };
+
+  // ✅ 지금 “여기(업로드 박스)”에 보여줄 이미지 결정
+  const displayUrl =
+    resultUrl && showResult ? resultUrl : previewUrl;
 
   return (
     <div className="kidsPage" style={{ backgroundImage: `url(${kidBg})` }}>
@@ -125,9 +134,46 @@ export default function KidsPage() {
               className="kidsUpload__previewWrap"
               onClick={(e) => e.stopPropagation()}
             >
-              <img className="kidsUpload__preview" src={previewUrl} alt="preview" />
+              {/* ✅ 결과는 아래가 아니라 “여기”에서 보여줌 */}
+              {displayUrl && (
+                <img
+                  className="kidsUpload__preview"
+                  src={displayUrl}
+                  alt="preview"
+                  onError={(e) => {
+                    console.error("Image load fail:", e.currentTarget.src, e);
+                    // 결과가 깨지면 원본으로 자동 fallback
+                    if (showResult) {
+                      setShowResult(false);
+                      setErrorMsg("결과 이미지 로드 실패(서빙/경로 확인)");
+                    }
+                  }}
+                />
+              )}
+
               <div className="kidsUpload__meta">
                 <div className="kidsUpload__filename">{file?.name}</div>
+
+                {/* ✅ 결과/원본 토글 */}
+                {resultUrl && (
+                  <div className="kidsUpload__toggle">
+                    <button
+                      type="button"
+                      className={`kidsUpload__toggleBtn ${!showResult ? "isActive" : ""}`}
+                      onClick={() => setShowResult(false)}
+                    >
+                      원본
+                    </button>
+                    <button
+                      type="button"
+                      className={`kidsUpload__toggleBtn ${showResult ? "isActive" : ""}`}
+                      onClick={() => setShowResult(true)}
+                    >
+                      결과
+                    </button>
+                  </div>
+                )}
+
                 <button
                   className="kidsUpload__remove"
                   type="button"
@@ -151,19 +197,7 @@ export default function KidsPage() {
 
         {errorMsg && <div className="kidsPage__error">{errorMsg}</div>}
 
-        {resultUrl && (
-          <div className="kidsResult">
-            <img
-              className="kidsResult__img"
-              src={resultUrl}
-              alt="result"
-              onError={(e) => {
-                console.error("Image load fail:", e.currentTarget.src, e);
-                setErrorMsg("결과 이미지 로드 실패(서빙/경로 확인)");
-              }}
-            />
-          </div>
-        )}
+        {/* ✅ 아래 결과 영역 제거 */}
       </div>
     </div>
   );
