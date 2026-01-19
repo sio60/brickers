@@ -54,6 +54,10 @@ export default function UpgradeModal({ isOpen, onClose }: Props) {
             .loadPaymentData(paymentDataRequest)
             .then((paymentData: any) => {
                 console.log("Payment Success", paymentData);
+                // ✅ 업그레이드 완료 처리
+                localStorage.setItem("isPro", "true");
+                // 스토리지 이벤트 강제 발생 (같은 탭 업데이트용)
+                window.dispatchEvent(new Event("storage"));
                 onClose();
             })
             .catch((err: any) => {
