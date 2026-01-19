@@ -6,7 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
+CLAUDE.md
 node_modules
 dist
 dist-ssr
@@ -125,3 +125,14 @@ frontend/public/ldraw/**
 frontend/complete/
 .env.local
 .env.*.local
+# Kids uploads (runtime files)
+uploads/
+uploads/**
+
+# (선택) kids 폴더만 명시적으로
+# uploads/kids/
+# uploads/kids/**
+__pycache__/
+*.pyc
+*.pyo
+*.pyd

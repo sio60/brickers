@@ -1,8 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import MainPage from "./pages/MainPage/MainPage";
 import KidsPage from "./pages/KidsPage/KidsPage";
-import KidsAgeSelection from "./pages/KidsPage/KidsAgeSelection";
 import AdultPage from "./pages/AdultPage/AdultPage";
+import KidsAgeSelection from "./pages/KidsPage/KidsAgeSelection";
 import Layout from "./Layout";
 import AuthSuccess from "./pages/Auth/AuthSuccess";
 import AuthFailure from "./pages/Auth/AuthFailure";

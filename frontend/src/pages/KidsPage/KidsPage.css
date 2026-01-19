@@ -11,7 +11,15 @@
   background-position: center;
   background-repeat: no-repeat;
 
-  overflow: hidden; /* ✅ 공룡이 밖으로 나갔다 들어가도 깔끔 */
+  /* ✅ 결과가 길어지면 스크롤 */
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.kidsUpload,
+.kidsPage__cta,
+.kidsPage__error,
+.kidsResult {
+  width: 100%;
 }
 
 /* 어두운 오버레이 */
@@ -23,47 +31,48 @@
   z-index: -1;
 }
 
-/* ✅ 공룡 기본 상태: 왼쪽 밖에 숨김 */
+/* ✅ 공룡 */
 .kidsPage__dino {
   position: absolute;
   left: 0;
   bottom: 4px;
-
   width: min(760px, 60vw);
   height: auto;
 
-  transform: translateX(-100%); /* 밖에 숨김 */
+  transform: translateX(-100%);
   transition: transform 350ms ease;
   z-index: 2;
-
-  pointer-events: none; /* ✅ hover 방해 안 함 */
+  pointer-events: none;
 }
 
-/* ✅ 배경(페이지)에 커서 올리면 빼곰 등장 */
 .kidsPage:hover .kidsPage__dino {
-  transform: translateX(-50%); 
+  transform: translateX(-50%);
 }
-/* ✅ 중앙 영역(기존에 추가했던 거 있으면 이걸로 맞춰) */
+
 .kidsPage__center {
-  min-height: calc(100vh - 24px - 90px);
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+
+  /* ✅ 세로 중앙에 가깝게 (너무 위로 안 붙게) */
+  min-height: calc(100vh - 48px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
+  /* ✅ 아주 살짝만 아래로 */
+  padding-top: 10vh;
+
   gap: 18px;
+  position: relative;
+  z-index: 3;
 }
 
-/* 가운데 이미지 */
-.kidsPage__hero {
-  width: min(520px, 78vw);
-  height: auto;
-  display: block;
-  filter: drop-shadow(0 14px 30px rgba(0, 0, 0, 0.35));
-}
 
-/* 업로드 박스 */
+/* 업로드 카드 */
 .kidsUpload {
-  width: min(520px, 86vw);
+  width: 100%;
   border-radius: 18px;
   padding: 18px;
   cursor: pointer;
@@ -121,6 +130,7 @@
   object-fit: contain;
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.05);
+  display: block;
 }
 
 .kidsUpload__meta {
@@ -148,17 +158,9 @@
   background: rgba(0, 0, 0, 0.08);
 }
 
-/* 아래 버튼(기존꺼 있으면 여기만 적용) */
-.kidsPage__bottom {
-  position: sticky;
-  bottom: 24px;
-  display: flex;
-  justify-content: center;
-  padding-top: 12px;
-}
-
+/* 생성 버튼 */
 .kidsPage__cta {
-  width: min(520px, 86vw);
+  width: 100%;
   height: 56px;
   border: 0;
   border-radius: 16px;
@@ -174,4 +176,37 @@
 .kidsPage__cta:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+/* 에러 */
+.kidsPage__error {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 0, 0, 0.12);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 800;
+  text-align: center;
+}
+
+/* ✅ 결과 카드 */
+.kidsResult {
+  width: 100%;
+  margin-top: 8px;
+
+  border-radius: 18px;
+  overflow: hidden;
+
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+
+  flex: 0 0 auto;
+}
+
+.kidsResult__img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  background: rgba(0, 0, 0, 0.04);
 }

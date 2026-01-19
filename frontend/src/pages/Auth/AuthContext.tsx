@@ -56,9 +56,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credentials: "include",
       });
     } finally {
-      setUser(null);
-      sessionStorage.clear();
-      window.location.href = "/";
+      setUser(null);           // 프론트 상태 초기화
+      sessionStorage.clear();  // lastPage 등 제거
+      window.location.href = "/"; // 홈으로
     }
   };
 
