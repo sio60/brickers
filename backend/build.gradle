@@ -14,7 +14,15 @@ java {
 repositories {
     mavenCentral()
 }
+// 실행 가능한 fat-jar는 만든다
+bootJar {
+    enabled = true
+}
 
+// 실행 불가능한 일반 jar(plain)는 만들지 않는다 (이게 핵심!)
+jar {
+    enabled = false
+}
 dependencies {
 implementation 'me.paulschwarz:spring-dotenv:4.0.0'   
  implementation 'org.springframework.boot:spring-boot-starter-web'

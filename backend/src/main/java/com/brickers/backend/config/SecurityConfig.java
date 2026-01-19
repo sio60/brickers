@@ -20,7 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomOAuth2UserService customOAuth2UserService;
+        private final CustomOAuth2UserService customOAuth2UserService;
 
     @Value("${app.front-base-url:http://localhost:5173}")
     private String frontBaseUrl;
@@ -58,12 +58,13 @@ public class SecurityConfig {
 
             .logout(logout -> logout
                 .logoutUrl("/logout")
+                .invalidateHttpSession(true)      // ⭐ 세션 무효화
+                .clearAuthentication(true)        // ⭐ 인증 정보 제거
+                .deleteCookies("JSESSIONID")       // ⭐ 쿠키 삭제
                 .logoutSuccessUrl(frontBaseUrl)
-                .deleteCookies("JSESSIONID")
             );
-
-        return http.build();
-    }
+                return http.build();
+        }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

@@ -75,8 +75,9 @@ export default function KidsPage() {
       const data = await res.json();
       if (!data?.imageUrl) throw new Error("imageUrl 응답이 없음");
 
-      // ✅ 배포/로컬 안전: 절대경로 + 캐시버스트
-      const absolute = new URL(data.imageUrl, window.location.origin).toString();
+      // ✅ Proxy 이슈 회피를 위해 8080 포트로 직접 연결 시도
+      const backendOrigin = "http://localhost:8080";
+      const absolute = new URL(data.imageUrl, backendOrigin).toString();
       const busted =
         absolute + (absolute.includes("?") ? "&" : "?") + "t=" + Date.now();
 
@@ -156,7 +157,10 @@ export default function KidsPage() {
               className="kidsResult__img"
               src={resultUrl}
               alt="result"
-              onError={() => setErrorMsg("결과 이미지 로드 실패(서빙/경로 확인)")}
+              onError={(e) => {
+                console.error("Image load fail:", e.currentTarget.src, e);
+                setErrorMsg("결과 이미지 로드 실패(서빙/경로 확인)");
+              }}
             />
           </div>
         )}

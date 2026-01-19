@@ -21,6 +21,7 @@ PARTS_COLLECTION = os.getenv("PARTS_COLLECTION", "ldraw_parts")
 ATLAS_VECTOR_INDEX_PARTS = os.getenv("ATLAS_VECTOR_INDEX_PARTS", "")
 VECTOR_FIELD = os.getenv("VECTOR_FIELD", "embedding")
 EMBEDDING_DIMS = int(os.getenv("EMBEDDING_DIMS", "512"))
+HF_EMBED_MODEL = os.getenv("HF_EMBED_MODEL", "intfloat/multilingual-e5-small")
 
 ################################
 # Kids Render (옵션이지만 거의 필수)

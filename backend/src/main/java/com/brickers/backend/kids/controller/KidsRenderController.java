@@ -1,8 +1,6 @@
 package com.brickers.backend.kids.controller;
 
 import com.brickers.backend.kids.service.KidsRenderService;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -51,10 +49,29 @@ public class KidsRenderController {
             byte[] data = java.nio.file.Files.readAllBytes(filePath);
             System.out.println("[KidsRenderController] Read " + data.length + " bytes. Serving now.");
 
-            // 파일 확장자에 따라 MediaType 결정 (기본값 PNG)
+            // 매직 넘버 확인용 로그
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < Math.min(data.length, 10); i++) {
+                sb.append(String.format("%02X ", data[i]));
+            }
+            System.out.println("[KidsRenderController] File Header (Hex): " + sb.toString());
+
+            // 매직 넘버로 실제 타입 확인
             MediaType mediaType = MediaType.IMAGE_PNG;
-            if (filename.toLowerCase().endsWith(".jpg") || filename.toLowerCase().endsWith(".jpeg")) {
+            if (data.length > 1 && data[0] == (byte) 0xFF && data[1] == (byte) 0xD8) {
                 mediaType = MediaType.IMAGE_JPEG;
+                System.out.println("[KidsRenderController] Detected JPEG header");
+            } else if (data.length > 8 &&
+                    data[0] == (byte) 0x89 && data[1] == (byte) 0x50 &&
+                    data[2] == (byte) 0x4E && data[3] == (byte) 0x47) {
+                mediaType = MediaType.IMAGE_PNG;
+                System.out.println("[KidsRenderController] Detected PNG header");
+            } else {
+                // 확장자로 fallback
+                System.out.println("[KidsRenderController] Unknown header, using extension fallback");
+                if (filename.toLowerCase().endsWith(".jpg") || filename.toLowerCase().endsWith(".jpeg")) {
+                    mediaType = MediaType.IMAGE_JPEG;
+                }
             }
 
             return ResponseEntity.ok()

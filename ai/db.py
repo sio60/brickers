@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-import config
+from ai import config
 
 _client = None
 

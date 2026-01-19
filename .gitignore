@@ -132,3 +132,7 @@ uploads/**
 # (선택) kids 폴더만 명시적으로
 # uploads/kids/
 # uploads/kids/**
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
