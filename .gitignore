@@ -114,6 +114,9 @@ frontend/public/ldraw/**
 # ✅ 하지만 샘플 모델(ldr)만 예외로 추적
 !frontend/public/ldraw/models/
 !frontend/public/ldraw/models/car.ldr
+!frontend/public/ldraw/models/3-5_1.ldr
+!frontend/public/ldraw/models/3-5_2.ldr
+!frontend/public/ldraw/models/3-5_3.ldr
 
 ####################################
 # Misc
