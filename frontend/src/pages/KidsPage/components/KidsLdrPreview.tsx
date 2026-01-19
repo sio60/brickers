@@ -143,7 +143,7 @@ export default function KidsLdrPreview({
         </div>
       )}
       <Canvas
-        camera={{ position: [200, 200, 200], fov: 45 }}
+        camera={{ position: [200, 100, 200], fov: 45 }}
         dpr={[1, 2]}
         onCreated={() => setLoading(false)}
       >
