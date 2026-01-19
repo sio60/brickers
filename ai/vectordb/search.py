@@ -1,5 +1,5 @@
 from typing import Any, Dict, List, Optional
-import config
+from ai import config
 
 
 def parts_vector_search(
