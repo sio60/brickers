@@ -29,7 +29,8 @@ implementation 'me.paulschwarz:spring-dotenv:4.0.0'
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.boot:spring-boot-starter-security'
-    
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
     
     // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
