@@ -19,7 +19,7 @@ export default function AdultPage() {
   const plan = useMemo(() => demoBrickPlan, []);
 
   // Ensure this path matches exactly where the file is in the public directory
-  const ldrUrl = "/ldraw/models/apple.ldr";
+  const ldrUrl = "/ldraw/models/30571 Pelican [Model A].ldr";
 
   return (
     <div
