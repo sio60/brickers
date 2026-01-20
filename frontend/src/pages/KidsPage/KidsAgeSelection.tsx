@@ -86,8 +86,8 @@ export default function KidsAgeSelection() {
 
   return (
     <div className="kidsAgeSelection">
-      <Background3D entryDirection="float" />
-      <h1 className="kidsAgeSelection__title">Select Your Child's Age Group</h1>
+      <Background3D entryDirection="top" />
+      <h1 className="kidsAgeSelection__title">Select Your Level</h1>
 
       <div className="kidsAgeSelection__buttons">
         <button
@@ -96,7 +96,7 @@ export default function KidsAgeSelection() {
           type="button"
         >
           <img src={img35} alt="4-5 years" className="kidsAgeBtn__img" />
-          <div className="kidsAgeBtn__label">4-5</div>
+          <div className="kidsAgeBtn__label">L1</div>
         </button>
 
         <button
@@ -105,7 +105,7 @@ export default function KidsAgeSelection() {
           type="button"
         >
           <img src={img67} alt="6-7 years" className="kidsAgeBtn__img" />
-          <div className="kidsAgeBtn__label">6-7</div>
+          <div className="kidsAgeBtn__label">L2</div>
         </button>
 
         <button
@@ -114,7 +114,7 @@ export default function KidsAgeSelection() {
           type="button"
         >
           <img src={img810} alt="8-10 years" className="kidsAgeBtn__img" />
-          <div className="kidsAgeBtn__label">8-10</div>
+          <div className="kidsAgeBtn__label">L3</div>
         </button>
       </div>
 

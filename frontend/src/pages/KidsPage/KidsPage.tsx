@@ -2,10 +2,12 @@ import "./KidsPage.css";
 import { useEffect, useState } from "react";
 import { useSearchParams, useLocation } from "react-router-dom";
 
-import kidBg from "../../assets/kid_bg.png";
-import dino from "../../assets/di.png";
+// import kidBg from "../../assets/kid_bg.png";
+// import dino from "../../assets/di.png";
+import Background3D from "../MainPage/components/Background3D";
 
 import KidsLdrPreview from "./components/KidsLdrPreview";
+import KidsGlbViewer from "./components/KidsGlbViewer";
 
 export default function KidsPage() {
   const [params] = useSearchParams();
@@ -17,6 +19,7 @@ export default function KidsPage() {
   const uploadedFile = (location.state as { uploadedFile?: File } | null)?.uploadedFile;
 
   const [resultUrl, setResultUrl] = useState<string | null>(null);
+  const [glbUrl, setGlbUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -29,6 +32,7 @@ export default function KidsPage() {
         setIsGenerating(true);
         setErrorMsg(null);
         setResultUrl(null);
+        setGlbUrl(null);
 
         const form = new FormData();
         form.append("file", uploadedFile);
@@ -49,13 +53,29 @@ export default function KidsPage() {
         }
 
         const data = await res.json();
-        if (!data?.imageUrl) throw new Error("imageUrl 응답이 없음");
 
-        const backendOrigin = "http://localhost:8080";
-        const absolute = new URL(data.imageUrl, backendOrigin).toString();
-        const busted = absolute + (absolute.includes("?") ? "&" : "?") + "t=" + Date.now();
+        // Handle result (data.imageUrl might be data URI or relative path)
+        let finalImgUrl = null;
+        if (data.imageUrl) {
+          if (data.imageUrl.startsWith("data:")) {
+            finalImgUrl = data.imageUrl;
+          } else {
+            const backendOrigin = "http://localhost:8080";
+            const absolute = new URL(data.imageUrl, backendOrigin).toString();
+            finalImgUrl = absolute + (absolute.includes("?") ? "&" : "?") + "t=" + Date.now();
+          }
+        }
+        setResultUrl(finalImgUrl);
 
-        setResultUrl(busted);
+        // Handle GLB
+        if (data.glbUrl) {
+          setGlbUrl(data.glbUrl);
+        }
+
+        if (!finalImgUrl && !data.glbUrl) {
+          throw new Error("결과 응답이 비어있습니다");
+        }
+
       } catch (e: any) {
         setErrorMsg(e?.message ?? "생성 실패");
       } finally {
@@ -70,8 +90,9 @@ export default function KidsPage() {
   const hasImage = !!uploadedFile;
 
   return (
-    <div className="kidsPage" style={{ backgroundImage: `url(${kidBg})` }}>
-      <img className="kidsPage__dino" src={dino} alt="dino" />
+    <div className="kidsPage">
+      <Background3D entryDirection="float" />
+      {/* <img className="kidsPage__dino" src={dino} alt="dino" /> */}
 
       <div className="kidsPage__center">
         <div className="kidsPage__title">레고 만들기</div>
@@ -90,7 +111,14 @@ export default function KidsPage() {
                 </div>
               )}
 
-              {!isGenerating && resultUrl && (
+              {/* 생성 완료 후: GLB가 있으면 GLB 우선 표시, 없으면 이미지 표시 */}
+              {!isGenerating && glbUrl && (
+                <div className="kidsPage__3dViewer" style={{ border: "2px solid #3b82f6" }}>
+                  <KidsGlbViewer url={glbUrl} />
+                </div>
+              )}
+
+              {!isGenerating && !glbUrl && resultUrl && (
                 <img
                   src={resultUrl}
                   alt="result"
