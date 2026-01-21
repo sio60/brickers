@@ -1,4 +1,4 @@
-package com.brickers.backend.controller;
+package com.brickers.backend.auth;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,9 +21,11 @@ public class AuthController {
     public Map<String, Object> getCurrentUser(@AuthenticationPrincipal OAuth2User oAuth2User) {
         Map<String, Object> response = new HashMap<>();
 
-        
         if (oAuth2User != null) {
-            log.info("로그인 사용자 확인: {}", oAuth2User.getAttributes().get("properties"));
+            log.info("로그인 사용자 확인: provider={}, attributes={}",
+                    oAuth2User.getAuthorities(),
+                    oAuth2User.getAttributes());
+
             response.put("authenticated", true);
             response.put("user", oAuth2User.getAttributes());
         } else {

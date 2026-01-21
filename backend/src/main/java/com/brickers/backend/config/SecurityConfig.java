@@ -6,9 +6,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -20,7 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-        private final CustomOAuth2UserService customOAuth2UserService;
+    private final CustomOAuth2UserService customOAuth2UserService;
 
     @Value("${app.front-base-url:http://localhost:5173}")
     private String frontBaseUrl;
@@ -28,55 +30,56 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
 
-            .authorizeHttpRequests(auth -> auth
-                // ✅ 기본 공개
-                .requestMatchers("/", "/error", "/favicon.ico", "/auth/**").permitAll()
-                .requestMatchers("/api/auth/me").permitAll()
-                .requestMatchers("/logout").permitAll()
+                // ✅ API는 401로 떨어지게 (기본 /login 리다이렉트 방지)
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
 
-                // ✅ Kids: 업로드 렌더 API (원하면 공개/인증 선택)
-                // 지금은 프론트에서 누구나 쓰는 흐름이면 일단 열어둬도 됨
-                .requestMatchers(HttpMethod.POST, "/api/kids/render").permitAll()
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/error", "/favicon.ico").permitAll()
+                        .requestMatchers("/auth/**", "/logout").permitAll()
+                        .requestMatchers("/api/auth/me").permitAll()
 
-                // ✅ Kids: 결과 이미지 정적 서빙은 무조건 공개(브라우저 <img>가 쿠키 없이도 요청함)
-                .requestMatchers(HttpMethod.GET, "/api/kids/rendered/**").permitAll()
+                        // ✅ Swagger 공개
+                        .requestMatchers(
+                                "/swagger", "/swagger/**",
+                                "/swagger-ui.html", "/swagger-ui/**",
+                                "/v3/api-docs/**")
+                        .permitAll()
 
-                // ✅ 그 외는 인증
-                .anyRequest().authenticated()
-            )
+                        // ✅ Kids API 공개
+                        .requestMatchers(HttpMethod.POST, "/api/kids/render").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/kids/rendered/**").permitAll()
 
-            .oauth2Login(oauth2 -> oauth2
-                .authorizationEndpoint(auth -> auth.baseUri("/auth"))
-                .redirectionEndpoint(red -> red.baseUri("/auth/*/callback"))
-                .userInfoEndpoint(user -> user.userService(customOAuth2UserService))
-                .defaultSuccessUrl(frontBaseUrl + "/auth/success", true)
-                .failureUrl(frontBaseUrl + "/auth/failure")
-            )
+                        .anyRequest().authenticated())
 
-            .logout(logout -> logout
-                .logoutUrl("/logout")
-                .invalidateHttpSession(true)      // ⭐ 세션 무효화
-                .clearAuthentication(true)        // ⭐ 인증 정보 제거
-                .deleteCookies("JSESSIONID")       // ⭐ 쿠키 삭제
-                .logoutSuccessUrl(frontBaseUrl)
-            );
-                return http.build();
-        }
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(a -> a.baseUri("/auth"))
+                        .redirectionEndpoint(r -> r.baseUri("/auth/*/callback"))
+                        .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
+                        .defaultSuccessUrl(frontBaseUrl + "/auth/success", true)
+                        .failureUrl(frontBaseUrl + "/auth/failure"))
+
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
+                        .logoutSuccessUrl(frontBaseUrl));
+
+        return http.build();
+    }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-
         config.setAllowedOriginPatterns(List.of(
-            "http://localhost:5173",
-            "http://localhost:3000",
-            "https://brickers.shop",
-            "https://www.brickers.shop"
-        ));
-
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "https://brickers.shop",
+                "https://www.brickers.shop"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

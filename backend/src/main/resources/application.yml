@@ -10,11 +10,6 @@ spring:
 
   mongodb:
     uri: ${PRIMARY_MONGODB_URI}
-    host: ${MONGO_HOST}    
-    port: ${MONGO_PORT}      
-    database: ${MONGO_DB_NAME} 
-    username: ${MONGO_USER}   
-    password: ${MONGO_PASSWORD}
 
   security:
     oauth2:
@@ -53,3 +48,14 @@ logging:
     "[org.springframework.data.mongodb.core.MongoTemplate]": DEBUG
     "[org.springframework.security]": DEBUG
     "[org.springframework.security.oauth2]": DEBUG
+
+springdoc:
+  swagger-ui:
+    path: /swagger
+    operationsSorter: method
+    tagsSorter: alpha
+    display-request-duration: true
+  api-docs:
+    path: /v3/api-docs
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json

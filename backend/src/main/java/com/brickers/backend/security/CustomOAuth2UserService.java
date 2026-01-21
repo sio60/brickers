@@ -1,12 +1,17 @@
 package com.brickers.backend.security;
 
-import com.brickers.backend.entity.User;
-import com.brickers.backend.repository.UserRepository;
+import com.brickers.backend.user.entity.AccountState;
+import com.brickers.backend.user.entity.MembershipPlan;
+import com.brickers.backend.user.entity.User;
+import com.brickers.backend.user.entity.UserRole;
+import com.brickers.backend.user.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
@@ -28,25 +33,21 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
-        // OAuth2 제공자 (kakao, google)
-        String provider = userRequest.getClientRegistration().getRegistrationId();
-
-        // 사용자 정보 추출 및 저장
+        String provider = userRequest.getClientRegistration().getRegistrationId(); // kakao, google
         saveOrUpdateUser(provider, oAuth2User);
 
         return oAuth2User;
     }
 
     private void saveOrUpdateUser(String provider, OAuth2User oAuth2User) {
-        String providerId;
+        Map<String, Object> attributes = oAuth2User.getAttributes();
+
+        String providerId = null;
         String email = null;
         String nickname = null;
         String profileImage = null;
 
-        Map<String, Object> attributes = oAuth2User.getAttributes();
-
         if ("kakao".equals(provider)) {
-            // 카카오 사용자 정보 추출
             providerId = String.valueOf(attributes.get("id"));
 
             @SuppressWarnings("unchecked")
@@ -65,7 +66,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             log.info("카카오 로그인 - providerId: {}, email: {}, nickname: {}", providerId, email, nickname);
 
         } else if ("google".equals(provider)) {
-            // 구글 사용자 정보 추출
             providerId = (String) attributes.get("sub");
             email = (String) attributes.get("email");
             nickname = (String) attributes.get("name");
@@ -78,34 +78,74 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             return;
         }
 
-        // 기존 사용자 조회 또는 새로 생성
-        final String finalEmail = email;
-        final String finalNickname = nickname;
-        final String finalProfileImage = profileImage;
+        if (providerId == null || providerId.isBlank()) {
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("invalid_provider_id"),
+                    "OAuth2 providerId를 가져오지 못했습니다. provider=" + provider);
+        }
 
-        User user = userRepository.findByProviderAndProviderId(provider, providerId)
+        LocalDateTime now = LocalDateTime.now();
+
+        // ✅ 람다에서 사용할 값들은 final(또는 effectively final)로 복사
+        final String providerFinal = provider;
+        final String providerIdFinal = providerId;
+        final String emailFinal = email;
+        final String nicknameFinal = nickname;
+        final String profileImageFinal = profileImage;
+
+        User user = userRepository.findByProviderAndProviderId(providerFinal, providerIdFinal)
                 .map(existingUser -> {
-                    // 기존 사용자 정보 업데이트
-                    existingUser.setEmail(finalEmail);
-                    existingUser.setNickname(finalNickname);
-                    existingUser.setProfileImage(finalProfileImage);
-                    existingUser.setUpdatedAt(LocalDateTime.now());
+                    existingUser.ensureDefaults();
+
+                    if (existingUser.getAccountState() == AccountState.REQUESTED) {
+                        throw new OAuth2AuthenticationException(
+                                new OAuth2Error("account_requested"),
+                                "탈퇴 요청된 계정입니다.");
+                    }
+                    if (existingUser.getAccountState() == AccountState.SUSPENDED) {
+                        throw new OAuth2AuthenticationException(
+                                new OAuth2Error("account_suspended"),
+                                "정지된 계정입니다.");
+                    }
+
+                    // ✅ null로 덮어쓰기 방지
+                    if (emailFinal != null && !emailFinal.isBlank()) {
+                        existingUser.setEmail(emailFinal);
+                    }
+                    if (nicknameFinal != null && !nicknameFinal.isBlank()) {
+                        existingUser.setNickname(nicknameFinal);
+                    }
+                    if (profileImageFinal != null && !profileImageFinal.isBlank()) {
+                        existingUser.setProfileImage(profileImageFinal);
+                    }
+
+                    existingUser.setUpdatedAt(now);
+                    existingUser.setLastLoginAt(now);
                     return existingUser;
                 })
                 .orElseGet(() -> {
-                    // 새 사용자 생성
-                    return User.builder()
-                            .provider(provider)
-                            .providerId(providerId)
-                            .email(finalEmail)
-                            .nickname(finalNickname)
-                            .profileImage(finalProfileImage)
-                            .createdAt(LocalDateTime.now())
-                            .updatedAt(LocalDateTime.now())
+                    User newUser = User.builder()
+                            .provider(providerFinal)
+                            .providerId(providerIdFinal)
+                            .email(emailFinal)
+                            .nickname(nicknameFinal)
+                            .profileImage(profileImageFinal)
+                            .bio("자기소개를 해주세요!")
+                            .role(UserRole.USER)
+                            .membershipPlan(MembershipPlan.FREE)
+                            .accountState(AccountState.ACTIVE)
+                            .lastLoginAt(now)
+                            .createdAt(now)
+                            .updatedAt(now)
                             .build();
+
+                    newUser.ensureDefaults();
+                    return newUser;
                 });
 
         userRepository.save(user);
-        log.info("사용자 저장 완료 - id: {}, provider: {}", user.getId(), provider);
+
+        log.info("사용자 저장 완료 - id: {}, provider: {}, role: {}, membershipPlan: {}, accountState: {}",
+                user.getId(), providerFinal, user.getRole(), user.getMembershipPlan(), user.getAccountState());
     }
 }
