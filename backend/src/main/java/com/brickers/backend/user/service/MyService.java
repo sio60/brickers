@@ -12,60 +12,46 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class MyService {
 
     private final UserRepository userRepository;
+    private final CurrentUserService currentUserService;
 
-    /*
-     * =======================
-     * GET /api/my/profile
-     * =======================
-     */
+    /** 내 프로필 조회 */
     public MyProfileResponse getMyProfile(OAuth2AuthenticationToken auth) {
-        User user = findCurrentUser(auth);
-
+        User user = currentUserService.get(auth);
         return toProfileResponse(user);
     }
 
-    /*
-     * =======================
-     * PATCH /api/my/profile
-     * =======================
-     */
-    public MyProfileResponse updateMyProfile(
-            OAuth2AuthenticationToken auth,
-            MyProfileUpdateRequest req) {
-        User user = findCurrentUser(auth);
+    /** 내 프로필 수정(PATCH) */
+    public MyProfileResponse updateMyProfile(OAuth2AuthenticationToken auth, MyProfileUpdateRequest req) {
+        User user = currentUserService.get(auth);
 
         // nickname
         if (req.getNickname() != null) {
             String nickname = req.getNickname().trim();
-            if (nickname.isEmpty()) {
+            if (nickname.isEmpty())
                 throw new IllegalArgumentException("닉네임은 비어 있을 수 없습니다.");
-            }
-            if (nickname.length() > 20) {
+            if (nickname.length() > 20)
                 throw new IllegalArgumentException("닉네임은 20자 이하여야 합니다.");
-            }
             user.setNickname(nickname);
         }
 
         // bio
         if (req.getBio() != null) {
             String bio = req.getBio().trim();
-            if (bio.length() > 200) {
+            if (bio.length() > 200)
                 throw new IllegalArgumentException("자기소개는 200자 이하여야 합니다.");
-            }
             user.setBio(bio);
         }
 
-        // profile image
+        // profile image (URL만 허용 / 아니면 null 처리)
         if (req.getProfileImage() != null) {
             String img = req.getProfileImage().trim();
-            user.setProfileImage(img.isEmpty() ? null : img);
+            user.setProfileImage(img.startsWith("http") ? img : null);
         }
 
         user.setUpdatedAt(LocalDateTime.now());
@@ -74,75 +60,46 @@ public class MyService {
         return toProfileResponse(user);
     }
 
-    /*
-     * =======================
-     * GET /api/my/membership
-     * =======================
-     */
+    /** 내 멤버십 조회 */
     public MyMembershipResponse getMyMembership(OAuth2AuthenticationToken auth) {
-        User user = findCurrentUser(auth);
-
+        User user = currentUserService.get(auth);
         return MyMembershipResponse.builder()
                 .membershipPlan(user.getMembershipPlan())
                 .expiresAt(null)
                 .build();
     }
 
-    /*
-     * =======================
-     * DELETE /api/my/account
-     * =======================
-     */
+    /** 회원 탈퇴(soft delete): accountState=DELETED + deletedAt 기록 */
     public DeleteMyAccountResponse requestDeleteMyAccount(OAuth2AuthenticationToken auth) {
-        User user = findCurrentUser(auth);
+        User user = currentUserService.get(auth);
 
-        user.setAccountState(AccountState.REQUESTED);
+        if (user.getAccountState() == AccountState.DELETED) {
+            return DeleteMyAccountResponse.builder()
+                    .success(false)
+                    .message("이미 탈퇴 완료된 계정입니다.")
+                    .build();
+        }
+
+        if (user.getAccountState() == AccountState.SUSPENDED) {
+            return DeleteMyAccountResponse.builder()
+                    .success(false)
+                    .message("정지된 계정은 탈퇴할 수 없습니다. 관리자에게 문의하세요.")
+                    .build();
+        }
+
+        user.setAccountState(AccountState.DELETED);
+        if (user.getDeletedAt() == null)
+            user.setDeletedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
 
         return DeleteMyAccountResponse.builder()
                 .success(true)
-                .message("회원 탈퇴 요청이 정상적으로 처리되었습니다.")
+                .message("회원 탈퇴가 정상적으로 처리되었습니다.")
                 .build();
     }
 
-    /*
-     * =======================
-     * 공통: 현재 로그인 유저 조회
-     * =======================
-     */
-    private User findCurrentUser(OAuth2AuthenticationToken auth) {
-        if (auth == null || auth.getPrincipal() == null) {
-            throw new IllegalStateException("인증 정보가 없습니다.");
-        }
-
-        String provider = auth.getAuthorizedClientRegistrationId();
-        Map<String, Object> attributes = auth.getPrincipal().getAttributes();
-
-        String providerId = extractProviderId(provider, attributes);
-
-        User user = userRepository.findByProviderAndProviderId(provider, providerId)
-                .orElseThrow(() -> new IllegalStateException("사용자 정보를 찾을 수 없습니다."));
-
-        user.ensureDefaults();
-        return user;
-    }
-
-    private String extractProviderId(String provider, Map<String, Object> attributes) {
-        if ("kakao".equals(provider)) {
-            return String.valueOf(attributes.get("id"));
-        }
-        if ("google".equals(provider)) {
-            return String.valueOf(attributes.get("sub"));
-        }
-        throw new IllegalStateException("지원하지 않는 OAuth2 provider: " + provider);
-    }
-
-    /*
-     * =======================
-     * Response Mapper
-     * =======================
-     */
+    /** 응답 DTO 매핑 */
     private MyProfileResponse toProfileResponse(User user) {
         return MyProfileResponse.builder()
                 .id(user.getId())

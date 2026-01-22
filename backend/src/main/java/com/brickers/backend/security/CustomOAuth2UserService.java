@@ -39,6 +39,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return oAuth2User;
     }
 
+    // ✅ null/이상값 처리 + 덮어쓰기 방지 정책 반영 버전
     private void saveOrUpdateUser(String provider, OAuth2User oAuth2User) {
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
@@ -62,17 +63,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     profileImage = (String) profile.get("profile_image_url");
                 }
             }
-
-            log.info("카카오 로그인 - providerId: {}, email: {}, nickname: {}", providerId, email, nickname);
-
         } else if ("google".equals(provider)) {
-            providerId = (String) attributes.get("sub");
+            providerId = String.valueOf(attributes.get("sub"));
             email = (String) attributes.get("email");
             nickname = (String) attributes.get("name");
             profileImage = (String) attributes.get("picture");
-
-            log.info("구글 로그인 - providerId: {}, email: {}, nickname: {}", providerId, email, nickname);
-
         } else {
             log.warn("지원하지 않는 OAuth2 제공자: {}", provider);
             return;
@@ -86,36 +81,44 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        // ✅ 람다에서 사용할 값들은 final(또는 effectively final)로 복사
         final String providerFinal = provider;
         final String providerIdFinal = providerId;
-        final String emailFinal = email;
-        final String nicknameFinal = nickname;
-        final String profileImageFinal = profileImage;
+        final String emailFinal = (email != null && !email.isBlank()) ? email.trim() : null;
+        final String nicknameFinal = (nickname != null && !nickname.isBlank()) ? nickname.trim() : null;
+
+        // ✅ profileImage는 URL일 때만 저장(아니면 null)
+        final String profileImageFinal = (profileImage != null && profileImage.trim().startsWith("http"))
+                ? profileImage.trim()
+                : null;
 
         User user = userRepository.findByProviderAndProviderId(providerFinal, providerIdFinal)
                 .map(existingUser -> {
                     existingUser.ensureDefaults();
 
                     if (existingUser.getAccountState() == AccountState.REQUESTED) {
-                        throw new OAuth2AuthenticationException(
-                                new OAuth2Error("account_requested"),
-                                "탈퇴 요청된 계정입니다.");
+                        throw new OAuth2AuthenticationException(new OAuth2Error("account_requested"), "탈퇴 요청된 계정입니다.");
+                    }
+                    if (existingUser.getAccountState() == AccountState.DELETED) {
+                        throw new OAuth2AuthenticationException(new OAuth2Error("account_deleted"), "탈퇴 완료된 계정입니다.");
                     }
                     if (existingUser.getAccountState() == AccountState.SUSPENDED) {
-                        throw new OAuth2AuthenticationException(
-                                new OAuth2Error("account_suspended"),
-                                "정지된 계정입니다.");
+                        throw new OAuth2AuthenticationException(new OAuth2Error("account_suspended"), "정지된 계정입니다.");
                     }
 
-                    // ✅ null로 덮어쓰기 방지
-                    if (emailFinal != null && !emailFinal.isBlank()) {
+                    // ✅ email은 있으면 업데이트 (변경될 수 있음)
+                    if (emailFinal != null)
                         existingUser.setEmail(emailFinal);
-                    }
-                    if (nicknameFinal != null && !nicknameFinal.isBlank()) {
+
+                    // ✅ 닉네임/프로필 이미지는 "비어있을 때만" 채움 (유저 수정값 보호)
+                    // nickname: 기존 값이 비어있을 때만 채움 (유저 수정값 보호)
+                    if ((existingUser.getNickname() == null || existingUser.getNickname().isBlank())
+                            && nicknameFinal != null && !nicknameFinal.isBlank()) {
                         existingUser.setNickname(nicknameFinal);
                     }
-                    if (profileImageFinal != null && !profileImageFinal.isBlank()) {
+
+                    // profileImage: 기존 값이 비어있을 때만 채움 (유저 수정값 보호)
+                    if ((existingUser.getProfileImage() == null || existingUser.getProfileImage().isBlank())
+                            && profileImageFinal != null && !profileImageFinal.isBlank()) {
                         existingUser.setProfileImage(profileImageFinal);
                     }
 
@@ -148,4 +151,5 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         log.info("사용자 저장 완료 - id: {}, provider: {}, role: {}, membershipPlan: {}, accountState: {}",
                 user.getId(), providerFinal, user.getRole(), user.getMembershipPlan(), user.getAccountState());
     }
+
 }
