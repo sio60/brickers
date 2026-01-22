@@ -16,6 +16,14 @@ spring:
         database: ${MONGO_DB_NAME} 
         username: ${MONGO_USER}   
         password: ${MONGO_PASSWORD}
+  mongodb:
+    uri: ${PRIMARY_MONGODB_URI}
+
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+
   security:
     oauth2:
       client:
@@ -42,6 +50,9 @@ spring:
 
 app:
   front-base-url: ${FRONT_BASE_URL:http://localhost:5173}
+  cookie:
+    secure: ${COOKIE_SECURE:false}   # 로컬은 false, 배포는 true
+    same-site: ${COOKIE_SAMESITE:Lax} # 로컬 Lax, 배포 None
 
 jwt:
   secret: ${JWT_SECRET}
@@ -53,3 +64,15 @@ logging:
     "[org.springframework.data.mongodb.core.MongoTemplate]": DEBUG
     "[org.springframework.security]": DEBUG
     "[org.springframework.security.oauth2]": DEBUG
+    "[org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping]": DEBUG
+
+springdoc:
+  swagger-ui:
+    path: /swagger
+    operationsSorter: method
+    tagsSorter: alpha
+    display-request-duration: true
+  api-docs:
+    path: /v3/api-docs
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json
