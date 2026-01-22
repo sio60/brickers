@@ -22,14 +22,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const refresh = async () => {
+    setIsLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/auth/me`, {
+      const res = await fetch(`${API_BASE}/api/auth/session`, {
         credentials: "include",
       });
+
+      // ban/suspended 같은 경우 403일 수 있음
+      if (res.status === 403) {
+        setUser(null);
+        return;
+      }
+
       const data = await res.json();
 
       if (data?.authenticated) {
-        setUser(data.user);
+        setUser(data.user); // ✅ session은 user로 내려줌
       } else {
         setUser(null);
       }
@@ -51,14 +59,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch(`${API_BASE}/logout`, {
+      await fetch(`${API_BASE}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
     } finally {
-      setUser(null);           // 프론트 상태 초기화
-      sessionStorage.clear();  // lastPage 등 제거
-      window.location.href = "/"; // 홈으로
+      setUser(null);
+      sessionStorage.clear();
+      window.location.href = "/";
     }
   };
 

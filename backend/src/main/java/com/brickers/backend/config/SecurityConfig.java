@@ -1,5 +1,6 @@
 package com.brickers.backend.config;
 
+import com.brickers.backend.auth.OAuth2LoginSuccessHandler;
 import com.brickers.backend.security.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +24,7 @@ import java.util.List;
 public class SecurityConfig {
 
         private final CustomOAuth2UserService customOAuth2UserService;
+        private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
         @Value("${app.front-base-url:http://localhost:5173}")
         private String frontBaseUrl;
@@ -41,7 +43,7 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/", "/error", "/favicon.ico").permitAll()
                                                 .requestMatchers("/auth/**", "/logout").permitAll()
-                                                .requestMatchers("/api/auth/me").permitAll()
+                                                .requestMatchers("/api/auth/**").permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/api/gallery/**").permitAll()
                                                 .requestMatchers("/api/gallery/**").authenticated()
 
@@ -62,7 +64,8 @@ public class SecurityConfig {
                                                 .authorizationEndpoint(a -> a.baseUri("/auth"))
                                                 .redirectionEndpoint(r -> r.baseUri("/auth/*/callback"))
                                                 .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
-                                                .defaultSuccessUrl(frontBaseUrl + "/auth/success", true)
+                                                .successHandler(oAuth2LoginSuccessHandler)
+                                                // .defaultSuccessUrl(frontBaseUrl + "/auth/success", true)
                                                 .failureUrl(frontBaseUrl + "/auth/failure"))
 
                                 .logout(logout -> logout

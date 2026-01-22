@@ -1,16 +1,18 @@
 package com.brickers.backend.auth;
 
+import com.brickers.backend.audit.entity.AuditEventType;
+import com.brickers.backend.audit.service.AuditLogService;
+import com.brickers.backend.user.entity.User;
+import com.brickers.backend.user.service.CurrentUserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -19,61 +21,83 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private final CurrentUserService currentUserService;
+    private final AuditLogService auditLogService;
+
     /**
-     * 기존 API (디버그/확인용)
+     * (선택) 기존 API – 디버그/개발용
+     * 👉 운영에서는 프론트에서 사용하지 않는 걸 권장
      */
     @GetMapping("/me")
-    public Map<String, Object> getCurrentUser(@AuthenticationPrincipal OAuth2User oAuth2User) {
-        Map<String, Object> response = new HashMap<>();
-
-        if (oAuth2User != null) {
-            log.info("로그인 사용자 확인: authorities={}, attributes={}",
-                    oAuth2User.getAuthorities(),
-                    oAuth2User.getAttributes());
-
-            response.put("authenticated", true);
-            response.put("user", oAuth2User.getAttributes());
-        } else {
-            response.put("authenticated", false);
-            response.put("message", "로그인 상태가 아닙니다.");
+    public ResponseEntity<?> me(OAuth2AuthenticationToken auth) {
+        if (auth == null) {
+            return ResponseEntity.ok(Map.of("authenticated", false));
         }
-
-        return response;
+        return ResponseEntity.ok(Map.of(
+                "authenticated", true,
+                "attributes", auth.getPrincipal().getAttributes()));
     }
 
     /**
-     * ✅ 세션 상태 확인 (프론트 표준용)
+     * ✅ 세션 상태 확인 (실서비스 표준 API)
+     * - DB(User) 기준
+     * - ban/SUSPENDED면 CurrentUserService에서 403 발생
      */
     @GetMapping("/session")
-    public ResponseEntity<?> session(@AuthenticationPrincipal OAuth2User principal) {
-        if (principal == null) {
+    public ResponseEntity<?> session(OAuth2AuthenticationToken auth) {
+        if (auth == null) {
             return ResponseEntity.ok(Map.of("authenticated", false));
         }
 
-        Map<String, Object> attrs = principal.getAttributes();
+        User me = currentUserService.get(auth); // ← 여기서 ban/탈퇴 차단
 
         return ResponseEntity.ok(Map.of(
                 "authenticated", true,
                 "user", Map.of(
-                        "name", attrs.getOrDefault("name", null),
-                        "email", attrs.getOrDefault("email", null))));
+                        "id", me.getId(),
+                        "nickname", me.getNickname(),
+                        "email", me.getEmail(),
+                        "role", me.getRole(),
+                        "membershipPlan", me.getMembershipPlan(),
+                        "accountState", me.getAccountState())));
     }
 
     /**
-     * ✅ 로그아웃: 우리 서버 세션 종료
+     * ✅ 로그아웃
+     * - 세션 종료
+     * - AuditLog(LOGOUT) 기록
      */
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletRequest request) {
-        // 1) 세션 무효화
+    public ResponseEntity<?> logout(
+            OAuth2AuthenticationToken auth,
+            HttpServletRequest request) {
+        String userId = null;
+
+        // 로그인 상태면 로그 기록
+        try {
+            User me = currentUserService.get(auth);
+            userId = me.getId();
+        } catch (Exception e) {
+            // 이미 세션 만료/비로그인 상태여도 logout은 성공 처리
+            log.debug("logout without authenticated user");
+        }
+
+        if (userId != null) {
+            auditLogService.log(
+                    AuditEventType.LOGOUT,
+                    userId, // target
+                    userId, // actor (본인)
+                    request,
+                    Map.of());
+        }
+
+        // 세션 무효화
         HttpSession session = request.getSession(false);
         if (session != null) {
             session.invalidate();
         }
 
-        // 2) SecurityContext 정리
         SecurityContextHolder.clearContext();
-
-        // 3) 컨테이너 logout (선택)
         try {
             request.logout();
         } catch (Exception e) {
