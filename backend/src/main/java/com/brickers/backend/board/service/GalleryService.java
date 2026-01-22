@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.Authentication;
 
 import java.time.LocalDateTime;
 
@@ -23,9 +24,8 @@ public class GalleryService {
     private final CurrentUserService currentUserService;
 
     /** 게시글 생성: 로그인 유저를 author로 설정하고 게시글을 저장한다. */
-    public GalleryResponse create(OAuth2AuthenticationToken auth, GalleryCreateRequest req) {
+    public GalleryResponse create(Authentication auth, GalleryCreateRequest req) {
         User me = currentUserService.get(auth);
-
         validateTitle(req.getTitle());
 
         LocalDateTime now = LocalDateTime.now();
@@ -75,7 +75,7 @@ public class GalleryService {
     }
 
     /** 게시글 상세: PUBLIC은 누구나, PRIVATE는 작성자만 조회 가능하도록 권한을 체크한다. */
-    public GalleryResponse getDetail(String id, OAuth2AuthenticationToken authOrNull) {
+    public GalleryResponse getDetail(String id, Authentication authOrNull) {
         GalleryPostEntity post = galleryPostRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다. id=" + id));
 
@@ -83,7 +83,7 @@ public class GalleryService {
             throw new IllegalArgumentException("삭제된 게시글입니다.");
 
         if (post.getVisibility() == Visibility.PRIVATE) {
-            User me = currentUserService.get(authOrNull);
+            User me = currentUserService.get(authOrNull); // null이면 ForbiddenException -> 접근 차단
             if (!post.getAuthorId().equals(me.getId())) {
                 throw new IllegalStateException("비공개 게시글 접근 권한이 없습니다.");
             }
@@ -93,7 +93,7 @@ public class GalleryService {
     }
 
     /** 게시글 수정: 작성자만 수정 가능하며, 전달된 필드만 부분 업데이트(PATCH)한다. */
-    public GalleryResponse update(String id, OAuth2AuthenticationToken auth, GalleryUpdateRequest req) {
+    public GalleryResponse update(String id, Authentication auth, GalleryUpdateRequest req) {
         User me = currentUserService.get(auth);
 
         GalleryPostEntity post = galleryPostRepository.findById(id)
@@ -124,7 +124,7 @@ public class GalleryService {
     }
 
     /** 게시글 삭제(소프트 삭제): 작성자만 삭제 가능하며 deleted=true로 처리한다. */
-    public void delete(String id, OAuth2AuthenticationToken auth) {
+    public void delete(String id, Authentication auth) {
         User me = currentUserService.get(auth);
 
         GalleryPostEntity post = galleryPostRepository.findById(id)
@@ -141,7 +141,7 @@ public class GalleryService {
     }
 
     /** 내 게시글 목록: 내 글(PUBLIC/PRIVATE 모두) 중 deleted=false를 최신순으로 페이징 조회한다. */
-    public Page<GalleryResponse> listMine(OAuth2AuthenticationToken auth, int page, int size) {
+    public Page<GalleryResponse> listMine(Authentication auth, int page, int size) {
         User me = currentUserService.get(auth);
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 

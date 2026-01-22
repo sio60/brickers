@@ -35,45 +35,73 @@ public class SecurityConfig {
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .csrf(csrf -> csrf.disable())
 
-                                // ✅ OAuth2 로그인 플로우는 세션이 필요할 수 있음
-                                // (authorization request 저장/콜백 처리)
+                                // ✅ OAuth2 플로우는 세션이 필요할 수 있음
                                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 
                                 // ✅ API는 401로 떨어지게 (/login redirect 방지)
-                                .exceptionHandling(ex -> ex
-                                                .authenticationEntryPoint(
-                                                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                                .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
 
                                 .authorizeHttpRequests(auth -> auth
+                                                // -------------------------------
+                                                // ✅ Public
+                                                // -------------------------------
                                                 .requestMatchers("/", "/error", "/favicon.ico").permitAll()
 
-                                                // OAuth2 시작/콜백
-                                                .requestMatchers("/auth/**").permitAll()
-
-                                                // ✅ auth API: refresh/logout는 permitAll, me는 인증 필요
-                                                .requestMatchers(HttpMethod.POST, "/api/auth/refresh",
-                                                                "/api/auth/logout")
-                                                .permitAll()
-                                                .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
-
-                                                // ✅ 내 정보 API (JWT 필요)
-                                                .requestMatchers("/api/my/**").authenticated()
-
-                                                // 갤러리
-                                                .requestMatchers(HttpMethod.GET, "/api/gallery/**").permitAll()
-                                                .requestMatchers("/api/gallery/**").authenticated()
-
-                                                // Swagger
+                                                // Swagger 공개
                                                 .requestMatchers(
                                                                 "/swagger", "/swagger/**",
                                                                 "/swagger-ui.html", "/swagger-ui/**",
                                                                 "/v3/api-docs/**")
                                                 .permitAll()
 
-                                                // Kids API
+                                                // OAuth2 시작/콜백
+                                                .requestMatchers("/auth/**").permitAll()
+
+                                                // Kids API 공개
                                                 .requestMatchers(HttpMethod.POST, "/api/kids/render").permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/api/kids/rendered/**").permitAll()
 
+                                                // -------------------------------
+                                                // ✅ Auth API
+                                                // -------------------------------
+                                                .requestMatchers(HttpMethod.POST, "/api/auth/refresh",
+                                                                "/api/auth/logout")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+
+                                                // -------------------------------
+                                                // ✅ My API (JWT 필요)
+                                                // -------------------------------
+                                                .requestMatchers("/api/my/**").authenticated()
+
+                                                // -------------------------------
+                                                // ✅ Gallery API 정책 (핵심)
+                                                // -------------------------------
+
+                                                // ✅ 내 목록(GET이지만 인증 필요)
+                                                .requestMatchers(HttpMethod.GET, "/api/gallery/my",
+                                                                "/api/gallery/bookmarks/my")
+                                                .authenticated()
+
+                                                // ✅ 북마크/리액션 토글(인증 필요)
+                                                .requestMatchers(HttpMethod.POST, "/api/gallery/*/bookmark",
+                                                                "/api/gallery/*/reaction")
+                                                .authenticated()
+
+                                                // ✅ 게시글 생성/수정/삭제(인증 필요)
+                                                .requestMatchers(HttpMethod.POST, "/api/gallery").authenticated()
+                                                .requestMatchers(HttpMethod.PATCH, "/api/gallery/*").authenticated()
+                                                .requestMatchers(HttpMethod.DELETE, "/api/gallery/*").authenticated()
+
+                                                // ✅ 공개 갤러리 조회/검색/상세는 공개
+                                                .requestMatchers(HttpMethod.GET, "/api/gallery", "/api/gallery/search",
+                                                                "/api/gallery/*")
+                                                .permitAll()
+
+                                                // -------------------------------
+                                                // ✅ 나머지는 인증
+                                                // -------------------------------
                                                 .anyRequest().authenticated())
 
                                 .oauth2Login(oauth2 -> oauth2
@@ -99,7 +127,7 @@ public class SecurityConfig {
                                 "https://www.brickers.shop"));
                 config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
-                // ✅ 지금 단계에선 * 허용해도 됨 (추후 제한 가능)
+                // ✅ 지금 단계에선 * 허용 OK (추후 Authorization/Content-Type 정도로 제한 가능)
                 config.setAllowedHeaders(List.of("*"));
 
                 config.setAllowCredentials(true);

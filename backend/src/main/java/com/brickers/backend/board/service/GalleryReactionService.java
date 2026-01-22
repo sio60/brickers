@@ -10,8 +10,8 @@ import com.brickers.backend.user.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.*;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.Authentication;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -27,7 +27,7 @@ public class GalleryReactionService {
     private final MongoTemplate mongoTemplate;
 
     /** 좋아요/싫어요 토글(전환 포함) + post 카운트 갱신 */
-    public ReactionToggleResponse toggle(OAuth2AuthenticationToken auth, String postId, ReactionToggleRequest req) {
+    public ReactionToggleResponse toggle(Authentication auth, String postId, ReactionToggleRequest req) {
         User me = currentUserService.get(auth);
 
         GalleryPostEntity post = postRepository.findById(postId)

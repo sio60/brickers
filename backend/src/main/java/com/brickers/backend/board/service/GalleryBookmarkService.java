@@ -11,8 +11,8 @@ import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.Authentication;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -27,7 +27,7 @@ public class GalleryBookmarkService {
     private final CurrentUserService currentUserService;
 
     /** 북마크 토글: 이미 있으면 삭제(해제), 없으면 생성(추가)한다. */
-    public BookmarkToggleResponse toggleBookmark(OAuth2AuthenticationToken auth, String postId) {
+    public BookmarkToggleResponse toggleBookmark(Authentication auth, String postId) {
         User me = currentUserService.get(auth);
 
         GalleryPostEntity post = postRepository.findById(postId)
@@ -69,7 +69,7 @@ public class GalleryBookmarkService {
     }
 
     /** 내 북마크 목록: 북마크한 게시글들을 최신순으로 페이징 조회해 카드용 정보를 내려준다. */
-    public Page<MyBookmarkItemResponse> listMyBookmarks(OAuth2AuthenticationToken auth, int page, int size) {
+    public Page<MyBookmarkItemResponse> listMyBookmarks(Authentication auth, int page, int size) {
         User me = currentUserService.get(auth);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));

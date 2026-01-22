@@ -11,6 +11,11 @@ spring:
   mongodb:
     uri: ${PRIMARY_MONGODB_URI}
 
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+
   security:
     oauth2:
       client:

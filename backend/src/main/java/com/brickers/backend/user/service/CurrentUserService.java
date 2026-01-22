@@ -14,12 +14,12 @@ public class CurrentUserService {
 
     private final UserRepository userRepository;
 
-    public User get(Authentication authentication) {
-        if (authentication == null || authentication.getPrincipal() == null) {
+    public User get(Authentication auth) {
+        if (auth == null || auth.getPrincipal() == null) {
             throw new ForbiddenException("로그인이 필요합니다.");
         }
 
-        String userId = (String) authentication.getPrincipal();
+        String userId = String.valueOf(auth.getPrincipal());
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ForbiddenException("사용자 정보를 찾을 수 없습니다."));

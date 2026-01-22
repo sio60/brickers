@@ -37,6 +37,9 @@ public class KidsRenderController {
         try {
             Path outDir = Paths.get(System.getenv().getOrDefault("KIDS_RENDER_DIR", "./uploads/kids/out"));
             Path filePath = outDir.resolve(filename).normalize();
+            if (!filePath.startsWith(outDir)) {
+                return ResponseEntity.status(403).build();
+            }
 
             System.out.println("[KidsRenderController] Requested: " + filename);
             System.out.println("[KidsRenderController] Resolved path: " + filePath.toAbsolutePath());
