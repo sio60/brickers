@@ -3,9 +3,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 
 import Background3D from "../MainPage/components/Background3D";
-import KidsGlbViewer from "./components/KidsGlbViewer";
 import KidsLdrPreview from "./components/KidsLdrPreview";
-
+import KidsLoadingScreen from "./components/KidsLoadingScreen";
 type Step =
   | "idle"
   | "correcting"
@@ -18,22 +17,39 @@ type Step =
 type PromptResp = { prompt: string };
 
 type Generate3DResp = {
-  prompt: string; // 백엔드가 다시 만들어서 내려줄 수도 있음
+  prompt: string;
   taskId: string;
-  modelUrl: string; // 대표 모델 url (상대/절대 가능)
-  files: Record<string, string>; // { glb: "/generated/..glb", ... }
+  modelUrl: string;
+  files: Record<string, string>;
 };
 
 type BrickifyResp = {
-  ldrUrl: string; // "/generated/...ldr"
-  files?: Record<string, string>;
+  ldrUrl: string; // "/api/generated/...ldr"
+  parts: number;
+  finalTarget: number;
 };
 
-const API_BASE = "/api/v1/kids"; // ✅ FastAPI prefix(/v1/kids)에 맞춤
-const API_ASSET_PREFIX = "/api"; // ✅ 백엔드가 "/generated/..." 같은 상대경로 주면 프록시를 타도록
+const API_BASE = "/api/v1/kids"; // FastAPI prefix
 
-function urlNoCache(u: string) {
-  return u + (u.includes("?") ? "&" : "?") + "t=" + Date.now();
+// ── 무한 재시도 설정 ──
+const RETRY_DELAY_MS = 3000;
+
+async function withInfiniteRetry<T>(
+  fn: () => Promise<T>,
+  onRetry?: (attempt: number) => void
+): Promise<T> {
+  let attempt = 0;
+  while (true) {
+    attempt++;
+    try {
+      return await fn();
+    } catch (e) {
+      onRetry?.(attempt);
+      // 지수 백오프: 최대 30초까지
+      const delay = Math.min(RETRY_DELAY_MS * Math.pow(1.5, attempt - 1), 30000);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
 }
 
 function toApiUrl(u: string | null) {
@@ -46,8 +62,15 @@ function toApiUrl(u: string | null) {
   ) {
     return u;
   }
-  // 백엔드가 "/generated/..."를 반환하면 프록시 경유해서 "/api/generated/..."로 요청
-  if (u.startsWith("/")) return `${API_ASSET_PREFIX}${u}`;
+
+  // ✅ 이미 /api/ 로 시작하면 그대로 (중복 prefix 방지)
+  if (u.startsWith("/api/")) return u;
+
+  // ✅ 예전 호환: /generated/... 만 오면 /api 붙여서 프록시 경유
+  if (u.startsWith("/generated/")) return `/api${u}`;
+
+  // 그 외는 그대로
+  if (u.startsWith("/")) return u;
   return u;
 }
 
@@ -61,35 +84,35 @@ async function fetchBlobAsFile(res: Response, filename: string): Promise<File> {
 export default function KidsPage() {
   const [params] = useSearchParams();
   const location = useLocation();
+
+  const age = (params.get("age") ?? "4-5") as "4-5" | "6-7" | "8-10";
   const referenceLdr = params.get("model");
+
+  // ✅ 레벨별 예산 고정
+  const budget = useMemo(() => {
+    if (age === "4-5") return 20;
+    if (age === "6-7") return 60;
+    return 120;
+  }, [age]);
 
   // navigate state에서 파일 받기
   const rawFile =
     (location.state as { uploadedFile?: File } | null)?.uploadedFile ?? null;
 
   const [step, setStep] = useState<Step>("idle");
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // 단계별 산출물
-  const [correctedFile, setCorrectedFile] = useState<File | null>(null);
+  const [, setCorrectedFile] = useState<File | null>(null);
   const [correctedUrl, setCorrectedUrl] = useState<string | null>(null);
 
-  const [prompt, setPrompt] = useState<string>("");
+  const [, setPrompt] = useState<string>("");
 
-  const [glbUrl, setGlbUrl] = useState<string | null>(null);
-  const [files3d, setFiles3d] = useState<Record<string, string> | null>(null);
+  const [, setGlbUrl] = useState<string | null>(null);
 
   const [ldrUrl, setLdrUrl] = useState<string | null>(null);
 
-  // 보기 탭
-  const [tab, setTab] = useState<"corrected" | "prompt" | "glb" | "ldr">("glb");
-
   const hasImage = !!rawFile;
-
-  // 자동 실행 중복 방지(React StrictMode/dev에서 useEffect 2번 실행 방지)
   const autoRunOnceRef = useRef(false);
 
-  // cleanup: ObjectURL
   useEffect(() => {
     return () => {
       if (correctedUrl?.startsWith("blob:")) URL.revokeObjectURL(correctedUrl);
@@ -97,22 +120,19 @@ export default function KidsPage() {
   }, [correctedUrl]);
 
   // -----------------------------
-  // Step 1) 나노바나나 보정(/render-image)
+  // Step 1) 나노바나나 보정
   // -----------------------------
-  const runCorrect = async () => {
-    if (!rawFile) return;
+  const runCorrect = async (): Promise<File> => {
+    if (!rawFile) throw new Error("원본 이미지가 없습니다");
 
     setStep("correcting");
-    setErrorMsg(null);
 
-    // 이전 결과 초기화
     setCorrectedFile(null);
     if (correctedUrl?.startsWith("blob:")) URL.revokeObjectURL(correctedUrl);
     setCorrectedUrl(null);
 
     setPrompt("");
     setGlbUrl(null);
-    setFiles3d(null);
     setLdrUrl(null);
 
     const form = new FormData();
@@ -129,26 +149,22 @@ export default function KidsPage() {
       throw new Error(`render-image 실패 (${res.status}) ${t}`);
     }
 
-    // render-image는 이미지 bytes를 Response로 반환하므로 blob->File로 래핑
     const file = await fetchBlobAsFile(res, "corrected.png");
     const objUrl = URL.createObjectURL(file);
 
     setCorrectedFile(file);
     setCorrectedUrl(objUrl);
-    setTab("corrected");
+    return file;  // ✅ 결과 반환
   };
 
   // -----------------------------
-  // Step 2) 프롬프트 생성(/generate-prompt)
+  // Step 2) 프롬프트 생성
   // -----------------------------
-  const runPrompt = async () => {
-    if (!correctedFile) throw new Error("보정 이미지가 없습니다");
-
+  const runPrompt = async (imgFile: File): Promise<string> => {
     setStep("prompting");
-    setErrorMsg(null);
 
     const form = new FormData();
-    form.append("file", correctedFile);
+    form.append("file", imgFile);
 
     const res = await fetch(`${API_BASE}/generate-prompt`, {
       method: "POST",
@@ -166,27 +182,19 @@ export default function KidsPage() {
     if (!p) throw new Error("프롬프트가 비어있습니다");
 
     setPrompt(p);
-    setTab("prompt");
+    return p;  // ✅ 결과 반환
   };
 
   // -----------------------------
-  // Step 3) 3D 생성(/generate-3d)
-  // - 백엔드에 prompt Form 필드 지원이 있으면 같이 넘김(추천)
-  // - 백엔드가 prompt를 안 받더라도(현재 코드) 무시될 수 있음
+  // Step 3) 3D 생성
   // -----------------------------
-  const run3D = async () => {
-    if (!correctedFile) throw new Error("보정 이미지가 없습니다");
-    if (!prompt) throw new Error("프롬프트가 없습니다");
-
+  const run3D = async (imgFile: File, promptText: string): Promise<string> => {
     setStep("modeling");
-    setErrorMsg(null);
 
     const form = new FormData();
-    form.append("file", correctedFile);
+    form.append("file", imgFile);
     if (referenceLdr) form.append("referenceLdr", referenceLdr);
-
-    // ✅ 백엔드가 prompt 받도록 해두면 진짜 순차 파이프라인 됨
-    form.append("prompt", prompt);
+    form.append("prompt", promptText);
 
     const res = await fetch(`${API_BASE}/generate-3d`, {
       method: "POST",
@@ -201,8 +209,6 @@ export default function KidsPage() {
 
     const data = (await res.json()) as Generate3DResp;
 
-    setFiles3d(data.files ?? null);
-
     const candidate =
       data.files?.glb ?? data.modelUrl ?? (data.files ? Object.values(data.files)[0] : null);
 
@@ -210,21 +216,19 @@ export default function KidsPage() {
     if (!finalGlb) throw new Error("GLB URL을 받지 못했습니다");
 
     setGlbUrl(finalGlb);
-    setTab("glb");
+    return finalGlb;  // ✅ 결과 반환
   };
 
   // -----------------------------
-  // Step 4) 브릭화(/brickify)
-  // - 네 백엔드에 아직 없으면 404가 정상임 (추가 구현 필요)
+  // Step 4) 브릭화
   // -----------------------------
-  const runBrickify = async () => {
-    if (!glbUrl) throw new Error("GLB URL이 없습니다");
-
+  const runBrickify = async (glbUrlParam: string): Promise<string> => {
     setStep("brickifying");
-    setErrorMsg(null);
 
     const form = new FormData();
-    form.append("glbUrl", glbUrl);
+    form.append("glbUrl", glbUrlParam);
+    form.append("age", age);
+    form.append("budget", String(budget));
 
     const res = await fetch(`${API_BASE}/brickify`, {
       method: "POST",
@@ -242,7 +246,7 @@ export default function KidsPage() {
     if (!ldr) throw new Error("LDR URL을 받지 못했습니다");
 
     setLdrUrl(ldr);
-    setTab("ldr");
+    return ldr;  // ✅ 결과 반환
   };
 
   // -----------------------------
@@ -250,27 +254,20 @@ export default function KidsPage() {
   // -----------------------------
   useEffect(() => {
     if (!rawFile) return;
-    if (autoRunOnceRef.current) return; // ✅ StrictMode 중복 실행 방지
+    if (autoRunOnceRef.current) return;
     autoRunOnceRef.current = true;
 
     (async () => {
-      try {
-        await runCorrect();
-        await runPrompt();
-        await run3D();
-        await runBrickify();
-        setStep("done");
-      } catch (e: any) {
-        setStep("error");
-        setErrorMsg(e?.message ?? "실패");
-      }
+      // ✅ 각 단계의 결과를 명시적으로 다음 단계에 전달
+      const imgFile = await withInfiniteRetry(() => runCorrect());
+      const promptText = await withInfiniteRetry(() => runPrompt(imgFile));
+      const glb = await withInfiniteRetry(() => run3D(imgFile, promptText));
+      await withInfiniteRetry(() => runBrickify(glb));
+      setStep("done");
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rawFile, referenceLdr]);
+    // eslint-disable-next-line react-hooks-deps
+  }, [rawFile, referenceLdr, age]);
 
-  // -----------------------------
-  // Render helpers
-  // -----------------------------
   const percent = useMemo(() => {
     switch (step) {
       case "correcting":
@@ -288,238 +285,48 @@ export default function KidsPage() {
     }
   }, [step]);
 
-  const label = useMemo(() => {
-    switch (step) {
-      case "correcting":
-        return "사진 보정 중...";
-      case "prompting":
-        return "프롬프트 생성 중...";
-      case "modeling":
-        return "3D 모델 생성 중...";
-      case "brickifying":
-        return "브릭화 중...";
-      case "done":
-        return "완료!";
-      case "error":
-        return "오류 발생";
-      default:
-        return "";
-    }
-  }, [step]);
-
   return (
     <div className="kidsPage">
       <Background3D entryDirection="float" />
 
       <div className="kidsPage__center">
-        <div className="kidsPage__title">레고 만들기</div>
-        <div className="kidsPage__sub">
-          {hasImage ? "단계별 생성 파이프라인" : referenceLdr ? "3D 미리보기" : "대기"}
-        </div>
-
-        {hasImage && (
-          <div className="kidsPage__progressWrap">
-            <div className="kidsPage__progressBar">
-              <div
-                className="kidsPage__progressFill"
-                style={{ width: `${percent}%` }}
-              />
-            </div>
-            <div className="kidsPage__progressText">{label}</div>
-          </div>
+        {/* ✅ 로딩 중일 때만 타이틀 표시 */}
+        {hasImage && step !== "done" && (
+          <div className="kidsPage__title">Creating Your LEGO</div>
         )}
 
-        {errorMsg && <div className="kidsPage__error">{errorMsg}</div>}
-
-        {/* 탭 */}
-        {hasImage && (
-          <div className="kidsPage__tabs">
-            <button
-              className={`kidsPage__tab ${tab === "corrected" ? "isActive" : ""
-                }`}
-              onClick={() => setTab("corrected")}
-              disabled={!correctedUrl}
-            >
-              보정 이미지
-            </button>
-            <button
-              className={`kidsPage__tab ${tab === "prompt" ? "isActive" : ""}`}
-              onClick={() => setTab("prompt")}
-              disabled={!prompt}
-            >
-              프롬프트
-            </button>
-            <button
-              className={`kidsPage__tab ${tab === "glb" ? "isActive" : ""}`}
-              onClick={() => setTab("glb")}
-              disabled={!glbUrl}
-            >
-              3D(GLB)
-            </button>
-            <button
-              className={`kidsPage__tab ${tab === "ldr" ? "isActive" : ""}`}
-              onClick={() => setTab("ldr")}
-              disabled={!ldrUrl}
-            >
-              LDR
-            </button>
-          </div>
+        {/* ✅ 업로드 파일 있으면: done 전까지 로딩(+미니게임) - 무한 재시도 */}
+        {hasImage && step !== "done" && (
+          <KidsLoadingScreen percent={percent} />
         )}
 
-        <div className="kidsPage__singleView">
-          {/* 이미지가 없고 모델만 있으면 미리보기 */}
-          {!hasImage && referenceLdr && (
-            <div className="kidsPage__3dViewer">
-              <KidsLdrPreview url={referenceLdr} />
-            </div>
-          )}
-
-          {!hasImage && !referenceLdr && (
-            <div className="kidsPage__empty">
-              <div>표시할 콘텐츠가 없습니다</div>
-            </div>
-          )}
-
-          {hasImage && (
-            <>
-              {tab === "corrected" && correctedUrl && (
-                <img
-                  src={correctedUrl}
-                  alt="corrected"
-                  className="kidsPage__resultImg"
-                  onError={() => setErrorMsg("보정 이미지 로드 실패")}
-                />
-              )}
-
-              {tab === "prompt" && (
-                <div className="kidsPage__promptBox">
-                  <textarea readOnly value={prompt} />
-                  <div className="kidsPage__actions">
-                    <button
-                      onClick={() => navigator.clipboard.writeText(prompt)}
-                      disabled={!prompt}
-                    >
-                      복사
-                    </button>
-
-                    <button
-                      onClick={async () => {
-                        try {
-                          await run3D();
-                          await runBrickify();
-                          setStep("done");
-                        } catch (e: any) {
-                          setStep("error");
-                          setErrorMsg(e?.message ?? "실패");
-                        }
-                      }}
-                      disabled={
-                        !prompt ||
-                        !correctedFile ||
-                        step === "modeling" ||
-                        step === "brickifying"
-                      }
-                    >
-                      이 프롬프트로 다시 생성
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {tab === "glb" && glbUrl && (
-                <div
-                  className="kidsPage__3dViewer"
-                  style={{ border: "2px solid #3b82f6" }}
-                >
-                  <KidsGlbViewer url={glbUrl} />
-                </div>
-              )}
-
-              {tab === "ldr" && ldrUrl && (
-                <div className="kidsPage__3dViewer">
-                  <KidsLdrPreview url={ldrUrl} />
-                </div>
-              )}
-
-              {/* 단계별 재시도 */}
-              <div className="kidsPage__retryRow">
-                <button
-                  onClick={async () => {
-                    try {
-                      await runCorrect();
-                      await runPrompt();
-                      await run3D();
-                      await runBrickify();
-                      setStep("done");
-                    } catch (e: any) {
-                      setStep("error");
-                      setErrorMsg(e?.message ?? "실패");
-                    }
-                  }}
-                  disabled={step === "correcting"}
-                >
-                  처음부터 다시
-                </button>
-
-                <button
-                  onClick={async () => {
-                    try {
-                      await runPrompt();
-                      await run3D();
-                      await runBrickify();
-                      setStep("done");
-                    } catch (e: any) {
-                      setStep("error");
-                      setErrorMsg(e?.message ?? "실패");
-                    }
-                  }}
-                  disabled={!correctedFile || step === "prompting"}
-                >
-                  프롬프트부터
-                </button>
-
-                <button
-                  onClick={async () => {
-                    try {
-                      await run3D();
-                      await runBrickify();
-                      setStep("done");
-                    } catch (e: any) {
-                      setStep("error");
-                      setErrorMsg(e?.message ?? "실패");
-                    }
-                  }}
-                  disabled={!prompt || step === "modeling"}
-                >
-                  3D부터
-                </button>
-
-                <button
-                  onClick={async () => {
-                    try {
-                      await runBrickify();
-                      setStep("done");
-                    } catch (e: any) {
-                      setStep("error");
-                      setErrorMsg(e?.message ?? "실패");
-                    }
-                  }}
-                  disabled={!glbUrl || step === "brickifying"}
-                >
-                  브릭화만
-                </button>
+        {/* ✅ 완료되면 결과 카드 */}
+        {hasImage && step === "done" && ldrUrl && (
+          <>
+            <div className="kidsPage__resultTitle">Your LEGO is Ready!</div>
+            <div className="kidsPage__resultCard">
+              <div className="kidsPage__3dViewer">
+                <KidsLdrPreview url={ldrUrl} />
               </div>
+            </div>
+          </>
+        )}
 
-              {/* 디버그: 3D 파일들 */}
-              {files3d && (
-                <div className="kidsPage__debug">
-                  <div className="kidsPage__debugTitle">3D files</div>
-                  <pre>{JSON.stringify(files3d, null, 2)}</pre>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+        {/* ✅ 이미지 없이 referenceLdr로 들어온 경우도 결과만 */}
+        {!hasImage && referenceLdr && (
+          <>
+            <div className="kidsPage__resultTitle">LEGO Preview</div>
+            <div className="kidsPage__resultCard">
+              <div className="kidsPage__3dViewer">
+                <KidsLdrPreview url={referenceLdr} />
+              </div>
+            </div>
+          </>
+        )}
+
+        {!hasImage && !referenceLdr && (
+          <div className="kidsPage__empty">No content to display</div>
+        )}
       </div>
     </div>
   );

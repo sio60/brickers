@@ -292,6 +292,35 @@
   overflow: hidden;
 }
 
+/* ✅ 결과 타이틀 - 카드 위에 표시 */
+.kidsPage__resultTitle {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: #111;
+  text-align: center;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+/* ✅ 결과 카드 */
+.kidsPage__resultCard {
+  width: 100%;
+  max-width: 800px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 2px solid #111;
+  padding: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.kidsPage__resultCard .kidsPage__3dViewer {
+  height: 500px;
+  border-radius: 0;
+  background: #fafafa;
+}
+
 /* Empty state */
 .kidsPage__empty {
   display: flex;
