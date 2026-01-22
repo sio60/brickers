@@ -90,9 +90,9 @@ export default function KidsPage() {
 
   // ✅ 레벨별 예산 고정
   const budget = useMemo(() => {
-    if (age === "4-5") return 20;
-    if (age === "6-7") return 60;
-    return 120;
+    if (age === "4-5") return 50;
+    if (age === "6-7") return 80;
+    return 200;
   }, [age]);
 
   // navigate state에서 파일 받기
@@ -292,7 +292,7 @@ export default function KidsPage() {
       <div className="kidsPage__center">
         {/* ✅ 로딩 중일 때만 타이틀 표시 */}
         {hasImage && step !== "done" && (
-          <div className="kidsPage__title">Creating Your LEGO</div>
+          <div className="kidsPage__title">Creating Your BRICK</div>
         )}
 
         {/* ✅ 업로드 파일 있으면: done 전까지 로딩(+미니게임) - 무한 재시도 */}
@@ -303,8 +303,9 @@ export default function KidsPage() {
         {/* ✅ 완료되면 결과 카드 */}
         {hasImage && step === "done" && ldrUrl && (
           <>
-            <div className="kidsPage__resultTitle">Your LEGO is Ready!</div>
+            <div className="kidsPage__resultTitle">Your Brick is Ready!</div>
             <div className="kidsPage__resultCard">
+
               <div className="kidsPage__3dViewer">
                 <KidsLdrPreview url={ldrUrl} />
               </div>
@@ -315,7 +316,7 @@ export default function KidsPage() {
         {/* ✅ 이미지 없이 referenceLdr로 들어온 경우도 결과만 */}
         {!hasImage && referenceLdr && (
           <>
-            <div className="kidsPage__resultTitle">LEGO Preview</div>
+            <div className="kidsPage__resultTitle">Brick Preview</div>
             <div className="kidsPage__resultCard">
               <div className="kidsPage__3dViewer">
                 <KidsLdrPreview url={referenceLdr} />
