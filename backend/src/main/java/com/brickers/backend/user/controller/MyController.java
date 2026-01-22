@@ -6,8 +6,8 @@ import com.brickers.backend.user.dto.MyProfileResponse;
 import com.brickers.backend.user.dto.MyProfileUpdateRequest;
 import com.brickers.backend.user.service.MyService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/api/my")
@@ -16,20 +16,25 @@ public class MyController {
 
     private final MyService myService;
 
+    @GetMapping("/profile")
+    public MyProfileResponse getMyProfile(Authentication authentication) {
+        return myService.getMyProfile(authentication);
+    }
+
     @PatchMapping("/profile")
     public MyProfileResponse updateMyProfile(
-            OAuth2AuthenticationToken auth,
+            Authentication authentication,
             @RequestBody MyProfileUpdateRequest req) {
-        return myService.updateMyProfile(auth, req);
+        return myService.updateMyProfile(authentication, req);
     }
 
     @GetMapping("/membership")
-    public MyMembershipResponse getMyMembership(OAuth2AuthenticationToken auth) {
-        return myService.getMyMembership(auth);
+    public MyMembershipResponse getMyMembership(Authentication authentication) {
+        return myService.getMyMembership(authentication);
     }
 
     @DeleteMapping("/account")
-    public DeleteMyAccountResponse deleteMyAccount(OAuth2AuthenticationToken auth) {
-        return myService.requestDeleteMyAccount(auth);
+    public DeleteMyAccountResponse deleteMyAccount(Authentication authentication) {
+        return myService.requestDeleteMyAccount(authentication);
     }
 }

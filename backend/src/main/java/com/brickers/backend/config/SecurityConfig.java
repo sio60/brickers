@@ -34,9 +34,15 @@ public class SecurityConfig {
                 http
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .csrf(csrf -> csrf.disable())
-                                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                .exceptionHandling(ex -> ex.authenticationEntryPoint(
-                                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+
+                                // ✅ OAuth2 로그인 플로우는 세션이 필요할 수 있음
+                                // (authorization request 저장/콜백 처리)
+                                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+
+                                // ✅ API는 401로 떨어지게 (/login redirect 방지)
+                                .exceptionHandling(ex -> ex
+                                                .authenticationEntryPoint(
+                                                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
 
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/", "/error", "/favicon.ico").permitAll()
@@ -50,14 +56,21 @@ public class SecurityConfig {
                                                 .permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
 
-                                                // 나머지 정책은 기존대로
+                                                // ✅ 내 정보 API (JWT 필요)
+                                                .requestMatchers("/api/my/**").authenticated()
+
+                                                // 갤러리
                                                 .requestMatchers(HttpMethod.GET, "/api/gallery/**").permitAll()
                                                 .requestMatchers("/api/gallery/**").authenticated()
 
-                                                .requestMatchers("/swagger", "/swagger/**", "/swagger-ui.html",
-                                                                "/swagger-ui/**", "/v3/api-docs/**")
+                                                // Swagger
+                                                .requestMatchers(
+                                                                "/swagger", "/swagger/**",
+                                                                "/swagger-ui.html", "/swagger-ui/**",
+                                                                "/v3/api-docs/**")
                                                 .permitAll()
 
+                                                // Kids API
                                                 .requestMatchers(HttpMethod.POST, "/api/kids/render").permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/api/kids/rendered/**").permitAll()
 
@@ -70,7 +83,7 @@ public class SecurityConfig {
                                                 .successHandler(oAuth2LoginSuccessHandler)
                                                 .failureUrl(frontBaseUrl + "/auth/failure"))
 
-                                // ✅ 이게 없으면 JWT 인증 자체가 안 됨
+                                // ✅ JWT 필터 (Bearer 토큰 처리)
                                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
                 return http.build();
@@ -85,7 +98,10 @@ public class SecurityConfig {
                                 "https://brickers.shop",
                                 "https://www.brickers.shop"));
                 config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+
+                // ✅ 지금 단계에선 * 허용해도 됨 (추후 제한 가능)
+                config.setAllowedHeaders(List.of("*"));
+
                 config.setAllowCredentials(true);
 
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

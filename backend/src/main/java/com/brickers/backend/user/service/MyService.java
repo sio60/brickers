@@ -8,8 +8,8 @@ import com.brickers.backend.user.entity.AccountState;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.Authentication;
 
 import java.time.LocalDateTime;
 
@@ -21,14 +21,14 @@ public class MyService {
     private final CurrentUserService currentUserService;
 
     /** 내 프로필 조회 */
-    public MyProfileResponse getMyProfile(OAuth2AuthenticationToken auth) {
-        User user = currentUserService.get(auth);
+    public MyProfileResponse getMyProfile(Authentication authentication) {
+        User user = currentUserService.get(authentication);
         return toProfileResponse(user);
     }
 
     /** 내 프로필 수정(PATCH) */
-    public MyProfileResponse updateMyProfile(OAuth2AuthenticationToken auth, MyProfileUpdateRequest req) {
-        User user = currentUserService.get(auth);
+    public MyProfileResponse updateMyProfile(Authentication authentication, MyProfileUpdateRequest req) {
+        User user = currentUserService.get(authentication);
 
         // nickname
         if (req.getNickname() != null) {
@@ -61,8 +61,8 @@ public class MyService {
     }
 
     /** 내 멤버십 조회 */
-    public MyMembershipResponse getMyMembership(OAuth2AuthenticationToken auth) {
-        User user = currentUserService.get(auth);
+    public MyMembershipResponse getMyMembership(Authentication authentication) {
+        User user = currentUserService.get(authentication);
         return MyMembershipResponse.builder()
                 .membershipPlan(user.getMembershipPlan())
                 .expiresAt(null)
@@ -70,8 +70,8 @@ public class MyService {
     }
 
     /** 회원 탈퇴(soft delete): accountState=DELETED + deletedAt 기록 */
-    public DeleteMyAccountResponse requestDeleteMyAccount(OAuth2AuthenticationToken auth) {
-        User user = currentUserService.get(auth);
+    public DeleteMyAccountResponse requestDeleteMyAccount(Authentication authentication) {
+        User user = currentUserService.get(authentication);
 
         if (user.getAccountState() == AccountState.DELETED) {
             return DeleteMyAccountResponse.builder()

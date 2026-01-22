@@ -51,6 +51,7 @@ logging:
     "[org.springframework.data.mongodb.core.MongoTemplate]": DEBUG
     "[org.springframework.security]": DEBUG
     "[org.springframework.security.oauth2]": DEBUG
+    "[org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping]": DEBUG
 
 springdoc:
   swagger-ui:
