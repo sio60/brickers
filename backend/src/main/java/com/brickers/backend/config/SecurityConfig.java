@@ -1,6 +1,7 @@
 package com.brickers.backend.config;
 
-import com.brickers.backend.auth.OAuth2LoginSuccessHandler;
+import com.brickers.backend.auth.jwt.JwtAuthFilter;
+import com.brickers.backend.auth.oauth.OAuth2LoginSuccessHandler;
 import com.brickers.backend.security.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,22 +10,21 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.*;
 
 import java.util.List;
 
 @Configuration
-@EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
         private final CustomOAuth2UserService customOAuth2UserService;
         private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+        private final JwtAuthFilter jwtAuthFilter;
 
         @Value("${app.front-base-url:http://localhost:5173}")
         private String frontBaseUrl;
@@ -34,27 +34,30 @@ public class SecurityConfig {
                 http
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .csrf(csrf -> csrf.disable())
-
-                                // ✅ API는 401로 떨어지게 (기본 /login 리다이렉트 방지)
-                                .exceptionHandling(ex -> ex
-                                                .authenticationEntryPoint(
-                                                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
 
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/", "/error", "/favicon.ico").permitAll()
-                                                .requestMatchers("/auth/**", "/logout").permitAll()
-                                                .requestMatchers("/api/auth/**").permitAll()
+
+                                                // OAuth2 시작/콜백
+                                                .requestMatchers("/auth/**").permitAll()
+
+                                                // ✅ auth API: refresh/logout는 permitAll, me는 인증 필요
+                                                .requestMatchers(HttpMethod.POST, "/api/auth/refresh",
+                                                                "/api/auth/logout")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+
+                                                // 나머지 정책은 기존대로
                                                 .requestMatchers(HttpMethod.GET, "/api/gallery/**").permitAll()
                                                 .requestMatchers("/api/gallery/**").authenticated()
 
-                                                // ✅ Swagger 공개
-                                                .requestMatchers(
-                                                                "/swagger", "/swagger/**",
-                                                                "/swagger-ui.html", "/swagger-ui/**",
-                                                                "/v3/api-docs/**")
+                                                .requestMatchers("/swagger", "/swagger/**", "/swagger-ui.html",
+                                                                "/swagger-ui/**", "/v3/api-docs/**")
                                                 .permitAll()
 
-                                                // ✅ Kids API 공개
                                                 .requestMatchers(HttpMethod.POST, "/api/kids/render").permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/api/kids/rendered/**").permitAll()
 
@@ -65,15 +68,10 @@ public class SecurityConfig {
                                                 .redirectionEndpoint(r -> r.baseUri("/auth/*/callback"))
                                                 .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
                                                 .successHandler(oAuth2LoginSuccessHandler)
-                                                // .defaultSuccessUrl(frontBaseUrl + "/auth/success", true)
                                                 .failureUrl(frontBaseUrl + "/auth/failure"))
 
-                                .logout(logout -> logout
-                                                .logoutUrl("/logout")
-                                                .invalidateHttpSession(true)
-                                                .clearAuthentication(true)
-                                                .deleteCookies("JSESSIONID")
-                                                .logoutSuccessUrl(frontBaseUrl));
+                                // ✅ 이게 없으면 JWT 인증 자체가 안 됨
+                                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
                 return http.build();
         }
@@ -87,7 +85,7 @@ public class SecurityConfig {
                                 "https://brickers.shop",
                                 "https://www.brickers.shop"));
                 config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                config.setAllowedHeaders(List.of("*"));
+                config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
                 config.setAllowCredentials(true);
 
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

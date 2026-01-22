@@ -26,7 +26,7 @@ public class AuditLog {
     private String actorUserId;
 
     // 세션 추적(가능하면)
-    private String sessionId;
+    private String tokenId;
 
     // 요청 정보(감사 목적)
     private String ip;

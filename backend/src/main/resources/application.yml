@@ -37,6 +37,9 @@ spring:
 
 app:
   front-base-url: ${FRONT_BASE_URL:http://localhost:5173}
+  cookie:
+    secure: ${COOKIE_SECURE:false}   # 로컬은 false, 배포는 true
+    same-site: ${COOKIE_SAMESITE:Lax} # 로컬 Lax, 배포 None
 
 jwt:
   secret: ${JWT_SECRET}
