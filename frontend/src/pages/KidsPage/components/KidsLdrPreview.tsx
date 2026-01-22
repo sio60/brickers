@@ -1,11 +1,12 @@
+// KidsLdrPreview.tsx (네 기존 코드에 "NEXT 버튼"만 추가하는 버전)
 import { Canvas } from "@react-three/fiber";
 import { Bounds, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ 추가
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 
-// ✅ gkjohnson CDN (LdrViewer와 동일)
 const CDN_BASE =
   "https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/";
 
@@ -37,7 +38,6 @@ function LdrModel({
     manager.setURLModifier((u) => {
       let fixed = u.replace(/\\/g, "/");
 
-      // CDN 쓸 때 parts/p 폴더 보정
       if (
         fixed.includes("ldraw-parts-library") &&
         !fixed.includes("/parts/") &&
@@ -65,7 +65,7 @@ function LdrModel({
 
     try {
       (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any);
-    } catch { }
+    } catch {}
 
     return l;
   }, [partsLibraryPath]);
@@ -87,7 +87,6 @@ function LdrModel({
         return;
       }
 
-      // LDraw -> Three 축 보정
       g.rotation.x = Math.PI;
 
       prev = g;
@@ -109,15 +108,32 @@ function LdrModel({
   );
 }
 
-export default function KidsLdrPreview({
-  url,
-  partsLibraryPath,
-  ldconfigUrl,
-}: Props) {
+export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl }: Props) {
   const [loading, setLoading] = useState(true);
+  const nav = useNavigate(); // ✅ 추가
 
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
+      {/* ✅ NEXT → 버튼(오른쪽 하단) : 스텝 화면으로 이동 */}
+      <button
+        onClick={() => nav(`/kids/steps?url=${encodeURIComponent(url)}`)}
+        style={{
+          position: "absolute",
+          right: 12,
+          bottom: 12,
+          zIndex: 20,
+          padding: "10px 14px",
+          borderRadius: 14,
+          border: "1px solid rgba(0,0,0,0.12)",
+          background: "white",
+          boxShadow: "0 6px 16px rgba(0,0,0,0.10)",
+          cursor: "pointer",
+          fontWeight: 700,
+        }}
+      >
+        NEXT →
+      </button>
+
       {loading && (
         <div style={{
           position: "absolute",
@@ -129,19 +145,11 @@ export default function KidsLdrPreview({
           zIndex: 10,
         }}>
           <div style={{ textAlign: "center", color: "#666" }}>
-            <div style={{
-              width: 32,
-              height: 32,
-              border: "3px solid #ddd",
-              borderTopColor: "#3b82f6",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              margin: "0 auto 8px",
-            }} />
             3D 로딩 중...
           </div>
         </div>
       )}
+
       <Canvas
         camera={{ position: [200, 0, 200], fov: 45 }}
         dpr={[1, 2]}
@@ -150,18 +158,9 @@ export default function KidsLdrPreview({
         <ambientLight intensity={0.9} />
         <directionalLight position={[3, 5, 2]} intensity={1.0} />
 
-        <LdrModel
-          url={url}
-          partsLibraryPath={partsLibraryPath}
-          ldconfigUrl={ldconfigUrl}
-        />
+        <LdrModel url={url} partsLibraryPath={partsLibraryPath} ldconfigUrl={ldconfigUrl} />
 
-        <OrbitControls
-          enablePan={false}
-          enableZoom={true}
-          autoRotate
-          autoRotateSpeed={1.2}
-        />
+        <OrbitControls enablePan={false} enableZoom autoRotate autoRotateSpeed={1.2} />
       </Canvas>
     </div>
   );

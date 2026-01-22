@@ -78,7 +78,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
       <div className="kidsModelModal__overlay" onClick={onClose}>
         <div className="kidsModelModal" onClick={(e) => e.stopPropagation()}>
           <div className="kidsModelModal__head">
-            <div className="kidsModelModal__title">레고 만들기</div>
+            <div className="kidsModelModal__title">Creating Brick</div>
             <div className="kidsModelModal__sub">모델 선택 또는 이미지 업로드</div>
             <button className="kidsModelModal__close" onClick={onClose} aria-label="close">
               ✕

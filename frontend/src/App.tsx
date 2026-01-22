@@ -6,6 +6,8 @@ import KidsAgeSelection from "./pages/KidsPage/KidsAgeSelection";
 import Layout from "./Layout";
 import AuthSuccess from "./pages/Auth/AuthSuccess";
 import AuthFailure from "./pages/Auth/AuthFailure";
+import KidsStepPage from "./pages/KidsPage/KidsStepPage";
+
 
 export default function App() {
   return (
@@ -14,6 +16,7 @@ export default function App() {
         <Route path="/" element={<KidsAgeSelection />} />
         {/* <Route path="/main-old" element={<MainPage />} /> */}
         <Route path="/kids/main" element={<KidsPage />} />
+        <Route path="/kids/steps" element={<KidsStepPage />} />
         <Route path="/adult" element={<AdultPage />} />
 
         <Route path="/auth/success" element={<AuthSuccess />} />
