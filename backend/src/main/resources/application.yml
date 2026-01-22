@@ -8,6 +8,14 @@ spring:
   config:
     import: "optional:file:.env[.properties]"
 
+  data:
+    data:
+      mongodb:
+        host: ${MONGO_HOST}    
+        port: ${MONGO_PORT}      
+        database: ${MONGO_DB_NAME} 
+        username: ${MONGO_USER}   
+        password: ${MONGO_PASSWORD}
   mongodb:
     uri: ${PRIMARY_MONGODB_URI}
 
