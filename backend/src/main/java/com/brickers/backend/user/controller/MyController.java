@@ -1,13 +1,12 @@
 package com.brickers.backend.user.controller;
 
-import com.brickers.backend.user.dto.DeleteMyAccountResponse;
-import com.brickers.backend.user.dto.MyMembershipResponse;
-import com.brickers.backend.user.dto.MyProfileResponse;
-import com.brickers.backend.user.dto.MyProfileUpdateRequest;
+import com.brickers.backend.user.MySettingsResponse;
+import com.brickers.backend.user.dto.*;
 import com.brickers.backend.user.service.MyService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/my")
@@ -36,5 +35,34 @@ public class MyController {
     @DeleteMapping("/account")
     public DeleteMyAccountResponse deleteMyAccount(Authentication authentication) {
         return myService.requestDeleteMyAccount(authentication);
+    }
+
+    @GetMapping("/settings")
+    public MySettingsResponse mySettings(Authentication authentication) {
+        return myService.getMySettings(authentication);
+    }
+
+    /** ✅ 내 생성 작업 목록 */
+    @GetMapping("/jobs")
+    public Page<MyJobResponse> myJobs(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        return myService.listMyJobs(authentication, page, size);
+    }
+
+    /** ✅ 마이페이지 한 번에 로드 */
+    @GetMapping("/overview")
+    public MyOverviewResponse myOverview(Authentication authentication) {
+        return myService.getMyOverview(authentication);
+    }
+
+    /** ✅ (코어 전) job 재시도 요청 */
+    @PostMapping("/jobs/{jobId}/retry")
+    public MyJobResponse retry(
+            Authentication authentication,
+            @PathVariable String jobId,
+            @RequestBody(required = false) MyJobRetryRequest req) {
+        return myService.retryJob(authentication, jobId, req);
     }
 }
