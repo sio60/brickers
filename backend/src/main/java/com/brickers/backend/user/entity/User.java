@@ -20,10 +20,7 @@ import lombok.NoArgsConstructor;
 @Document(collection = "users")
 @CompoundIndexes({
         // ✅ provider + providerId 조합으로 유니크 보장 (카카오/구글 providerId 충돌 방지)
-        @CompoundIndex(name = "ux_provider_providerId", def = "{'provider': 1, 'providerId': 1}", unique = true),
-
-        // (선택) 이메일 조회가 잦다면 인덱스 추천 (unique는 정책 확정 후)
-        @CompoundIndex(name = "ix_email", def = "{'email': 1}")
+        @CompoundIndex(name = "ux_provider_providerId", def = "{'provider': 1, 'providerId': 1}", unique = true)
 })
 @Data
 @Builder
@@ -42,7 +39,7 @@ public class User {
     private String providerId;
 
     // 사용자 정보
-    @Indexed // 조회용 (unique는 정책 확정 후)
+    @Indexed(name = "ix_email") // ✅ 기존 DB 인덱스 이름과 맞춤
     private String email;
 
     @Indexed // 닉네임 검색/중복체크를 한다면 인덱스 추천 (unique는 운영 정책 후)

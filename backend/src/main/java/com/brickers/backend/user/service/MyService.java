@@ -1,15 +1,20 @@
 package com.brickers.backend.user.service;
 
-import com.brickers.backend.user.dto.DeleteMyAccountResponse;
-import com.brickers.backend.user.dto.MyMembershipResponse;
-import com.brickers.backend.user.dto.MyProfileResponse;
-import com.brickers.backend.user.dto.MyProfileUpdateRequest;
+import com.brickers.backend.gallery.service.GalleryService;
+import com.brickers.backend.job.entity.GenerateJobEntity;
+import com.brickers.backend.job.entity.JobStage;
+import com.brickers.backend.job.entity.JobStatus;
+import com.brickers.backend.job.repository.GenerateJobRepository;
+import com.brickers.backend.user.MySettingsResponse;
+import com.brickers.backend.user.dto.*;
 import com.brickers.backend.user.entity.AccountState;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
@@ -19,6 +24,10 @@ public class MyService {
 
     private final UserRepository userRepository;
     private final CurrentUserService currentUserService;
+
+    // ✅ 추가
+    private final GalleryService galleryService;
+    private final GenerateJobRepository generateJobRepository;
 
     /** 내 프로필 조회 */
     public MyProfileResponse getMyProfile(Authentication authentication) {
@@ -48,10 +57,17 @@ public class MyService {
             user.setBio(bio);
         }
 
-        // profile image (URL만 허용 / 아니면 null 처리)
+        // profile image (URL만 허용 / 빈 문자열은 변경 없음)
         if (req.getProfileImage() != null) {
             String img = req.getProfileImage().trim();
-            user.setProfileImage(img.startsWith("http") ? img : null);
+
+            if (img.isEmpty()) {
+                // ✅ 변경 없음: 기존 이미지 유지
+            } else if (img.startsWith("http")) {
+                user.setProfileImage(img);
+            } else {
+                throw new IllegalArgumentException("profileImage는 http(s) URL만 허용됩니다.");
+            }
         }
 
         user.setUpdatedAt(LocalDateTime.now());
@@ -97,6 +113,103 @@ public class MyService {
                 .success(true)
                 .message("회원 탈퇴가 정상적으로 처리되었습니다.")
                 .build();
+    }
+
+    /** 내 설정 조회 */
+    public MySettingsResponse getMySettings(Authentication authentication) {
+        User user = currentUserService.get(authentication);
+        user.ensureDefaults();
+        return MySettingsResponse.from(user);
+    }
+
+    /** ✅ 내 생성 작업 목록 */
+    public Page<MyJobResponse> listMyJobs(Authentication authentication, int page, int size) {
+        User user = currentUserService.get(authentication);
+
+        return generateJobRepository
+                .findByUserIdOrderByCreatedAtDesc(user.getId(), PageRequest.of(page, size))
+                .map(j -> {
+                    j.ensureDefaults();
+                    return MyJobResponse.from(j);
+                });
+    }
+
+    /** ✅ 마이페이지 한 번에 로드: settings + 최근 내 글 + 최근 jobs */
+    public MyOverviewResponse getMyOverview(Authentication authentication) {
+        User user = currentUserService.get(authentication);
+        user.ensureDefaults();
+
+        MySettingsResponse settings = MySettingsResponse.from(user);
+
+        // 최근 내 글 6개 (기존 /api/gallery/my 와 동일 소스)
+        var myPostsPage = galleryService.listMine(authentication, 0, 6, "latest");
+        var galleryOverview = MyOverviewResponse.GalleryOverview.builder()
+                .totalCount(myPostsPage.getTotalElements())
+                .recent(myPostsPage.getContent())
+                .build();
+
+        // 최근 jobs 6개
+        var jobsPage = generateJobRepository.findByUserIdOrderByCreatedAtDesc(
+                user.getId(),
+                PageRequest.of(0, 6));
+
+        var jobsRecent = jobsPage.getContent().stream().map(j -> {
+            j.ensureDefaults();
+            return MyJobResponse.from(j);
+        }).toList();
+
+        var jobsOverview = MyOverviewResponse.JobsOverview.builder()
+                .totalCount(jobsPage.getTotalElements())
+                .recent(jobsRecent)
+                .build();
+
+        return MyOverviewResponse.builder()
+                .settings(settings)
+                .gallery(galleryOverview)
+                .jobs(jobsOverview)
+                .build();
+    }
+
+    /** ✅ (코어 전) job 재시도 요청: 상태를 QUEUED로 되돌리고 fromStage 기록 */
+    public MyJobResponse retryJob(Authentication authentication, String jobId, MyJobRetryRequest req) {
+        User user = currentUserService.get(authentication);
+
+        GenerateJobEntity job = generateJobRepository.findById(jobId)
+                .orElseThrow(() -> new IllegalArgumentException("job을 찾을 수 없습니다. id=" + jobId));
+
+        // 기존 문서 호환 + null 방지
+        job.ensureDefaults();
+
+        if (!job.getUserId().equals(user.getId())) {
+            throw new IllegalStateException("내 job만 재시도할 수 있습니다.");
+        }
+
+        // (선택) 이미 RUNNING이면 재시도 막기
+        if (job.getStatus() == JobStatus.RUNNING) {
+            throw new IllegalStateException("진행 중인 작업은 재시도할 수 없습니다.");
+        }
+
+        // fromStage가 없으면 현재 stage부터
+        JobStage fromStage = (req == null) ? null : req.getFromStage();
+        if (fromStage == null) {
+            fromStage = job.getStage();
+        }
+
+        // 재시도 기록
+        job.setRequestedFromStage(fromStage);
+
+        // 상태 초기화
+        job.setStatus(JobStatus.QUEUED);
+        job.setStage(fromStage);
+        job.setErrorMessage(null);
+
+        LocalDateTime now = LocalDateTime.now();
+        job.setStageUpdatedAt(now);
+        job.setUpdatedAt(now);
+
+        generateJobRepository.save(job);
+
+        return MyJobResponse.from(job);
     }
 
     /** 응답 DTO 매핑 */

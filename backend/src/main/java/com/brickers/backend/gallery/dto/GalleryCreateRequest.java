@@ -1,0 +1,16 @@
+package com.brickers.backend.gallery.dto;
+
+import lombok.Data;
+
+import java.util.List;
+
+import com.brickers.backend.gallery.entity.Visibility;
+
+@Data
+public class GalleryCreateRequest {
+    private String title;
+    private String content;
+    private List<String> tags;
+    private String thumbnailUrl; // 현재는 URL 문자열만
+    private Visibility visibility; // null이면 PUBLIC
+}
