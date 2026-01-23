@@ -8,11 +8,7 @@ services:
       - "${BACKEND_PORT}:8080"
     environment:
       # ✅ MongoDB 설정
-      - MONGO_USER=${MONGO_USER}
-      - MONGO_PASSWORD=${MONGO_PASSWORD}
-      - MONGO_HOST=${MONGO_HOST}
-      - MONGO_PORT=${MONGO_PORT}
-      - MONGO_DB_NAME=${MONGO_DB_NAME}
+      - PRIMARY_MONGODB_URI=${PRIMARY_MONGODB_URI}
       
       # ✅ [추가] AWS S3 설정 (이게 없으면 업로드 안 됨)
       - AWS_S3_BUCKET=${AWS_S3_BUCKET}
