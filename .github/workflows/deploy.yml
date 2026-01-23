@@ -13,6 +13,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 디스크 청소 (용량 부족 방지용)
+      - name: Clean up disk space
+        run: |
+          echo "=== Before cleanup ==="
+          df -h
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo docker system prune -af || true
+          echo "=== After cleanup ==="
+          df -h
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -32,7 +42,7 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/brickers-backend:${{ github.sha }}
           provenance: false
           no-cache: true
-          # 백엔드 빌드용 가짜 값 (Docker 빌드 통과용)
+          # 백엔드 빌드 통과용 가짜 값 (실행 시엔 .env 값 사용됨)
           build-args: |
             AWS_S3_BUCKET=dummy
 
@@ -46,7 +56,7 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/brickers-frontend:${{ github.sha }}
           provenance: false
           no-cache: true
-          # ✅ [수정] 프론트엔드 필수 변수 추가
+          # 프론트엔드는 빌드 시점에 환경변수가 꼭 필요함
           build-args: |
             VITE_KAKAO_CLIENT_ID=${{ secrets.VITE_KAKAO_CLIENT_ID }}
             VITE_KAKAO_REDIRECT_URI=${{ secrets.VITE_KAKAO_REDIRECT_URI }}
@@ -67,6 +77,9 @@ jobs:
           script: |
             set -e
             echo "🚀 Starting deployment on EC2..."
+            
+            # 프로젝트 폴더가 없으면 생성
+            mkdir -p ~/brickers
             cd ~/brickers
             
             echo "📄 Creating .env file..."
@@ -80,7 +93,7 @@ jobs:
             MONGO_PORT=${{ secrets.MONGO_PORT }}
             MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }}
             
-            # AI / Python
+            # AI / Python Service
             AI_PORT=${{ secrets.AI_PORT }}
             AI_MONGODB_URI=${{ secrets.AI_MONGODB_URI }}
             AI_MONGODB_NAME=${{ secrets.AI_MONGODB_NAME }}
@@ -89,23 +102,23 @@ jobs:
             AI_VECTOR_FIELD=${{ secrets.AI_VECTOR_FIELD }}
             AI_EMBEDDING_DIMS=${{ secrets.AI_EMBEDDING_DIMS }}
             
-            # ✅ [수정] Frontend Env (EC2 런타임용)
+            # Frontend Vars (런타임 참조용)
             VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
             VITE_KAKAO_CLIENT_ID=${{ secrets.VITE_KAKAO_CLIENT_ID }}
             VITE_KAKAO_REDIRECT_URI=${{ secrets.VITE_KAKAO_REDIRECT_URI }}
             
-            # ✅ [수정] Backend - JWT (필수)
+            # Backend - JWT (필수)
             JWT_SECRET=${{ secrets.JWT_SECRET }}
-            JWT_ACCESS_EXPIRATION=3600000
-            JWT_REFRESH_EXPIRATION=604800000
+            JWT_ACCESS_EXPIRATION=${{ secrets.JWT_ACCESS_EXPIRATION }}
+            JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }}
             
-            # ✅ [수정] Backend - AWS S3 (필수)
+            # Backend - AWS S3 (필수)
             AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
             AWS_REGION=${{ secrets.AWS_REGION }}
             AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
             
-            # ✅ [수정] Backend - OAuth
+            # Backend - OAuth
             KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
             KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }} 
             KAKAO_ADMIN_KEY=${{ secrets.KAKAO_ADMIN_KEY }}
@@ -115,10 +128,8 @@ jobs:
             GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }}
             GOOGLE_LOCAL_REDIRECT_URI=${{ secrets.GOOGLE_LOCAL_REDIRECT_URI }}
             
-            # ✅ [수정] Base URLs
+            # Base URLs & Ports
             FRONT_BASE_URL=${{ secrets.FRONT_BASE_URL }}
-            
-            # Ports
             BACKEND_PORT=${{ secrets.BACKEND_PORT }}
             FRONTEND_PORT=${{ secrets.FRONTEND_PORT }}
             EOF
@@ -129,7 +140,7 @@ jobs:
             echo "🔁 Restarting containers..."
             docker-compose up -d
             
-            echo "🧹 Cleaning up..."
+            echo "🧹 Cleaning up unused images..."
             docker image prune -f
             
-            echo "✅ Deployment completed!"
+            echo "✅ Deployment completed successfully!"
