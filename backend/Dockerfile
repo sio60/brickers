@@ -15,7 +15,7 @@ ENV MONGO_PORT=27017
 ENV MONGO_DB_NAME=brickers
 ENV MONGO_USER=admin
 ENV MONGO_PASSWORD=password
-ENV MONGODB_URI=mongodb://localhost:27017/brickers
+ENV PRIMARY_MONGODB_URI=mongodb+srv://brickers_ai:q1w2e3r4@kmj.bui5j8b.mongodb.net/brickers_vector?retryWrites=true&w=majority
 
 # 2) AWS S3 관련 (이게 문제였음)
 ENV AWS_S3_BUCKET=build-time-dummy-bucket
