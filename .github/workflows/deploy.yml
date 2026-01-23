@@ -87,7 +87,7 @@ jobs:
             DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
             
             # MongoDB
-            PRIMARY_MONGODB_URI=${{ secrets.PRIMARY_MONGODB_URI }}
+            PRIMARY_MONGO_URI=${{ secrets.PRIMARY_MONGO_URI }}
             
             # AI / Python Service
             AI_PORT=${{ secrets.AI_PORT }}
@@ -102,9 +102,7 @@ jobs:
             VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
             VITE_KAKAO_CLIENT_ID=${{ secrets.VITE_KAKAO_CLIENT_ID }}
             VITE_KAKAO_REDIRECT_URI=${{ secrets.VITE_KAKAO_REDIRECT_URI }}
-            JWT_ACCESS_EXPIRATION=3600000
-            JWT_REFRESH_EXPIRATION=604800000
-            AWS_PRESIGN_EXP_SECONDS=120
+            
             # Backend - JWT (필수)
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             JWT_ACCESS_EXPIRATION=${{ secrets.JWT_ACCESS_EXPIRATION }}
