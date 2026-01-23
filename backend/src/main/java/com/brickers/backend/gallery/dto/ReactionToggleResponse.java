@@ -1,10 +1,11 @@
-package com.brickers.backend.board.dto;
+package com.brickers.backend.gallery.dto;
 
-import com.brickers.backend.board.entity.ReactionType;
 import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+
+import com.brickers.backend.gallery.entity.ReactionType;
 
 @Data
 @Builder

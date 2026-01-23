@@ -1,6 +1,6 @@
 package com.brickers.backend.user.dto;
 
-import com.brickers.backend.board.dto.GalleryResponse;
+import com.brickers.backend.gallery.dto.GalleryResponse;
 import com.brickers.backend.user.MySettingsResponse;
 
 import lombok.Builder;

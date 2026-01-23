@@ -1,10 +1,10 @@
-package com.brickers.backend.board.service;
+package com.brickers.backend.gallery.service;
 
-import com.brickers.backend.board.dto.ReactionToggleRequest;
-import com.brickers.backend.board.dto.ReactionToggleResponse;
-import com.brickers.backend.board.entity.*;
-import com.brickers.backend.board.repository.GalleryPostRepository;
-import com.brickers.backend.board.repository.GalleryReactionRepository;
+import com.brickers.backend.gallery.dto.ReactionToggleRequest;
+import com.brickers.backend.gallery.dto.ReactionToggleResponse;
+import com.brickers.backend.gallery.entity.*;
+import com.brickers.backend.gallery.repository.GalleryPostRepository;
+import com.brickers.backend.gallery.repository.GalleryReactionRepository;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;

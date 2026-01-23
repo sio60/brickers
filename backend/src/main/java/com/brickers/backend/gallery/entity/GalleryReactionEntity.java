@@ -1,4 +1,4 @@
-package com.brickers.backend.board.entity;
+package com.brickers.backend.gallery.entity;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;

@@ -1,12 +1,14 @@
-package com.brickers.backend.board.controller;
+package com.brickers.backend.gallery.controller;
 
-import com.brickers.backend.board.dto.*;
-import com.brickers.backend.board.service.*;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import com.brickers.backend.gallery.dto.*;
+import com.brickers.backend.gallery.service.*;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -18,7 +20,6 @@ import java.util.Map;
 public class GalleryController {
 
     private final GalleryService galleryService;
-    private final GalleryBookmarkService galleryBookmarkService;
     private final GalleryReactionService galleryReactionService;
     private final GalleryViewService galleryViewService;
 
@@ -54,17 +55,10 @@ public class GalleryController {
     public GalleryResponse detail(
             @PathVariable String id,
             Authentication authOrNull,
-            HttpSession session) {
+            HttpServletRequest request) {
+        String viewerKey = galleryViewService.buildViewerKey(authOrNull, request);
 
-        @SuppressWarnings("unchecked")
-        Map<String, LocalDateTime> viewMap = (Map<String, LocalDateTime>) session.getAttribute("GALLERY_VIEW_MAP");
-
-        if (viewMap == null) {
-            viewMap = new HashMap<>();
-            session.setAttribute("GALLERY_VIEW_MAP", viewMap);
-        }
-
-        galleryViewService.increaseViewIfNeeded(id, viewMap);
+        galleryViewService.increaseViewIfNeeded(id, viewerKey);
         return galleryService.getDetail(id, authOrNull);
     }
 

@@ -1,6 +1,7 @@
-package com.brickers.backend.board.dto;
+package com.brickers.backend.gallery.dto;
 
-import com.brickers.backend.board.entity.ReactionType;
+import com.brickers.backend.gallery.entity.ReactionType;
+
 import lombok.Data;
 
 @Data

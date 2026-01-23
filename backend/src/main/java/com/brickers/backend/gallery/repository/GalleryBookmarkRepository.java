@@ -1,9 +1,10 @@
-package com.brickers.backend.board.repository;
+package com.brickers.backend.gallery.repository;
 
-import com.brickers.backend.board.entity.GalleryBookmarkEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
+
+import com.brickers.backend.gallery.entity.GalleryBookmarkEntity;
 
 import java.util.Optional;
 

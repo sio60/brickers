@@ -1,11 +1,12 @@
-package com.brickers.backend.board.dto;
+package com.brickers.backend.gallery.dto;
 
-import com.brickers.backend.board.entity.Visibility;
 import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import com.brickers.backend.gallery.entity.Visibility;
 
 @Data
 @Builder

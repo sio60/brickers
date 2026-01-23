@@ -1,12 +1,12 @@
-package com.brickers.backend.board.service;
+package com.brickers.backend.gallery.service;
 
-import com.brickers.backend.board.dto.BookmarkToggleResponse;
-import com.brickers.backend.board.dto.MyBookmarkItemResponse;
-import com.brickers.backend.board.entity.GalleryBookmarkEntity;
-import com.brickers.backend.board.entity.GalleryPostEntity;
-import com.brickers.backend.board.entity.Visibility;
-import com.brickers.backend.board.repository.GalleryBookmarkRepository;
-import com.brickers.backend.board.repository.GalleryPostRepository;
+import com.brickers.backend.gallery.dto.BookmarkToggleResponse;
+import com.brickers.backend.gallery.dto.MyBookmarkItemResponse;
+import com.brickers.backend.gallery.entity.GalleryBookmarkEntity;
+import com.brickers.backend.gallery.entity.GalleryPostEntity;
+import com.brickers.backend.gallery.entity.Visibility;
+import com.brickers.backend.gallery.repository.GalleryBookmarkRepository;
+import com.brickers.backend.gallery.repository.GalleryPostRepository;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;

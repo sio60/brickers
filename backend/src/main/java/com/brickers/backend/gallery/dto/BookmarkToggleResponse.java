@@ -1,4 +1,4 @@
-package com.brickers.backend.board.dto;
+package com.brickers.backend.gallery.dto;
 
 import lombok.Builder;
 import lombok.Data;

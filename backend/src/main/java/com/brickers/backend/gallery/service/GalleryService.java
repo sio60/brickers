@@ -1,11 +1,11 @@
-package com.brickers.backend.board.service;
+package com.brickers.backend.gallery.service;
 
-import com.brickers.backend.board.dto.GalleryCreateRequest;
-import com.brickers.backend.board.dto.GalleryResponse;
-import com.brickers.backend.board.dto.GalleryUpdateRequest;
-import com.brickers.backend.board.entity.GalleryPostEntity;
-import com.brickers.backend.board.entity.Visibility;
-import com.brickers.backend.board.repository.GalleryPostRepository;
+import com.brickers.backend.gallery.dto.GalleryCreateRequest;
+import com.brickers.backend.gallery.dto.GalleryResponse;
+import com.brickers.backend.gallery.dto.GalleryUpdateRequest;
+import com.brickers.backend.gallery.entity.GalleryPostEntity;
+import com.brickers.backend.gallery.entity.Visibility;
+import com.brickers.backend.gallery.repository.GalleryPostRepository;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
@@ -168,7 +168,12 @@ public class GalleryService {
         String u = url.trim();
         if (u.isEmpty())
             return null;
-        return u.startsWith("http") ? u : null;
+
+        if (u.startsWith("http://") || u.startsWith("https://"))
+            return u;
+        if (u.startsWith("/uploads/"))
+            return u; // ✅ 상대경로 허용
+        return null;
     }
 
     private GalleryResponse toResponse(GalleryPostEntity post) {

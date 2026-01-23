@@ -1,12 +1,13 @@
-package com.brickers.backend.board.controller;
+package com.brickers.backend.gallery.controller;
 
-import com.brickers.backend.board.dto.BookmarkToggleResponse;
-import com.brickers.backend.board.dto.MyBookmarkItemResponse;
-import com.brickers.backend.board.service.GalleryBookmarkService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import com.brickers.backend.gallery.dto.BookmarkToggleResponse;
+import com.brickers.backend.gallery.dto.MyBookmarkItemResponse;
+import com.brickers.backend.gallery.service.GalleryBookmarkService;
 
 @RestController
 @RequestMapping("/api/gallery")

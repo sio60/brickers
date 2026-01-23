@@ -1,6 +1,6 @@
 package com.brickers.backend.user.service;
 
-import com.brickers.backend.board.service.GalleryService;
+import com.brickers.backend.gallery.service.GalleryService;
 import com.brickers.backend.job.entity.GenerateJobEntity;
 import com.brickers.backend.job.entity.JobStage;
 import com.brickers.backend.job.entity.JobStatus;

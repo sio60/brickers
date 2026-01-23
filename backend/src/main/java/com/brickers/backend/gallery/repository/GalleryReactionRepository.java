@@ -1,7 +1,8 @@
-package com.brickers.backend.board.repository;
+package com.brickers.backend.gallery.repository;
 
-import com.brickers.backend.board.entity.GalleryReactionEntity;
 import org.springframework.data.mongodb.repository.MongoRepository;
+
+import com.brickers.backend.gallery.entity.GalleryReactionEntity;
 
 import java.util.Optional;
 
