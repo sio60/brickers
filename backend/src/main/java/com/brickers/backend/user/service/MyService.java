@@ -142,7 +142,7 @@ public class MyService {
         MySettingsResponse settings = MySettingsResponse.from(user);
 
         // 최근 내 글 6개 (기존 /api/gallery/my 와 동일 소스)
-        var myPostsPage = galleryService.listMine(authentication, 0, 6);
+        var myPostsPage = galleryService.listMine(authentication, 0, 6, "latest");
         var galleryOverview = MyOverviewResponse.GalleryOverview.builder()
                 .totalCount(myPostsPage.getTotalElements())
                 .recent(myPostsPage.getContent())

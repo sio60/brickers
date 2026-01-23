@@ -1,5 +1,6 @@
 package com.brickers.backend.gallery.service;
 
+import com.brickers.backend.common.exception.ForbiddenException;
 import com.brickers.backend.gallery.dto.GalleryCreateRequest;
 import com.brickers.backend.gallery.dto.GalleryResponse;
 import com.brickers.backend.gallery.dto.GalleryUpdateRequest;
@@ -10,7 +11,6 @@ import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
 
@@ -48,16 +48,18 @@ public class GalleryService {
     }
 
     /** 공개 게시글 목록: PUBLIC + deleted=false를 최신순(createdAt DESC)으로 페이징 조회한다. */
-    public Page<GalleryResponse> listPublic(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    public Page<GalleryResponse> listPublic(int page, int size, String sort) {
+        Pageable pageable = pageReq(page, size, sort);
+
         Page<GalleryPostEntity> result = galleryPostRepository.findByDeletedFalseAndVisibility(Visibility.PUBLIC,
                 pageable);
+
         return result.map(this::toResponse);
     }
 
     /** 공개 게시글 검색: q(제목/내용) 또는 tag로 PUBLIC + deleted=false를 페이징 조회한다. */
-    public Page<GalleryResponse> searchPublic(String q, String tag, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    public Page<GalleryResponse> searchPublic(String q, String tag, int page, int size, String sort) {
+        Pageable pageable = pageReq(page, size, sort);
 
         if (q != null && !q.trim().isEmpty()) {
             Page<GalleryPostEntity> result = galleryPostRepository.searchByTitleOrContent(Visibility.PUBLIC, q.trim(),
@@ -71,7 +73,25 @@ public class GalleryService {
             return result.map(this::toResponse);
         }
 
-        return listPublic(page, size);
+        return listPublic(page, size, sort);
+    }
+
+    private PageRequest pageReq(int page, int size, String sort) {
+        String s = (sort == null) ? "latest" : sort.trim().toLowerCase();
+
+        return switch (s) {
+            case "views" -> PageRequest.of(page, size,
+                    Sort.by(Sort.Direction.DESC, "viewCount")
+                            .and(Sort.by(Sort.Direction.DESC, "createdAt")));
+            case "likes" -> PageRequest.of(page, size,
+                    Sort.by(Sort.Direction.DESC, "likeCount")
+                            .and(Sort.by(Sort.Direction.DESC, "createdAt")));
+            case "popular" -> PageRequest.of(page, size,
+                    Sort.by(Sort.Direction.DESC, "likeCount")
+                            .and(Sort.by(Sort.Direction.DESC, "viewCount"))
+                            .and(Sort.by(Sort.Direction.DESC, "createdAt")));
+            default -> PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        };
     }
 
     /** 게시글 상세: PUBLIC은 누구나, PRIVATE는 작성자만 조회 가능하도록 권한을 체크한다. */
@@ -83,9 +103,9 @@ public class GalleryService {
             throw new IllegalArgumentException("삭제된 게시글입니다.");
 
         if (post.getVisibility() == Visibility.PRIVATE) {
-            User me = currentUserService.get(authOrNull); // null이면 ForbiddenException -> 접근 차단
+            User me = currentUserService.get(authOrNull); // null이면 ForbiddenException("로그인이 필요합니다.")
             if (!post.getAuthorId().equals(me.getId())) {
-                throw new IllegalStateException("비공개 게시글 접근 권한이 없습니다.");
+                throw new ForbiddenException("비공개 게시글에 대한 접근 권한이 없습니다.");
             }
         }
 
@@ -141,9 +161,9 @@ public class GalleryService {
     }
 
     /** 내 게시글 목록: 내 글(PUBLIC/PRIVATE 모두) 중 deleted=false를 최신순으로 페이징 조회한다. */
-    public Page<GalleryResponse> listMine(Authentication auth, int page, int size) {
+    public Page<GalleryResponse> listMine(Authentication auth, int page, int size, String sort) {
         User me = currentUserService.get(auth);
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable pageable = pageReq(page, size, sort);
 
         Page<GalleryPostEntity> result = galleryPostRepository.findByDeletedFalseAndAuthorId(me.getId(), pageable);
 

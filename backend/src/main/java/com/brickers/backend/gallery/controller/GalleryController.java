@@ -33,8 +33,9 @@ public class GalleryController {
     @GetMapping
     public Page<GalleryResponse> listPublic(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size) {
-        return galleryService.listPublic(page, size);
+            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(defaultValue = "latest") String sort) {
+        return galleryService.listPublic(page, size, sort);
     }
 
     /** 🔍 공개 게시글 검색 */
@@ -43,8 +44,9 @@ public class GalleryController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String tag,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size) {
-        return galleryService.searchPublic(q, tag, page, size);
+            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(defaultValue = "latest") String sort) {
+        return galleryService.searchPublic(q, tag, page, size, sort);
     }
 
     /**
@@ -82,8 +84,9 @@ public class GalleryController {
     public Page<GalleryResponse> my(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
+            @RequestParam(defaultValue = "latest") String sort,
             Authentication auth) {
-        return galleryService.listMine(auth, page, size);
+        return galleryService.listMine(auth, page, size, sort);
     }
 
     /** 좋아요/싫어요 토글 */
