@@ -15,6 +15,7 @@
   overflow-x: hidden;
   overflow-y: auto;
 }
+
 .kidsUpload,
 .kidsPage__cta,
 .kidsPage__error,
@@ -51,20 +52,19 @@
 
 .kidsPage__center {
   width: 100%;
-  max-width: 520px;
+  max-width: 1100px;
+  /* ✅ 3개 나란히 위해 늘림 */
   margin: 0 auto;
-
-  /* ✅ 세로 중앙에 가깝게 (너무 위로 안 붙게) */
   min-height: calc(100vh - 48px);
+
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 
-  /* ✅ 아주 살짝만 아래로 */
-  padding-top: 10vh;
-
+  padding-top: 8vh;
   gap: 18px;
+
   position: relative;
   z-index: 3;
 }
@@ -210,6 +210,7 @@
   object-fit: contain;
   background: rgba(0, 0, 0, 0.04);
 }
+
 .kidsUpload__toggle {
   display: flex;
   gap: 8px;
@@ -217,8 +218,8 @@
 }
 
 .kidsUpload__toggleBtn {
-  border: 1px solid rgba(0,0,0,0.2);
-  background: rgba(255,255,255,0.75);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.75);
   padding: 6px 10px;
   border-radius: 10px;
   font-size: 12px;
@@ -226,7 +227,189 @@
 }
 
 .kidsUpload__toggleBtn.isActive {
-  background: rgba(0,0,0,0.75);
+  background: rgba(0, 0, 0, 0.75);
   color: white;
-  border-color: rgba(0,0,0,0.75);
+  border-color: rgba(0, 0, 0, 0.75);
+}
+
+/* ✅ 타이틀 */
+.kidsPage__title {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  color: #000000;
+  text-align: center;
+}
+
+.kidsPage__sub {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+/* ✅ 싱글뷰 레이아웃 */
+.kidsPage__singleView {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 이전 2열 레이아웃 (사용 안 함) */
+.kidsPage__content {
+  display: none;
+}
+
+/* ✅ 3D 미리보기 섹션 */
+.kidsPage__3dSection {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+}
+
+.kidsPage__sectionLabel {
+  font-size: 16px;
+  font-weight: 900;
+  color: #111;
+  margin-bottom: 12px;
+}
+
+.kidsPage__3dViewer {
+  width: 100%;
+  height: 450px;
+  background: #f8f9fa;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* ✅ 결과 타이틀 - 카드 위에 표시 */
+.kidsPage__resultTitle {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: #111;
+  text-align: center;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+/* ✅ 결과 카드 */
+.kidsPage__resultCard {
+  width: 100%;
+  max-width: 800px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 2px solid #111;
+  padding: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.kidsPage__resultCard .kidsPage__3dViewer {
+  height: 500px;
+  border-radius: 0;
+  background: #fafafa;
+}
+
+/* Empty state */
+.kidsPage__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #888;
+  font-weight: 700;
+}
+
+/* ✅ 결과 섹션 */
+.kidsPage__resultSection {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+}
+
+.kidsPage__resultViewer {
+  height: 400px;
+  background: #f8f9fa;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kidsPage__resultImg {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* ✅ 로딩 */
+.kidsPage__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: #666;
+  font-weight: 700;
+}
+
+.kidsPage__spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ✅ 원본 미리보기 */
+.kidsPage__originalPreview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.kidsPage__originalPreview img {
+  max-width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.kidsPage__originalLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #888;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .kidsPage__content {
+    grid-template-columns: 1fr;
+  }
+
+  .kidsPage__3dViewer,
+  .kidsPage__resultViewer {
+    height: 300px;
+  }
 }

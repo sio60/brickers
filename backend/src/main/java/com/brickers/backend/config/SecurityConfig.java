@@ -1,88 +1,148 @@
 package com.brickers.backend.config;
 
+import com.brickers.backend.auth.jwt.JwtAuthFilter;
+import com.brickers.backend.auth.oauth.OAuth2LoginSuccessHandler;
 import com.brickers.backend.security.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.*;
 
 import java.util.List;
 
 @Configuration
-@EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
         private final CustomOAuth2UserService customOAuth2UserService;
+        private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+        private final JwtAuthFilter jwtAuthFilter;
 
-    @Value("${app.front-base-url:http://localhost:5173}")
-    private String frontBaseUrl;
+        @Value("${app.front-base-url:http://localhost:5173}")
+        private String frontBaseUrl;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+                http
+                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                                .csrf(csrf -> csrf.disable())
 
-            .authorizeHttpRequests(auth -> auth
-                // ✅ 기본 공개
-                .requestMatchers("/", "/error", "/favicon.ico", "/auth/**").permitAll()
-                .requestMatchers("/api/auth/me").permitAll()
-                .requestMatchers("/logout").permitAll()
+                                // ✅ OAuth2 플로우는 세션이 필요할 수 있음
+                                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 
-                // ✅ Kids: 업로드 렌더 API (원하면 공개/인증 선택)
-                // 지금은 프론트에서 누구나 쓰는 흐름이면 일단 열어둬도 됨
-                .requestMatchers(HttpMethod.POST, "/api/kids/render").permitAll()
+                                // ✅ API는 401로 떨어지게 (/login redirect 방지)
+                                .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
 
-                // ✅ Kids: 결과 이미지 정적 서빙은 무조건 공개(브라우저 <img>가 쿠키 없이도 요청함)
-                .requestMatchers(HttpMethod.GET, "/api/kids/rendered/**").permitAll()
+                                .authorizeHttpRequests(auth -> auth
+                                                // -------------------------------
+                                                // ✅ Public
+                                                // -------------------------------
+                                                .requestMatchers("/", "/error", "/favicon.ico").permitAll()
 
-                // ✅ 그 외는 인증
-                .anyRequest().authenticated()
-            )
+                                                // Swagger 공개
+                                                .requestMatchers(
+                                                                "/swagger", "/swagger/**",
+                                                                "/swagger-ui.html", "/swagger-ui/**",
+                                                                "/v3/api-docs/**")
+                                                .permitAll()
 
-            .oauth2Login(oauth2 -> oauth2
-                .authorizationEndpoint(auth -> auth.baseUri("/auth"))
-                .redirectionEndpoint(red -> red.baseUri("/auth/*/callback"))
-                .userInfoEndpoint(user -> user.userService(customOAuth2UserService))
-                .defaultSuccessUrl(frontBaseUrl + "/auth/success", true)
-                .failureUrl(frontBaseUrl + "/auth/failure")
-            )
+                                                // OAuth2 시작/콜백
+                                                .requestMatchers("/auth/**").permitAll()
 
-            .logout(logout -> logout
-                .logoutUrl("/logout")
-                .invalidateHttpSession(true)      // ⭐ 세션 무효화
-                .clearAuthentication(true)        // ⭐ 인증 정보 제거
-                .deleteCookies("JSESSIONID")       // ⭐ 쿠키 삭제
-                .logoutSuccessUrl(frontBaseUrl)
-            );
+                                                // Kids API 공개
+                                                .requestMatchers(HttpMethod.POST, "/api/kids/render").permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/kids/rendered/**").permitAll()
+
+                                                // -------------------------------
+                                                // ✅ Auth API
+                                                // -------------------------------
+                                                .requestMatchers(HttpMethod.POST, "/api/auth/refresh",
+                                                                "/api/auth/logout")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+
+                                                // -------------------------------
+                                                // ✅ My API (JWT 필요)
+                                                // -------------------------------
+                                                .requestMatchers("/api/my/**").authenticated()
+
+                                                // -------------------------------
+                                                // ✅ Gallery API 정책 (핵심)
+                                                // -------------------------------
+
+                                                // ✅ 내 목록(GET이지만 인증 필요)
+                                                .requestMatchers(HttpMethod.GET, "/api/gallery/my",
+                                                                "/api/gallery/bookmarks/my")
+                                                .authenticated()
+
+                                                // ✅ 북마크/리액션 토글(인증 필요)
+                                                .requestMatchers(HttpMethod.POST, "/api/gallery/*/bookmark",
+                                                                "/api/gallery/*/reaction")
+                                                .authenticated()
+
+                                                // ✅ 게시글 생성/수정/삭제(인증 필요)
+                                                .requestMatchers(HttpMethod.POST, "/api/gallery").authenticated()
+                                                .requestMatchers(HttpMethod.PATCH, "/api/gallery/*").authenticated()
+                                                .requestMatchers(HttpMethod.DELETE, "/api/gallery/*").authenticated()
+
+                                                // ✅ 공개 갤러리 조회/검색/상세는 공개
+                                                .requestMatchers(HttpMethod.GET, "/api/gallery", "/api/gallery/search",
+                                                                "/api/gallery/*")
+                                                .permitAll()
+
+                                                // ✅ Upload API (인증 필요)
+                                                .requestMatchers(HttpMethod.POST, "/api/uploads/**").authenticated()
+
+                                                // ✅ 업로드된 파일 서빙은 공개(또는 필요시 인증)
+                                                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+
+                                                // -------------------------------
+                                                // ✅ 나머지는 인증
+                                                // -------------------------------
+                                                .anyRequest().authenticated())
+
+                                .oauth2Login(oauth2 -> oauth2
+                                                .authorizationEndpoint(a -> a.baseUri("/auth"))
+                                                .redirectionEndpoint(r -> r.baseUri("/auth/*/callback"))
+                                                .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
+                                                .successHandler(oAuth2LoginSuccessHandler)
+                                                .failureUrl(frontBaseUrl + "/auth/failure"))
+
+                                // ✅ JWT 필터 (Bearer 토큰 처리)
+                                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
                 return http.build();
         }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration config = new CorsConfiguration();
+                config.setAllowedOriginPatterns(List.of(
+                                "http://localhost:5173",
+                                "http://localhost:3000",
+                                "https://brickers.shop",
+                                "https://www.brickers.shop"));
+                config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                // config.setAllowedHeaders(List.of("Authorization", "Content-Type",
+                // "X-Requested-With"));
+                // config.setExposedHeaders(List.of("Location"));
 
-        config.setAllowedOriginPatterns(List.of(
-            "http://localhost:5173",
-            "http://localhost:3000",
-            "https://brickers.shop",
-            "https://www.brickers.shop"
-        ));
+                // ✅ 지금 단계에선 * 허용 OK (추후 Authorization/Content-Type 정도로 제한 가능)
+                config.setAllowedHeaders(List.of("*"));
 
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
+                config.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
-    }
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", config);
+                return source;
+        }
 }

@@ -1,0 +1,198 @@
+.kidsModelModal__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.kidsModelModal {
+  width: min(900px, 96vw);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.kidsModelModal__head {
+  position: relative;
+  padding: 16px 20px 10px;
+}
+
+.kidsModelModal__title {
+  font-size: 24px;
+  font-weight: 900;
+  color: #111;
+}
+
+.kidsModelModal__sub {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.kidsModelModal__close {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 0;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.08);
+  font-weight: 900;
+}
+
+.kidsModelModal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 0 20px 16px;
+}
+
+.kidsModelCard {
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.kidsModelCard:hover {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+.kidsModelCard.isSelected {
+  border-color: #3b82f6;
+}
+
+.kidsModelCard__viewer {
+  height: 200px;
+  padding: 8px;
+}
+
+.kidsModelCard__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px 12px;
+}
+
+.kidsModelCard__label {
+  font-size: 16px;
+  font-weight: 900;
+  color: #111;
+}
+
+.kidsModelCard__pick {
+  font-size: 13px;
+  font-weight: 700;
+  color: #666;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.kidsModelCard.isSelected .kidsModelCard__pick {
+  background: #3b82f6;
+  color: #fff;
+}
+
+/* 이미지 업로드 영역 */
+.kidsModelModal__upload {
+  margin: 0 20px 16px;
+  padding: 24px;
+  border: 2px dashed rgba(0, 0, 0, 0.15);
+  border-radius: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.kidsModelModal__upload:hover,
+.kidsModelModal__upload.isDragOver {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.kidsModelModal__uploadTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: #333;
+}
+
+.kidsModelModal__uploadSub {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #888;
+}
+
+.kidsModelModal__uploadPreview {
+  max-height: 120px;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+/* 하단 버튼 */
+.kidsModelModal__actions {
+  padding: 0 20px 20px;
+}
+
+.kidsModelModal__confirmBtn {
+  width: 100%;
+  padding: 14px;
+  border: 0;
+  border-radius: 12px;
+  background: #111;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.kidsModelModal__confirmBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 3D 미리보기 영역 */
+.kidsModelModal__3dPreview {
+  margin: 0 20px 16px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 16px;
+  text-align: center;
+}
+
+.kidsModelModal__3dLabel {
+  font-size: 14px;
+  font-weight: 800;
+  color: #555;
+  margin-bottom: 12px;
+}
+
+.kidsModelModal__3dViewer {
+  height: 300px;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 업로드 힌트 */
+.kidsModelModal__uploadHint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #aaa;
+}

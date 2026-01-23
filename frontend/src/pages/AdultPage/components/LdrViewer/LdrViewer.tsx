@@ -402,7 +402,7 @@ export default function LdrViewer({ url, partsLibraryPath, ldconfigUrl }: Props)
             }}
           >
             <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.8 }}>
-              LEGO
+              Brick
             </div>
             <div style={{ fontWeight: 900, fontSize: 18, marginTop: 6 }}>
               6+

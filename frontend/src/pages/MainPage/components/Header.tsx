@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../../../assets/logo.png";
 import "./Header.css";
@@ -13,9 +13,23 @@ export default function Header() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
+  // 업그레이드 여부 확인
+  const [isPro, setIsPro] = useState(false);
+
+  useEffect(() => {
+    const checkPro = () => {
+      setIsPro(localStorage.getItem("isPro") === "true");
+    };
+    checkPro();
+
+    window.addEventListener("storage", checkPro);
+    return () => window.removeEventListener("storage", checkPro);
+  }, []);
+
   const handleLogout = async () => {
     await logout();
-    // 원하면 홈으로 보내기 (원치 않으면 이 줄 삭제)
+    // 로컬스토리지 isPro 제거 (정책에 따라 다름, 여기선 일단 둠 or 제거)
+    // localStorage.removeItem("isPro"); 
     navigate("/", { replace: true });
   };
 
@@ -31,8 +45,8 @@ export default function Header() {
         />
 
         <div className="header__actions">
-          {/* ✅ 로그인해야 UPGRADE 보이게 */}
-          {!isLoading && isAuthenticated && (
+          {/* ✅ 로그인하고 && 아직 업그레이드 안했을 때만 UPGRADE 표시 */}
+          {!isLoading && isAuthenticated && !isPro && (
             <button
               className="header__upgrade-btn"
               onClick={() => setIsUpgradeModalOpen(true)}

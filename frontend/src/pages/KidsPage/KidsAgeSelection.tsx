@@ -2,64 +2,138 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./KidsAgeSelection.css";
 import Background3D from "../MainPage/components/Background3D";
+
 import img35 from "../../assets/35.png";
 import img67 from "../../assets/67.png";
 import img810 from "../../assets/810.png";
 
-type AgeGroup = "3-5" | "6-7" | "8-10" | null;
+// 4-5 썸네일
+import thumb3_5 from "../../assets/3-5.png";
+import thumb3_5_2 from "../../assets/3-5_2.png";
+
+// 6-7 썸네일
+import thumb6_7 from "../../assets/6-7.png";
+import thumb6_7_2 from "../../assets/6-7_2.png";
+
+// 8-10 썸네일
+import thumb8_10 from "../../assets/8-10.png";
+import thumb8_10_2 from "../../assets/8-10_2.png";
+
+import KidsModelSelectModal from "./components/KidsModelSelectModal";
+
+type AgeGroup = "4-5" | "6-7" | "8-10" | null;
 
 export default function KidsAgeSelection() {
-    const navigate = useNavigate();
-    const [selectedAge, setSelectedAge] = useState<AgeGroup>(null);
+  const navigate = useNavigate();
+  const [selectedAge, setSelectedAge] = useState<AgeGroup>(null);
 
-    const handleSelect = (ageGroup: AgeGroup) => {
-        setSelectedAge(ageGroup);
-    };
+  // 모달 오픈 상태
+  const [openModelModal, setOpenModelModal] = useState(false);
+  // 현재 모달에 표시할 연령대
+  const [modalAge, setModalAge] = useState<"4-5" | "6-7" | "8-10" | null>(null);
 
-    const handleContinue = () => {
-        if (selectedAge) {
-            navigate(`/kids/main?age=${selectedAge}`);
-        }
-    };
+  // 4-5 모델들
+  const models45 = [
+    { title: "모델 1", url: "/ldraw/models/3-5_1.ldr", thumbnail: thumb3_5 },
+    { title: "모델 2", url: "/ldraw/models/3-5_2.ldr", thumbnail: thumb3_5_2 },
+  ];
 
-    return (
-        <div className="kidsAgeSelection">
-            <Background3D entryDirection="float" />
-            <h1 className="kidsAgeSelection__title">Select Your Child's Age Group</h1>
+  // 6-7 모델들
+  const models67 = [
+    { title: "모델 1", url: "/ldraw/models/6-7_1.ldr", thumbnail: thumb6_7 },
+    { title: "모델 2", url: "/ldraw/models/6-7_2.ldr", thumbnail: thumb6_7_2 },
+  ];
 
-            <div className="kidsAgeSelection__buttons">
-                <button
-                    className={`kidsAgeBtn ${selectedAge === "3-5" ? "active" : ""}`}
-                    onClick={() => handleSelect("3-5")}
-                >
-                    <img src={img35} alt="3-5 years" className="kidsAgeBtn__img" />
-                    <div className="kidsAgeBtn__label">3-5</div>
-                </button>
+  // 8-10 모델들
+  const models810 = [
+    { title: "모델 1", url: "/ldraw/models/8-10_1.ldr", thumbnail: thumb8_10 },
+    { title: "모델 2", url: "/ldraw/models/8-10_2.ldr", thumbnail: thumb8_10_2 },
+  ];
 
-                <button
-                    className={`kidsAgeBtn ${selectedAge === "6-7" ? "active" : ""}`}
-                    onClick={() => handleSelect("6-7")}
-                >
-                    <img src={img67} alt="6-7 years" className="kidsAgeBtn__img" />
-                    <div className="kidsAgeBtn__label">6-7</div>
-                </button>
+  const handleSelect = (ageGroup: AgeGroup) => {
+    setSelectedAge(ageGroup);
 
-                <button
-                    className={`kidsAgeBtn ${selectedAge === "8-10" ? "active" : ""}`}
-                    onClick={() => handleSelect("8-10")}
-                >
-                    <img src={img810} alt="8-10 years" className="kidsAgeBtn__img" />
-                    <div className="kidsAgeBtn__label">8-10</div>
-                </button>
-            </div>
+    // 모든 연령대에서 모달 띄워서 모델 고르게 함
+    if (ageGroup) {
+      setModalAge(ageGroup);
+      setOpenModelModal(true);
+    }
+  };
 
-            <button
-                className={`kidsAgeSelection__continue ${selectedAge ? "visible" : ""}`}
-                onClick={handleContinue}
-                disabled={!selectedAge}
-            >
-                Continue
-            </button>
-        </div>
-    );
+  // 모델 선택 또는 이미지 업로드 완료하면 KidsPage로 이동
+  const handlePickModel = (url: string | null, file: File | null) => {
+    setOpenModelModal(false);
+    const age = modalAge || "4-5";
+    const modelParam = url ? `&model=${encodeURIComponent(url)}` : "";
+    navigate(`/kids/main?age=${age}${modelParam}`, {
+      state: file ? { uploadedFile: file } : undefined
+    });
+  };
+
+  // Continue 버튼
+  const handleContinue = () => {
+    if (!selectedAge) return;
+    setModalAge(selectedAge);
+    setOpenModelModal(true);
+  };
+
+  // 현재 모달에 표시할 모델 목록
+  const getCurrentModels = () => {
+    if (modalAge === "6-7") return models67;
+    if (modalAge === "8-10") return models810;
+    return models45;
+  };
+
+  return (
+    <div className="kidsAgeSelection">
+      <Background3D entryDirection="top" />
+      <h1 className="kidsAgeSelection__title">Select Your Level</h1>
+
+      <div className="kidsAgeSelection__buttons">
+        <button
+          className={`kidsAgeBtn ${selectedAge === "4-5" ? "active" : ""}`}
+          onClick={() => handleSelect("4-5")}
+          type="button"
+        >
+          <img src={img35} alt="4-5 years" className="kidsAgeBtn__img" />
+          <div className="kidsAgeBtn__label">L1</div>
+        </button>
+
+        <button
+          className={`kidsAgeBtn ${selectedAge === "6-7" ? "active" : ""}`}
+          onClick={() => handleSelect("6-7")}
+          type="button"
+        >
+          <img src={img67} alt="6-7 years" className="kidsAgeBtn__img" />
+          <div className="kidsAgeBtn__label">L2</div>
+        </button>
+
+        <button
+          className={`kidsAgeBtn ${selectedAge === "8-10" ? "active" : ""}`}
+          onClick={() => handleSelect("8-10")}
+          type="button"
+        >
+          <img src={img810} alt="8-10 years" className="kidsAgeBtn__img" />
+          <div className="kidsAgeBtn__label">L3</div>
+        </button>
+      </div>
+
+      <button
+        className={`kidsAgeSelection__continue ${selectedAge ? "visible" : ""}`}
+        onClick={handleContinue}
+        disabled={!selectedAge}
+        type="button"
+      >
+        Continue
+      </button>
+
+      {/* 모델 선택 모달 */}
+      <KidsModelSelectModal
+        open={openModelModal}
+        onClose={() => setOpenModelModal(false)}
+        onSelect={handlePickModel}
+        items={getCurrentModels()}
+      />
+    </div>
+  );
 }
