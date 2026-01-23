@@ -7,7 +7,7 @@ spring:
 
   config:
     import: "optional:file:.env[.properties]"
-        
+
   mongodb:
     uri: ${MONGODB_URI}
     host: ${MONGO_HOST}
@@ -16,7 +16,7 @@ spring:
     username: ${MONGO_USER}
     password: ${MONGO_PASSWORD}
     auto-index-creation: true
-    
+
 
   servlet:
     multipart:
