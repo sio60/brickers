@@ -1,53 +1,50 @@
 # =============================================================================
 # 1. Build Stage
 # =============================================================================
-FROM gradle:8.14-jdk17 AS build
-COPY --chown=gradle:gradle . /home/gradle/src
-WORKDIR /home/gradle/src
+FROM node:20-alpine AS build
+WORKDIR /app
+
+# 패키지 설치 (캐싱 활용을 위해 package.json과 lock 파일 먼저 복사)
+COPY package.json package-lock.json ./
+
+# npm install 보다 더 빠르고 정확한 npm ci 사용 (lock 파일 기준 설치)
+RUN npm ci
+
+# 소스 코드 복사
+COPY . .
 
 # -----------------------------------------------------------------------------
-# [핵심 수정] 빌드 통과용 가짜 환경변수 주입
-# Spring Boot가 빌드 중 설정파일 검사할 때 터지지 않게 막는 용도입니다.
+# [환경 변수 주입]
+# Vite는 빌드 시점(Build Time)에 환경변수가 주입되어야 합니다.
+# GitHub Actions에서 --build-arg로 넘겨준 값을 받아서 ENV로 설정합니다.
 # -----------------------------------------------------------------------------
-# 1) MongoDB 관련
-ENV MONGO_HOST=localhost
-ENV MONGO_PORT=27017
-ENV MONGO_DB_NAME=brickers
-ENV MONGO_USER=admin
-ENV MONGO_PASSWORD=password
-ENV PRIMARY_MONGODB_URI=mongodb://localhost:27017/brickers
+ARG VITE_KAKAO_CLIENT_ID
+ARG VITE_KAKAO_REDIRECT_URI
+ARG VITE_API_BASE_URL
+ARG VITE_FASTAPI_ORIGIN
+ARG VITE_API_ORIGIN
 
-# 2) AWS S3 관련 (이게 문제였음)
-ENV AWS_S3_BUCKET=build-time-dummy-bucket
-ENV AWS_REGION=ap-northeast-2
-ENV AWS_ACCESS_KEY_ID=dummy
-ENV AWS_SECRET_ACCESS_KEY=dummy
+ENV VITE_KAKAO_CLIENT_ID=$VITE_KAKAO_CLIENT_ID
+ENV VITE_KAKAO_REDIRECT_URI=$VITE_KAKAO_REDIRECT_URI
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_FASTAPI_ORIGIN=$VITE_FASTAPI_ORIGIN
+ENV VITE_API_ORIGIN=$VITE_API_ORIGIN
 
-# 3) OAuth (구글/카카오) 관련
-ENV GOOGLE_CLIENT_ID=dummy
-ENV GOOGLE_CLIENT_SECRET=dummy
-ENV KAKAO_CLIENT_ID=dummy
-ENV KAKAO_CLIENT_SECRET=dummy
-ENV KAKAO_ADMIN_KEY=dummy
-
-# 4) JWT 및 기타
-ENV JWT_SECRET=dummy_secret_key_must_be_long_enough_for_build
-ENV FRONT_BASE_URL=http://localhost:5173
-ENV LOCAL_BASE_URL=http://localhost:8080
-
-# -----------------------------------------------------------------------------
-# 빌드 실행 (테스트 제외)
-# -----------------------------------------------------------------------------
-RUN gradle build --no-daemon -x test
+# 빌드 실행 -> /app/dist 폴더 생성됨
+RUN npm run build
 
 # =============================================================================
 # 2. Run Stage
 # =============================================================================
-FROM eclipse-temurin:17-jre
-EXPOSE 8080
+FROM nginx:alpine
 
-# 빌드 결과물 복사
-COPY --from=build /home/gradle/src/build/libs/*.jar app.jar
+# 빌드 결과물(dist)을 Nginx 기본 경로로 복사
+COPY --from=build /app/dist /usr/share/nginx/html
 
-# 실행
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+# 커스텀 Nginx 설정을 복사 (SPA 라우팅 문제 해결용)
+# 만약 프로젝트 루트에 nginx.conf가 없다면 이 줄은 에러가 납니다.
+# 파일이 없다면 아래 [참고]를 봐주세요.
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
