@@ -56,6 +56,19 @@ app:
   cookie:
     secure: ${COOKIE_SECURE:false}   # 로컬은 false, 배포는 true
     same-site: ${COOKIE_SAMESITE:Lax} # 로컬 Lax, 배포 None
+  
+# ✅ 업로드 설정
+  upload:
+    provider: S3
+    public-base-url: ${UPLOAD_PUBLIC_BASE_URL:https://YOUR_BUCKET.s3.ap-northeast-2.amazonaws.com} # 또는 CloudFront 도메인
+    s3:
+      bucket: ${AWS_S3_BUCKET}
+      region: ${AWS_REGION:ap-northeast-2}
+      presign-exp-seconds: ${AWS_PRESIGN_EXP_SECONDS:120}
+      key-prefix: ${AWS_S3_KEY_PREFIX:uploads}   # uploads/{userId}/yyyy/MM/{uuid}.png
+      max-bytes: ${UPLOAD_MAX_BYTES:10485760}     # 10MB
+      allowed-content-types: image/png,image/jpeg,image/webp
+
 
 jwt:
   secret: ${JWT_SECRET}

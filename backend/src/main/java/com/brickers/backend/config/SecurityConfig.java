@@ -99,6 +99,12 @@ public class SecurityConfig {
                                                                 "/api/gallery/*")
                                                 .permitAll()
 
+                                                // ✅ Upload API (인증 필요)
+                                                .requestMatchers(HttpMethod.POST, "/api/uploads/**").authenticated()
+
+                                                // ✅ 업로드된 파일 서빙은 공개(또는 필요시 인증)
+                                                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+
                                                 // -------------------------------
                                                 // ✅ 나머지는 인증
                                                 // -------------------------------
@@ -126,6 +132,9 @@ public class SecurityConfig {
                                 "https://brickers.shop",
                                 "https://www.brickers.shop"));
                 config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                // config.setAllowedHeaders(List.of("Authorization", "Content-Type",
+                // "X-Requested-With"));
+                // config.setExposedHeaders(List.of("Location"));
 
                 // ✅ 지금 단계에선 * 허용 OK (추후 Authorization/Content-Type 정도로 제한 가능)
                 config.setAllowedHeaders(List.of("*"));

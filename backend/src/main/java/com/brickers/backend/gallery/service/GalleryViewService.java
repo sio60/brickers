@@ -50,28 +50,27 @@ public class GalleryViewService {
     public void increaseViewIfNeeded(String postId, String viewerKey) {
         LocalDateTime now = LocalDateTime.now();
 
-        // 게시글 존재/삭제 체크 (deleted=true면 증가 X)
         GalleryPostEntity post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다. id=" + postId));
         if (post.isDeleted())
             throw new IllegalArgumentException("삭제된 게시글입니다.");
 
         try {
-            // ✅ 처음 보는 경우에만 로그 insert 성공
-            viewLogRepository.save(GalleryViewLogEntity.builder()
+            // ✅ insert로 명확히 “처음 본 경우만” 저장
+            viewLogRepository.insert(GalleryViewLogEntity.builder()
                     .postId(postId)
                     .viewerKey(viewerKey)
                     .createdAt(now)
                     .build());
 
-            // ✅ insert 성공했을 때만 조회수 +1 (원자 증가)
+            // ✅ insert 성공했을 때만 조회수 +1
             mongoTemplate.updateFirst(
                     Query.query(Criteria.where("_id").is(postId).and("deleted").is(false)),
                     new Update().inc("viewCount", 1).set("updatedAt", now),
                     GalleryPostEntity.class);
 
         } catch (DuplicateKeyException e) {
-            // ✅ 24h 내 이미 본 경우 (유니크 충돌) → 증가 안 함
+            // ✅ 24h 내 이미 본 경우 → 증가 안 함
         }
     }
 
