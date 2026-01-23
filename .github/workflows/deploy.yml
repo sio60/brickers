@@ -13,7 +13,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 디스크 청소 (용량 부족 방지용)
+      # 디스크 청소
       - name: Clean up disk space
         run: |
           echo "=== Before cleanup ==="
@@ -42,7 +42,6 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/brickers-backend:${{ github.sha }}
           provenance: false
           no-cache: true
-          # 백엔드 빌드 통과용 가짜 값 (실행 시엔 .env 값 사용됨)
           build-args: |
             AWS_S3_BUCKET=dummy
 
@@ -56,7 +55,6 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/brickers-frontend:${{ github.sha }}
           provenance: false
           no-cache: true
-          # 프론트엔드는 빌드 시점에 환경변수가 꼭 필요함
           build-args: |
             VITE_KAKAO_CLIENT_ID=${{ secrets.VITE_KAKAO_CLIENT_ID }}
             VITE_KAKAO_REDIRECT_URI=${{ secrets.VITE_KAKAO_REDIRECT_URI }}
@@ -78,7 +76,6 @@ jobs:
             set -e
             echo "🚀 Starting deployment on EC2..."
             
-            # 프로젝트 폴더가 없으면 생성
             mkdir -p ~/brickers
             cd ~/brickers
             
@@ -93,7 +90,7 @@ jobs:
             MONGO_PORT=${{ secrets.MONGO_PORT }}
             MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }}
             
-            # AI / Python Service
+            # AI Service
             AI_PORT=${{ secrets.AI_PORT }}
             AI_MONGODB_URI=${{ secrets.AI_MONGODB_URI }}
             AI_MONGODB_NAME=${{ secrets.AI_MONGODB_NAME }}
@@ -102,23 +99,30 @@ jobs:
             AI_VECTOR_FIELD=${{ secrets.AI_VECTOR_FIELD }}
             AI_EMBEDDING_DIMS=${{ secrets.AI_EMBEDDING_DIMS }}
             
-            # Frontend Vars (런타임 참조용)
+            # Frontend
             VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
             VITE_KAKAO_CLIENT_ID=${{ secrets.VITE_KAKAO_CLIENT_ID }}
             VITE_KAKAO_REDIRECT_URI=${{ secrets.VITE_KAKAO_REDIRECT_URI }}
             
-            # Backend - JWT (필수)
+            # ✅ [추가] JWT 설정 (시간값 하드코딩)
             JWT_SECRET=${{ secrets.JWT_SECRET }}
-            JWT_ACCESS_EXPIRATION=${{ secrets.JWT_ACCESS_EXPIRATION }}
-            JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }}
+            JWT_ACCESS_EXPIRATION=3600000
+            JWT_REFRESH_EXPIRATION=604800000
             
-            # Backend - AWS S3 (필수)
+            # ✅ [추가] AWS S3 & Upload 설정 (시간/크기)
             AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
             AWS_REGION=${{ secrets.AWS_REGION }}
             AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            AWS_PRESIGN_EXP_SECONDS=120
+            AWS_S3_KEY_PREFIX=uploads
+            UPLOAD_MAX_BYTES=10485760
             
-            # Backend - OAuth
+            # ✅ [추가] Cookie 설정
+            COOKIE_SECURE=true
+            COOKIE_SAMESITE=None
+            
+            # OAuth
             KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
             KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }} 
             KAKAO_ADMIN_KEY=${{ secrets.KAKAO_ADMIN_KEY }}
@@ -128,7 +132,7 @@ jobs:
             GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }}
             GOOGLE_LOCAL_REDIRECT_URI=${{ secrets.GOOGLE_LOCAL_REDIRECT_URI }}
             
-            # Base URLs & Ports
+            # URL & Ports
             FRONT_BASE_URL=${{ secrets.FRONT_BASE_URL }}
             BACKEND_PORT=${{ secrets.BACKEND_PORT }}
             FRONTEND_PORT=${{ secrets.FRONTEND_PORT }}
@@ -140,7 +144,7 @@ jobs:
             echo "🔁 Restarting containers..."
             docker-compose up -d
             
-            echo "🧹 Cleaning up unused images..."
+            echo "🧹 Cleaning up..."
             docker image prune -f
             
             echo "✅ Deployment completed successfully!"
