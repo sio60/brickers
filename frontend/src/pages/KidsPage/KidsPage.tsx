@@ -91,8 +91,8 @@ export default function KidsPage() {
   // ✅ 레벨별 예산 고정
   const budget = useMemo(() => {
     if (age === "4-5") return 50;
-    if (age === "6-7") return 80;
-    return 200;
+    if (age === "6-7") return 100;
+    return 150;
   }, [age]);
 
   // navigate state에서 파일 받기
