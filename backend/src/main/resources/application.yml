@@ -8,7 +8,7 @@ spring:
   config:
     import: "optional:file:.env[.properties]"
 
-  data:
+
     data:
       mongodb:
         host: ${MONGO_HOST}    
