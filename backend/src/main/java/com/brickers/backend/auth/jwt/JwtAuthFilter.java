@@ -23,7 +23,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
+    protected void doFilterInternal(
+            HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
@@ -37,13 +38,22 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         try {
             Jws<Claims> jws = jwtProvider.parse(token);
-            String userId = jws.getPayload().getSubject();
+            Claims claims = jws.getPayload();
+
+            String userId = claims.getSubject();
+
+            // ✅ role 클레임 읽기 (없으면 USER로 fallback)
+            String role = claims.get("role", String.class);
+            if (role == null || role.isBlank())
+                role = "USER";
 
             var auth = new UsernamePasswordAuthenticationToken(
                     userId,
                     null,
-                    List.of(new SimpleGrantedAuthority("ROLE_USER")));
+                    List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+
             SecurityContextHolder.getContext().setAuthentication(auth);
+
         } catch (Exception e) {
             SecurityContextHolder.clearContext();
         }

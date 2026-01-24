@@ -1,25 +1,106 @@
 package com.brickers.backend.common.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
+import lombok.Builder;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.Instant;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<?> handleForbidden(ForbiddenException e) {
-        return ResponseEntity.status(403).body(Map.of(
-                "code", "FORBIDDEN",
-                "message", e.getMessage()));
+    // ✅ 400: 비즈니스 검증 실패 (ex. "이미 처리된 신고는 취소 불가")
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> handleIllegalArgument(
+            IllegalArgumentException e,
+            HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiError.of(HttpStatus.BAD_REQUEST, "BAD_REQUEST", e.getMessage(), req.getRequestURI()));
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<?> handleIllegalState(IllegalStateException e) {
-        // 기존 throw들이 있으면 일단 400으로 떨어지게 처리 (원하면 401/403로 더 세분화 가능)
-        return ResponseEntity.badRequest().body(Map.of(
-                "code", "BAD_REQUEST",
-                "message", e.getMessage()));
+    // ✅ 404: 데이터 없음 (Optional.orElseThrow()에서 발생 가능)
+    @ExceptionHandler(java.util.NoSuchElementException.class)
+    public ResponseEntity<ApiError> handleNoSuchElement(
+            java.util.NoSuchElementException e,
+            HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of(HttpStatus.NOT_FOUND, "NOT_FOUND", e.getMessage(), req.getRequestURI()));
+    }
+
+    // ✅ 400: @Valid 바인딩 실패 (request body 검증)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiError> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException e,
+            HttpServletRequest req) {
+        Map<String, String> fieldErrors = e.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .collect(Collectors.toMap(
+                        fe -> fe.getField(),
+                        fe -> fe.getDefaultMessage() == null ? "invalid" : fe.getDefaultMessage(),
+                        (a, b) -> a));
+
+        ApiError body = ApiError.of(
+                HttpStatus.BAD_REQUEST,
+                "VALIDATION_ERROR",
+                "요청 값이 올바르지 않습니다.",
+                req.getRequestURI());
+        body.setDetails(fieldErrors);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    // ✅ 400: @RequestParam / @PathVariable 검증 등 (필요시)
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiError> handleConstraintViolation(
+            ConstraintViolationException e,
+            HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiError.of(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", e.getMessage(), req.getRequestURI()));
+    }
+
+    // ✅ 500: 나머지 예외 (로그 남기고 500)
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> handleException(
+            Exception e,
+            HttpServletRequest req) {
+        log.error("Unhandled error at {} {}", req.getMethod(), req.getRequestURI(), e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiError.of(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "서버 오류", req.getRequestURI()));
+    }
+
+    @Data
+    @Builder
+    public static class ApiError {
+        private Instant timestamp;
+        private int status;
+        private String error;
+        private String code;
+        private String message;
+        private String path;
+
+        // field error 같은 추가 정보
+        private Object details;
+
+        public static ApiError of(HttpStatus status, String code, String message, String path) {
+            return ApiError.builder()
+                    .timestamp(Instant.now())
+                    .status(status.value())
+                    .error(status.getReasonPhrase())
+                    .code(code)
+                    .message(message)
+                    .path(path)
+                    .build();
+        }
     }
 }

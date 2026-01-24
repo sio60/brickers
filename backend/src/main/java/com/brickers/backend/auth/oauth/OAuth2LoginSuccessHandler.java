@@ -3,7 +3,6 @@ package com.brickers.backend.auth.oauth;
 import com.brickers.backend.audit.entity.AuditEventType;
 import com.brickers.backend.audit.service.AuditLogService;
 import com.brickers.backend.auth.service.AuthTokenService;
-import com.brickers.backend.auth.service.AuthTokenService.IssuedTokens;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,6 +39,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         String userId = null;
         String provider = null;
+        String role = null;
 
         if (authentication instanceof OAuth2AuthenticationToken token) {
             provider = token.getAuthorizedClientRegistrationId();
@@ -47,6 +47,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
             String providerId = extractProviderId(provider, attrs);
             if (providerId != null && !providerId.isBlank() && !"null".equals(providerId)) {
+
                 User user = userRepository.findByProviderAndProviderId(provider, providerId).orElse(null);
                 if (user != null) {
                     user.ensureDefaults();
@@ -55,6 +56,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                     userRepository.save(user);
 
                     userId = user.getId();
+                    role = (user.getRole() == null) ? "USER" : user.getRole().name();
 
                     auditLogService.log(
                             AuditEventType.LOGIN,
@@ -67,15 +69,15 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         }
 
         if (userId == null) {
-            // 유저를 못 찾으면 실패로 보내는 게 안전
             String failUrl = normalizeFront(frontBaseUrl) + "/auth/failure";
             response.sendRedirect(failUrl);
             return;
         }
 
-        // ✅ JWT 토큰 발급 (access는 응답 바디로 주는 게 아니라 refresh로 뽑는 구조라 refreshCookie만 심어도 됨)
-        // 다만, 지금은 "로그인 성공 즉시 refresh-cookie 세팅"만 하고 프론트가 /api/auth/refresh를 호출하도록 설계.
-        var issued = tokenService.issueTokens(userId, Map.of("provider", provider));
+        // ✅ refresh-cookie 발급 (accessToken도 함께 발급되지만, 현재 플로우에선 refresh로 access 뽑음)
+        var issued = tokenService.issueTokens(userId, Map.of(
+                "provider", provider == null ? "" : provider,
+                "role", role == null ? "USER" : role));
 
         response.addHeader("Set-Cookie", issued.refreshCookie().toString());
 
