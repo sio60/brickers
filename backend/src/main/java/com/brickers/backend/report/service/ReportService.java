@@ -18,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.NoSuchElementException;
 
 @Slf4j
 @Service
@@ -76,7 +77,7 @@ public class ReportService {
         String userId = user.getId();
 
         Report report = reportRepository.findById(reportId)
-                .orElseThrow(() -> new IllegalArgumentException("신고를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NoSuchElementException("신고를 찾을 수 없습니다."));
 
         if (!report.getReporterId().equals(userId)) {
             throw new IllegalArgumentException("본인의 신고만 조회 가능합니다.");
