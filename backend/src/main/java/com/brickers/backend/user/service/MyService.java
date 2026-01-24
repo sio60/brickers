@@ -5,6 +5,7 @@ import com.brickers.backend.job.entity.GenerateJobEntity;
 import com.brickers.backend.job.entity.JobStage;
 import com.brickers.backend.job.entity.JobStatus;
 import com.brickers.backend.job.repository.GenerateJobRepository;
+import com.brickers.backend.payment.service.PaymentService;
 import com.brickers.backend.user.MySettingsResponse;
 import com.brickers.backend.user.dto.*;
 import com.brickers.backend.user.entity.AccountState;
@@ -32,6 +33,7 @@ public class MyService {
     // ✅ 추가
     private final GalleryService galleryService;
     private final GenerateJobRepository generateJobRepository;
+    private final PaymentService paymentService;
 
     private static final Set<String> ADMIN_EMAILS = Set.of(
             "rladbskepgpt@naver.com",
@@ -119,11 +121,21 @@ public class MyService {
     }
 
     /** 멤버십 업그레이드 (PRO로 변경) */
-    public MyMembershipResponse upgradeMembership(Authentication authentication) {
+    public MyMembershipResponse upgradeMembership(Authentication authentication,
+            com.brickers.backend.payment.dto.GooglePayVerifyRequest req) {
         User user = currentUserService.get(authentication);
-        user.setMembershipPlan(MembershipPlan.PRO);
-        user.setUpdatedAt(LocalDateTime.now());
-        userRepository.save(user);
+
+        // 구글 페이 데이터가 있으면 검증 및 결제 내역 생성 포함
+        if (req != null && req.getPaymentData() != null) {
+            paymentService.verifyGooglePay(authentication, req);
+            // verifyGooglePay 내부에서 이미 user.setMembershipPlan(PRO) 및 저장을 하므로 다시 가져옴
+            user = userRepository.findById(user.getId()).orElse(user);
+        } else {
+            // 구글 페이 데이터가 없으면 단순 업그레이드 (기존 로직 유지)
+            user.setMembershipPlan(MembershipPlan.PRO);
+            user.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user);
+        }
 
         return MyMembershipResponse.builder()
                 .membershipPlan(user.getMembershipPlan())

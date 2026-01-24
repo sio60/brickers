@@ -35,8 +35,10 @@ public class MyController {
     }
 
     @PostMapping("/membership/upgrade")
-    public MyMembershipResponse upgradeMembership(Authentication authentication) {
-        return myService.upgradeMembership(authentication);
+    public MyMembershipResponse upgradeMembership(
+            Authentication authentication,
+            @RequestBody(required = false) com.brickers.backend.payment.dto.GooglePayVerifyRequest req) {
+        return myService.upgradeMembership(authentication, req);
     }
 
     @DeleteMapping("/account")

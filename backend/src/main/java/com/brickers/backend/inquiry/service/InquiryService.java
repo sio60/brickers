@@ -150,7 +150,6 @@ public class InquiryService {
     }
 
     public InquiryResponse updateAnswer(Authentication auth, String inquiryId, InquiryAnswerRequest req) {
-        String adminId = (String) auth.getPrincipal();
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다."));
 
