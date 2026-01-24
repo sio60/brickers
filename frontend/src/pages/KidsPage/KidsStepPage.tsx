@@ -3,8 +3,12 @@ import { Bounds, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLanguage } from "../../contexts/LanguageContext";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
+import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+import { registerToGallery } from "../../api/myApi";
+import "./KidsStepPage.css";
 
 const CDN_BASE =
   "https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/";
@@ -60,7 +64,7 @@ function LdrModel({
   overrideMainLdrUrl?: string; // 현재 스텝용 blob url
   partsLibraryPath?: string;
   ldconfigUrl?: string;
-  onLoaded?: () => void;
+  onLoaded?: (group: THREE.Group) => void;
   onError?: (e: unknown) => void;
 }) {
   const loader = useMemo(() => {
@@ -100,7 +104,7 @@ function LdrModel({
       if (overrideMainLdrUrl && !isAbsolute) {
         try {
           fixed = new URL(fixed, url).href;
-        } catch {}
+        } catch { }
       }
 
       // CDN parts/p 보정
@@ -131,7 +135,7 @@ function LdrModel({
 
     try {
       (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any);
-    } catch {}
+    } catch { }
 
     return l;
   }, [partsLibraryPath, url, overrideMainLdrUrl]);
@@ -158,7 +162,7 @@ function LdrModel({
 
       prev = g;
       setGroup(g);
-      onLoaded?.();
+      onLoaded?.(g);
     })().catch((e) => {
       console.error("[LDraw] load failed:", e);
       onError?.(e);
@@ -181,6 +185,7 @@ function LdrModel({
 
 export default function KidsStepPage() {
   const nav = useNavigate();
+  const { t } = useLanguage();
   const [params] = useSearchParams();
   const url = params.get("url") || "";
 
@@ -188,12 +193,18 @@ export default function KidsStepPage() {
   const [stepIdx, setStepIdx] = useState(0);
   const [stepBlobUrls, setStepBlobUrls] = useState<string[]>([]);
   const blobRef = useRef<string[]>([]);
+  const modelGroupRef = useRef<THREE.Group | null>(null);
+
+  // 갤러리 등록 모달 관련
+  const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
+  const [galleryTitle, setGalleryTitle] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const revokeAll = (arr: string[]) => {
     arr.forEach((u) => {
       try {
         URL.revokeObjectURL(u);
-      } catch {}
+      } catch { }
     });
   };
 
@@ -237,6 +248,80 @@ export default function KidsStepPage() {
       alive = false;
     };
   }, [url]);
+
+  const downloadLdr = async () => {
+    if (!url) return;
+    try {
+      const res = await fetch(url);
+      const text = await res.text();
+      const blob = new Blob([text], { type: "text/plain" });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = "brickers_model.ldr";
+      link.click();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (err) {
+      console.error("LDR download failed:", err);
+    }
+  };
+
+  const downloadGlb = () => {
+    if (!modelGroupRef.current) return;
+    const exporter = new GLTFExporter();
+    exporter.parse(
+      modelGroupRef.current,
+      (result) => {
+        const output = result instanceof ArrayBuffer ? result : JSON.stringify(result);
+        const blob = new Blob([output], { type: result instanceof ArrayBuffer ? "application/octet-stream" : "application/json" });
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = "brickers_model.glb";
+        link.click();
+        window.URL.revokeObjectURL(downloadUrl);
+      },
+      (error) => {
+        console.error("GLB export failed:", error);
+      },
+      { binary: true }
+    );
+  };
+
+  const handleRegisterGallery = async () => {
+    if (!galleryTitle.trim()) {
+      alert(t.kids.steps.galleryModal.placeholder);
+      return;
+    }
+    // jobId를 url 파라미터나 상태에서 가져와야 함. 
+    // 여기서는 편의상 임시로 'temp_id'를 사용하거나 
+    // ldrUrl 자체가 식별자가 될 수 있는지 확인 필요.
+    // 보통 KidsPage에서 생성 후 넘겨받을 때 jobId도 같이 넘겨주는 게 좋음.
+    // 현재는 url(blob)만 넘어오고 있으므로, 실제 연동 시에는 navigate할 때 jobId도 같이 넘겨야 함.
+    const searchParams = new URLSearchParams(window.location.search);
+
+    setIsSubmitting(true);
+    try {
+      // ✅ 백엔드 실제 스펙 GalleryCreateRequest에 맞춰 호출
+      await registerToGallery({
+        title: galleryTitle,
+        content: `Created in Kids Mode (Age: ${searchParams.get("age") || "Unknown"})`,
+        tags: ["Kids", "Lego"],
+        // thumbnailUrl은 현재 백엔드에서 jobId 연동 로직이 없으므로 빈값 혹은 
+        // 추후 백엔드에서 jobId를 받아 작업 썸네일을 자동 매칭하도록 개선 필요.
+        thumbnailUrl: "/uploads/placeholder.png",
+        visibility: 'PUBLIC'
+      });
+      alert(t.kids.steps.galleryModal.success);
+      setIsGalleryModalOpen(false);
+      setGalleryTitle("");
+    } catch (err) {
+      console.error("Gallery registration failed:", err);
+      alert(t.kids.steps.galleryModal.fail);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     return () => revokeAll(blobRef.current);
@@ -293,7 +378,7 @@ export default function KidsStepPage() {
             cursor: "pointer",
           }}
         >
-          ← Back
+          ← {t.kids.steps.back}
         </button>
 
         <div style={{ fontWeight: 900, letterSpacing: 0.5, opacity: 0.9 }}>
@@ -309,7 +394,7 @@ export default function KidsStepPage() {
             fontWeight: 900,
           }}
         >
-          STEP {stepIdx + 1} / {total}
+          {t.kids.steps.title.replace("{cur}", String(stepIdx + 1)).replace("{total}", String(total))}
         </div>
       </div>
 
@@ -351,7 +436,7 @@ export default function KidsStepPage() {
               fontWeight: 900,
             }}
           >
-            Brick Preview
+            {t.kids.steps.preview}
           </div>
 
           {/* 로딩 오버레이 */}
@@ -370,7 +455,7 @@ export default function KidsStepPage() {
                 color: "#666",
               }}
             >
-              스텝 로딩 중...
+              {t.kids.steps.loading}
             </div>
           )}
 
@@ -383,7 +468,10 @@ export default function KidsStepPage() {
               <LdrModel
                 url={url}
                 overrideMainLdrUrl={overrideMainLdrUrl}
-                onLoaded={() => setLoading(false)}
+                onLoaded={(g) => {
+                  setLoading(false);
+                  modelGroupRef.current = g;
+                }}
                 onError={() => setLoading(false)}
               />
 
@@ -414,7 +502,7 @@ export default function KidsStepPage() {
               opacity: canPrev ? 1 : 0.45,
             }}
           >
-            ← PREV
+            ← {t.kids.steps.prev}
           </button>
 
           <button
@@ -439,10 +527,62 @@ export default function KidsStepPage() {
               opacity: canNext ? 1 : 0.45,
             }}
           >
-            NEXT →
+            {t.kids.steps.next} →
           </button>
         </div>
       </div>
+
+      {/* 하단 액션 버튼들 */}
+      <div className="kidsStep__actionContainer">
+        <button className="kidsStep__actionBtn" onClick={downloadGlb}>
+          {t.kids.steps.downloadGlb}
+        </button>
+
+        <button className="kidsStep__actionBtn" onClick={downloadLdr}>
+          {t.kids.steps.downloadLdr}
+        </button>
+
+        <button
+          className="kidsStep__actionBtn kidsStep__actionBtn--gallery"
+          onClick={() => setIsGalleryModalOpen(true)}
+        >
+          {t.kids.steps.registerGallery}
+        </button>
+      </div>
+
+      {/* 갤러리 등록 모달 */}
+      {isGalleryModalOpen && (
+        <div className="galleryModalOverlay" onClick={() => setIsGalleryModalOpen(false)}>
+          <div className="galleryModal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="galleryModal__title">
+              {t.kids.steps.galleryModal.title}
+            </h3>
+            <input
+              type="text"
+              className="galleryModal__input"
+              value={galleryTitle}
+              onChange={(e) => setGalleryTitle(e.target.value)}
+              placeholder={t.kids.steps.galleryModal.placeholder}
+              autoFocus
+            />
+            <div className="galleryModal__actions">
+              <button
+                className="galleryModal__btn galleryModal__btn--cancel"
+                onClick={() => setIsGalleryModalOpen(false)}
+              >
+                {t.kids.steps.galleryModal.cancel}
+              </button>
+              <button
+                className="galleryModal__btn galleryModal__btn--confirm"
+                onClick={handleRegisterGallery}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "..." : t.kids.steps.galleryModal.confirm}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

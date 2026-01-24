@@ -234,7 +234,6 @@
 
 /* ✅ 타이틀 */
 .kidsPage__title {
-  font-family: 'Inter', 'Segoe UI', sans-serif;
   font-size: 28px;
   font-weight: 900;
   color: #000000;
@@ -295,7 +294,6 @@
 
 /* ✅ 결과 타이틀 - 카드 위에 표시 */
 .kidsPage__resultTitle {
-  font-family: 'Inter', 'Segoe UI', sans-serif;
   font-size: 24px;
   font-weight: 800;
   color: #111;
@@ -412,4 +410,24 @@
   .kidsPage__resultViewer {
     height: 300px;
   }
+}
+
+/* ✅ NEXT 버튼 */
+.kidsPage__nextBtn {
+  margin-top: 20px;
+  padding: 16px 48px;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.kidsPage__nextBtn:hover {
+  background: #333;
+  transform: scale(1.05);
 }

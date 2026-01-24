@@ -37,9 +37,11 @@ public class AuthController {
 
         try {
             String userId = tokenService.validateAndRotate(refreshRaw);
+            User user = userRepository.findById(userId).orElseThrow();
 
             // access에 넣을 claims는 필요 시 추가 (role, provider 등)
-            var issued = tokenService.issueTokens(userId, Map.of());
+            var issued = tokenService.issueTokens(userId, Map.of("role", user.getRole().name()));
+
 
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, issued.refreshCookie().toString())
@@ -106,4 +108,15 @@ public class AuthController {
         }
         return null;
     }
+
+    @GetMapping("/debug-auth")
+    public ResponseEntity<?> debugAuth(Authentication authentication) {
+        if (authentication == null)
+            return ResponseEntity.ok(Map.of("auth", null));
+
+        return ResponseEntity.ok(Map.of(
+                "principal", authentication.getPrincipal(),
+                "authorities", authentication.getAuthorities()));
+    }
+
 }

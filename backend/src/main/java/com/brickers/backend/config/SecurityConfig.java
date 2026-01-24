@@ -106,6 +106,13 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
 
                                                 // -------------------------------
+
+                                                // ✅ Admin API
+                                                // -------------------------------
+                                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+
+                                                // -------------------------------
                                                 // ✅ 나머지는 인증
                                                 // -------------------------------
                                                 .anyRequest().authenticated())
@@ -131,7 +138,7 @@ public class SecurityConfig {
                                 "http://localhost:3000",
                                 "https://brickers.shop",
                                 "https://www.brickers.shop"));
-                config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                 // config.setAllowedHeaders(List.of("Authorization", "Content-Type",
                 // "X-Requested-With"));
                 // config.setExposedHeaders(List.of("Location"));

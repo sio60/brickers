@@ -1,0 +1,676 @@
+.mypage {
+    min-height: 100vh;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+}
+
+/* 언어별 폰트 설정 */
+.mypage.lang-ko,
+.mypage.lang-ja {
+    font-family: "Jua", sans-serif;
+}
+
+.mypage__container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px;
+    padding-top: 10vh;
+    position: relative;
+    z-index: 10;
+}
+
+.mypage__layout {
+    display: flex;
+    gap: 0;
+    background: #fff;
+    border: 2px solid #000;
+    border-radius: 20px;
+    overflow: hidden;
+    height: 80vh;
+    /* Fixed height for internal scrolling */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    position: relative;
+    /* Ensure absolute children are positioned relative to this */
+}
+
+/* 사이드바 */
+.mypage__sidebar {
+    width: 200px;
+    background: #fafafa;
+    border-right: 2px solid #000;
+    padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.mypage__menuItem {
+    display: flex;
+    align-items: center;
+    padding: 18px 24px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+    text-align: left;
+    transition: all 0.15s;
+}
+
+.mypage__menuItem:hover {
+    background: #000;
+    color: #fff;
+}
+
+.mypage__menuItem.active {
+    background: #ffe135;
+    font-weight: 700;
+}
+
+.mypage__menuIcon {
+    font-size: 18px;
+}
+
+.mypage__menuLabel {
+    flex: 1;
+}
+
+/* 컨텐츠 영역 */
+.mypage__content {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+}
+
+.mypage__loading,
+.mypage__error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: #666;
+}
+
+.mypage__loginBtn {
+    margin-top: 16px;
+    padding: 12px 24px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* 섹션 */
+.mypage__section {
+    width: 100%;
+}
+
+.mypage__sectionTitle {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0 0 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #eee;
+}
+
+/* 프로필 카드 */
+.mypage__profileCard {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.mypage__avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #f0f0f0;
+    border: 2px solid #000;
+}
+
+.mypage__profileInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.mypage__infoRow {
+    display: flex;
+    gap: 16px;
+}
+
+.mypage__label {
+    width: 80px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #888;
+}
+
+.mypage__value {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 500;
+    color: #111;
+}
+
+.mypage__editBtn {
+    align-self: flex-start;
+    padding: 12px 24px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+}
+
+.mypage__editBtn:hover {
+    background: #333;
+}
+
+/* 멤버십 카드 */
+.mypage__membershipCard {
+    padding: 24px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.mypage__planBadge {
+    display: inline-block;
+    padding: 8px 20px;
+    background: #ffe135;
+    border-radius: 999px;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.mypage__planDesc {
+    font-size: 15px;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.mypage__upgradeBtn {
+    padding: 12px 24px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* 작업 리스트 (그리드 레이아웃) */
+.mypage__jobs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 10px 0;
+}
+
+.mypage__job {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.mypage__job:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+    border-color: #000;
+}
+
+.mypage__jobThumbData {
+    position: relative;
+    width: 100%;
+    padding-top: 100%;
+    /* 1:1 Aspect Ratio */
+    background: #f4f4f4;
+    overflow: hidden;
+}
+
+.mypage__jobThumb {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.mypage__job:hover .mypage__jobThumb {
+    transform: scale(1.05);
+}
+
+.mypage__jobOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.mypage__jobOverlay:hover,
+.mypage__jobOverlay:has(button) {
+    opacity: 1;
+}
+
+.mypage__retryBtn {
+    padding: 10px 16px;
+    background: #fff;
+    color: #000;
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.mypage__retryBtn:hover {
+    background: #f0f0f0;
+    transform: rotate(180deg);
+    transition: transform 0.4s;
+}
+
+.mypage__jobInfo {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mypage__jobTitle {
+    font-size: 16px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #111;
+}
+
+.mypage__jobMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mypage__jobStatus {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.mypage__jobStatus.pending {
+    color: #f59e0b;
+}
+
+.mypage__jobStatus.running {
+    color: #3b82f6;
+}
+
+.mypage__jobStatus.paused {
+    color: #8b5cf6;
+}
+
+.mypage__jobStatus.completed {
+    color: #22c55e;
+}
+
+.mypage__jobStatus.failed {
+    color: #ef4444;
+}
+
+.mypage__jobDate {
+    font-size: 12px;
+    color: #888;
+}
+
+.mypage__empty {
+    color: #888;
+    font-size: 15px;
+    text-align: center;
+    padding: 40px;
+    background: #f9f9f9;
+    border-radius: 12px;
+}
+
+/* 설정 카드 */
+.mypage__settingsCard {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mypage__settingRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.mypage__settingBtn {
+    padding: 8px 16px;
+    background: #eee;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mypage__settingBtn:hover {
+    background: #ddd;
+}
+
+/* 회원탈퇴 카드 */
+.mypage__deleteCard {
+    padding: 24px;
+    background: #fff5f5;
+    border-radius: 12px;
+    border: 1px solid #ffcccc;
+}
+
+.mypage__deleteCard p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.mypage__deleteBtn {
+    padding: 12px 24px;
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mypage__deleteBtn:hover {
+    background: #dc2626;
+}
+
+/* 프로필 수정 폼 */
+.mypage__avatarEdit {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.mypage__avatarBtn {
+    padding: 8px 16px;
+    background: #eee;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mypage__avatarBtn:hover {
+    background: #ddd;
+}
+
+.mypage__editForm {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.mypage__formRow {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mypage__formLabel {
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+}
+
+.mypage__formInput {
+    padding: 12px 16px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    font-size: 15px;
+    transition: border-color 0.15s;
+}
+
+.mypage__formInput:focus {
+    outline: none;
+    border-color: #000;
+}
+
+.mypage__formTextarea {
+    padding: 12px 16px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    font-size: 15px;
+    resize: vertical;
+    font-family: inherit;
+    transition: border-color 0.15s;
+}
+
+.mypage__formTextarea:focus {
+    outline: none;
+    border-color: #000;
+}
+
+.mypage__editActions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.mypage__cancelBtn {
+    padding: 12px 24px;
+    background: #eee;
+    color: #333;
+    border: none;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mypage__cancelBtn:hover {
+    background: #ddd;
+}
+
+.mypage__saveBtn {
+    padding: 12px 24px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mypage__saveBtn:hover {
+    background: #333;
+}
+
+.mypage__saveBtn:disabled,
+.mypage__cancelBtn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .mypage__layout {
+        flex-direction: column;
+    }
+
+    .mypage__sidebar {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        border-right: none;
+        border-bottom: 2px solid #000;
+        padding: 0;
+    }
+
+    .mypage__menuItem {
+        flex-direction: column;
+        gap: 4px;
+        padding: 12px 16px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+}
+
+/* 3D 뷰어 모달 */
+.mypage__modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.mypage__modalContent {
+    position: relative;
+    width: 90%;
+    max-width: 1200px;
+    height: 85vh;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.mypage__closeBtn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: transparent;
+    color: #000;
+    border: none;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mypage__closeBtn:hover {
+    transform: rotate(90deg);
+    background: transparent;
+}
+
+.mypage__viewerContainer {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    background: #f8f9fa;
+}
+
+/* 마이페이지 나가기 버튼 */
+.mypage__exitBtn {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    color: #000;
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mypage__exitBtn:hover {
+    transform: rotate(90deg);
+    background: transparent;
+}
+
+/* 언어 설정 버튼 그룹 */
+.mypage__langGroup {
+    display: flex;
+    gap: 8px;
+}
+
+.mypage__langBtn {
+    padding: 8px 16px;
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mypage__langBtn:hover {
+    background: #e0e0e0;
+}
+
+.mypage__langBtn.active {
+    background: #000;
+    color: #fff;
+    border-color: #000;
+}

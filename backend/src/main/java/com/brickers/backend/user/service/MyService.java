@@ -8,16 +8,20 @@ import com.brickers.backend.job.repository.GenerateJobRepository;
 import com.brickers.backend.user.MySettingsResponse;
 import com.brickers.backend.user.dto.*;
 import com.brickers.backend.user.entity.AccountState;
+import com.brickers.backend.user.entity.MembershipPlan;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MyService {
@@ -29,10 +33,39 @@ public class MyService {
     private final GalleryService galleryService;
     private final GenerateJobRepository generateJobRepository;
 
+    private static final Set<String> ADMIN_EMAILS = Set.of(
+            "rladbskepgpt@naver.com",
+            "kurijuki11@gmail.com",
+            "mayjoonll@naver.com",
+            "mayjoonll@gmail.com",
+            "khwhj@naver.com",
+            "khwhj3577@gmail.com",
+            "ghks0115@gmail.com",
+            "passion.johnbyeon@gmail.com",
+            "sbpak10@naver.com",
+            "sbpak1@gmail.com");
+
     /** 내 프로필 조회 */
     public MyProfileResponse getMyProfile(Authentication authentication) {
         User user = currentUserService.get(authentication);
+        checkAndUpgradeAdmin(user);
         return toProfileResponse(user);
+    }
+
+    private void checkAndUpgradeAdmin(User user) {
+        if (user.getEmail() != null) {
+            String email = user.getEmail().trim().toLowerCase();
+            boolean isAdminEmail = ADMIN_EMAILS.stream().anyMatch(e -> e.equalsIgnoreCase(email));
+
+            if (isAdminEmail) {
+                if (user.getRole() != com.brickers.backend.user.entity.UserRole.ADMIN) {
+                    log.info("[AdminUpgrade] Upgrading user {} (email: {}) to ADMIN role", user.getId(),
+                            user.getEmail());
+                    user.setRole(com.brickers.backend.user.entity.UserRole.ADMIN);
+                    userRepository.save(user);
+                }
+            }
+        }
     }
 
     /** 내 프로필 수정(PATCH) */
@@ -79,6 +112,19 @@ public class MyService {
     /** 내 멤버십 조회 */
     public MyMembershipResponse getMyMembership(Authentication authentication) {
         User user = currentUserService.get(authentication);
+        return MyMembershipResponse.builder()
+                .membershipPlan(user.getMembershipPlan())
+                .expiresAt(null)
+                .build();
+    }
+
+    /** 멤버십 업그레이드 (PRO로 변경) */
+    public MyMembershipResponse upgradeMembership(Authentication authentication) {
+        User user = currentUserService.get(authentication);
+        user.setMembershipPlan(MembershipPlan.PRO);
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
         return MyMembershipResponse.builder()
                 .membershipPlan(user.getMembershipPlan())
                 .expiresAt(null)
@@ -137,6 +183,7 @@ public class MyService {
     /** ✅ 마이페이지 한 번에 로드: settings + 최근 내 글 + 최근 jobs */
     public MyOverviewResponse getMyOverview(Authentication authentication) {
         User user = currentUserService.get(authentication);
+        checkAndUpgradeAdmin(user);
         user.ensureDefaults();
 
         MySettingsResponse settings = MySettingsResponse.from(user);
@@ -214,6 +261,7 @@ public class MyService {
 
     /** 응답 DTO 매핑 */
     private MyProfileResponse toProfileResponse(User user) {
+        user.ensureDefaults();
         return MyProfileResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
@@ -222,6 +270,7 @@ public class MyService {
                 .profileImage(user.getProfileImage())
                 .membershipPlan(user.getMembershipPlan())
                 .accountState(user.getAccountState())
+                .role(user.getRole())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

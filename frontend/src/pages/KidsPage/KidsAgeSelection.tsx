@@ -20,11 +20,14 @@ import thumb8_10 from "../../assets/8-10.png";
 import thumb8_10_2 from "../../assets/8-10_2.png";
 
 import KidsModelSelectModal from "./components/KidsModelSelectModal";
+import FloatingMenuButton from "./components/FloatingMenuButton";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 type AgeGroup = "4-5" | "6-7" | "8-10" | null;
 
 export default function KidsAgeSelection() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [selectedAge, setSelectedAge] = useState<AgeGroup>(null);
 
   // 모달 오픈 상태
@@ -34,20 +37,20 @@ export default function KidsAgeSelection() {
 
   // 4-5 모델들
   const models45 = [
-    { title: "모델 1", url: "/ldraw/models/3-5_1.ldr", thumbnail: thumb3_5 },
-    { title: "모델 2", url: "/ldraw/models/3-5_2.ldr", thumbnail: thumb3_5_2 },
+    { title: t.kids.model1, url: "/ldraw/models/3-5_1.ldr", thumbnail: thumb3_5 },
+    { title: t.kids.model2, url: "/ldraw/models/3-5_2.ldr", thumbnail: thumb3_5_2 },
   ];
 
   // 6-7 모델들
   const models67 = [
-    { title: "모델 1", url: "/ldraw/models/6-7_1.ldr", thumbnail: thumb6_7 },
-    { title: "모델 2", url: "/ldraw/models/6-7_2.ldr", thumbnail: thumb6_7_2 },
+    { title: t.kids.model1, url: "/ldraw/models/6-7_1.ldr", thumbnail: thumb6_7 },
+    { title: t.kids.model2, url: "/ldraw/models/6-7_2.ldr", thumbnail: thumb6_7_2 },
   ];
 
   // 8-10 모델들
   const models810 = [
-    { title: "모델 1", url: "/ldraw/models/8-10_1.ldr", thumbnail: thumb8_10 },
-    { title: "모델 2", url: "/ldraw/models/8-10_2.ldr", thumbnail: thumb8_10_2 },
+    { title: t.kids.model1, url: "/ldraw/models/8-10_1.ldr", thumbnail: thumb8_10 },
+    { title: t.kids.model2, url: "/ldraw/models/8-10_2.ldr", thumbnail: thumb8_10_2 },
   ];
 
   const handleSelect = (ageGroup: AgeGroup) => {
@@ -87,7 +90,7 @@ export default function KidsAgeSelection() {
   return (
     <div className="kidsAgeSelection">
       <Background3D entryDirection="top" />
-      <h1 className="kidsAgeSelection__title">Select Your Level</h1>
+      <h1 className="kidsAgeSelection__title">{t.kids.title}</h1>
 
       <div className="kidsAgeSelection__buttons">
         <button
@@ -96,7 +99,7 @@ export default function KidsAgeSelection() {
           type="button"
         >
           <img src={img35} alt="4-5 years" className="kidsAgeBtn__img" />
-          <div className="kidsAgeBtn__label">L1</div>
+          <div className="kidsAgeBtn__label">{t.kids.level.replace("{lv}", "1")}</div>
         </button>
 
         <button
@@ -105,7 +108,7 @@ export default function KidsAgeSelection() {
           type="button"
         >
           <img src={img67} alt="6-7 years" className="kidsAgeBtn__img" />
-          <div className="kidsAgeBtn__label">L2</div>
+          <div className="kidsAgeBtn__label">{t.kids.level.replace("{lv}", "2")}</div>
         </button>
 
         <button
@@ -114,7 +117,7 @@ export default function KidsAgeSelection() {
           type="button"
         >
           <img src={img810} alt="8-10 years" className="kidsAgeBtn__img" />
-          <div className="kidsAgeBtn__label">L3</div>
+          <div className="kidsAgeBtn__label">{t.kids.level.replace("{lv}", "3")}</div>
         </button>
       </div>
 
@@ -124,7 +127,7 @@ export default function KidsAgeSelection() {
         disabled={!selectedAge}
         type="button"
       >
-        Continue
+        {t.kids.continueBtn}
       </button>
 
       {/* 모델 선택 모달 */}
@@ -134,6 +137,9 @@ export default function KidsAgeSelection() {
         onSelect={handlePickModel}
         items={getCurrentModels()}
       />
+
+      {/* 플로팅 메뉴 버튼 */}
+      <FloatingMenuButton />
     </div>
   );
 }

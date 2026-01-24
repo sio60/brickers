@@ -1,9 +1,9 @@
-// KidsLdrPreview.tsx (네 기존 코드에 "NEXT 버튼"만 추가하는 버전)
+// KidsLdrPreview.tsx
 import { Canvas } from "@react-three/fiber";
 import { Bounds, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ 추가
+
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 
@@ -14,6 +14,7 @@ type Props = {
   url: string;
   partsLibraryPath?: string;
   ldconfigUrl?: string;
+  stepMode?: boolean; // ✅ Step mode flag
 };
 
 function disposeObject3D(root: THREE.Object3D) {
@@ -29,7 +30,10 @@ function LdrModel({
   url,
   partsLibraryPath = CDN_BASE,
   ldconfigUrl = `${CDN_BASE}LDConfig.ldr`,
-}: Props) {
+  stepMode = false,
+  currentStep = 1,
+  onStepCountChange,
+}: Props & { currentStep?: number; onStepCountChange?: (count: number) => void }) {
   const loader = useMemo(() => {
     THREE.Cache.enabled = true;
 
@@ -65,7 +69,7 @@ function LdrModel({
 
     try {
       (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any);
-    } catch {}
+    } catch { }
 
     return l;
   }, [partsLibraryPath]);
@@ -89,6 +93,18 @@ function LdrModel({
 
       g.rotation.x = Math.PI;
 
+      // Group children might represent steps or parts.
+      // Typically, LDrawLoader puts everything in one group, or nested groups.
+      // If we assume a flat list of parts for simplicity in "fake step mode":
+      if (onStepCountChange) {
+        // If specific step groups exist, count them. Otherwise count basic children (parts).
+        // LDrawLoader usually puts steps in "userData.numSteps"? No standard.
+        // Let's just treat total children as total "parts" to show one by one if we want animation,
+        // but for "Steps", LDraw often groups them.
+        // For now, let's just expose the total children count as max steps.
+        onStepCountChange(g.children.length);
+      }
+
       prev = g;
       setGroup(g);
     })().catch((e) => console.error("[LDraw] load failed:", e));
@@ -97,7 +113,16 @@ function LdrModel({
       cancelled = true;
       if (prev) disposeObject3D(prev);
     };
-  }, [url, ldconfigUrl, loader]);
+  }, [url, ldconfigUrl, loader, onStepCountChange]);
+
+  // Handle visibility for steps
+  useEffect(() => {
+    if (!group || !stepMode) return;
+
+    group.children.forEach((child, index) => {
+      child.visible = index < currentStep;
+    });
+  }, [group, currentStep, stepMode]);
 
   if (!group) return null;
 
@@ -108,31 +133,25 @@ function LdrModel({
   );
 }
 
-export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl }: Props) {
+export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, stepMode = false }: Props) {
   const [loading, setLoading] = useState(true);
-  const nav = useNavigate(); // ✅ 추가
+  const [currentStep, setCurrentStep] = useState(1);
+  const [totalSteps, setTotalSteps] = useState(1);
+
+  const handleNext = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
 
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
-      {/* ✅ NEXT → 버튼(오른쪽 하단) : 스텝 화면으로 이동 */}
-      <button
-        onClick={() => nav(`/kids/steps?url=${encodeURIComponent(url)}`)}
-        style={{
-          position: "absolute",
-          right: 12,
-          bottom: 12,
-          zIndex: 20,
-          padding: "10px 14px",
-          borderRadius: 14,
-          border: "1px solid rgba(0,0,0,0.12)",
-          background: "white",
-          boxShadow: "0 6px 16px rgba(0,0,0,0.10)",
-          cursor: "pointer",
-          fontWeight: 700,
-        }}
-      >
-        NEXT →
-      </button>
 
       {loading && (
         <div style={{
@@ -150,6 +169,51 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl }: P
         </div>
       )}
 
+      {stepMode && !loading && (
+        <div style={{
+          position: "absolute",
+          bottom: "20px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 20,
+          display: "flex",
+          alignItems: "center",
+          gap: "16px",
+          background: "rgba(255,255,255,0.9)",
+          padding: "12px 24px",
+          borderRadius: "50px",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+          border: "2px solid #000"
+        }}>
+          <button
+            onClick={handlePrev}
+            disabled={currentStep === 1}
+            style={{
+              background: "none", border: "none", fontSize: "18px", fontWeight: "bold", cursor: "pointer",
+              opacity: currentStep === 1 ? 0.3 : 1
+            }}
+          >
+            &lt; PREV
+          </button>
+
+          <div style={{ fontSize: "16px", fontWeight: "800", minWidth: "80px", textAlign: "center" }}>
+            Step {currentStep} <span style={{ color: "#888", fontWeight: "normal" }}>/ {totalSteps}</span>
+          </div>
+
+          <button
+            onClick={handleNext}
+            disabled={currentStep >= totalSteps}
+            style={{
+              background: "#000", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "20px",
+              fontSize: "14px", fontWeight: "bold", cursor: "pointer",
+              opacity: currentStep >= totalSteps ? 0.5 : 1
+            }}
+          >
+            NEXT -&gt;
+          </button>
+        </div>
+      )}
+
       <Canvas
         camera={{ position: [200, 0, 200], fov: 45 }}
         dpr={[1, 2]}
@@ -158,9 +222,16 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl }: P
         <ambientLight intensity={0.9} />
         <directionalLight position={[3, 5, 2]} intensity={1.0} />
 
-        <LdrModel url={url} partsLibraryPath={partsLibraryPath} ldconfigUrl={ldconfigUrl} />
+        <LdrModel
+          url={url}
+          partsLibraryPath={partsLibraryPath}
+          ldconfigUrl={ldconfigUrl}
+          stepMode={stepMode}
+          currentStep={currentStep}
+          onStepCountChange={setTotalSteps}
+        />
 
-        <OrbitControls enablePan={false} enableZoom autoRotate autoRotateSpeed={1.2} />
+        <OrbitControls enablePan={false} enableZoom autoRotate={!stepMode} autoRotateSpeed={1.2} />
       </Canvas>
     </div>
   );

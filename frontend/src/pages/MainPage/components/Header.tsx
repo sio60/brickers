@@ -5,10 +5,12 @@ import "./Header.css";
 import LoginModal from "./LoginModal";
 import UpgradeModal from "./UpgradeModal";
 import { useAuth } from "../../../pages/Auth/AuthContext";
+import { useLanguage } from "../../../contexts/LanguageContext";
 
 export default function Header() {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading, logout } = useAuth();
+  const { t } = useLanguage();
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -39,7 +41,7 @@ export default function Header() {
         <img
           className="header__logo"
           src={logo}
-          alt="logo"
+          alt={t.header.logoAlt || "logo"}
           onClick={() => navigate("/")}
           style={{ cursor: "pointer" }}
         />
@@ -51,7 +53,7 @@ export default function Header() {
               className="header__upgrade-btn"
               onClick={() => setIsUpgradeModalOpen(true)}
             >
-              UPGRADE
+              {t.header.upgrade}
             </button>
           )}
 
@@ -61,13 +63,13 @@ export default function Header() {
               className="header__login-btn"
               onClick={() => setIsLoginModalOpen(true)}
             >
-              LOGIN
+              {t.header.login}
             </button>
           )}
 
           {!isLoading && isAuthenticated && (
             <button className="header__login-btn" onClick={handleLogout}>
-              LOGOUT
+              {t.header.logout}
             </button>
           )}
         </div>

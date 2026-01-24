@@ -1,10 +1,12 @@
 // src/pages/Auth/AuthSuccess.tsx
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "./AuthContext"; // ✅ 너희 실제 경로로 맞춰줘 (예시)
+import { useAuth } from "./AuthContext";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function AuthSuccess() {
   const { refresh } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,7 +53,7 @@ export default function AuthSuccess() {
 
   return (
     <div style={{ textAlign: "center", marginTop: "100px" }}>
-      <h2>로그인 처리 중... 잠시만 기다려주세요</h2>
+      <h2>{t.auth.processing}</h2>
     </div>
   );
 }

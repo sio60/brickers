@@ -1,11 +1,27 @@
-html, body, #root {
+html,
+body,
+#root {
   width: 100%;
   height: 100%;
   margin: 0;
-  overflow: hidden; /* ✅ 전역 스크롤 차단 */
+  overflow: hidden;
+  /* ✅ 전역 스크롤 차단 */
+  font-family: "Bebas Neue", sans-serif;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 /* ✅ Canvas가 inline이면 아래쪽에 2~4px 틈 생겨서 스크롤 생길 수 있음 */
-canvas { display: block; }
+canvas {
+  display: block;
+}
+
+/* ✅ 언어별 전역 폰트 설정 (상속을 위해 모든 자식에게도 강제 적용) */
+.lang-ko,
+.lang-ko *,
+.lang-ja,
+.lang-ja * {
+  font-family: "Jua", sans-serif !important;
+}
