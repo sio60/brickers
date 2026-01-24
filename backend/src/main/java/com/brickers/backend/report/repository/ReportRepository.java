@@ -22,8 +22,11 @@ public interface ReportRepository extends MongoRepository<Report, String> {
     // 복합 조건 검색 예시
     Page<Report> findByTargetTypeAndStatus(String targetType, ReportStatus status, Pageable pageable);
 
-    // 중복 신고 방지를 위한 조회
-    boolean existsByReporterIdAndTargetTypeAndTargetIdAndStatusNot(
-            String reporterId, String targetType, String targetId, ReportStatus status);
-
+    // ✅ 1분 내 중복 신고 방지 (연타/재시도 방어)
+    boolean existsByReporterIdAndTargetTypeAndTargetIdAndStatusNotAndCreatedAtAfter(
+            String reporterId,
+            String targetType,
+            String targetId,
+            ReportStatus status,
+            LocalDateTime createdAt);
 }

@@ -4,6 +4,8 @@ import com.brickers.backend.report.dto.ReportCreateRequest;
 import com.brickers.backend.report.dto.ReportResponse;
 import com.brickers.backend.report.entity.ReportReason;
 import com.brickers.backend.report.service.ReportService;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +25,7 @@ public class ReportController {
 
     /** 신고 생성 */
     @PostMapping
-    public ReportResponse createReport(Authentication authentication, @RequestBody ReportCreateRequest req) {
+    public ReportResponse createReport(Authentication authentication, @Valid @RequestBody ReportCreateRequest req) {
         return reportService.createReport(authentication, req);
     }
 

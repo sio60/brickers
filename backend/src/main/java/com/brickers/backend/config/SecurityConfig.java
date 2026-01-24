@@ -106,6 +106,12 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
 
                                                 // -------------------------------
+                                                // ✅ Admin API (관리자만)
+                                                // -------------------------------
+                                                .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                                                .requestMatchers(HttpMethod.GET, "/api/reports/reasons").permitAll()
+
+                                                // -------------------------------
                                                 // ✅ 나머지는 인증
                                                 // -------------------------------
                                                 .anyRequest().authenticated())

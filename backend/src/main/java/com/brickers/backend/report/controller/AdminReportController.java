@@ -3,14 +3,18 @@ package com.brickers.backend.report.controller;
 import com.brickers.backend.report.dto.ReportResolveRequest;
 import com.brickers.backend.report.dto.ReportResponse;
 import com.brickers.backend.report.service.ReportService;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+@PreAuthorize("hasAuthority('ROLE_ADMIN')")
 @RestController
 @RequestMapping("/api/admin/reports")
 @RequiredArgsConstructor
@@ -37,7 +41,7 @@ public class AdminReportController {
     public ReportResponse resolveReport(
             Authentication authentication,
             @PathVariable String reportId,
-            @RequestBody ReportResolveRequest req) {
+            @Valid @RequestBody ReportResolveRequest req) {
         return reportService.resolveReport(authentication, reportId, req);
     }
 
