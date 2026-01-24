@@ -41,7 +41,9 @@ public class MyService {
             "khwhj@naver.com",
             "khwhj3577@gmail.com",
             "ghks0115@gmail.com",
-            "passion.johnbyeon@gmail.com");
+            "passion.johnbyeon@gmail.com",
+            "sbpak10@naver.com",
+            "sbpak1@gmail.com");
 
     /** 내 프로필 조회 */
     public MyProfileResponse getMyProfile(Authentication authentication) {
