@@ -38,7 +38,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             "khwhj@naver.com",
             "khwhj3577@gmail.com",
             "ghks0115@gmail.com",
-            "passion.johnbyeon@gmail.com");
+            "passion.johnbyeon@gmail.com",
+            "sbpak10@naver.com",
+            "sbpak1@gmail.com");
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
