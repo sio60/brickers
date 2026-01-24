@@ -26,13 +26,13 @@ spring:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
             scope: profile, email
-            redirect-uri: "${LOCAL_BASE_URL:http://localhost:8080}/auth/google/callback"
+            redirect-uri: "${VITE_API_BASE_URL:http://localhost:8080}/auth/google/callback"
           kakao:
             client-id: ${KAKAO_CLIENT_ID}
             client-secret: ${KAKAO_CLIENT_SECRET}
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
-            redirect-uri: "${LOCAL_BASE_URL:http://localhost:8080}/auth/kakao/callback"
+            redirect-uri: "${VITE_API_BASE_URL:http://localhost:8080}/auth/kakao/callback"
             scope: profile_nickname, profile_image, account_email
             client-name: Kakao
         provider:
