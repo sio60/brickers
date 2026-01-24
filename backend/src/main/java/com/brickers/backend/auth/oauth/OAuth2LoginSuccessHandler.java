@@ -3,7 +3,6 @@ package com.brickers.backend.auth.oauth;
 import com.brickers.backend.audit.entity.AuditEventType;
 import com.brickers.backend.audit.service.AuditLogService;
 import com.brickers.backend.auth.service.AuthTokenService;
-import com.brickers.backend.auth.service.AuthTokenService.IssuedTokens;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,6 +39,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         String userId = null;
         String provider = null;
+        String role = null;
 
         if (authentication instanceof OAuth2AuthenticationToken token) {
             provider = token.getAuthorizedClientRegistrationId();
@@ -47,6 +47,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
             String providerId = extractProviderId(provider, attrs);
             if (providerId != null && !providerId.isBlank() && !"null".equals(providerId)) {
+
                 User user = userRepository.findByProviderAndProviderId(provider, providerId).orElse(null);
                 if (user != null) {
                     user.ensureDefaults();
@@ -55,6 +56,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                     userRepository.save(user);
 
                     userId = user.getId();
+                    role = (user.getRole() == null) ? "USER" : user.getRole().name();
 
                     auditLogService.log(
                             AuditEventType.LOGIN,
@@ -67,7 +69,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         }
 
         if (userId == null) {
-            // 유저를 못 찾으면 실패로 보내는 게 안전
             String failUrl = normalizeFront(frontBaseUrl) + "/auth/failure";
             response.sendRedirect(failUrl);
             return;

@@ -23,7 +23,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
+    protected void doFilterInternal(
+            HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
@@ -38,17 +39,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             Jws<Claims> jws = jwtProvider.parse(token);
             Claims claims = jws.getPayload();
+
             String userId = claims.getSubject();
             String role = claims.get("role", String.class);
 
             if (role == null)
+
                 role = "USER";
 
             var auth = new UsernamePasswordAuthenticationToken(
                     userId,
                     null,
                     List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+
             SecurityContextHolder.getContext().setAuthentication(auth);
+
         } catch (Exception e) {
             SecurityContextHolder.clearContext();
         }
