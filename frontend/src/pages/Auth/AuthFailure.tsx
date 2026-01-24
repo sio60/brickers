@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function AuthFailure() {
   const navigate = useNavigate();
   const { refresh } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     (async () => {
@@ -24,8 +26,8 @@ export default function AuthFailure() {
 
   return (
     <div style={{ padding: 24, textAlign: "center" }}>
-      <p style={{ color: "red" }}>로그인에 실패했습니다.</p>
-      <p>홈으로 이동합니다...</p>
+      <p style={{ color: "red" }}>{t.auth.failed}</p>
+      <p>{t.auth.redirecting}</p>
     </div>
   );
 }

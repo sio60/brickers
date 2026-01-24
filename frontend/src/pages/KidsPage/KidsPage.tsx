@@ -1,9 +1,11 @@
+import React from "react";
 import "./KidsPage.css";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Background3D from "../MainPage/components/Background3D";
 import KidsLdrPreview from "./components/KidsLdrPreview";
 import KidsLoadingScreen from "./components/KidsLoadingScreen";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 // 응답 타입: ldrUrl 대신 ldrData(문자열)를 받습니다.
 type GenerateResp = {
@@ -17,6 +19,7 @@ type GenerateResp = {
 
 export default function KidsPage() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [params] = useSearchParams();
   const location = useLocation();
   const age = (params.get("age") ?? "4-5") as "4-5" | "6-7" | "8-10";
@@ -119,14 +122,14 @@ export default function KidsPage() {
       <div className="kidsPage__center">
         {status === "loading" && (
           <>
-            <div className="kidsPage__title">AI is making your brick...</div>
+            <div className="kidsPage__title">{t.kids.generate.loading}</div>
             <KidsLoadingScreen percent={percent} />
           </>
         )}
 
         {status === "done" && ldrUrl && (
           <>
-            <div className="kidsPage__resultTitle">Your Brick is Ready!</div>
+            <div className="kidsPage__resultTitle">{t.kids.generate.ready}</div>
             <div className="kidsPage__resultCard">
               <div className="kidsPage__3dViewer">
                 <KidsLdrPreview url={ldrUrl} />
@@ -137,15 +140,19 @@ export default function KidsPage() {
               className="kidsPage__nextBtn"
               onClick={() => navigate(`/kids/steps?url=${encodeURIComponent(ldrUrl)}`)}
             >
-              NEXT →
+              {t.kids.generate.next}
             </button>
           </>
         )}
 
         {status === "error" && (
           <div className="kidsPage__error">
-            Oops! Something went wrong.<br />
-            Please try again later.
+            {t.kids.generate.error.split('\n').map((line: string, i: number) => (
+              <React.Fragment key={i}>
+                {line}
+                <br />
+              </React.Fragment>
+            ))}
           </div>
         )}
       </div>

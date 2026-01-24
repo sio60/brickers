@@ -234,7 +234,6 @@
 
 /* ✅ 타이틀 */
 .kidsPage__title {
-  font-family: 'Inter', 'Segoe UI', sans-serif;
   font-size: 28px;
   font-weight: 900;
   color: #000000;
@@ -295,7 +294,6 @@
 
 /* ✅ 결과 타이틀 - 카드 위에 표시 */
 .kidsPage__resultTitle {
-  font-family: 'Inter', 'Segoe UI', sans-serif;
   font-size: 24px;
   font-weight: 800;
   color: #111;

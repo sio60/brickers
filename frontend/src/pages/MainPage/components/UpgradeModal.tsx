@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "./UpgradeModal.css";
 import { baseGooglePayRequest, merchantInfo } from "../../../config/googlePay";
 import { useAuth } from "../../Auth/AuthContext";
+import { useLanguage } from "../../../contexts/LanguageContext";
 
 type Props = {
     isOpen: boolean;
@@ -16,6 +17,7 @@ declare global {
 
 export default function UpgradeModal({ isOpen, onClose }: Props) {
     const { authFetch } = useAuth();
+    const { t } = useLanguage();
     const [paymentsClient, setPaymentsClient] = useState<any>(null);
 
     useEffect(() => {
@@ -69,15 +71,15 @@ export default function UpgradeModal({ isOpen, onClose }: Props) {
                     if (res.ok) {
                         localStorage.setItem("isPro", "true");
                         window.dispatchEvent(new Event("storage"));
-                        alert("프로 멤버십으로 업그레이드되었습니다!");
+                        alert(t.upgradeModal.alertSuccess);
                         onClose();
                         window.location.reload(); // 새로고침하여 상태 반영
                     } else {
-                        alert("멤버십 업그레이드에 실패했습니다.");
+                        alert(t.upgradeModal.alertFail);
                     }
                 } catch (err) {
                     console.error("Upgrade API Error", err);
-                    alert("멤버십 업그레이드에 실패했습니다.");
+                    alert(t.upgradeModal.alertFail);
                 }
             })
             .catch((err: any) => {
@@ -90,57 +92,53 @@ export default function UpgradeModal({ isOpen, onClose }: Props) {
     return (
         <div className="upgradeModalOverlay" onClick={onClose}>
             <div className="upgradeModal" onClick={(e) => e.stopPropagation()}>
-                <h2 className="upgradeModal__title">UPGRADE</h2>
+                <h2 className="upgradeModal__title">{t.upgradeModal.title}</h2>
 
                 <p className="upgradeModal__message">
-                    업그레이드하고 더 많은 도면과 고급 기능을 사용해보세요.
+                    {t.upgradeModal.message}
                 </p>
 
                 <div className="upgradeModal__plans">
                     {/* Kids */}
                     <div className="upgradeModal__planCard">
                         <div className="upgradeModal__planHeader">
-                            <p className="upgradeModal__planTitle">키즈 모드</p>
-                            <span className="upgradeModal__badge">Easy</span>
+                            <p className="upgradeModal__planTitle">{t.upgradeModal.kidsPlan.title}</p>
+                            <span className="upgradeModal__badge">{t.upgradeModal.kidsPlan.badge}</span>
                         </div>
 
                         <ul className="upgradeModal__list">
-                            <li className="upgradeModal__listItem">
-                                <span className="upgradeModal__dot" />
-                                사진/이미지를 직접 업로드
-                            </li>
-                            <li className="upgradeModal__listItem">
-                                <span className="upgradeModal__dot" />
-                                자동 도면 생성
-                            </li>
+                            {t.upgradeModal.kidsPlan.features.map((feature: string, idx: number) => (
+                                <li key={idx} className="upgradeModal__listItem">
+                                    <span className="upgradeModal__dot" />
+                                    {feature}
+                                </li>
+                            ))}
                         </ul>
                     </div>
 
                     {/* Pro */}
                     <div className="upgradeModal__planCard">
                         <div className="upgradeModal__planHeader">
-                            <p className="upgradeModal__planTitle">프로 모드</p>
-                            <span className="upgradeModal__badge">Pro</span>
+                            <p className="upgradeModal__planTitle">{t.upgradeModal.proPlan.title}</p>
+                            <span className="upgradeModal__badge">{t.upgradeModal.proPlan.badge}</span>
                         </div>
 
                         <ul className="upgradeModal__list">
-                            <li className="upgradeModal__listItem">
-                                <span className="upgradeModal__dot" />
-                                추천 도면 TOP 3 미리보기
-                            </li>
-                            <li className="upgradeModal__listItem">
-                                <span className="upgradeModal__dot" />
-                                최대 3회 재생성(리롤) 가능
-                            </li>
+                            {t.upgradeModal.proPlan.features.map((feature: string, idx: number) => (
+                                <li key={idx} className="upgradeModal__listItem">
+                                    <span className="upgradeModal__dot" />
+                                    {feature}
+                                </li>
+                            ))}
                         </ul>
                     </div>
                 </div>
 
                 <button className="upgradeModal__button" onClick={onPaymentClick}>
-                    Google Pay로 결제하기
+                    {t.upgradeModal.payBtn}
                 </button>
 
-                <div className="upgradeModal__hint">테스트 결제 환경(TEST) 기준</div>
+                <div className="upgradeModal__hint">{t.upgradeModal.hint}</div>
             </div>
         </div>
     );

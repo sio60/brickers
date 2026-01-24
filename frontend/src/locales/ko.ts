@@ -1,0 +1,160 @@
+export const ko = {
+    main: {
+        proMode: "PRO MODE",
+        proSubtitle: "정밀 · 검증 · 고급 설정",
+        kidsMode: "키즈 모드",
+        kidsSubtitle: "쉽고 재미있는 레고 생성"
+    },
+    floatingMenu: {
+        mypage: "마이페이지",
+        chatbot: "브릭봇 문의",
+        gallery: "갤러리",
+        open: "메뉴 열기",
+        iconAlt: "메뉴 아이콘"
+    },
+    upgradeModal: {
+        title: "UPGRADE",
+        message: "업그레이드하고 더 많은 도면과 고급 기능을 사용해보세요.",
+        kidsPlan: {
+            title: "키즈 모드",
+            badge: "Easy",
+            features: [
+                "사진/이미지를 직접 업로드",
+                "자동 도면 생성"
+            ]
+        },
+        proPlan: {
+            title: "프로 모드",
+            badge: "Pro",
+            features: [
+                "추천 도면 TOP 3 미리보기",
+                "최대 3회 재생성(리롤) 가능"
+            ]
+        },
+        payBtn: "Google Pay로 결제하기",
+        hint: "테스트 결제 환경(TEST) 기준",
+        alertSuccess: "프로 멤버십으로 업그레이드되었습니다!",
+        alertFail: "멤버십 업그레이드에 실패했습니다."
+    },
+    menu: {
+        profile: "프로필 조회",
+        membership: "멤버십 정보",
+        jobs: "내 작업 목록",
+        settings: "설정",
+        delete: "회원탈퇴"
+    },
+    profile: {
+        title: "프로필 조회",
+        editTitle: "프로필 수정",
+        nickname: "닉네임",
+        email: "이메일",
+        bio: "자기소개",
+        joinedAt: "가입일",
+        editBtn: "프로필 수정",
+        cancelBtn: "취소",
+        saveBtn: "저장",
+        saving: "저장 중...",
+        alertSaved: "프로필이 수정되었습니다.",
+        alertFailed: "프로필 수정에 실패했습니다."
+    },
+    membership: {
+        title: "멤버십 정보",
+        desc: "현재 {plan} 플랜을 이용 중입니다.",
+        upgradeBtn: "멤버십 업그레이드",
+        proUser: "프로 플랜을 이용 중입니다!"
+    },
+    jobs: {
+        title: "내 작업 목록",
+        empty: "아직 작업 내역이 없습니다.",
+        status: {
+            QUEUED: "대기중",
+            RUNNING: "실행 중",
+            CANCELED: "취소됨",
+            DONE: "완료",
+            FAILED: "실패"
+        },
+        retryFail: "작업 재시도에 실패했습니다.",
+        modalError: "실패한 작업입니다: ",
+        modalPending: "아직 생성 중이거나 3D 모델이 준비되지 않았습니다.",
+        modalNoData: "모델 데이터를 불러올 수 없습니다."
+    },
+    settings: {
+        title: "설정",
+        notification: "알림 설정",
+        language: "언어 설정",
+        changeBtn: "변경"
+    },
+    delete: {
+        title: "회원탈퇴",
+        desc: "정말 탈퇴하시겠습니까? 모든 데이터가 삭제되며 복구가 불가능합니다.",
+        btn: "회원탈퇴"
+    },
+    kids: {
+        title: "난이도를 선택해 보세요",
+        level: "L{lv}",
+        continueBtn: "계속하기",
+        model1: "모델 1",
+        model2: "모델 2",
+        generate: {
+            loading: "AI가 레고를 만들고 있어요...",
+            creating: "생성 중...",
+            ready: "레고가 완성되었어요!",
+            next: "다음으로 →",
+            error: "앗! 문제가 발생했어요.\n나중에 다시 시도해 주세요."
+        },
+        modelSelect: {
+            title: "브릭 생성하기",
+            sub: "모델 선택 또는 이미지 업로드",
+            pick: "선택",
+            uploadTitle: "이미지 업로드",
+            uploadSub: "클릭하거나 파일을 여기로 드래그하세요",
+            uploadHint: "JPG / PNG / WEBP",
+            uploadProTitle: "이미지 업로드 (프로 기능)",
+            uploadProSub: "클릭하여 업그레이드하세요",
+            uploadProHint: "업그레이드 시 사용 가능",
+            confirm: "생성하기",
+            previewTitle: "3D 미리보기",
+            previewSub: "모델을 회전시켜 확인하세요"
+        },
+        steps: {
+            back: "뒤로",
+            title: "STEP {cur} / {total}",
+            preview: "브릭 정보",
+            loading: "스텝 로딩 중...",
+            prev: "이전",
+            next: "다음"
+        }
+    },
+    header: {
+        upgrade: "업그레이드",
+        login: "로그인",
+        logout: "로그아웃",
+        logoAlt: "브릭커스 로고"
+    },
+    auth: {
+        title: "로그인",
+        kakao: "Kakao로 시작하기",
+        google: "Google로 시작하기",
+        processing: "로그인 처리 중... 잠시만 기다려주세요",
+        failed: "로그인에 실패했습니다.",
+        redirecting: "홈으로 이동합니다..."
+    },
+    adult: {
+        title: "PRO MODE",
+        ldrTest: "LDR 테스트",
+        ldrDesc: "현재는 LDraw 파츠 렌더링 확인용 뷰입니다.",
+        fileLabel: "파일",
+        panel: {
+            title: "선택 정보",
+            hint: "브릭을 클릭하면 상세가 표시됩니다."
+        }
+    },
+    common: {
+        loading: "로딩 중...",
+        loginRequired: "로그인이 필요합니다.",
+        homeBtn: "홈으로",
+        retryBtn: "다시 시도",
+        error: "데이터를 불러오지 못했습니다.",
+        unknownError: "알 수 없는 오류"
+    }
+};

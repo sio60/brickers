@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import UpgradeModal from "../../MainPage/components/UpgradeModal";
 import KidsLdrPreview from "./KidsLdrPreview";
+import { useLanguage } from "../../../contexts/LanguageContext";
 
 type Props = {
   open: boolean;
@@ -13,6 +14,7 @@ type Props = {
 
 export default function KidsModelSelectModal({ open, onClose, onSelect, items }: Props) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -110,8 +112,8 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
             /* ====================== 모델 선택 화면 ====================== */
             <>
               <div className="kidsModelModal__head">
-                <div className="kidsModelModal__title">Creating Brick</div>
-                <div className="kidsModelModal__sub">모델 선택 또는 이미지 업로드</div>
+                <div className="kidsModelModal__title">{t.kids.modelSelect.title}</div>
+                <div className="kidsModelModal__sub">{t.kids.modelSelect.sub}</div>
                 <button className="kidsModelModal__close" onClick={onClose} aria-label="close">
                   ✕
                 </button>
@@ -140,7 +142,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
 
                     <div className="kidsModelCard__footer">
                       <div className="kidsModelCard__label">{it.title}</div>
-                      <div className="kidsModelCard__pick">선택</div>
+                      <div className="kidsModelCard__pick">{t.kids.modelSelect.pick}</div>
                     </div>
                   </div>
                 ))}
@@ -175,16 +177,16 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                 ) : isPro ? (
                   // Pro 유저 UI
                   <>
-                    <div className="kidsModelModal__uploadTitle">이미지 업로드</div>
-                    <div className="kidsModelModal__uploadSub">클릭하거나 파일을 여기로 드래그하세요</div>
-                    <div className="kidsModelModal__uploadHint">JPG / PNG / WEBP</div>
+                    <div className="kidsModelModal__uploadTitle">{t.kids.modelSelect.uploadTitle}</div>
+                    <div className="kidsModelModal__uploadSub">{t.kids.modelSelect.uploadSub}</div>
+                    <div className="kidsModelModal__uploadHint">{t.kids.modelSelect.uploadHint}</div>
                   </>
                 ) : (
                   // 무료 유저 UI
                   <>
-                    <div className="kidsModelModal__uploadTitle">이미지 업로드 (유료 기능)</div>
-                    <div className="kidsModelModal__uploadSub">클릭하여 업그레이드하세요</div>
-                    <div className="kidsModelModal__uploadHint">업그레이드 시 사용 가능</div>
+                    <div className="kidsModelModal__uploadTitle">{t.kids.modelSelect.uploadProTitle}</div>
+                    <div className="kidsModelModal__uploadSub">{t.kids.modelSelect.uploadProSub}</div>
+                    <div className="kidsModelModal__uploadHint">{t.kids.modelSelect.uploadProHint}</div>
                   </>
                 )}
               </div>
@@ -195,7 +197,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                   disabled={!canSubmit}
                   onClick={handleConfirm}
                 >
-                  생성하기
+                  {t.kids.modelSelect.confirm}
                 </button>
               </div>
             </>
@@ -203,8 +205,8 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
             /* ====================== 3D 미리보기 화면 ====================== */
             <>
               <div className="kidsModelModal__head">
-                <div className="kidsModelModal__title">3D Preview</div>
-                <div className="kidsModelModal__sub">모델을 회전시켜 확인하세요</div>
+                <div className="kidsModelModal__title">{t.kids.modelSelect.previewTitle}</div>
+                <div className="kidsModelModal__sub">{t.kids.modelSelect.previewSub}</div>
                 <button className="kidsModelModal__close" onClick={onClose} aria-label="close">
                   ✕
                 </button>
@@ -239,7 +241,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                     border: "none",
                   }}
                 >
-                  NEXT →
+                  {t.kids.generate.next}
                 </button>
               </div>
             </>

@@ -1,4 +1,5 @@
 import type { Brick, BrickPlan, Violation } from "../../../../types/brickplan";
+import { useLanguage } from "../../../../contexts/LanguageContext";
 
 type Props = {
   plan: BrickPlan;
@@ -6,15 +7,16 @@ type Props = {
 };
 
 export default function BrickPanel({ plan, selected }: Props) {
+  const { t } = useLanguage();
   const violationsById = new Map<string, Violation>();
   plan.analysis?.violations?.forEach(v => violationsById.set(v.id, v));
 
   return (
     <div style={{ padding: 16 }}>
-      <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 12 }}>선택 정보</div>
+      <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 12 }}>{t.adult.panel.title}</div>
 
       {!selected ? (
-        <div style={{ opacity: 0.75 }}>브릭을 클릭하면 상세가 표시됩니다.</div>
+        <div style={{ opacity: 0.75 }}>{t.adult.panel.hint}</div>
       ) : (
         <>
           <div style={{ display: "grid", gap: 8 }}>
