@@ -3,7 +3,7 @@ import { Canvas } from "@react-three/fiber";
 import { Bounds, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ 추가
+
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 
@@ -65,7 +65,7 @@ function LdrModel({
 
     try {
       (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any);
-    } catch {}
+    } catch { }
 
     return l;
   }, [partsLibraryPath]);
@@ -110,29 +110,9 @@ function LdrModel({
 
 export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl }: Props) {
   const [loading, setLoading] = useState(true);
-  const nav = useNavigate(); // ✅ 추가
 
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
-      {/* ✅ NEXT → 버튼(오른쪽 하단) : 스텝 화면으로 이동 */}
-      <button
-        onClick={() => nav(`/kids/steps?url=${encodeURIComponent(url)}`)}
-        style={{
-          position: "absolute",
-          right: 12,
-          bottom: 12,
-          zIndex: 20,
-          padding: "10px 14px",
-          borderRadius: 14,
-          border: "1px solid rgba(0,0,0,0.12)",
-          background: "white",
-          boxShadow: "0 6px 16px rgba(0,0,0,0.10)",
-          cursor: "pointer",
-          fontWeight: 700,
-        }}
-      >
-        NEXT →
-      </button>
 
       {loading && (
         <div style={{
