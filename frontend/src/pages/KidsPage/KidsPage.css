@@ -413,3 +413,23 @@
     height: 300px;
   }
 }
+
+/* ✅ NEXT 버튼 */
+.kidsPage__nextBtn {
+  margin-top: 20px;
+  padding: 16px 48px;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.kidsPage__nextBtn:hover {
+  background: #333;
+  transform: scale(1.05);
+}

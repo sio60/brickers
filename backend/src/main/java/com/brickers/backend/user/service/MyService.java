@@ -8,6 +8,7 @@ import com.brickers.backend.job.repository.GenerateJobRepository;
 import com.brickers.backend.user.MySettingsResponse;
 import com.brickers.backend.user.dto.*;
 import com.brickers.backend.user.entity.AccountState;
+import com.brickers.backend.user.entity.MembershipPlan;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -79,6 +80,19 @@ public class MyService {
     /** 내 멤버십 조회 */
     public MyMembershipResponse getMyMembership(Authentication authentication) {
         User user = currentUserService.get(authentication);
+        return MyMembershipResponse.builder()
+                .membershipPlan(user.getMembershipPlan())
+                .expiresAt(null)
+                .build();
+    }
+
+    /** 멤버십 업그레이드 (PRO로 변경) */
+    public MyMembershipResponse upgradeMembership(Authentication authentication) {
+        User user = currentUserService.get(authentication);
+        user.setMembershipPlan(MembershipPlan.PRO);
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
         return MyMembershipResponse.builder()
                 .membershipPlan(user.getMembershipPlan())
                 .expiresAt(null)

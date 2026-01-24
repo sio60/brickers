@@ -32,6 +32,11 @@ public class MyController {
         return myService.getMyMembership(authentication);
     }
 
+    @PostMapping("/membership/upgrade")
+    public MyMembershipResponse upgradeMembership(Authentication authentication) {
+        return myService.upgradeMembership(authentication);
+    }
+
     @DeleteMapping("/account")
     public DeleteMyAccountResponse deleteMyAccount(Authentication authentication) {
         return myService.requestDeleteMyAccount(authentication);

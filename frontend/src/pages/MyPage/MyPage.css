@@ -1,0 +1,474 @@
+.mypage {
+    min-height: 100vh;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.mypage__container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px;
+    padding-top: 10vh;
+    position: relative;
+    z-index: 10;
+}
+
+.mypage__layout {
+    display: flex;
+    gap: 0;
+    background: #fff;
+    border: 2px solid #000;
+    border-radius: 20px;
+    overflow: hidden;
+    min-height: 70vh;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+/* 사이드바 */
+.mypage__sidebar {
+    width: 200px;
+    background: #fafafa;
+    border-right: 2px solid #000;
+    padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.mypage__menuItem {
+    display: flex;
+    align-items: center;
+    padding: 18px 24px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+    text-align: left;
+    transition: all 0.15s;
+}
+
+.mypage__menuItem:hover {
+    background: #f0f0f0;
+}
+
+.mypage__menuItem.active {
+    background: #ffe135;
+    font-weight: 700;
+}
+
+.mypage__menuIcon {
+    font-size: 18px;
+}
+
+.mypage__menuLabel {
+    flex: 1;
+}
+
+/* 컨텐츠 영역 */
+.mypage__content {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+}
+
+.mypage__loading,
+.mypage__error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: #666;
+}
+
+.mypage__loginBtn {
+    margin-top: 16px;
+    padding: 12px 24px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* 섹션 */
+.mypage__section {
+    width: 100%;
+}
+
+.mypage__sectionTitle {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0 0 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #eee;
+}
+
+/* 프로필 카드 */
+.mypage__profileCard {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.mypage__avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #f0f0f0;
+    border: 2px solid #000;
+}
+
+.mypage__profileInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.mypage__infoRow {
+    display: flex;
+    gap: 16px;
+}
+
+.mypage__label {
+    width: 80px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #888;
+}
+
+.mypage__value {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 500;
+    color: #111;
+}
+
+.mypage__editBtn {
+    align-self: flex-start;
+    padding: 12px 24px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+}
+
+.mypage__editBtn:hover {
+    background: #333;
+}
+
+/* 멤버십 카드 */
+.mypage__membershipCard {
+    padding: 24px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.mypage__planBadge {
+    display: inline-block;
+    padding: 8px 20px;
+    background: #ffe135;
+    border-radius: 999px;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.mypage__planDesc {
+    font-size: 15px;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.mypage__upgradeBtn {
+    padding: 12px 24px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* 작업 리스트 */
+.mypage__jobs {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mypage__job {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.mypage__jobThumb {
+    width: 64px;
+    height: 64px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: #e0e0e0;
+}
+
+.mypage__jobInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.mypage__jobTitle {
+    font-size: 16px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mypage__jobStatus {
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.mypage__jobStatus.pending {
+    color: #f59e0b;
+}
+
+.mypage__jobStatus.running {
+    color: #3b82f6;
+}
+
+.mypage__jobStatus.paused {
+    color: #8b5cf6;
+}
+
+.mypage__jobStatus.completed {
+    color: #22c55e;
+}
+
+.mypage__jobStatus.failed {
+    color: #ef4444;
+}
+
+.mypage__retryBtn {
+    padding: 10px 20px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mypage__retryBtn:hover {
+    background: #333;
+}
+
+.mypage__retryBtn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.mypage__empty {
+    color: #888;
+    font-size: 15px;
+}
+
+/* 설정 카드 */
+.mypage__settingsCard {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mypage__settingRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.mypage__settingBtn {
+    padding: 8px 16px;
+    background: #eee;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mypage__settingBtn:hover {
+    background: #ddd;
+}
+
+/* 회원탈퇴 카드 */
+.mypage__deleteCard {
+    padding: 24px;
+    background: #fff5f5;
+    border-radius: 12px;
+    border: 1px solid #ffcccc;
+}
+
+.mypage__deleteCard p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.mypage__deleteBtn {
+    padding: 12px 24px;
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mypage__deleteBtn:hover {
+    background: #dc2626;
+}
+
+/* 프로필 수정 폼 */
+.mypage__avatarEdit {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.mypage__avatarBtn {
+    padding: 8px 16px;
+    background: #eee;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mypage__avatarBtn:hover {
+    background: #ddd;
+}
+
+.mypage__editForm {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.mypage__formRow {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mypage__formLabel {
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+}
+
+.mypage__formInput {
+    padding: 12px 16px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    font-size: 15px;
+    transition: border-color 0.15s;
+}
+
+.mypage__formInput:focus {
+    outline: none;
+    border-color: #000;
+}
+
+.mypage__formTextarea {
+    padding: 12px 16px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    font-size: 15px;
+    resize: vertical;
+    font-family: inherit;
+    transition: border-color 0.15s;
+}
+
+.mypage__formTextarea:focus {
+    outline: none;
+    border-color: #000;
+}
+
+.mypage__editActions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.mypage__cancelBtn {
+    padding: 12px 24px;
+    background: #eee;
+    color: #333;
+    border: none;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mypage__cancelBtn:hover {
+    background: #ddd;
+}
+
+.mypage__saveBtn {
+    padding: 12px 24px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mypage__saveBtn:hover {
+    background: #333;
+}
+
+.mypage__saveBtn:disabled,
+.mypage__cancelBtn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .mypage__layout {
+        flex-direction: column;
+    }
+
+    .mypage__sidebar {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        border-right: none;
+        border-bottom: 2px solid #000;
+        padding: 0;
+    }
+
+    .mypage__menuItem {
+        flex-direction: column;
+        gap: 4px;
+        padding: 12px 16px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+}

@@ -1,6 +1,8 @@
 import "./KidsModelSelectModal.css";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import UpgradeModal from "../../MainPage/components/UpgradeModal";
+import KidsLdrPreview from "./KidsLdrPreview";
 
 type Props = {
   open: boolean;
@@ -10,11 +12,15 @@ type Props = {
 };
 
 export default function KidsModelSelectModal({ open, onClose, onSelect, items }: Props) {
+  const navigate = useNavigate();
   const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // 2단계 플로우: 'select' = 모델 선택, 'preview' = 3D 미리보기
+  const [step, setStep] = useState<'select' | 'preview'>('select');
 
   // 업그레이드 관련 상태
   const [isPro, setIsPro] = useState(false);
@@ -31,7 +37,30 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
     return () => window.removeEventListener("storage", checkPro);
   }, []);
 
+  // 모달 닫힐 때 초기화
+  useEffect(() => {
+    if (!open) {
+      setStep('select');
+      setSelectedUrl(null);
+    }
+  }, [open]);
+
   if (!open) return null;
+
+  // 모델 카드 클릭 시 3D 미리보기로 전환
+  const handleModelClick = (url: string) => {
+    setSelectedUrl(url);
+    setStep('preview');
+  };
+
+  // NEXT → 버튼: 스텝 페이지로 이동
+  const handleGoToSteps = () => {
+    if (selectedUrl) {
+      onClose();
+      navigate(`/kids/steps?url=${encodeURIComponent(selectedUrl)}`);
+    }
+  };
+
 
   const handleFile = (f: File) => {
     if (!f.type.startsWith("image/")) return;
@@ -77,97 +106,144 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
     <>
       <div className="kidsModelModal__overlay" onClick={onClose}>
         <div className="kidsModelModal" onClick={(e) => e.stopPropagation()}>
-          <div className="kidsModelModal__head">
-            <div className="kidsModelModal__title">Creating Brick</div>
-            <div className="kidsModelModal__sub">모델 선택 또는 이미지 업로드</div>
-            <button className="kidsModelModal__close" onClick={onClose} aria-label="close">
-              ✕
-            </button>
-          </div>
+          {step === 'select' ? (
+            /* ====================== 모델 선택 화면 ====================== */
+            <>
+              <div className="kidsModelModal__head">
+                <div className="kidsModelModal__title">Creating Brick</div>
+                <div className="kidsModelModal__sub">모델 선택 또는 이미지 업로드</div>
+                <button className="kidsModelModal__close" onClick={onClose} aria-label="close">
+                  ✕
+                </button>
+              </div>
 
-          <div className="kidsModelModal__grid">
-            {items.map((it) => (
-              <div
-                key={it.url}
-                className={`kidsModelCard ${selectedUrl === it.url ? "isSelected" : ""}`}
-                onClick={() => setSelectedUrl(it.url)}
-              >
-                <div className="kidsModelCard__viewer">
-                  {it.thumbnail ? (
-                    <img
-                      src={it.thumbnail}
-                      alt={it.title}
-                      style={{ width: "100%", height: "100%", objectFit: "contain" }}
-                    />
-                  ) : (
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#999" }}>
-                      No Preview
+              <div className="kidsModelModal__grid">
+                {items.map((it) => (
+                  <div
+                    key={it.url}
+                    className={`kidsModelCard ${selectedUrl === it.url ? "isSelected" : ""}`}
+                    onClick={() => handleModelClick(it.url)}
+                  >
+                    <div className="kidsModelCard__viewer">
+                      {it.thumbnail ? (
+                        <img
+                          src={it.thumbnail}
+                          alt={it.title}
+                          style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                        />
+                      ) : (
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#999" }}>
+                          No Preview
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
 
-                <div className="kidsModelCard__footer">
-                  <div className="kidsModelCard__label">{it.title}</div>
-                  <div className="kidsModelCard__pick">
-                    {selectedUrl === it.url ? "선택됨" : "선택"}
+                    <div className="kidsModelCard__footer">
+                      <div className="kidsModelCard__label">{it.title}</div>
+                      <div className="kidsModelCard__pick">선택</div>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {/* 이미지 업로드 영역 */}
-          <div
-            className={`kidsModelModal__upload ${dragOver ? "isDragOver" : ""} ${file ? "hasFile" : ""}`}
-            onClick={handleUploadClick}
-            onDragEnter={() => setDragOver(true)}
-            onDragLeave={() => setDragOver(false)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={onDrop}
-          >
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/*"
-              style={{ display: "none" }}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleFile(f);
-              }}
-              // Pro가 아니면 input 비활성화 (보안상 추가)
-              disabled={!isPro}
-            />
-            {previewUrl ? (
-              <div className="kidsModelModal__uploadPreviewWrap">
-                <img src={previewUrl} alt="preview" className="kidsModelModal__uploadPreview" />
-                <div className="kidsModelModal__uploadFilename">{file?.name}</div>
+              {/* 이미지 업로드 영역 */}
+              <div
+                className={`kidsModelModal__upload ${dragOver ? "isDragOver" : ""} ${file ? "hasFile" : ""}`}
+                onClick={handleUploadClick}
+                onDragEnter={() => setDragOver(true)}
+                onDragLeave={() => setDragOver(false)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={onDrop}
+              >
+                <input
+                  ref={inputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleFile(f);
+                  }}
+                  // Pro가 아니면 input 비활성화 (보안상 추가)
+                  disabled={!isPro}
+                />
+                {previewUrl ? (
+                  <div className="kidsModelModal__uploadPreviewWrap">
+                    <img src={previewUrl} alt="preview" className="kidsModelModal__uploadPreview" />
+                    <div className="kidsModelModal__uploadFilename">{file?.name}</div>
+                  </div>
+                ) : isPro ? (
+                  // Pro 유저 UI
+                  <>
+                    <div className="kidsModelModal__uploadTitle">이미지 업로드</div>
+                    <div className="kidsModelModal__uploadSub">클릭하거나 파일을 여기로 드래그하세요</div>
+                    <div className="kidsModelModal__uploadHint">JPG / PNG / WEBP</div>
+                  </>
+                ) : (
+                  // 무료 유저 UI
+                  <>
+                    <div className="kidsModelModal__uploadTitle">이미지 업로드 (유료 기능)</div>
+                    <div className="kidsModelModal__uploadSub">클릭하여 업그레이드하세요</div>
+                    <div className="kidsModelModal__uploadHint">업그레이드 시 사용 가능</div>
+                  </>
+                )}
               </div>
-            ) : isPro ? (
-              // Pro 유저 UI
-              <>
-                <div className="kidsModelModal__uploadTitle">이미지 업로드</div>
-                <div className="kidsModelModal__uploadSub">클릭하거나 파일을 여기로 드래그하세요</div>
-                <div className="kidsModelModal__uploadHint">JPG / PNG / WEBP</div>
-              </>
-            ) : (
-              // 무료 유저 UI
-              <>
-                <div className="kidsModelModal__uploadTitle">이미지 업로드 (유료 기능)</div>
-                <div className="kidsModelModal__uploadSub">클릭하여 업그레이드하세요</div>
-                <div className="kidsModelModal__uploadHint">업그레이드 시 사용 가능</div>
-              </>
-            )}
-          </div>
 
-          <div className="kidsModelModal__actions">
-            <button
-              className="kidsModelModal__confirmBtn"
-              disabled={!canSubmit}
-              onClick={handleConfirm}
-            >
-              생성하기
-            </button>
-          </div>
+              <div className="kidsModelModal__actions">
+                <button
+                  className="kidsModelModal__confirmBtn"
+                  disabled={!canSubmit}
+                  onClick={handleConfirm}
+                >
+                  생성하기
+                </button>
+              </div>
+            </>
+          ) : (
+            /* ====================== 3D 미리보기 화면 ====================== */
+            <>
+              <div className="kidsModelModal__head">
+                <div className="kidsModelModal__title">3D Preview</div>
+                <div className="kidsModelModal__sub">모델을 회전시켜 확인하세요</div>
+                <button className="kidsModelModal__close" onClick={onClose} aria-label="close">
+                  ✕
+                </button>
+              </div>
+
+              {/* 3D 뷰어 */}
+              <div
+                style={{
+                  width: "100%",
+                  height: 400,
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  background: "#f8f9fa",
+                  position: "relative",
+                }}
+              >
+                {selectedUrl && <KidsLdrPreview url={selectedUrl} />}
+              </div>
+
+              <div className="kidsModelModal__actions" style={{ marginTop: 16 }}>
+                <button
+                  className="kidsModelModal__confirmBtn"
+                  onClick={handleGoToSteps}
+                  style={{
+                    background: "#000",
+                    color: "#fff",
+                    padding: "14px 32px",
+                    borderRadius: 999,
+                    fontWeight: 700,
+                    fontSize: 16,
+                    cursor: "pointer",
+                    border: "none",
+                  }}
+                >
+                  NEXT →
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -175,3 +251,4 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
     </>
   );
 }
+

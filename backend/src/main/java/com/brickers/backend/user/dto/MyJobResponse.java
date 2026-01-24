@@ -25,6 +25,9 @@ public class MyJobResponse {
 
     private String previewImageUrl;
 
+    /** LDR 파일 URL (AI 서버 경로) */
+    private String modelKey;
+
     /** 결과물 존재 여부(모델/도면/BOM 중 하나라도 있으면 true) */
     private boolean hasResult;
 
@@ -48,6 +51,7 @@ public class MyJobResponse {
                 .title(j.getTitle())
                 .sourceImageUrl(j.getSourceImageUrl())
                 .previewImageUrl(j.getPreviewImageUrl())
+                .modelKey(j.getModelKey()) // ✅ 추가
                 .hasResult(hasResult)
                 .errorMessage(j.getErrorMessage())
                 .createdAt(j.getCreatedAt())
