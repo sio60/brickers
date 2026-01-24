@@ -1,19 +1,36 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./FloatingMenuButton.css";
 import mypageIcon from "../../../assets/mypage.png";
 import { useLanguage } from "../../../contexts/LanguageContext";
+import { getMyProfile } from "../../../api/myApi";
 
 export default function FloatingMenuButton() {
     const navigate = useNavigate();
     const { t } = useLanguage();
+    const [isAdmin, setIsAdmin] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
+
+    useEffect(() => {
+        getMyProfile().then(profile => {
+            console.log("Logged in user role:", profile.role);
+            if (profile.role === "ADMIN") {
+                setIsAdmin(true);
+            }
+        }).catch(err => {
+            console.error("Failed to fetch profile for admin check:", err);
+        });
+    }, []);
 
     const menuItems = [
         { id: "mypage", label: t.floatingMenu?.mypage || "My Page" },
         { id: "chatbot", label: t.floatingMenu?.chatbot || "ChatBot" },
         { id: "gallery", label: t.floatingMenu?.gallery || "Gallery" },
     ];
+
+    if (isAdmin) {
+        menuItems.push({ id: "admin", label: t.floatingMenu?.admin || "Admin Page" });
+    }
 
     const handleMenuClick = (id: string) => {
         setIsOpen(false);
@@ -27,8 +44,10 @@ export default function FloatingMenuButton() {
                 window.open("https://pf.kakao.com/_your_channel", "_blank");
                 break;
             case "gallery":
-                // TODO: 갤러리 페이지로 이동
                 navigate("/gallery");
+                break;
+            case "admin":
+                navigate("/admin");
                 break;
         }
     };

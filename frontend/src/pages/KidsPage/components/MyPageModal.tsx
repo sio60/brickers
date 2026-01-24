@@ -5,6 +5,9 @@ import type { MyOverview, MyJob } from "../../../api/myApi";
 import { useNavigate } from "react-router-dom";
 import MyPageProfile from "./MyPageProfile";
 import MyPageGrid from "./MyPageGrid";
+import { useLanguage } from "../../../contexts/LanguageContext";
+
+type MenuItem = "profile" | "jobs" | "gallery" | "settings";
 
 type Props = {
     open: boolean;
@@ -16,8 +19,10 @@ export default function MyPageModal({ open, onClose }: Props) {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<MyOverview | null>(null);
     const [error, setError] = useState<string | null>(null);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [retrying, setRetrying] = useState<string | null>(null);
+    const [activeMenu, setActiveMenu] = useState<MenuItem>("jobs");
+    const [galleryItems, setGalleryItems] = useState<any[]>([]);
+    const { t } = useLanguage();
 
     useEffect(() => {
         if (!open) return;
@@ -35,6 +40,17 @@ export default function MyPageModal({ open, onClose }: Props) {
                 setLoading(false);
             });
     }, [open]);
+
+    useEffect(() => {
+        if (!open) return;
+        if (activeMenu === "gallery") {
+            setLoading(true);
+            import("../../../api/myApi").then(m => m.getMyGalleryItems()).then(res => {
+                setGalleryItems(res.content);
+                setLoading(false);
+            }).catch(() => setLoading(false));
+        }
+    }, [activeMenu, open]);
 
     if (!open) return null;
 
@@ -83,26 +99,73 @@ export default function MyPageModal({ open, onClose }: Props) {
                     <button className="mypageModal__close" onClick={onClose}>✕</button>
                 </div>
 
-                {/* 컨텐츠 */}
-                <div className="mypageModal__content">
-                    {loading ? (
-                        <div className="mypageModal__loading">로딩 중...</div>
-                    ) : error ? (
-                        <div className="mypageModal__error">
-                            <p>로그인이 필요합니다.</p>
-                            <button className="mypageModal__loginBtn" onClick={onClose}>
-                                로그인하기
-                            </button>
-                        </div>
-                    ) : data ? (
-                        <>
-                            {/* 프로필 섹션 */}
-                            <MyPageProfile settings={data.settings} />
+                {/* 컨텐츠 레이아웃 */}
+                <div className="mypageModal__layout">
+                    {/* 왼쪽 사이드바 */}
+                    <div className="mypageModal__sidebar">
+                        <button
+                            className={`mypageModal__menuItem ${activeMenu === "profile" ? "active" : ""}`}
+                            onClick={() => setActiveMenu("profile")}
+                        >
+                            {t.menu.profile}
+                        </button>
+                        <button
+                            className={`mypageModal__menuItem ${activeMenu === "jobs" ? "active" : ""}`}
+                            onClick={() => setActiveMenu("jobs")}
+                        >
+                            {t.menu.jobs}
+                        </button>
+                        <button
+                            className={`mypageModal__menuItem ${activeMenu === "gallery" ? "active" : ""}`}
+                            onClick={() => setActiveMenu("gallery")}
+                        >
+                            {t.menu.gallery}
+                        </button>
+                        <button
+                            className={`mypageModal__menuItem ${activeMenu === "settings" ? "active" : ""}`}
+                            onClick={() => setActiveMenu("settings")}
+                        >
+                            {t.menu.settings}
+                        </button>
+                    </div>
 
-                            {/* 통합 그리드 (파일 탐색기 스타일) */}
-                            <MyPageGrid jobs={allJobs} onJobClick={handleCardClick} />
-                        </>
-                    ) : null}
+                    {/* 오른쪽 컨텐츠 */}
+                    <div className="mypageModal__content">
+                        {loading ? (
+                            <div className="mypageModal__loading">{t.common.loading}</div>
+                        ) : error ? (
+                            <div className="mypageModal__error">
+                                <p>{t.common.loginRequired}</p>
+                                <button className="mypageModal__loginBtn" onClick={onClose}>
+                                    {t.common.homeBtn}
+                                </button>
+                            </div>
+                        ) : data ? (
+                            <>
+                                {activeMenu === "profile" && (
+                                    <MyPageProfile settings={data.settings} />
+                                )}
+                                {activeMenu === "jobs" && (
+                                    <MyPageGrid jobs={allJobs} onJobClick={handleCardClick} />
+                                )}
+                                {activeMenu === "gallery" && (
+                                    <MyPageGrid
+                                        jobs={galleryItems.map(item => ({
+                                            id: item.id,
+                                            title: item.title,
+                                            sourceImageUrl: item.thumbnailUrl,
+                                            status: 'DONE',
+                                            createdAt: item.createdAt,
+                                        })) as any}
+                                        onJobClick={() => { }}
+                                    />
+                                )}
+                                {activeMenu === "settings" && (
+                                    <div>Settings View (TBD)</div>
+                                )}
+                            </>
+                        ) : null}
+                    </div>
                 </div>
             </div>
         </div>

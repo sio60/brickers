@@ -9,6 +9,7 @@ export const ko = {
         mypage: "마이페이지",
         chatbot: "브릭봇 문의",
         gallery: "갤러리",
+        admin: "관리자 페이지",
         open: "메뉴 열기",
         iconAlt: "메뉴 아이콘"
     },
@@ -40,8 +41,11 @@ export const ko = {
         profile: "프로필 조회",
         membership: "멤버십 정보",
         jobs: "내 작업 목록",
+        gallery: "내 갤러리",
+        bookmarks: "북마크",
         settings: "설정",
-        delete: "회원탈퇴"
+        delete: "회원탈퇴",
+        admin: "관리자 전용"
     },
     profile: {
         title: "프로필 조회",
@@ -122,7 +126,25 @@ export const ko = {
             preview: "브릭 정보",
             loading: "스텝 로딩 중...",
             prev: "이전",
-            next: "다음"
+            next: "다음",
+            downloadGlb: "GLB 다운로드",
+            downloadLdr: "LDR 다운로드",
+            registerGallery: "갤러리 등록",
+            galleryModal: {
+                title: "갤러리에 작품 등록",
+                placeholder: "작품 제목을 입력하세요",
+                confirm: "등록하기",
+                cancel: "취소",
+                success: "갤러리에 등록되었습니다!",
+                fail: "갤러리 등록에 실패했습니다."
+            },
+            emptyGallery: "등록된 작품이 없습니다.",
+            galleryTable: {
+                title: "제목",
+                author: "작성자",
+                date: "수정한 날짜",
+                views: "조회수"
+            }
         }
     },
     header: {
@@ -156,5 +178,13 @@ export const ko = {
         retryBtn: "다시 시도",
         error: "데이터를 불러오지 못했습니다.",
         unknownError: "알 수 없는 오류"
+    },
+    admin: {
+        welcome: "전용 관리자 도구에 접속하셨습니다.",
+        stats: {
+            users: "총 사용자",
+            jobs: "오늘의 작업",
+            gallery: "신규 갤러리"
+        }
     }
 };

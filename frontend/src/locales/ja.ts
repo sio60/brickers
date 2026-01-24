@@ -40,6 +40,8 @@ export const ja = {
         profile: "プロフィール",
         membership: "メンバーシップ情報",
         jobs: "作業履歴",
+        gallery: "マイギャラリー",
+        bookmarks: "ブックマーク",
         settings: "設定",
         delete: "退会"
     },
@@ -122,7 +124,19 @@ export const ja = {
             preview: "ブリックプレビュー",
             loading: "ステップ読み込み中...",
             prev: "前へ",
-            next: "次へ"
+            next: "次へ",
+            downloadGlb: "GLB ダウンロード",
+            downloadLdr: "LDR ダウン로드",
+            registerGallery: "ギャラリー登録",
+            galleryModal: {
+                title: "ギャラリーに作品を登録",
+                placeholder: "作品のタイトルを入力してください",
+                confirm: "登録する",
+                cancel: "キャンセル",
+                success: "ギャラリーに登録されました！",
+                fail: "ギャラリー登録に失敗しました。"
+            },
+            emptyGallery: "登録された作品がありません。"
         }
     },
     header: {
