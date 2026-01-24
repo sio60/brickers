@@ -2,6 +2,7 @@
 import "./LoginModal.css";
 import kakaoIcon from "../../../assets/kakao.png";
 import googleIcon from "../../../assets/google.png";
+import { useLanguage } from "../../../contexts/LanguageContext";
 
 // ✅ 백엔드 베이스 URL (권장: .env.local에 VITE_API_BASE_URL 넣기)
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || "http://localhost:8080" || "https://brickers.shop";
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export default function LoginModal({ isOpen, onClose }: Props) {
+  const { t } = useLanguage();
   if (!isOpen) return null;
 
   const saveLastPage = () => {
@@ -38,14 +40,14 @@ export default function LoginModal({ isOpen, onClose }: Props) {
   return (
     <div className="loginModalOverlay" onClick={onClose}>
       <div className="loginModal" onClick={(e) => e.stopPropagation()}>
-        <h2 className="loginModal__title">LOGIN</h2>
+        <h2 className="loginModal__title">{t.auth.title}</h2>
 
         <button
           className="loginModal__button loginModal__button--kakao"
           onClick={handleKakaoLogin}
         >
           <img src={kakaoIcon} alt="Kakao" className="loginModal__icon" />
-          <span className="loginModal__paramName">Kakao로 시작하기</span>
+          <span className="loginModal__paramName">{t.auth.kakao}</span>
         </button>
 
         <button
@@ -53,7 +55,7 @@ export default function LoginModal({ isOpen, onClose }: Props) {
           onClick={handleGoogleLogin}
         >
           <img src={googleIcon} alt="Google" className="loginModal__icon" />
-          <span className="loginModal__paramName">Google로 시작하기</span>
+          <span className="loginModal__paramName">{t.auth.google}</span>
         </button>
       </div>
     </div>

@@ -5,6 +5,12 @@
     position: relative;
 }
 
+/* 언어별 폰트 설정 */
+.mypage.lang-ko,
+.mypage.lang-ja {
+    font-family: "Jua", sans-serif;
+}
+
 .mypage__container {
     max-width: 1100px;
     margin: 0 auto;
@@ -21,8 +27,11 @@
     border: 2px solid #000;
     border-radius: 20px;
     overflow: hidden;
-    min-height: 70vh;
+    height: 80vh;
+    /* Fixed height for internal scrolling */
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    position: relative;
+    /* Ensure absolute children are positioned relative to this */
 }
 
 /* 사이드바 */
@@ -198,46 +207,123 @@
     cursor: pointer;
 }
 
-/* 작업 리스트 */
+/* 작업 리스트 (그리드 레이아웃) */
 .mypage__jobs {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 10px 0;
 }
 
 .mypage__job {
     display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 16px;
-    background: #f8f9fa;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    background: #fff;
     border-radius: 12px;
+    border: 1px solid #eee;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.mypage__job:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+    border-color: #000;
+}
+
+.mypage__jobThumbData {
+    position: relative;
+    width: 100%;
+    padding-top: 100%;
+    /* 1:1 Aspect Ratio */
+    background: #f4f4f4;
+    overflow: hidden;
 }
 
 .mypage__jobThumb {
-    width: 64px;
-    height: 64px;
-    border-radius: 10px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
-    background: #e0e0e0;
+    transition: transform 0.3s;
+}
+
+.mypage__job:hover .mypage__jobThumb {
+    transform: scale(1.05);
+}
+
+.mypage__jobOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.mypage__jobOverlay:hover,
+.mypage__jobOverlay:has(button) {
+    opacity: 1;
+}
+
+.mypage__retryBtn {
+    padding: 10px 16px;
+    background: #fff;
+    color: #000;
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.mypage__retryBtn:hover {
+    background: #f0f0f0;
+    transform: rotate(180deg);
+    transition: transform 0.4s;
 }
 
 .mypage__jobInfo {
-    flex: 1;
-    min-width: 0;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .mypage__jobTitle {
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: #111;
+}
+
+.mypage__jobMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .mypage__jobStatus {
     font-size: 13px;
-    margin-top: 4px;
+    font-weight: 600;
 }
 
 .mypage__jobStatus.pending {
@@ -260,29 +346,18 @@
     color: #ef4444;
 }
 
-.mypage__retryBtn {
-    padding: 10px 20px;
-    background: #000;
-    color: #fff;
-    border: none;
-    border-radius: 999px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.mypage__retryBtn:hover {
-    background: #333;
-}
-
-.mypage__retryBtn:disabled {
-    background: #ccc;
-    cursor: not-allowed;
+.mypage__jobDate {
+    font-size: 12px;
+    color: #888;
 }
 
 .mypage__empty {
     color: #888;
     font-size: 15px;
+    text-align: center;
+    padding: 40px;
+    background: #f9f9f9;
+    border-radius: 12px;
 }
 
 /* 설정 카드 */
@@ -471,4 +546,130 @@
         font-size: 12px;
         white-space: nowrap;
     }
+}
+
+/* 3D 뷰어 모달 */
+.mypage__modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.mypage__modalContent {
+    position: relative;
+    width: 90%;
+    max-width: 1200px;
+    height: 85vh;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.mypage__closeBtn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: transparent;
+    color: #000;
+    border: none;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: none;
+    transition: transform 0.2s;
+}
+
+.mypage__closeBtn:hover {
+    transform: scale(1.1);
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.mypage__viewerContainer {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    background: #f8f9fa;
+}
+
+/* 마이페이지 나가기 버튼 */
+.mypage__exitBtn {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    color: #000;
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: none;
+    transition: transform 0.2s;
+}
+
+.mypage__exitBtn:hover {
+    transform: scale(1.1);
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* 언어 설정 버튼 그룹 */
+.mypage__langGroup {
+    display: flex;
+    gap: 8px;
+}
+
+.mypage__langBtn {
+    padding: 8px 16px;
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mypage__langBtn:hover {
+    background: #e0e0e0;
+}
+
+.mypage__langBtn.active {
+    background: #000;
+    color: #fff;
+    border-color: #000;
 }

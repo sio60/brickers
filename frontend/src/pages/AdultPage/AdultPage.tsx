@@ -4,6 +4,7 @@ import { demoBrickPlan } from "../../data/demoBrickPlan";
 
 import BrickViewer from "./components/BrickViewer/BrickViewer";
 import BrickPanel from "./components/BrickPanel/BrickPanel";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 import "./AdultPage.css";
 
@@ -13,6 +14,7 @@ import LdrViewer from "./components/LdrViewer/LdrViewer";
 type ViewMode = "brickplan" | "ldr";
 
 export default function AdultPage() {
+  const { t } = useLanguage();
   const [selected, setSelected] = useState<Brick | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("brickplan");
 
@@ -76,10 +78,10 @@ export default function AdultPage() {
           <BrickPanel plan={plan} selected={selected} />
         ) : (
           <div style={{ padding: 16, opacity: 0.8 }}>
-            <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 8 }}>LDR 테스트</div>
-            <div>현재는 LDraw 파츠 렌더링 확인용 뷰입니다.</div>
+            <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 8 }}>{t.adult.ldrTest}</div>
+            <div>{t.adult.ldrDesc}</div>
             <div style={{ marginTop: 8, fontSize: 13, opacity: 0.85 }}>
-              파일: <b>{ldrUrl}</b>
+              {t.adult.fileLabel}: <b>{ldrUrl}</b>
             </div>
           </div>
         )}

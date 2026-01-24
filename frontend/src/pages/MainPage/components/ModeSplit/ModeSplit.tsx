@@ -3,9 +3,11 @@ import ModeTile from "./ModeTile";
 import kidsModeImg from "../../../../assets/kids_mode.png";
 import { useNavigate } from "react-router-dom";
 import Background3D from "../Background3D";
+import { useLanguage } from "../../../../contexts/LanguageContext";
 
 export default function ModeSplit() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   return (
     <section className="modeSplit">
@@ -14,14 +16,14 @@ export default function ModeSplit() {
       <div className="modeSplit__controls">
         <ModeTile
           variant="adult"
-          title="PRO MODE"
-          subtitle="정밀 · 검증 · 고급 설정"
+          title={t.main.proMode}
+          subtitle={t.main.proSubtitle}
           onClick={() => navigate("/adult")}
         />
 
         <ModeTile
           variant="kids"
-          title="키즈 모드"
+          title={t.main.kidsMode}
           logo={kidsModeImg}
           onClick={() => navigate("/kids")}
         />

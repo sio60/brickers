@@ -19,13 +19,66 @@ public class LocalStorageService implements StorageService {
     private static final Map<String, String> EXT_BY_CONTENT_TYPE = Map.of(
             "image/png", "png",
             "image/jpeg", "jpg",
-            "image/webp", "webp");
+            "image/webp", "webp",
+            "application/octet-stream", "ldr", // ✅ LDR
+            "text/plain", "ldr", // ✅ LDR (text)
+            "application/json", "json"); // ✅ JSON
 
     @Value("${app.upload.root-dir:./uploads}")
     private String rootDir;
 
     @Value("${app.upload.public-prefix:/uploads}")
     private String publicPrefix;
+
+    @Override
+    public StoredFile storeFile(String userId, String fileName, byte[] content, String contentType) {
+        if (content == null || content.length == 0) {
+            throw new IllegalArgumentException("파일 내용이 비었습니다.");
+        }
+
+        // 확장자 결정
+        String ext = "bin";
+        if (fileName != null && fileName.contains(".")) {
+            ext = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+        } else if (EXT_BY_CONTENT_TYPE.containsKey(contentType)) {
+            ext = EXT_BY_CONTENT_TYPE.get(contentType);
+        }
+
+        LocalDate now = LocalDate.now();
+        String safeUser = (userId == null || userId.isBlank()) ? "guest" : userId;
+
+        Path base = Paths.get(rootDir).toAbsolutePath().normalize();
+        Path dir = base.resolve(Paths.get(
+                safeUser,
+                String.valueOf(now.getYear()),
+                String.format("%02d", now.getMonthValue()))).normalize();
+
+        try {
+            Files.createDirectories(dir);
+
+            String finalFileName = (fileName != null && !fileName.isBlank())
+                    ? UUID.randomUUID() + "_" + fileName
+                    : UUID.randomUUID() + "." + ext;
+
+            Path target = dir.resolve(finalFileName).normalize();
+
+            // path traversal 방어
+            if (!target.startsWith(dir)) {
+                throw new IllegalStateException("잘못된 파일 경로");
+            }
+
+            Files.write(target, content);
+
+            // URL 생성
+            String url = publicPrefix + "/" + safeUser + "/" + now.getYear() + "/"
+                    + String.format("%02d", now.getMonthValue()) + "/" + finalFileName;
+
+            return new StoredFile(url, fileName, contentType, content.length);
+
+        } catch (Exception e) {
+            throw new RuntimeException("파일 저장 실패: " + e.getMessage(), e);
+        }
+    }
 
     @Override
     public StoredFile storeImage(String userId, MultipartFile file) {

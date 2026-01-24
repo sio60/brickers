@@ -1,6 +1,15 @@
 // My API 서비스 - 프로필, 작업 관리
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
+export class ApiError extends Error {
+    status: number;
+    constructor(message: string, status: number) {
+        super(message);
+        this.status = status;
+        this.name = "ApiError";
+    }
+}
+
 export interface MyProfile {
     id: string;
     email: string;
@@ -59,45 +68,63 @@ function getHeaders(): HeadersInit {
     };
 }
 
+// 공통 요청 핸들러
+async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
+    try {
+        const res = await fetch(url, {
+            ...options,
+            headers: {
+                ...getHeaders(),
+                ...options.headers,
+            },
+            credentials: 'include',
+        });
+
+        if (!res.ok) {
+            // 에러 메시지 추출 시도
+            let errorMessage = '요청 실패';
+            try {
+                const errorData = await res.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch {
+                // JSON 파싱 실패 시 기본 메시지 사용
+            }
+            throw new ApiError(errorMessage, res.status);
+        }
+
+        // 응답이 없는 경우 (204 No Content 등) 처리
+        if (res.status === 204) return {} as T;
+
+        return res.json();
+    } catch (err) {
+        if (err instanceof ApiError) {
+            throw err;
+        }
+        // 네트워크 에러 등
+        throw new ApiError(err instanceof Error ? err.message : '네트워크 에러', 0);
+    }
+}
+
 // 내 프로필 조회
 export async function getMyProfile(): Promise<MyProfile> {
-    const res = await fetch(`${API_BASE}/api/my/profile`, {
-        headers: getHeaders(),
-        credentials: 'include',
-    });
-    if (!res.ok) throw new Error('프로필 조회 실패');
-    return res.json();
+    return request<MyProfile>(`${API_BASE}/api/my/profile`);
 }
 
 // 마이페이지 전체 조회 (프로필+갤러리+작업)
 export async function getMyOverview(): Promise<MyOverview> {
-    const res = await fetch(`${API_BASE}/api/my/overview`, {
-        headers: getHeaders(),
-        credentials: 'include',
-    });
-    if (!res.ok) throw new Error('마이페이지 조회 실패');
-    return res.json();
+    return request<MyOverview>(`${API_BASE}/api/my/overview`);
 }
 
 // 내 작업 목록 조회
 export async function getMyJobs(page = 0, size = 12): Promise<{ content: MyJob[]; totalPages: number }> {
-    const res = await fetch(`${API_BASE}/api/my/jobs?page=${page}&size=${size}`, {
-        headers: getHeaders(),
-        credentials: 'include',
-    });
-    if (!res.ok) throw new Error('작업 목록 조회 실패');
-    return res.json();
+    return request<{ content: MyJob[]; totalPages: number }>(`${API_BASE}/api/my/jobs?page=${page}&size=${size}`);
 }
 
 // 작업 재시도 (중단된 작업 이어하기)
 export async function retryJob(jobId: string): Promise<MyJob> {
-    const res = await fetch(`${API_BASE}/api/my/jobs/${jobId}/retry`, {
+    return request<MyJob>(`${API_BASE}/api/my/jobs/${jobId}/retry`, {
         method: 'POST',
-        headers: getHeaders(),
-        credentials: 'include',
     });
-    if (!res.ok) throw new Error('작업 재시도 실패');
-    return res.json();
 }
 
 // 프로필 수정 요청 타입
@@ -109,14 +136,10 @@ export interface MyProfileUpdateRequest {
 
 // 프로필 수정
 export async function updateMyProfile(data: MyProfileUpdateRequest): Promise<MyProfile> {
-    const res = await fetch(`${API_BASE}/api/my/profile`, {
+    return request<MyProfile>(`${API_BASE}/api/my/profile`, {
         method: 'PATCH',
-        headers: getHeaders(),
-        credentials: 'include',
         body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('프로필 수정 실패');
-    return res.json();
 }
 
 // S3 presign 응답 타입
@@ -129,14 +152,10 @@ export interface PresignResponse {
 
 // S3 presign URL 요청
 export async function getPresignUrl(contentType: string, originalName: string): Promise<PresignResponse> {
-    const res = await fetch(`${API_BASE}/api/uploads/presign`, {
+    return request<PresignResponse>(`${API_BASE}/api/uploads/presign`, {
         method: 'POST',
-        headers: getHeaders(),
-        credentials: 'include',
         body: JSON.stringify({ contentType, originalName }),
     });
-    if (!res.ok) throw new Error('Presign URL 생성 실패');
-    return res.json();
 }
 
 // S3에 이미지 업로드 (presign URL 사용)
@@ -144,7 +163,7 @@ export async function uploadImageToS3(file: File): Promise<string> {
     // 1. presign URL 요청
     const presign = await getPresignUrl(file.type, file.name);
 
-    // 2. S3에 직접 업로드
+    // 2. S3에 직접 업로드 (Direct fetch usage as it's external URL)
     const uploadRes = await fetch(presign.uploadUrl, {
         method: 'PUT',
         body: file,

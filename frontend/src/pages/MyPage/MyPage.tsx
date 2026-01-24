@@ -1,20 +1,24 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./MyPage.css";
-import { getMyOverview, getMyProfile, retryJob, updateMyProfile } from "../../api/myApi";
+import { getMyOverview, getMyProfile, retryJob, updateMyProfile, ApiError } from "../../api/myApi";
 import type { MyOverview, MyProfile, MyJob } from "../../api/myApi";
 import Background3D from "../MainPage/components/Background3D";
 import FloatingMenuButton from "../KidsPage/components/FloatingMenuButton";
 import UpgradeModal from "../MainPage/components/UpgradeModal";
+import KidsLdrPreview from "../KidsPage/components/KidsLdrPreview";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 type MenuItem = "profile" | "membership" | "jobs" | "settings" | "delete";
 
 export default function MyPage() {
     const navigate = useNavigate();
+    const { language, setLanguage, t } = useLanguage();
+
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<MyOverview | null>(null);
     const [profile, setProfile] = useState<MyProfile | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<{ message: string; status: number } | null>(null);
     const [activeMenu, setActiveMenu] = useState<MenuItem>("profile");
     const [retrying, setRetrying] = useState<string | null>(null);
 
@@ -24,6 +28,9 @@ export default function MyPage() {
     const [editBio, setEditBio] = useState("");
     const [saving, setSaving] = useState(false);
     const [showUpgrade, setShowUpgrade] = useState(false);
+
+    // 3D 뷰어 모달 상태
+    const [selectedJob, setSelectedJob] = useState<MyJob | null>(null);
 
     useEffect(() => {
         setLoading(true);
@@ -36,10 +43,14 @@ export default function MyPage() {
                 setLoading(false);
             })
             .catch((err) => {
-                setError(err.message);
+                if (err instanceof ApiError) {
+                    setError({ message: err.message, status: err.status });
+                } else {
+                    setError({ message: err instanceof Error ? err.message : t.common.unknownError, status: 0 });
+                }
                 setLoading(false);
             });
-    }, []);
+    }, [language]); // 언어 변경 시 에러 메시지 갱신을 위해 dependency 추가
 
     // 수정 모드 진입 시 현재 값으로 초기화
     const startEditing = () => {
@@ -65,9 +76,9 @@ export default function MyPage() {
             });
             setProfile(updated);
             setIsEditing(false);
-            alert("프로필이 수정되었습니다.");
+            alert(t.profile.alertSaved);
         } catch {
-            alert("프로필 수정에 실패했습니다.");
+            alert(t.profile.alertFailed);
         } finally {
             setSaving(false);
         }
@@ -80,53 +91,88 @@ export default function MyPage() {
             const updated = await getMyOverview();
             setData(updated);
         } catch {
-            alert("작업 재시도에 실패했습니다.");
+            alert(t.jobs.retryFail);
         } finally {
             setRetrying(null);
         }
     };
 
-    const getStatusLabel = (status: MyJob["status"]) => {
-        switch (status) {
-            case "PENDING": return "대기중";
-            case "RUNNING": return "생성중";
-            case "PAUSED": return "중단됨";
-            case "COMPLETED": return "완료";
-            case "FAILED": return "실패";
-            default: return status;
-        }
+    const getStatusLabel = (status: MyJob["status"] | string) => {
+        const statusMap: Record<string, string> = t.jobs.status;
+        return statusMap[status] || status;
     };
 
-    const getStatusClass = (status: MyJob["status"]) => {
+    const getStatusClass = (status: MyJob["status"] | string) => {
         switch (status) {
-            case "PENDING": return "pending";
+            case "QUEUED": return "pending";
             case "RUNNING": return "running";
-            case "PAUSED": return "paused";
-            case "COMPLETED": return "completed";
+            case "CANCELED": return "paused"; // or canceled
+            case "DONE": return "completed";
             case "FAILED": return "failed";
             default: return "";
         }
     };
 
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    };
+
     const menuItems = [
-        { id: "profile" as MenuItem, label: "프로필 조회" },
-        { id: "membership" as MenuItem, label: "멤버십 정보" },
-        { id: "jobs" as MenuItem, label: "내 작업 목록" },
-        { id: "settings" as MenuItem, label: "설정" },
-        { id: "delete" as MenuItem, label: "회원탈퇴" },
+        { id: "profile" as MenuItem, label: t.menu.profile },
+        { id: "membership" as MenuItem, label: t.menu.membership },
+        { id: "jobs" as MenuItem, label: t.menu.jobs },
+        { id: "settings" as MenuItem, label: t.menu.settings },
+        { id: "delete" as MenuItem, label: t.menu.delete },
     ];
+
+    // 실시간 업데이트 (Polling)
+    useEffect(() => {
+        let intervalId: any;
+
+        if (activeMenu === "jobs") {
+            const fetchJobs = async () => {
+                try {
+                    // 전체 오버뷰 대신 job만 가져오는게 효율적이지만, 현재 API 구조상 overview 활용
+                    const updated = await getMyOverview();
+                    setData(updated);
+                } catch (e) {
+                    console.error("Polling failed", e);
+                }
+            };
+
+            // 3초마다 갱신
+            intervalId = setInterval(fetchJobs, 3000);
+        }
+
+        return () => {
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [activeMenu]);
 
     const renderContent = () => {
         if (loading) {
-            return <div className="mypage__loading">로딩 중...</div>;
+            return <div className="mypage__loading">{t.common.loading}</div>;
         }
 
         if (error) {
+            if (error.status === 401) {
+                return (
+                    <div className="mypage__error">
+                        <p>{t.common.loginRequired}</p>
+                        <button className="mypage__loginBtn" onClick={() => navigate("/")}>
+                            {t.common.homeBtn}
+                        </button>
+                    </div>
+                );
+            }
+
             return (
                 <div className="mypage__error">
-                    <p>로그인이 필요합니다.</p>
-                    <button className="mypage__loginBtn" onClick={() => navigate("/")}>
-                        홈으로
+                    <p>{t.common.error}</p>
+                    <p className="mypage__errorMessage">({error.message})</p>
+                    <button className="mypage__retryBtn" onClick={() => window.location.reload()}>
+                        {t.common.retryBtn}
                     </button>
                 </div>
             );
@@ -137,7 +183,7 @@ export default function MyPage() {
                 return (
                     <div className="mypage__section">
                         <h2 className="mypage__sectionTitle">
-                            {isEditing ? "프로필 수정" : "프로필 조회"}
+                            {isEditing ? t.profile.editTitle : t.profile.title}
                         </h2>
                         {profile && !isEditing && (
                             <div className="mypage__profileCard">
@@ -148,26 +194,26 @@ export default function MyPage() {
                                 />
                                 <div className="mypage__profileInfo">
                                     <div className="mypage__infoRow">
-                                        <span className="mypage__label">닉네임</span>
+                                        <span className="mypage__label">{t.profile.nickname}</span>
                                         <span className="mypage__value">{profile.nickname || "-"}</span>
                                     </div>
                                     <div className="mypage__infoRow">
-                                        <span className="mypage__label">이메일</span>
+                                        <span className="mypage__label">{t.profile.email}</span>
                                         <span className="mypage__value">{profile.email}</span>
                                     </div>
                                     <div className="mypage__infoRow">
-                                        <span className="mypage__label">자기소개</span>
+                                        <span className="mypage__label">{t.profile.bio}</span>
                                         <span className="mypage__value">{profile.bio || "-"}</span>
                                     </div>
                                     <div className="mypage__infoRow">
-                                        <span className="mypage__label">가입일</span>
+                                        <span className="mypage__label">{t.profile.joinedAt}</span>
                                         <span className="mypage__value">
                                             {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "-"}
                                         </span>
                                     </div>
                                 </div>
                                 <button className="mypage__editBtn" onClick={startEditing}>
-                                    프로필 수정
+                                    {t.profile.editBtn}
                                 </button>
                             </div>
                         )}
@@ -183,7 +229,7 @@ export default function MyPage() {
 
                                 <div className="mypage__editForm">
                                     <div className="mypage__formRow">
-                                        <label className="mypage__formLabel">닉네임</label>
+                                        <label className="mypage__formLabel">{t.profile.nickname}</label>
                                         <input
                                             type="text"
                                             className="mypage__formInput"
@@ -193,7 +239,7 @@ export default function MyPage() {
                                         />
                                     </div>
                                     <div className="mypage__formRow">
-                                        <label className="mypage__formLabel">자기소개</label>
+                                        <label className="mypage__formLabel">{t.profile.bio}</label>
                                         <textarea
                                             className="mypage__formTextarea"
                                             value={editBio}
@@ -210,14 +256,14 @@ export default function MyPage() {
                                         onClick={cancelEditing}
                                         disabled={saving}
                                     >
-                                        취소
+                                        {t.profile.cancelBtn}
                                     </button>
                                     <button
                                         className="mypage__saveBtn"
                                         onClick={saveProfile}
                                         disabled={saving}
                                     >
-                                        {saving ? "저장 중..." : "저장"}
+                                        {saving ? t.profile.saving : t.profile.saveBtn}
                                     </button>
                                 </div>
                             </div>
@@ -228,23 +274,23 @@ export default function MyPage() {
             case "membership":
                 return (
                     <div className="mypage__section">
-                        <h2 className="mypage__sectionTitle">멤버십 정보</h2>
+                        <h2 className="mypage__sectionTitle">{t.membership.title}</h2>
                         {profile && (
                             <div className="mypage__membershipCard">
                                 <div className="mypage__planBadge">{profile.membershipPlan}</div>
                                 <p className="mypage__planDesc">
-                                    현재 <strong>{profile.membershipPlan}</strong> 플랜을 이용 중입니다.
+                                    {t.membership.desc.replace("{plan}", profile.membershipPlan)}
                                 </p>
                                 {profile.membershipPlan === "FREE" && (
                                     <button
                                         className="mypage__upgradeBtn"
                                         onClick={() => setShowUpgrade(true)}
                                     >
-                                        프로 업그레이드
+                                        {t.membership.upgradeBtn}
                                     </button>
                                 )}
                                 {profile.membershipPlan !== "FREE" && (
-                                    <p className="mypage__proPlan">프로 플랜을 이용 중입니다!</p>
+                                    <p className="mypage__proPlan">{t.membership.proUser}</p>
                                 )}
                             </div>
                         )}
@@ -254,36 +300,63 @@ export default function MyPage() {
             case "jobs":
                 return (
                     <div className="mypage__section">
-                        <h2 className="mypage__sectionTitle">내 작업 목록</h2>
+                        <h2 className="mypage__sectionTitle">{t.jobs.title}</h2>
                         {data?.jobs.recent && data.jobs.recent.length > 0 ? (
                             <div className="mypage__jobs">
                                 {data.jobs.recent.map((job) => (
-                                    <div key={job.id} className="mypage__job">
-                                        <img
-                                            src={job.previewImageUrl || job.sourceImageUrl || "/placeholder.png"}
-                                            alt={job.title}
-                                            className="mypage__jobThumb"
-                                        />
+                                    <div
+                                        key={job.id}
+                                        className="mypage__job"
+                                        onClick={() => {
+                                            if (job.status === "DONE" && job.modelKey) {
+                                                setSelectedJob(job);
+                                            } else if (job.status === "FAILED") {
+                                                alert(t.jobs.modalError + job.errorMessage);
+                                            } else {
+                                                alert(t.jobs.modalPending);
+                                            }
+                                        }}
+                                    >
+                                        <div className="mypage__jobThumbData">
+                                            <img
+                                                src={job.sourceImageUrl || "/placeholder.png"}
+                                                alt={job.title}
+                                                className="mypage__jobThumb"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).src = "/placeholder.png";
+                                                }}
+                                            />
+                                            {(job.status === "FAILED" || job.status === "CANCELED" || job.status === "QUEUED") && (
+                                                <div className="mypage__jobOverlay">
+                                                    <button
+                                                        className="mypage__retryBtn"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleRetry(job.id);
+                                                        }}
+                                                        disabled={retrying === job.id}
+                                                    >
+                                                        {retrying === job.id ? "..." : "↺"}
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                         <div className="mypage__jobInfo">
                                             <div className="mypage__jobTitle">{job.title || "제목 없음"}</div>
-                                            <div className={`mypage__jobStatus ${getStatusClass(job.status)}`}>
-                                                {getStatusLabel(job.status)} - {job.stage}
+                                            <div className="mypage__jobMeta">
+                                                <span className={`mypage__jobStatus ${getStatusClass(job.status)}`}>
+                                                    {getStatusLabel(job.status)}
+                                                </span>
+                                                <span className="mypage__jobDate">
+                                                    {formatDate(job.createdAt)}
+                                                </span>
                                             </div>
                                         </div>
-                                        {(job.status === "PAUSED" || job.status === "FAILED") && (
-                                            <button
-                                                className="mypage__retryBtn"
-                                                onClick={() => handleRetry(job.id)}
-                                                disabled={retrying === job.id}
-                                            >
-                                                {retrying === job.id ? "..." : "이어하기"}
-                                            </button>
-                                        )}
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <p className="mypage__empty">아직 작업 내역이 없습니다.</p>
+                            <p className="mypage__empty">{t.jobs.empty}</p>
                         )}
                     </div>
                 );
@@ -291,15 +364,34 @@ export default function MyPage() {
             case "settings":
                 return (
                     <div className="mypage__section">
-                        <h2 className="mypage__sectionTitle">설정</h2>
+                        <h2 className="mypage__sectionTitle">{t.settings.title}</h2>
                         <div className="mypage__settingsCard">
                             <div className="mypage__settingRow">
-                                <span>알림 설정</span>
-                                <button className="mypage__settingBtn">변경</button>
+                                <span>{t.settings.notification}</span>
+                                <button className="mypage__settingBtn">{t.settings.changeBtn}</button>
                             </div>
                             <div className="mypage__settingRow">
-                                <span>언어 설정</span>
-                                <button className="mypage__settingBtn">변경</button>
+                                <span>{t.settings.language}</span>
+                                <div className="mypage__langGroup">
+                                    <button
+                                        className={`mypage__langBtn ${language === "ko" ? "active" : ""}`}
+                                        onClick={() => setLanguage("ko")}
+                                    >
+                                        한국어
+                                    </button>
+                                    <button
+                                        className={`mypage__langBtn ${language === "en" ? "active" : ""}`}
+                                        onClick={() => setLanguage("en")}
+                                    >
+                                        English
+                                    </button>
+                                    <button
+                                        className={`mypage__langBtn ${language === "ja" ? "active" : ""}`}
+                                        onClick={() => setLanguage("ja")}
+                                    >
+                                        日本語
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -308,10 +400,10 @@ export default function MyPage() {
             case "delete":
                 return (
                     <div className="mypage__section">
-                        <h2 className="mypage__sectionTitle">회원탈퇴</h2>
+                        <h2 className="mypage__sectionTitle">{t.delete.title}</h2>
                         <div className="mypage__deleteCard">
-                            <p>정말 탈퇴하시겠습니까? 모든 데이터가 삭제되며 복구가 불가능합니다.</p>
-                            <button className="mypage__deleteBtn">회원탈퇴</button>
+                            <p>{t.delete.desc}</p>
+                            <button className="mypage__deleteBtn">{t.delete.btn}</button>
                         </div>
                     </div>
                 );
@@ -322,11 +414,16 @@ export default function MyPage() {
     };
 
     return (
-        <div className="mypage">
+        <div className={`mypage lang-${language}`}>
             <Background3D entryDirection="float" />
 
             <div className="mypage__container">
                 <div className="mypage__layout">
+                    {/* 나가기 버튼 */}
+                    <button className="mypage__exitBtn" onClick={() => navigate("/")}>
+                        ✕
+                    </button>
+
                     {/* 왼쪽 사이드바 */}
                     <div className="mypage__sidebar">
                         {menuItems.map((item) => (
@@ -349,6 +446,30 @@ export default function MyPage() {
 
             <FloatingMenuButton />
             <UpgradeModal isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} />
+
+            {/* 3D 뷰어 모달 */}
+            {selectedJob && (
+                <div className="mypage__modalOverlay">
+                    <div className="mypage__modalContent">
+                        <button
+                            className="mypage__closeBtn"
+                            onClick={() => setSelectedJob(null)}
+                        >
+                            ✕
+                        </button>
+                        <div className="mypage__viewerContainer">
+                            {selectedJob.modelKey ? (
+                                <KidsLdrPreview
+                                    url={selectedJob.modelKey}
+                                    stepMode={true}
+                                />
+                            ) : (
+                                <p>{t.jobs.modalNoData}</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
