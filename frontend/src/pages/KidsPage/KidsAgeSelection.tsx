@@ -20,6 +20,7 @@ import thumb8_10 from "../../assets/8-10.png";
 import thumb8_10_2 from "../../assets/8-10_2.png";
 
 import KidsModelSelectModal from "./components/KidsModelSelectModal";
+import FloatingMenuButton from "./components/FloatingMenuButton";
 
 type AgeGroup = "4-5" | "6-7" | "8-10" | null;
 
@@ -134,6 +135,9 @@ export default function KidsAgeSelection() {
         onSelect={handlePickModel}
         items={getCurrentModels()}
       />
+
+      {/* 플로팅 메뉴 버튼 */}
+      <FloatingMenuButton />
     </div>
   );
 }

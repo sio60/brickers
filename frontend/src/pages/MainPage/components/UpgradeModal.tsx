@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "./UpgradeModal.css";
 import { baseGooglePayRequest, merchantInfo } from "../../../config/googlePay";
+import { useAuth } from "../../Auth/AuthContext";
 
 type Props = {
     isOpen: boolean;
@@ -14,6 +15,7 @@ declare global {
 }
 
 export default function UpgradeModal({ isOpen, onClose }: Props) {
+    const { authFetch } = useAuth();
     const [paymentsClient, setPaymentsClient] = useState<any>(null);
 
     useEffect(() => {
@@ -52,13 +54,31 @@ export default function UpgradeModal({ isOpen, onClose }: Props) {
 
         paymentsClient
             .loadPaymentData(paymentDataRequest)
-            .then((paymentData: any) => {
+            .then(async (paymentData: any) => {
                 console.log("Payment Success", paymentData);
-                // ✅ 업그레이드 완료 처리
-                localStorage.setItem("isPro", "true");
-                // 스토리지 이벤트 강제 발생 (같은 탭 업데이트용)
-                window.dispatchEvent(new Event("storage"));
-                onClose();
+
+                // ✅ 백엔드에 멤버십 업그레이드 요청
+                try {
+                    const res = await authFetch('/api/my/membership/upgrade', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    if (res.ok) {
+                        localStorage.setItem("isPro", "true");
+                        window.dispatchEvent(new Event("storage"));
+                        alert("프로 멤버십으로 업그레이드되었습니다!");
+                        onClose();
+                        window.location.reload(); // 새로고침하여 상태 반영
+                    } else {
+                        alert("멤버십 업그레이드에 실패했습니다.");
+                    }
+                } catch (err) {
+                    console.error("Upgrade API Error", err);
+                    alert("멤버십 업그레이드에 실패했습니다.");
+                }
             })
             .catch((err: any) => {
                 console.error("Payment Error", err);
