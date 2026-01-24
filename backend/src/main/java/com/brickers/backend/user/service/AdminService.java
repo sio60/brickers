@@ -1,4 +1,4 @@
-package com.brickers.backend.admin.service;
+package com.brickers.backend.user.service;
 
 import com.brickers.backend.gallery.repository.GalleryPostRepository;
 import com.brickers.backend.job.repository.GenerateJobRepository;

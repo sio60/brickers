@@ -225,5 +225,5 @@ export interface AdminStats {
 }
 
 export async function getAdminStats(): Promise<AdminStats> {
-    return request<AdminStats>(`${API_BASE}/api/admin/stats`);
+    return request<AdminStats>(`${API_BASE}/api/my/admin/stats`);
 }

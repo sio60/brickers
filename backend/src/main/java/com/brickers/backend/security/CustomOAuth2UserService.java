@@ -137,15 +137,25 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     existingUser.setLastLoginAt(now);
 
                     // ✅ 기존 유저도 이메일이 매칭되면 Admin으로 승급 (운영 편의성)
-                    if (emailFinal != null && ADMIN_EMAILS.contains(emailFinal)) {
-                        existingUser.setRole(UserRole.ADMIN);
+                    if (emailFinal != null) {
+                        String e = emailFinal.toLowerCase();
+                        if (ADMIN_EMAILS.stream().anyMatch(ae -> ae.equalsIgnoreCase(e))) {
+                            log.info("[OAuth2/Update] User matches admin email: {}", emailFinal);
+                            existingUser.setRole(UserRole.ADMIN);
+                        }
                     }
 
                     return existingUser;
                 })
                 .orElseGet(() -> {
-                    UserRole role = (emailFinal != null && ADMIN_EMAILS.contains(emailFinal)) ? UserRole.ADMIN
-                            : UserRole.USER;
+                    UserRole role = UserRole.USER;
+                    if (emailFinal != null) {
+                        String e = emailFinal.toLowerCase();
+                        if (ADMIN_EMAILS.stream().anyMatch(ae -> ae.equalsIgnoreCase(e))) {
+                            log.info("[OAuth2/Create] New user matches admin email: {}", emailFinal);
+                            role = UserRole.ADMIN;
+                        }
+                    }
 
                     User newUser = User.builder()
                             .provider(providerFinal)
