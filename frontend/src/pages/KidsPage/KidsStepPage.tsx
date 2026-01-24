@@ -3,6 +3,7 @@ import { Bounds, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLanguage } from "../../contexts/LanguageContext";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 
@@ -100,7 +101,7 @@ function LdrModel({
       if (overrideMainLdrUrl && !isAbsolute) {
         try {
           fixed = new URL(fixed, url).href;
-        } catch {}
+        } catch { }
       }
 
       // CDN parts/p 보정
@@ -131,7 +132,7 @@ function LdrModel({
 
     try {
       (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any);
-    } catch {}
+    } catch { }
 
     return l;
   }, [partsLibraryPath, url, overrideMainLdrUrl]);
@@ -181,6 +182,7 @@ function LdrModel({
 
 export default function KidsStepPage() {
   const nav = useNavigate();
+  const { t } = useLanguage();
   const [params] = useSearchParams();
   const url = params.get("url") || "";
 
@@ -193,7 +195,7 @@ export default function KidsStepPage() {
     arr.forEach((u) => {
       try {
         URL.revokeObjectURL(u);
-      } catch {}
+      } catch { }
     });
   };
 
@@ -293,7 +295,7 @@ export default function KidsStepPage() {
             cursor: "pointer",
           }}
         >
-          ← Back
+          ← {t.kids.steps.back}
         </button>
 
         <div style={{ fontWeight: 900, letterSpacing: 0.5, opacity: 0.9 }}>
@@ -309,7 +311,7 @@ export default function KidsStepPage() {
             fontWeight: 900,
           }}
         >
-          STEP {stepIdx + 1} / {total}
+          {t.kids.steps.title.replace("{cur}", String(stepIdx + 1)).replace("{total}", String(total))}
         </div>
       </div>
 
@@ -351,7 +353,7 @@ export default function KidsStepPage() {
               fontWeight: 900,
             }}
           >
-            Brick Preview
+            {t.kids.steps.preview}
           </div>
 
           {/* 로딩 오버레이 */}
@@ -370,7 +372,7 @@ export default function KidsStepPage() {
                 color: "#666",
               }}
             >
-              스텝 로딩 중...
+              {t.kids.steps.loading}
             </div>
           )}
 
@@ -414,7 +416,7 @@ export default function KidsStepPage() {
               opacity: canPrev ? 1 : 0.45,
             }}
           >
-            ← PREV
+            ← {t.kids.steps.prev}
           </button>
 
           <button
@@ -439,7 +441,7 @@ export default function KidsStepPage() {
               opacity: canNext ? 1 : 0.45,
             }}
           >
-            NEXT →
+            {t.kids.steps.next} →
           </button>
         </div>
       </div>

@@ -101,9 +101,40 @@ public class KidsService {
                     if (response.containsKey("image_url")) {
                         job.setPreviewImageUrl(String.valueOf(response.get("image_url")));
                     }
-                    // ✅ LDR URL -> modelKey에 저장
+                    // ✅ LDR URL -> 파일 시스템 읽기 -> StorageService(S3/Local) 저장 -> modelKey 업데이트
                     if (response.containsKey("ldrUrl")) {
-                        job.setModelKey(String.valueOf(response.get("ldrUrl")));
+                        String originalLdrUrl = String.valueOf(response.get("ldrUrl"));
+                        try {
+                            // 1. 파일명 추출
+                            String filename = originalLdrUrl;
+                            if (filename.contains("/")) {
+                                filename = filename.substring(filename.lastIndexOf("/") + 1);
+                            }
+
+                            // 2. 로컬(Volume) 경로에서 파일 읽기
+                            // (Docker 배포 시 brickers-ai 결과물이 공유 볼륨에 있다고 가정)
+                            java.nio.file.Path sourcePath = java.nio.file.Paths.get("../brickers-ai/public/generated",
+                                    filename);
+
+                            byte[] ldrContent;
+                            if (java.nio.file.Files.exists(sourcePath)) {
+                                ldrContent = java.nio.file.Files.readAllBytes(sourcePath);
+                            } else {
+                                throw new java.io.FileNotFoundException("Generated file not found at " + sourcePath);
+                            }
+
+                            // 3. StorageService를 통해 저장 (S3 or Local Uploads)
+                            var stored = storageService.storeFile(userId, filename, ldrContent, "text/plain");
+
+                            // 4. 저장된 스토리지 URL로 교체 (DB 저장용)
+                            job.setModelKey(stored.url());
+                            log.info("LDR 파일 스토리지 이관 완료: {}", stored.url());
+
+                        } catch (Exception e) {
+                            log.error("LDR 파일 처리 실패: {}", e.getMessage());
+                            // 실패 시 원본 경로 유지
+                            job.setModelKey(originalLdrUrl);
+                        }
                     }
                 }
                 job.markDone();

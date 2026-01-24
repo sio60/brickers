@@ -2,15 +2,17 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./FloatingMenuButton.css";
 import mypageIcon from "../../../assets/mypage.png";
+import { useLanguage } from "../../../contexts/LanguageContext";
 
 export default function FloatingMenuButton() {
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
 
     const menuItems = [
-        { id: "mypage", label: "마이페이지" },
-        { id: "chatbot", label: "브릭봇 문의" },
-        { id: "gallery", label: "갤러리" },
+        { id: "mypage", label: t.floatingMenu?.mypage || "My Page" },
+        { id: "chatbot", label: t.floatingMenu?.chatbot || "ChatBot" },
+        { id: "gallery", label: t.floatingMenu?.gallery || "Gallery" },
     ];
 
     const handleMenuClick = (id: string) => {
@@ -59,9 +61,9 @@ export default function FloatingMenuButton() {
                 <button
                     className={`floatingMenu__btn ${isOpen ? "isOpen" : ""}`}
                     onClick={() => setIsOpen(!isOpen)}
-                    aria-label="메뉴 열기"
+                    aria-label={t.floatingMenu.open}
                 >
-                    <img src={mypageIcon} alt="메뉴" className="floatingMenu__btnIcon" />
+                    <img src={mypageIcon} alt={t.floatingMenu.iconAlt} className="floatingMenu__btnIcon" />
                 </button>
             </div>
         </>
