@@ -41,10 +41,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             Claims claims = jws.getPayload();
 
             String userId = claims.getSubject();
-
-            // ✅ role 클레임 읽기 (없으면 USER로 fallback)
             String role = claims.get("role", String.class);
-            if (role == null || role.isBlank())
+
+            if (role == null)
+
                 role = "USER";
 
             var auth = new UsernamePasswordAuthenticationToken(

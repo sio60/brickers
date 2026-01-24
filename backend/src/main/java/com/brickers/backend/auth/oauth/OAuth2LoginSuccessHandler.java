@@ -74,10 +74,12 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             return;
         }
 
-        // ✅ refresh-cookie 발급 (accessToken도 함께 발급되지만, 현재 플로우에선 refresh로 access 뽑음)
+        // ✅ JWT 토큰 발급 (access는 응답 바디로 주는 게 아니라 refresh로 뽑는 구조라 refreshCookie만 심어도 됨)
+        // 다만, 지금은 "로그인 성공 즉시 refresh-cookie 세팅"만 하고 프론트가 /api/auth/refresh를 호출하도록 설계.
+        User user = userRepository.findById(userId).orElseThrow();
         var issued = tokenService.issueTokens(userId, Map.of(
-                "provider", provider == null ? "" : provider,
-                "role", role == null ? "USER" : role));
+                "provider", provider,
+                "role", user.getRole().name()));
 
         response.addHeader("Set-Cookie", issued.refreshCookie().toString());
 

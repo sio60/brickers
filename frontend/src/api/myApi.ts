@@ -18,6 +18,7 @@ export interface MyProfile {
     profileImage: string;
     membershipPlan: string;
     accountState: string;
+    role: 'USER' | 'ADMIN';
     createdAt: string;
 }
 
@@ -120,6 +121,45 @@ export async function getMyJobs(page = 0, size = 12): Promise<{ content: MyJob[]
     return request<{ content: MyJob[]; totalPages: number }>(`${API_BASE}/api/my/jobs?page=${page}&size=${size}`);
 }
 
+// 갤러리 등록 응답 타입
+export interface GalleryRegisterResponse {
+    id: string;
+    title: string;
+    thumbnailUrl: string;
+}
+
+// 갤러리 등록 요청 타입 (백엔드 스펙)
+export interface GalleryCreateRequest {
+    title: string;
+    content?: string;
+    tags?: string[];
+    thumbnailUrl?: string;
+    visibility?: 'PUBLIC' | 'PRIVATE';
+}
+
+// 갤러리에 작품 등록
+export async function registerToGallery(data: GalleryCreateRequest): Promise<any> {
+    return request<any>(`${API_BASE}/api/gallery`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
+// 갤러리 목록 조회 (전체 공개)
+export async function getGalleryItems(page = 0, size = 12): Promise<{ content: any[]; totalPages: number }> {
+    return request<{ content: any[]; totalPages: number }>(`${API_BASE}/api/gallery?page=${page}&size=${size}`);
+}
+
+// 내 갤러리 목록 조회
+export async function getMyGalleryItems(page = 0, size = 12): Promise<{ content: any[]; totalPages: number }> {
+    return request<{ content: any[]; totalPages: number }>(`${API_BASE}/api/gallery/my?page=${page}&size=${size}`);
+}
+
+// 내 북마크 목록 조회
+export async function getMyBookmarks(page = 0, size = 12): Promise<{ content: any[]; totalPages: number }> {
+    return request<{ content: any[]; totalPages: number }>(`${API_BASE}/api/gallery/bookmarks/my?page=${page}&size=${size}`);
+}
+
 // 작업 재시도 (중단된 작업 이어하기)
 export async function retryJob(jobId: string): Promise<MyJob> {
     return request<MyJob>(`${API_BASE}/api/my/jobs/${jobId}/retry`, {
@@ -176,4 +216,14 @@ export async function uploadImageToS3(file: File): Promise<string> {
 
     // 3. 공개 URL 반환
     return presign.publicUrl;
+}
+
+export interface AdminStats {
+    totalUsers: number;
+    totalJobsCount: number;
+    totalGalleryPosts: number;
+}
+
+export async function getAdminStats(): Promise<AdminStats> {
+    return request<AdminStats>(`${API_BASE}/api/admin/stats`);
 }

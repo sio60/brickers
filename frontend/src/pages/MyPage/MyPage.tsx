@@ -9,7 +9,7 @@ import UpgradeModal from "../MainPage/components/UpgradeModal";
 import KidsLdrPreview from "../KidsPage/components/KidsLdrPreview";
 import { useLanguage } from "../../contexts/LanguageContext";
 
-type MenuItem = "profile" | "membership" | "jobs" | "settings" | "delete";
+type MenuItem = "profile" | "membership" | "jobs" | "gallery" | "settings" | "delete";
 
 export default function MyPage() {
     const navigate = useNavigate();
@@ -122,6 +122,7 @@ export default function MyPage() {
         { id: "profile" as MenuItem, label: t.menu.profile },
         { id: "membership" as MenuItem, label: t.menu.membership },
         { id: "jobs" as MenuItem, label: t.menu.jobs },
+        { id: "gallery" as MenuItem, label: t.menu.gallery },
         { id: "settings" as MenuItem, label: t.menu.settings },
         { id: "delete" as MenuItem, label: t.menu.delete },
     ];
@@ -149,6 +150,7 @@ export default function MyPage() {
             if (intervalId) clearInterval(intervalId);
         };
     }, [activeMenu]);
+
 
     const renderContent = () => {
         if (loading) {

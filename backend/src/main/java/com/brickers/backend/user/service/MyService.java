@@ -236,6 +236,7 @@ public class MyService {
                 .profileImage(user.getProfileImage())
                 .membershipPlan(user.getMembershipPlan())
                 .accountState(user.getAccountState())
+                .role(user.getRole())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

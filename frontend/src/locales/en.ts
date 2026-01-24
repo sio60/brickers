@@ -9,6 +9,7 @@ export const en = {
         mypage: "My Page",
         chatbot: "Chat with BrickBot",
         gallery: "Gallery",
+        admin: "Admin Page",
         open: "Open Menu",
         iconAlt: "Menu Icon"
     },
@@ -40,8 +41,11 @@ export const en = {
         profile: "Profile",
         membership: "Membership",
         jobs: "My Jobs",
+        gallery: "My Gallery",
+        bookmarks: "Bookmarks",
         settings: "Settings",
-        delete: "Delete Account"
+        delete: "Delete Account",
+        admin: "Admin Only"
     },
     profile: {
         title: "My Profile",
@@ -122,7 +126,25 @@ export const en = {
             preview: "Brick Preview",
             loading: "Loading steps...",
             prev: "PREV",
-            next: "NEXT"
+            next: "NEXT",
+            downloadGlb: "Download GLB",
+            downloadLdr: "Download LDR",
+            registerGallery: "Post to Gallery",
+            galleryModal: {
+                title: "Post to Gallery",
+                placeholder: "Enter a title for your work",
+                confirm: "Post",
+                cancel: "Cancel",
+                success: "Posted to gallery successfully!",
+                fail: "Failed to post to gallery."
+            },
+            emptyGallery: "No works registered yet.",
+            galleryTable: {
+                title: "Title",
+                author: "Author",
+                date: "Modified Date",
+                views: "Views"
+            }
         }
     },
     header: {
@@ -156,5 +178,13 @@ export const en = {
         retryBtn: "Retry",
         error: "Failed to load data.",
         unknownError: "Unknown error"
+    },
+    admin: {
+        welcome: "You have accessed the exclusive administrator tools.",
+        stats: {
+            users: "Total Users",
+            jobs: "Today's Jobs",
+            gallery: "New Gallery"
+        }
     }
 };

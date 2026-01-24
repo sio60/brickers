@@ -34,6 +34,7 @@ export default function KidsPage() {
 
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [ldrUrl, setLdrUrl] = useState<string | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
 
   const processingRef = useRef(false);
 
@@ -84,6 +85,7 @@ export default function KidsPage() {
             const tempUrl = URL.createObjectURL(blob);
 
             setLdrUrl(tempUrl);
+            setJobId(data.reqId);
             setStatus("done");
           } catch (err) {
             console.error("Base64 converting error:", err);
@@ -138,7 +140,15 @@ export default function KidsPage() {
             {/* 스텝 페이지로 이동 버튼 */}
             <button
               className="kidsPage__nextBtn"
-              onClick={() => navigate(`/kids/steps?url=${encodeURIComponent(ldrUrl)}`)}
+              onClick={() => {
+                const searchParams = new URL(window.location.href).searchParams;
+                const age = searchParams.get("age") || "4-5";
+                // jobId 및 썸네일(필요시) 전달
+                // Generate-response에는 previewUrl이 없을 수 있으므로, 
+                // 생성된 모델의 프리뷰 이미지가 서버에 저장되는 시점에 따라 다름.
+                // 여기서는 프론트에서 알고 있는 정보를 최대한 넘김.
+                navigate(`/kids/steps?url=${encodeURIComponent(ldrUrl)}&jobId=${jobId}&age=${age}`);
+              }}
             >
               {t.kids.generate.next}
             </button>

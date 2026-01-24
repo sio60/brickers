@@ -12,12 +12,15 @@
 .mypageModal {
     background: #fff;
     border-radius: 20px;
-    width: min(480px, 92vw);
-    max-height: 80vh;
+    width: min(900px, 95vw);
+    /* 가로 너비 확장 */
+    height: 80vh;
+    /* 고정 높이 */
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.35);
+    border: 2px solid #000;
 }
 
 .mypageModal__header {
@@ -29,8 +32,8 @@
 }
 
 .mypageModal__title {
-    font-size: 20px;
-    font-weight: 800;
+    font-size: 24px;
+    font-weight: 900;
     margin: 0;
 }
 
@@ -45,17 +48,62 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mypageModal__close:hover {
-    background: #e0e0e0;
+    background: transparent;
+    transform: rotate(90deg);
+}
+
+/* 레이아웃 구조 */
+.mypageModal__layout {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* 사이드바 */
+.mypageModal__sidebar {
+    width: 220px;
+    background: #fff;
+    border-right: 2px solid #000;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0;
+}
+
+.mypageModal__menuItem {
+    padding: 20px 32px;
+    border: none;
+    background: transparent;
+    text-align: left;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #444;
+}
+
+.mypageModal__menuItem:hover {
+    background: #000;
+    color: #fff;
+}
+
+.mypageModal__menuItem.active {
+    background: #ffe135;
+    color: #000;
+}
+
+.mypageModal__menuItem.active:hover {
+    background: #000;
+    color: #fff;
 }
 
 .mypageModal__content {
     flex: 1;
     overflow-y: auto;
-    padding: 24px;
+    padding: 32px;
 }
 
 .mypageModal__loading,

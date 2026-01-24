@@ -7,7 +7,7 @@ export default function Layout() {
   const { language } = useLanguage();
 
   return (
-    <div className="appLayout">
+    <div className={`appLayout lang-${language}`}>
       <Header />
       <main className="appLayout__content">
         <Outlet />

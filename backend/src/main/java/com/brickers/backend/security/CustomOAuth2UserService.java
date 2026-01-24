@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * OAuth2 사용자 정보 처리 서비스
@@ -28,6 +29,16 @@ import java.util.Map;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
+
+    private static final Set<String> ADMIN_EMAILS = Set.of(
+            "rladbskepgpt@naver.com",
+            "kurijuki11@gmail.com",
+            "mayjoonll@naver.com",
+            "mayjoonll@gmail.com",
+            "khwhj@naver.com",
+            "khwhj3577@gmail.com",
+            "ghks0115@gmail.com",
+            "passion.johnbyeon@gmail.com");
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -124,9 +135,18 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
                     existingUser.setUpdatedAt(now);
                     existingUser.setLastLoginAt(now);
+
+                    // ✅ 기존 유저도 이메일이 매칭되면 Admin으로 승급 (운영 편의성)
+                    if (emailFinal != null && ADMIN_EMAILS.contains(emailFinal)) {
+                        existingUser.setRole(UserRole.ADMIN);
+                    }
+
                     return existingUser;
                 })
                 .orElseGet(() -> {
+                    UserRole role = (emailFinal != null && ADMIN_EMAILS.contains(emailFinal)) ? UserRole.ADMIN
+                            : UserRole.USER;
+
                     User newUser = User.builder()
                             .provider(providerFinal)
                             .providerId(providerIdFinal)
@@ -134,7 +154,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                             .nickname(nicknameFinal)
                             .profileImage(profileImageFinal)
                             .bio("자기소개를 해주세요!")
-                            .role(UserRole.USER)
+                            .role(role)
                             .membershipPlan(MembershipPlan.FREE)
                             .accountState(AccountState.ACTIVE)
                             .lastLoginAt(now)
