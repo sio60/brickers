@@ -15,10 +15,14 @@ export default function AdminPage() {
     useEffect(() => {
         getMyProfile()
             .then(profile => {
-                if (profile.role !== "ADMIN") {
-                    navigate("/", { replace: true });
-                } else {
+                console.log("AdminPage access check - User profile:", profile);
+                if (profile.role === "ADMIN") {
+                    console.log("Access granted: ADMIN role confirmed. Fetching stats...");
                     return getAdminStats();
+                } else {
+                    console.warn("Access denied: Role is " + profile.role + ". Redirecting...");
+                    alert("관리자 권한이 없습니다. (현재 권한: " + profile.role + ")");
+                    navigate("/", { replace: true });
                 }
             })
             .then(s => {
