@@ -4,14 +4,13 @@ server:
 spring:
   application:
     name: brickers-api
-
+  
   config:
     import: "optional:file:.env[.properties]"
 
   mongodb:
     uri: ${PRIMARY_MONGODB_URI}
     auto-index-creation: true
-
 
   servlet:
     multipart:
@@ -42,24 +41,32 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
+# ✅ 커스텀 앱 설정 (들여쓰기 주의: app이 최상위)
 app:
   front-base-url: ${FRONT_BASE_URL:http://localhost:5173}
+  generated-path: ${GENERATED_FILES_PATH:../brickers-ai/public/generated}
   cookie:
-    secure: ${COOKIE_SECURE:false}   # 로컬은 false, 배포는 true
+    secure: ${COOKIE_SECURE:false}    # 로컬은 false, 배포는 true
     same-site: ${COOKIE_SAMESITE:Lax} # 로컬 Lax, 배포 None
   
-# ✅ 업로드 설정
+  # 업로드 설정
   upload:
     provider: S3
-    public-base-url: ${UPLOAD_PUBLIC_BASE_URL:https://YOUR_BUCKET.s3.ap-northeast-2.amazonaws.com} # 또는 CloudFront 도메인
+    public-base-url: ${UPLOAD_PUBLIC_BASE_URL:https://YOUR_BUCKET.s3.ap-northeast-2.amazonaws.com}
     s3:
       bucket: ${AWS_S3_BUCKET}
+      # 환경변수 AWS_REGION이 없으면 기본값 ap-northeast-2 사용
       region: ${AWS_REGION:ap-northeast-2}
       presign-exp-seconds: ${AWS_PRESIGN_EXP_SECONDS:120}
-      key-prefix: ${AWS_S3_KEY_PREFIX:uploads}   # uploads/{userId}/yyyy/MM/{uuid}.png
-      max-bytes: ${UPLOAD_MAX_BYTES:10485760}     # 10MB
+      key-prefix: ${AWS_S3_KEY_PREFIX:uploads}
+      max-bytes: ${UPLOAD_MAX_BYTES:10485760}
       allowed-content-types: image/png,image/jpeg,image/webp
 
+# ✅ AI 서버 설정 (들여쓰기 주의: ai가 최상위)
+ai:
+  server:
+    # 환경변수 AI_SERVER_URL이 없으면 기본값 localhost:8000 사용
+    url: ${AI_SERVER_URL:http://localhost:8000}
 
 jwt:
   secret: ${JWT_SECRET}
