@@ -50,6 +50,7 @@ public class AuthController {
                     .header(HttpHeaders.SET_COOKIE, issued.refreshCookie().toString())
                     .body(Map.of("accessToken", issued.accessToken()));
         } catch (Exception e) {
+            log.warn("[Refresh] Failed: {}", e.getMessage());
             return ResponseEntity.status(401).build();
         }
     }
