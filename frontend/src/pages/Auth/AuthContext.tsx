@@ -17,8 +17,10 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 // ✅ 배포에서 env 안 박혀있으면 ""(same-origin) / 로컬은 8080 권장
-const API_BASE =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "http://localhost:8080";
+const rawBase = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "http://localhost:8080";
+const API_BASE = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase;
+
+console.debug("[AuthContext] API_BASE is set to:", API_BASE);
 
 // ✅ input이 상대경로("/api/...")로 오면 API_BASE 붙여서 백엔드로 보냄
 function toAbsoluteUrl(input: RequestInfo | URL) {
