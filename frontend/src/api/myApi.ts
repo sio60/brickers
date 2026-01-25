@@ -1,5 +1,8 @@
 // My API 서비스 - 프로필, 작업 관리
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const rawBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase;
+
+console.debug("[myApi] API_BASE is set to:", API_BASE);
 
 export class ApiError extends Error {
     status: number;
