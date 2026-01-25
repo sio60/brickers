@@ -24,6 +24,7 @@ public class GlobalExceptionHandler {
         public ResponseEntity<ApiError> handleIllegalArgument(
                         IllegalArgumentException e,
                         HttpServletRequest req) {
+                log.error("IllegalArgumentException at {}: ", req.getRequestURI(), e);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(ApiError.of(HttpStatus.BAD_REQUEST, "BAD_REQUEST", e.getMessage(),
                                                 req.getRequestURI()));

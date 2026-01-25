@@ -32,6 +32,8 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(HttpServletRequest request) {
         String refreshRaw = readCookie(request, "refreshToken");
+        log.info("[Debug] Refresh cookie: {}", refreshRaw);
+
         if (refreshRaw == null)
             return ResponseEntity.status(401).build();
 
