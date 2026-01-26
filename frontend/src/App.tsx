@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-// import MainPage from "./pages/MainPage/MainPage";
+
 import KidsPage from "./pages/KidsPage/KidsPage";
-import AdultPage from "./pages/AdultPage/AdultPage";
+
 import KidsAgeSelection from "./pages/KidsPage/KidsAgeSelection";
 import Layout from "./Layout";
 import AuthSuccess from "./pages/Auth/AuthSuccess";
@@ -17,10 +17,10 @@ export default function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<KidsAgeSelection />} />
-        {/* <Route path="/main-old" element={<MainPage />} /> */}
+
         <Route path="/kids/main" element={<KidsPage />} />
         <Route path="/kids/steps" element={<KidsStepPage />} />
-        <Route path="/adult" element={<AdultPage />} />
+
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/admin" element={<AdminPage />} />

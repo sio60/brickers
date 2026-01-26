@@ -63,7 +63,7 @@
     transform: translateY(20px) scale(0.95);
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     pointer-events: none;
-    font-family: "Jua", sans-serif !important;
+    font-family: 'Cafe24Surround', sans-serif !important;
 }
 
 .floatingMenu__modal.isOpen {
@@ -88,7 +88,7 @@
     color: #333;
     transition: background 0.15s;
     text-align: left;
-    font-family: "Jua", sans-serif !important;
+    font-family: 'Cafe24Surround', sans-serif !important;
 }
 
 .floatingMenu__item:hover {

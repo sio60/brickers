@@ -9,6 +9,7 @@ export const ja = {
         mypage: "マイページ",
         chatbot: "ブリックボット問い合わせ",
         gallery: "ギャラリー",
+        admin: "管理者ページ",
         open: "メニューを開く",
         iconAlt: "メニューアイコン"
     },
@@ -43,7 +44,8 @@ export const ja = {
         gallery: "マイギャラリー",
         bookmarks: "ブックマーク",
         settings: "設定",
-        delete: "退会"
+        delete: "退会",
+        admin: "管理者専用"
     },
     profile: {
         title: "プロフィール表示",
@@ -126,7 +128,7 @@ export const ja = {
             prev: "前へ",
             next: "次へ",
             downloadGlb: "GLB ダウンロード",
-            downloadLdr: "LDR ダウン로드",
+            downloadLdr: "LDR ダウンロード",
             registerGallery: "ギャラリー登録",
             galleryModal: {
                 title: "ギャラリーに作品を登録",
@@ -136,7 +138,13 @@ export const ja = {
                 success: "ギャラリーに登録されました！",
                 fail: "ギャラリー登録に失敗しました。"
             },
-            emptyGallery: "登録された作品がありません。"
+            emptyGallery: "登録された作品がありません。",
+            galleryTable: {
+                title: "タイトル",
+                author: "作成者",
+                date: "修正日",
+                views: "閲覧数"
+            }
         }
     },
     header: {
@@ -163,12 +171,30 @@ export const ja = {
             hint: "ブリックをクリックすると詳細が表示されます。"
         }
     },
+    admin: {
+        panelTitle: "管理者パネル",
+        welcome: "管理者専用ツールにアクセスしました。",
+        stats: {
+            users: "総ユーザー数",
+            jobs: "今日の作業数",
+            gallery: "新規ギャラリー"
+        },
+        sidebar: {
+            dashboard: "ダッシュボード",
+            users: "ユーザー管理",
+            gallery: "ギャラリー管理",
+            settings: "システム設定"
+        },
+        accessDenied: "管理者権限がありません。(現在の権限: {role})"
+    },
     common: {
         loading: "読み込み中...",
         loginRequired: "ログインが必要です。",
         homeBtn: "ホームへ",
         retryBtn: "もう一度試す",
         error: "データを読み込めませんでした。",
-        unknownError: "不明なエラー"
+        unknownError: "不明なエラー",
+        noPreview: "プレビューなし",
+        anonymous: "匿名"
     }
 };

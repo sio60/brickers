@@ -33,6 +33,9 @@ services:
       
       # ✅ Base URL (CORS/리다이렉트용)
       - FRONT_BASE_URL=${FRONT_BASE_URL}
+      
+      # ✅ AI 서버 URL (Python FastAPI)
+      - AI_SERVER_URL=${AI_SERVER_URL:-http://brickers-ai:8000}
 
     networks:
       - brickers-network

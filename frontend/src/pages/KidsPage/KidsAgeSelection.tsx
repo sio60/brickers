@@ -22,16 +22,22 @@ import thumb8_10_2 from "../../assets/8-10_2.png";
 import KidsModelSelectModal from "./components/KidsModelSelectModal";
 import FloatingMenuButton from "./components/FloatingMenuButton";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useAuth } from "../Auth/AuthContext";
+import LoginModal from "../MainPage/components/LoginModal";
 
 type AgeGroup = "4-5" | "6-7" | "8-10" | null;
 
 export default function KidsAgeSelection() {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { isAuthenticated } = useAuth(); // ✅ 로그인 상태 가져오기
+
   const [selectedAge, setSelectedAge] = useState<AgeGroup>(null);
 
   // 모달 오픈 상태
   const [openModelModal, setOpenModelModal] = useState(false);
+  const [openLoginModal, setOpenLoginModal] = useState(false); // ✅ 로그인 모달 상태
+
   // 현재 모달에 표시할 연령대
   const [modalAge, setModalAge] = useState<"4-5" | "6-7" | "8-10" | null>(null);
 
@@ -54,6 +60,13 @@ export default function KidsAgeSelection() {
   ];
 
   const handleSelect = (ageGroup: AgeGroup) => {
+    // ✅ 로그인 체크: 로그인이 안 되어 있으면 진행 막고 로그인 모달 띄움
+    if (!isAuthenticated) {
+      alert(t.common?.loginRequired || "Login required.");
+      setOpenLoginModal(true);
+      return;
+    }
+
     setSelectedAge(ageGroup);
 
     // 모든 연령대에서 모달 띄워서 모델 고르게 함
@@ -75,6 +88,12 @@ export default function KidsAgeSelection() {
 
   // Continue 버튼
   const handleContinue = () => {
+    if (!isAuthenticated) {
+      alert(t.common?.loginRequired || "Login required.");
+      setOpenLoginModal(true);
+      return;
+    }
+
     if (!selectedAge) return;
     setModalAge(selectedAge);
     setOpenModelModal(true);
@@ -99,7 +118,7 @@ export default function KidsAgeSelection() {
           type="button"
         >
           <img src={img35} alt="4-5 years" className="kidsAgeBtn__img" />
-          <div className="kidsAgeBtn__label">{t.kids.level.replace("{lv}", "1")}</div>
+          <div className="kidsAgeBtn__label font-en">{t.kids.level.replace("{lv}", "1")}</div>
         </button>
 
         <button
@@ -108,7 +127,7 @@ export default function KidsAgeSelection() {
           type="button"
         >
           <img src={img67} alt="6-7 years" className="kidsAgeBtn__img" />
-          <div className="kidsAgeBtn__label">{t.kids.level.replace("{lv}", "2")}</div>
+          <div className="kidsAgeBtn__label font-en">{t.kids.level.replace("{lv}", "2")}</div>
         </button>
 
         <button
@@ -117,7 +136,7 @@ export default function KidsAgeSelection() {
           type="button"
         >
           <img src={img810} alt="8-10 years" className="kidsAgeBtn__img" />
-          <div className="kidsAgeBtn__label">{t.kids.level.replace("{lv}", "3")}</div>
+          <div className="kidsAgeBtn__label font-en">{t.kids.level.replace("{lv}", "3")}</div>
         </button>
       </div>
 
@@ -136,6 +155,12 @@ export default function KidsAgeSelection() {
         onClose={() => setOpenModelModal(false)}
         onSelect={handlePickModel}
         items={getCurrentModels()}
+      />
+
+      {/* 로그인 모달 */}
+      <LoginModal
+        isOpen={openLoginModal}
+        onClose={() => setOpenLoginModal(false)}
       />
 
       {/* 플로팅 메뉴 버튼 */}

@@ -35,11 +35,13 @@
 }
 
 .loginModal__title {
-  font-family: "Bebas Neue", sans-serif;
-  font-size: 48px;
+  /* font-family: "Bebas Neue", sans-serif;  <- 한국어일 땐 Bebas가 어색할 수 있어서 제거 또는 유지 고려 */
+  font-size: 32px;
   color: #000;
-  margin: 0 0 32px 0;
-  letter-spacing: 2px;
+  margin: 0 0 24px 0;
+  letter-spacing: 1px;
+  font-weight: 800;
+  /* 좀 더 굵게 */
 }
 
 .loginModal__button {

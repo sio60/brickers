@@ -81,7 +81,7 @@ export default function Gallery() {
                                                 <span className="title-text">{item.title}</span>
                                             </div>
                                             <div className="galleryTable__col col-author">
-                                                {item.authorNickname || "Anonymous"}
+                                                {item.authorNickname || t.common.anonymous}
                                             </div>
                                             <div className="galleryTable__col col-date">
                                                 {new Date(item.createdAt).toLocaleString()}

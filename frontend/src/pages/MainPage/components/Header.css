@@ -61,19 +61,3 @@
 .header__login-btn:hover {
   background: #333;
 }
-
-/* ✅ 폰트 강제 적용 (상속 문제 방지) */
-body.lang-ko .header__login-btn,
-body.lang-ko .header__upgrade-btn {
-  font-family: "Jua", sans-serif !important;
-}
-
-body.lang-ja .header__login-btn,
-body.lang-ja .header__upgrade-btn {
-  font-family: "Noto Sans JP", sans-serif !important;
-}
-
-body.lang-en .header__login-btn,
-body.lang-en .header__upgrade-btn {
-  font-family: "Bebas Neue", sans-serif !important;
-}
