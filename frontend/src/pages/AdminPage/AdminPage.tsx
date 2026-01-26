@@ -6,21 +6,29 @@ import type { AdminStats } from "../../api/myApi";
 import "./AdminPage.css";
 import Background3D from "../MainPage/components/Background3D";
 
+// 타입 정의 추가
+type Inquiry = { id: string; title: string; content: string; status: string; createdAt: string; createdBy: string };
+type Report = { id: string; targetType: string; targetId: string; reason: string; details: string; status: string; createdAt: string; createdBy: string };
+type RefundRequest = { orderId: string; amount: number; status: string; requestedAt: string; userId: string };
+
 export default function AdminPage() {
     const { t } = useLanguage();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<AdminStats | null>(null);
+    const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "gallery" | "inquiries" | "reports" | "refunds">("dashboard");
+
+    // 데이터 상태
+    const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+    const [reports, setReports] = useState<Report[]>([]);
+    const [refunds, setRefunds] = useState<RefundRequest[]>([]);
 
     useEffect(() => {
         getMyProfile()
             .then(profile => {
-                console.log("AdminPage access check - User profile:", profile);
                 if (profile.role === "ADMIN") {
-                    console.log("Access granted: ADMIN role confirmed. Fetching stats...");
                     return getAdminStats();
                 } else {
-                    console.warn("Access denied: Role is " + profile.role + ". Redirecting...");
                     alert(t.admin.accessDenied.replace("{role}", profile.role));
                     navigate("/", { replace: true });
                 }
@@ -36,6 +44,37 @@ export default function AdminPage() {
             });
     }, []);
 
+    // 탭 변경 시 데이터 로드
+    useEffect(() => {
+        if (activeTab === "inquiries") fetchInquiries();
+        if (activeTab === "reports") fetchReports();
+        if (activeTab === "refunds") fetchRefunds();
+    }, [activeTab]);
+
+    const fetchInquiries = async () => {
+        try {
+            const res = await fetch("/api/admin/inquiries?page=0&size=20");
+            const data = await res.json();
+            setInquiries(data.content || []);
+        } catch (e) { console.error(e); }
+    };
+
+    const fetchReports = async () => {
+        try {
+            const res = await fetch("/api/admin/reports?page=0&size=20");
+            const data = await res.json();
+            setReports(data.content || []);
+        } catch (e) { console.error(e); }
+    };
+
+    const fetchRefunds = async () => {
+        try {
+            const res = await fetch("/api/admin/payments/refund-requests?page=0&size=20");
+            const data = await res.json();
+            setRefunds(data.content || []);
+        } catch (e) { console.error(e); }
+    };
+
     if (loading) return null;
 
     return (
@@ -45,35 +84,87 @@ export default function AdminPage() {
                 <div className="admin__layout">
                     <aside className="admin__sidebar">
                         <div className="admin__sidebarTitle">{t.admin.panelTitle}</div>
-                        <button className="admin__sidebarItem active">{t.admin.sidebar.dashboard}</button>
-                        <button className="admin__sidebarItem">{t.admin.sidebar.users}</button>
-                        <button className="admin__sidebarItem">{t.admin.sidebar.gallery}</button>
-                        <button className="admin__sidebarItem">{t.admin.sidebar.settings}</button>
+                        <button className={`admin__sidebarItem ${activeTab === "dashboard" ? "active" : ""}`} onClick={() => setActiveTab("dashboard")}>{t.admin.sidebar.dashboard}</button>
+                        <button className={`admin__sidebarItem ${activeTab === "inquiries" ? "active" : ""}`} onClick={() => setActiveTab("inquiries")}>문의 관리</button>
+                        <button className={`admin__sidebarItem ${activeTab === "reports" ? "active" : ""}`} onClick={() => setActiveTab("reports")}>신고 관리</button>
+                        <button className={`admin__sidebarItem ${activeTab === "refunds" ? "active" : ""}`} onClick={() => setActiveTab("refunds")}>환불 관리</button>
+                        <button className={`admin__sidebarItem ${activeTab === "users" ? "active" : ""}`} onClick={() => setActiveTab("users")}>{t.admin.sidebar.users}</button>
+                        <button className={`admin__sidebarItem ${activeTab === "gallery" ? "active" : ""}`} onClick={() => setActiveTab("gallery")}>{t.admin.sidebar.gallery}</button>
                     </aside>
 
                     <main className="admin__content">
                         <header className="admin__header">
-                            <h1 className="admin__title">{t.floatingMenu.admin}</h1>
+                            <h1 className="admin__title">
+                                {activeTab === "dashboard" && t.floatingMenu.admin}
+                                {activeTab === "inquiries" && "문의 관리"}
+                                {activeTab === "reports" && "신고 관리"}
+                                {activeTab === "refunds" && "환불 관리"}
+                            </h1>
                             <button className="admin__closeBtn" onClick={() => navigate(-1)}>✕</button>
                         </header>
 
-                        <div className="admin__dashboard">
-                            <p>{t.admin.welcome}</p>
-                            <div className="admin__statsGrid">
-                                <div className="admin__statCard">
-                                    <h3>{t.admin.stats.users}</h3>
-                                    <p className="admin__statValue">{stats?.totalUsers ?? "--"}</p>
-                                </div>
-                                <div className="admin__statCard">
-                                    <h3>{t.admin.stats.jobs}</h3>
-                                    <p className="admin__statValue">{stats?.totalJobs ?? "--"}</p>
-                                </div>
-                                <div className="admin__statCard">
-                                    <h3>{t.admin.stats.gallery}</h3>
-                                    <p className="admin__statValue">{stats?.totalGalleryPosts ?? "--"}</p>
+                        {activeTab === "dashboard" && (
+                            <div className="admin__dashboard">
+                                <p>{t.admin.welcome}</p>
+                                <div className="admin__statsGrid">
+                                    <div className="admin__statCard">
+                                        <h3>{t.admin.stats.users}</h3>
+                                        <p className="admin__statValue">{stats?.totalUsers ?? "--"}</p>
+                                    </div>
+                                    <div className="admin__statCard">
+                                        <h3>{t.admin.stats.jobs}</h3>
+                                        <p className="admin__statValue">{stats?.totalJobs ?? "--"}</p>
+                                    </div>
+                                    <div className="admin__statCard">
+                                        <h3>{t.admin.stats.gallery}</h3>
+                                        <p className="admin__statValue">{stats?.totalGalleryPosts ?? "--"}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
+
+                        {activeTab === "inquiries" && (
+                            <div className="admin__list">
+                                {inquiries.map(item => (
+                                    <div key={item.id} className="admin__listItem">
+                                        <h4>{item.title} <span className={`status-badge ${item.status}`}>{item.status}</span></h4>
+                                        <p>{item.content}</p>
+                                        <div className="meta">{item.createdBy} • {new Date(item.createdAt).toLocaleDateString()}</div>
+                                    </div>
+                                ))}
+                                {inquiries.length === 0 && <p className="empty-msg">문의 내역이 없습니다.</p>}
+                            </div>
+                        )}
+
+                        {activeTab === "reports" && (
+                            <div className="admin__list">
+                                {reports.map(item => (
+                                    <div key={item.id} className="admin__listItem">
+                                        <h4>{item.reason} <span className={`status-badge ${item.status}`}>{item.status}</span></h4>
+                                        <p>{item.details}</p>
+                                        <div className="meta">Target: {item.targetType} {item.targetId} • {new Date(item.createdAt).toLocaleDateString()}</div>
+                                    </div>
+                                ))}
+                                {reports.length === 0 && <p className="empty-msg">신고 내역이 없습니다.</p>}
+                            </div>
+                        )}
+
+                        {activeTab === "refunds" && (
+                            <div className="admin__list">
+                                {refunds.map(item => (
+                                    <div key={item.orderId} className="admin__listItem">
+                                        <h4>Order #{item.orderId} <span className={`status-badge ${item.status}`}>{item.status}</span></h4>
+                                        <p>Amount: {item.amount}원</p>
+                                        <div className="meta">User: {item.userId} • {new Date(item.requestedAt).toLocaleDateString()}</div>
+                                        {/* 승인 버튼 예시 */}
+                                        <div className="actions">
+                                            <button onClick={() => alert("기능 구현 중")}>승인</button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {refunds.length === 0 && <p className="empty-msg">환불 요청이 없습니다.</p>}
+                            </div>
+                        )}
                     </main>
                 </div>
             </div>
