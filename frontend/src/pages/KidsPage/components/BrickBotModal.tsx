@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./BrickBotModal.css";
 import { useLanguage } from "../../../contexts/LanguageContext";
+import { useAuth } from "../../Auth/AuthContext";
 
 interface BrickBotModalProps {
     isOpen: boolean;
@@ -166,8 +167,9 @@ const CHAT_TRANSLATIONS = {
 
 export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
     const navigate = useNavigate();
-    const { language } = useLanguage(); // 언어 컨텍스트 사용
+    const { language } = useLanguage();
     const tChat = CHAT_TRANSLATIONS[language];
+    const { isAuthenticated, authFetch } = useAuth();
 
     const [messages, setMessages] = useState<Message[]>([
         { role: "bot", content: tChat.welcome },
@@ -203,9 +205,6 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
     const [refundList, setRefundList] = useState<any[]>([]);
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // 로컬에서 백엔드 API 호출 주소
-    const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -272,16 +271,17 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
     const fetchPaymentHistory = async () => {
         try {
             setIsLoading(true);
-            // 페이지네이션 없이 일단 최근 10개만
-            const token = localStorage.getItem('accessToken');
-            const res = await fetch(`${API_BASE}/api/payments/my/history?page=0&size=10`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            if (!isAuthenticated) {
+                alert("로그인이 필요한 서비스입니다.");
+                setMode("CHAT");
+                return;
+            }
+            const res = await authFetch("/api/payments/my/history?page=0&size=10");
             if (res.ok) {
                 const data = await res.json();
                 setRefundList(data.content || []);
             } else {
-                alert("결제 내역을 불러오는데 실패했습니다."); // TODO: i18n
+                alert("결제 내역을 불러오는데 실패했습니다.");
                 setMode("CHAT");
             }
         } catch (e) {
@@ -302,10 +302,9 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
         setShowSuggestions(false); // 질문하면 제안 숨기기
 
         try {
-            const res = await fetch(`${API_BASE}/api/chat/query`, {
+            const res = await authFetch("/api/chat/query", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: userMsg, language }), // 언어 정보 전송
+                body: JSON.stringify({ message: userMsg, language }),
             });
 
             if (!res.ok) throw new Error("API Error");
@@ -334,25 +333,26 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
     };
 
     // --- 폼 제출 핸들러 ---
-
     const submitInquiry = async () => {
         if (!formTitle.trim() || !formContent.trim()) return alert("제목과 내용을 입력해주세요.");
         setIsSubmitting(true);
+        if (!isAuthenticated) {
+            alert("로그인이 필요한 서비스입니다. 로그인 후 다시 시도해주세요.");
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
-            const token = localStorage.getItem('accessToken');
-            const res = await fetch(`${API_BASE}/api/inquiries`, {
+            const res = await authFetch("/api/inquiries", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
                 body: JSON.stringify({ title: formTitle, content: formContent }),
             });
             if (res.ok) {
                 setMode("CHAT");
                 setMessages(prev => [...prev, { role: "bot", content: tChat.inquiry.confirm }]);
             } else {
-                alert("문의 접수 실패 (로그인 상태를 확인해주세요)");
+                const errorData = await res.json().catch(() => ({}));
+                alert(errorData.message || "문의 접수 실패 (로그인 상태를 확인해주세요)");
             }
         } catch (e) {
             alert("오류가 발생했습니다.");
@@ -364,14 +364,15 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
     const submitReport = async () => {
         if (!formContent.trim()) return alert("신고 내용을 입력해주세요.");
         setIsSubmitting(true);
+        if (!isAuthenticated) {
+            alert("로그인이 필요합니다.");
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
-            const token = localStorage.getItem('accessToken');
-            const res = await fetch(`${API_BASE}/api/reports`, {
+            const res = await authFetch("/api/reports", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
                 body: JSON.stringify({
                     targetType: "GENERAL",
                     targetId: "0",
@@ -395,11 +396,15 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
     const submitRefund = async () => {
         if (!selectedOrderId) return alert("환불할 내역을 선택해주세요.");
         setIsSubmitting(true);
+        if (!isAuthenticated) {
+            alert("로그인이 필요합니다.");
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
-            const token = localStorage.getItem('accessToken');
-            const res = await fetch(`${API_BASE}/api/payments/orders/${selectedOrderId}/cancel`, {
+            const res = await authFetch(`/api/payments/orders/${selectedOrderId}/cancel`, {
                 method: "POST",
-                headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
                 setMode("CHAT");
