@@ -128,7 +128,12 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.GET, "/api/payments/plans").permitAll()
                                                 .requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
                                                 .requestMatchers("/api/payments/**").authenticated()
+                                                // ✅ preflight는 무조건 통과 (JWT 필터/시큐리티에서 401 막기)
+                                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                                                // ✅ Kids API 공개 (네 실제 매핑 경로에 맞춰 추가)
+                                                .requestMatchers("/api/v1/kids/**").permitAll()
+                                                .requestMatchers("/api/kids/**").permitAll()
                                                 // -------------------------------
                                                 // ✅ Admin API
                                                 // -------------------------------
