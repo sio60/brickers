@@ -10,7 +10,7 @@ import FloatingMenuButton from "../KidsPage/components/FloatingMenuButton";
 import UpgradeModal from "../MainPage/components/UpgradeModal";
 import KidsLdrPreview from "../KidsPage/components/KidsLdrPreview";
 
-type MenuItem = "profile" | "membership" | "jobs" | "gallery" | "inquiries" | "settings" | "delete";
+type MenuItem = "profile" | "membership" | "jobs" | "gallery" | "inquiries" | "reports" | "settings" | "delete";
 
 export default function MyPage() {
     const navigate = useNavigate();
@@ -24,9 +24,10 @@ export default function MyPage() {
     const [activeMenu, setActiveMenu] = useState<MenuItem>("profile");
     const [retrying, setRetrying] = useState<string | null>(null);
 
-    // 문의 내역 상태
+    // 문의/신고 내역 상태
     const [inquiries, setInquiries] = useState<any[]>([]);
-    const [inquiriesLoading, setInquiriesLoading] = useState(false);
+    const [reports, setReports] = useState<any[]>([]); // ✅ 추가
+    const [listLoading, setListLoading] = useState(false); // ✅ 통합
 
     // 프로필 수정 관련 상태
     const [isEditing, setIsEditing] = useState(false);
@@ -130,6 +131,7 @@ export default function MyPage() {
         { id: "jobs" as MenuItem, label: t.menu.jobs },
         { id: "gallery" as MenuItem, label: t.menu.gallery },
         { id: "inquiries" as MenuItem, label: t.menu.inquiries },
+        { id: "reports" as MenuItem, label: "내 신고함" }, // ✅ 추가
         { id: "settings" as MenuItem, label: t.menu.settings },
         { id: "delete" as MenuItem, label: t.menu.delete },
     ];
@@ -154,6 +156,10 @@ export default function MyPage() {
             fetchMyInquiries();
         }
 
+        if (activeMenu === "reports") {
+            fetchMyReports(); // ✅ 추가
+        }
+
         return () => {
             if (intervalId) clearInterval(intervalId);
         };
@@ -161,7 +167,7 @@ export default function MyPage() {
 
     const fetchMyInquiries = async () => {
         try {
-            setInquiriesLoading(true);
+            setListLoading(true);
             const res = await authFetch("/api/inquiries/my?page=0&size=20");
             if (res.ok) {
                 const data = await res.json();
@@ -170,7 +176,22 @@ export default function MyPage() {
         } catch (e) {
             console.error("Failed to fetch inquiries", e);
         } finally {
-            setInquiriesLoading(false);
+            setListLoading(false);
+        }
+    };
+
+    const fetchMyReports = async () => {
+        try {
+            setListLoading(true);
+            const res = await authFetch("/api/reports/my?page=0&size=20");
+            if (res.ok) {
+                const data = await res.json();
+                setReports(data.content || []);
+            }
+        } catch (e) {
+            console.error("Failed to fetch reports", e);
+        } finally {
+            setListLoading(false);
         }
     };
 
@@ -419,7 +440,7 @@ export default function MyPage() {
                     <div className="mypage__section">
                         <h2 className="mypage__sectionTitle">{t.menu.inquiries}</h2>
                         <div className="mypage__inquiriesList">
-                            {inquiriesLoading ? (
+                            {listLoading ? (
                                 <p className="mypage__loading">불러오는 중...</p>
                             ) : inquiries.length > 0 ? (
                                 inquiries.map((iq) => (
@@ -442,6 +463,44 @@ export default function MyPage() {
                                 ))
                             ) : (
                                 <p className="mypage__empty">문의 내역이 없습니다.</p>
+                            )}
+                        </div>
+                    </div>
+                );
+
+            case "reports":
+                return (
+                    <div className="mypage__section">
+                        <h2 className="mypage__sectionTitle">내 신고함</h2>
+                        <div className="mypage__inquiriesList">
+                            {listLoading ? (
+                                <p className="mypage__loading">불러오는 중...</p>
+                            ) : reports.length > 0 ? (
+                                reports.map((rp) => (
+                                    <div key={rp.id} className="mypage__inquiryCard">
+                                        <div className="inquiry__header">
+                                            <span className={`inquiry__status ${rp.status}`}>{rp.status}</span>
+                                            <span className="inquiry__date">{new Date(rp.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                        <h3 className="inquiry__title">{rp.reason}</h3>
+                                        <p className="inquiry__content">
+                                            Target: {rp.targetType} ({rp.targetId})<br />
+                                            {rp.details}
+                                        </p>
+
+                                        {rp.resolutionNote && (
+                                            <div className="inquiry__answer">
+                                                <div className="answer__badge">관리자 조치 내용</div>
+                                                <p className="answer__text">{rp.resolutionNote}</p>
+                                                {rp.resolvedAt && (
+                                                    <span className="answer__date">{new Date(rp.resolvedAt).toLocaleString()}</span>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="mypage__empty">신고 내역이 없습니다.</p>
                             )}
                         </div>
                     </div>

@@ -15,12 +15,24 @@ type Inquiry = {
     status: string;
     createdAt: string;
     userId: string;
+    userEmail?: string; // ✅ 추가
     answer?: {
         content: string;
         answeredAt: string;
     }
 };
-type Report = { id: string; targetType: string; targetId: string; reason: string; details: string; status: string; createdAt: string; createdBy: string };
+type Report = {
+    id: string;
+    targetType: string;
+    targetId: string;
+    reason: string;
+    details: string;
+    status: string;
+    createdAt: string;
+    createdBy: string; // reporterId와 동일하지만 백엔드 필드명 확인 필요
+    reporterEmail?: string; // ✅ 추가
+    resolutionNote?: string;
+};
 type RefundRequest = { orderId: string; amount: number; status: string; requestedAt: string; userId: string };
 
 export default function AdminPage() {
@@ -103,6 +115,32 @@ export default function AdminPage() {
         }
     };
 
+    const handleReportResolve = async (reportId: string, approve: boolean) => {
+        const note = answerTexts[reportId];
+        if (!note || !note.trim()) {
+            alert("조치 내용을 입력하세요.");
+            return;
+        }
+
+        try {
+            const res = await authFetch(`/api/admin/reports/${reportId}/resolve`, {
+                method: "POST",
+                body: JSON.stringify({ approve, note })
+            });
+
+            if (res.ok) {
+                alert(approve ? "조치가 완료되었습니다." : "신고가 반려되었습니다.");
+                setAnswerTexts(prev => ({ ...prev, [reportId]: "" }));
+                fetchReports();
+            } else {
+                alert("처리에 실패했습니다.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("오류가 발생했습니다.");
+        }
+    };
+
     const fetchReports = async () => {
         try {
             const res = await authFetch("/api/admin/reports?page=0&size=20");
@@ -178,7 +216,7 @@ export default function AdminPage() {
                                         <div className="inquiry__main">
                                             <h4>{item.title} <span className={`status-badge ${item.status}`}>{item.status}</span></h4>
                                             <p>{item.content}</p>
-                                            <div className="meta">{item.userId} • {new Date(item.createdAt).toLocaleDateString()}</div>
+                                            <div className="meta">{item.userEmail || item.userId} • {new Date(item.createdAt).toLocaleDateString()}</div>
                                         </div>
 
                                         <div className="inquiry__answer-section">
@@ -208,10 +246,44 @@ export default function AdminPage() {
                         {activeTab === "reports" && (
                             <div className="admin__list">
                                 {reports.map(item => (
-                                    <div key={item.id} className="admin__listItem">
-                                        <h4>{item.reason} <span className={`status-badge ${item.status}`}>{item.status}</span></h4>
-                                        <p>{item.details}</p>
-                                        <div className="meta">Target: {item.targetType} {item.targetId} • {new Date(item.createdAt).toLocaleDateString()}</div>
+                                    <div key={item.id} className="admin__listItem inquiry">
+                                        <div className="inquiry__main">
+                                            <h4>{item.reason} <span className={`status-badge ${item.status}`}>{item.status}</span></h4>
+                                            <p>{item.details}</p>
+                                            <div className="meta">
+                                                Target: {item.targetType}({item.targetId}) •
+                                                Reporter: {item.reporterEmail || item.createdBy} •
+                                                {new Date(item.createdAt).toLocaleDateString()}
+                                            </div>
+                                        </div>
+
+                                        <div className="inquiry__answer-section">
+                                            {item.status !== "PENDING" ? (
+                                                <div className="admin__answer active">
+                                                    <div className="answer__label">{item.status === "RESOLVED" ? "조치 완료" : "신고 반려"}</div>
+                                                    <div className="answer__content">{item.resolutionNote}</div>
+                                                </div>
+                                            ) : (
+                                                <div className="answer__form">
+                                                    <textarea
+                                                        placeholder="조치 내용이나 반려 사유를 입력하세요..."
+                                                        value={answerTexts[item.id] || ""}
+                                                        onChange={(e) => setAnswerTexts(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                                    />
+                                                    <div className="actions" style={{ display: 'flex', gap: '8px', alignSelf: 'flex-end' }}>
+                                                        <button
+                                                            onClick={() => handleReportResolve(item.id, false)}
+                                                            style={{ background: '#eee', color: '#000' }}
+                                                        >
+                                                            반려
+                                                        </button>
+                                                        <button onClick={() => handleReportResolve(item.id, true)}>
+                                                            조치 승인
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                                 {reports.length === 0 && <p className="empty-msg">신고 내역이 없습니다.</p>}
@@ -224,7 +296,7 @@ export default function AdminPage() {
                                     <div key={item.orderId} className="admin__listItem">
                                         <h4>Order #{item.orderId} <span className={`status-badge ${item.status}`}>{item.status}</span></h4>
                                         <p>Amount: {item.amount}원</p>
-                                        <div className="meta">User: {item.userId} • {new Date(item.requestedAt).toLocaleDateString()}</div>
+                                        <div className="meta">User: {item.userId} (Email lookup needed) • {new Date(item.requestedAt).toLocaleDateString()}</div>
                                         {/* 승인 버튼 예시 */}
                                         <div className="actions">
                                             <button onClick={() => alert("기능 구현 중")}>승인</button>

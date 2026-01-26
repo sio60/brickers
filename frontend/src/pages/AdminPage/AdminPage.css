@@ -150,108 +150,129 @@
 .admin__listItem.inquiry {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 24px;
+    gap: 20px;
+    padding: 32px;
+    background: #fff;
+    border: 3px solid #000;
+    border-radius: 32px;
+    margin-bottom: 24px;
+    transition: all 0.2s;
+}
+
+.admin__listItem.inquiry:hover {
+    transform: translate(-4px, -4px);
+    box-shadow: 8px 8px 0 #000;
 }
 
 .inquiry__main h4 {
-    margin: 0 0 8px;
+    margin: 0 0 12px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: space-between;
+    font-size: 20px;
+    font-weight: 900;
 }
 
 .inquiry__answer-section {
-    border-top: 1px solid #eee;
-    padding-top: 16px;
+    border-top: 2px solid #000;
+    padding-top: 24px;
+    margin-top: 12px;
 }
 
 .answer__form {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
 }
 
 .answer__form textarea {
     width: 100%;
-    min-height: 80px;
-    padding: 12px;
-    border-radius: 12px;
-    border: 2px solid #eee;
+    min-height: 120px;
+    padding: 16px;
+    border-radius: 16px;
+    border: 3px solid #000;
     font-family: inherit;
+    font-size: 15px;
     resize: none;
+    background: #fdfdfd;
 }
 
 .answer__form textarea:focus {
     outline: none;
-    border-color: #ffe135;
+    box-shadow: 4px 4px 0 #000;
 }
 
 .answer__form button {
     align-self: flex-end;
-    padding: 8px 24px;
+    padding: 12px 32px;
     background: #000;
     color: #fff;
     border: none;
-    border-radius: 8px;
-    font-weight: 700;
+    border-radius: 12px;
+    font-weight: 900;
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .answer__form button:hover {
-    background: #ffe135;
-    color: #000;
+    transform: scale(1.05);
 }
 
 .admin__answer.active {
-    background: #fff9e6;
-    padding: 16px;
-    border-radius: 12px;
-    border: 1px dashed #ffe135;
+    background: #fdfdfd;
+    padding: 24px;
+    border-radius: 20px;
+    border: 3px solid #000;
 }
 
 .answer__label {
-    font-size: 13px;
-    font-weight: 800;
-    color: #f5a623;
-    margin-bottom: 8px;
+    font-size: 11px;
+    font-weight: 900;
+    color: #fff;
+    background: #000;
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 12px;
 }
 
 .answer__content {
     font-size: 15px;
-    line-height: 1.5;
-    color: #333;
+    line-height: 1.6;
+    color: #000;
+    font-weight: 500;
 }
 
 .answer__date {
     font-size: 12px;
-    color: #999;
-    margin-top: 8px;
+    color: #666;
+    margin-top: 12px;
     text-align: right;
 }
 
 .status-badge {
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 11px;
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 12px;
     font-weight: 900;
     text-transform: uppercase;
+    border: 2px solid #000;
 }
 
 .status-badge.OPEN {
-    background: #e3f2fd;
-    color: #1976d2;
+    background: #fff;
+    color: #000;
 }
 
 .status-badge.ANSWERED {
-    background: #e8f5e9;
-    color: #2e7d32;
+    background: #000;
+    color: #fff;
 }
 
 .status-badge.CLOSED {
-    background: #f5f5f5;
-    color: #616161;
+    background: #666;
+    color: #fff;
+    border-color: #666;
 }
 
 .empty-msg {
