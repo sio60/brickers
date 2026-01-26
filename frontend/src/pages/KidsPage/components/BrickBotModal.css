@@ -123,17 +123,15 @@
 }
 
 .brickbot-msg-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    /* 완전 원형 */
-    object-fit: cover;
-    background: #fff;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 4px;
+    object-fit: contain;
+    /* cover -> contain으로 변경하여 전체 이미지가 보이게 함 */
+    background: transparent;
+    border: none;
     flex-shrink: 0;
-    /* 찌그러짐 방지 */
-    margin-top: 0px;
-    /* 상단 정렬 맞춤 */
+    margin-top: 2px;
 }
 
 .brickbot-bubble {
