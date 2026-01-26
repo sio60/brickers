@@ -21,7 +21,7 @@ export default function AdminPage() {
                     return getAdminStats();
                 } else {
                     console.warn("Access denied: Role is " + profile.role + ". Redirecting...");
-                    alert("관리자 권한이 없습니다. (현재 권한: " + profile.role + ")");
+                    alert(t.admin.accessDenied.replace("{role}", profile.role));
                     navigate("/", { replace: true });
                 }
             })
@@ -44,11 +44,11 @@ export default function AdminPage() {
             <div className="admin__container">
                 <div className="admin__layout">
                     <aside className="admin__sidebar">
-                        <div className="admin__sidebarTitle">Admin Panel</div>
-                        <button className="admin__sidebarItem active">Dashboard</button>
-                        <button className="admin__sidebarItem">User Management</button>
-                        <button className="admin__sidebarItem">Gallery Management</button>
-                        <button className="admin__sidebarItem">System Settings</button>
+                        <div className="admin__sidebarTitle">{t.admin.panelTitle}</div>
+                        <button className="admin__sidebarItem active">{t.admin.sidebar.dashboard}</button>
+                        <button className="admin__sidebarItem">{t.admin.sidebar.users}</button>
+                        <button className="admin__sidebarItem">{t.admin.sidebar.gallery}</button>
+                        <button className="admin__sidebarItem">{t.admin.sidebar.settings}</button>
                     </aside>
 
                     <main className="admin__content">

@@ -2,8 +2,10 @@ import "./KidsModelSelectModal.css";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import UpgradeModal from "../../MainPage/components/UpgradeModal";
+import LoginModal from "../../MainPage/components/LoginModal";
 import KidsLdrPreview from "./KidsLdrPreview";
 import { useLanguage } from "../../../contexts/LanguageContext";
+import { useAuth } from "../../Auth/AuthContext";
 
 type Props = {
   open: boolean;
@@ -15,6 +17,8 @@ type Props = {
 export default function KidsModelSelectModal({ open, onClose, onSelect, items }: Props) {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { isAuthenticated } = useAuth();
+
   const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -24,9 +28,10 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
   // 2단계 플로우: 'select' = 모델 선택, 'preview' = 3D 미리보기
   const [step, setStep] = useState<'select' | 'preview'>('select');
 
-  // 업그레이드 관련 상태
+  // 업그레이드 및 로그인 관련 상태
   const [isPro, setIsPro] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
 
   // Pro 상태 체크 (마운트 시 + 스토리지 변경 시)
   useEffect(() => {
@@ -51,6 +56,12 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
 
   // 모델 카드 클릭 시 3D 미리보기로 전환
   const handleModelClick = (url: string) => {
+    // ✅ 로그인 체크
+    if (!isAuthenticated) {
+      alert(t.common?.loginRequired || "Login required.");
+      setShowLogin(true);
+      return;
+    }
     setSelectedUrl(url);
     setStep('preview');
   };
@@ -75,6 +86,13 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
     e.preventDefault();
     setDragOver(false);
 
+    // ✅ 로그인 체크
+    if (!isAuthenticated) {
+      alert(t.common?.loginRequired || "Login required.");
+      setShowLogin(true);
+      return;
+    }
+
     // Pro가 아니면 드롭 시에도 업그레이드 모달
     if (!isPro) {
       setShowUpgrade(true);
@@ -86,6 +104,13 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
   };
 
   const handleUploadClick = () => {
+    // ✅ 로그인 체크
+    if (!isAuthenticated) {
+      alert(t.common?.loginRequired || "Login required.");
+      setShowLogin(true);
+      return;
+    }
+
     if (isPro) {
       // Pro면 파일 선택 창 오픈
       inputRef.current?.click();
@@ -96,6 +121,13 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
   };
 
   const handleConfirm = () => {
+    // ✅ 마지막 컨펌 단계에서도 한번 더 체크
+    if (!isAuthenticated) {
+      alert(t.common?.loginRequired || "Login required.");
+      setShowLogin(true);
+      return;
+    }
+
     if (file || selectedUrl) {
       onSelect(selectedUrl, file);
     }
@@ -135,7 +167,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                         />
                       ) : (
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#999" }}>
-                          No Preview
+                          {t.common.noPreview}
                         </div>
                       )}
                     </div>
@@ -250,7 +282,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
       </div>
 
       <UpgradeModal isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} />
+      <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
     </>
   );
 }
-

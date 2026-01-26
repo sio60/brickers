@@ -6,39 +6,52 @@
 }
 
 /* 언어별 폰트 설정 */
-.mypage.lang-ko,
+.mypage.lang-ko {
+    font-family: 'Cafe24Surround', sans-serif;
+}
+
 .mypage.lang-ja {
     font-family: "Jua", sans-serif;
 }
 
 .mypage__container {
     max-width: 1100px;
-    margin: 0 auto;
-    padding: 24px;
-    padding-top: 10vh;
+    margin: 40px auto;
+    /* Gallery와 동일하게 상단 여백 조정 */
+    padding-top: 80px;
     position: relative;
     z-index: 10;
+
+    /* 패널 자체 높이 관리 */
+    display: flex;
+    flex-direction: column;
 }
 
 .mypage__layout {
     display: flex;
     gap: 0;
-    background: #fff;
-    border: 2px solid #000;
-    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    /* Gallery: 반투명 배경 */
+    backdrop-filter: blur(20px);
+    /* Gallery: 블러 효과 */
+    border: 3px solid #000;
+    /* Gallery: 3px */
+    border-radius: 40px;
+    /* Gallery: 40px */
     overflow: hidden;
     height: 80vh;
-    /* Fixed height for internal scrolling */
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.2);
+    /* Gallery: 그림자 강화 */
     position: relative;
-    /* Ensure absolute children are positioned relative to this */
 }
 
 /* 사이드바 */
 .mypage__sidebar {
     width: 200px;
-    background: #fafafa;
-    border-right: 2px solid #000;
+    background: #fff;
+    /* Gallery는 #fff */
+    border-right: 3px solid #000;
+    /* Gallery: 3px */
     padding: 24px 0;
     display: flex;
     flex-direction: column;
