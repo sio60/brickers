@@ -4,9 +4,13 @@ import com.brickers.backend.common.exception.ForbiddenException;
 import com.brickers.backend.gallery.dto.GalleryCreateRequest;
 import com.brickers.backend.gallery.dto.GalleryResponse;
 import com.brickers.backend.gallery.dto.GalleryUpdateRequest;
+import com.brickers.backend.gallery.entity.GalleryBookmarkEntity;
 import com.brickers.backend.gallery.entity.GalleryPostEntity;
+import com.brickers.backend.gallery.entity.GalleryReactionEntity;
 import com.brickers.backend.gallery.entity.Visibility;
+import com.brickers.backend.gallery.repository.GalleryBookmarkRepository;
 import com.brickers.backend.gallery.repository.GalleryPostRepository;
+import com.brickers.backend.gallery.repository.GalleryReactionRepository;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
@@ -15,12 +19,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class GalleryService {
 
     private final GalleryPostRepository galleryPostRepository;
+    private final GalleryBookmarkRepository galleryBookmarkRepository;
+    private final GalleryReactionRepository galleryReactionRepository;
     private final CurrentUserService currentUserService;
 
     /** 게시글 생성: 로그인 유저를 author로 설정하고 게시글을 저장한다. */
@@ -102,14 +109,24 @@ public class GalleryService {
         if (post.isDeleted())
             throw new IllegalArgumentException("삭제된 게시글입니다.");
 
+        String userId = null;
         if (post.getVisibility() == Visibility.PRIVATE) {
             User me = currentUserService.get(authOrNull); // null이면 ForbiddenException("로그인이 필요합니다.")
             if (!post.getAuthorId().equals(me.getId())) {
                 throw new ForbiddenException("비공개 게시글에 대한 접근 권한이 없습니다.");
             }
+            userId = me.getId();
+        } else if (authOrNull != null) {
+            // PUBLIC이지만 로그인한 경우 사용자 ID 가져오기
+            try {
+                User me = currentUserService.get(authOrNull);
+                userId = me.getId();
+            } catch (Exception ignored) {
+                // 로그인 안 된 경우 무시
+            }
         }
 
-        return toResponse(post);
+        return toResponseWithUserState(post, userId);
     }
 
     /** 게시글 수정: 작성자만 수정 가능하며, 전달된 필드만 부분 업데이트(PATCH)한다. */
@@ -197,6 +214,23 @@ public class GalleryService {
     }
 
     private GalleryResponse toResponse(GalleryPostEntity post) {
+        return toResponseWithUserState(post, null);
+    }
+
+    private GalleryResponse toResponseWithUserState(GalleryPostEntity post, String userId) {
+        Boolean bookmarked = null;
+        String myReaction = null;
+
+        if (userId != null) {
+            // 북마크 상태 조회
+            Optional<GalleryBookmarkEntity> bookmark = galleryBookmarkRepository.findByUserIdAndPostId(userId, post.getId());
+            bookmarked = bookmark.isPresent();
+
+            // 반응 상태 조회
+            Optional<GalleryReactionEntity> reaction = galleryReactionRepository.findByUserIdAndPostId(userId, post.getId());
+            myReaction = reaction.map(r -> r.getType().name()).orElse(null);
+        }
+
         return GalleryResponse.builder()
                 .id(post.getId())
                 .authorId(post.getAuthorId())
@@ -212,6 +246,8 @@ public class GalleryService {
                 .likeCount(Math.max(0, post.getLikeCount()))
                 .dislikeCount(Math.max(0, post.getDislikeCount()))
                 .viewCount(Math.max(0, post.getViewCount()))
+                .bookmarked(bookmarked)
+                .myReaction(myReaction)
                 .build();
     }
 
