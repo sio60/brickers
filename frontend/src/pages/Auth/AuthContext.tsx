@@ -16,17 +16,18 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-// ✅ 배포에서 env 안 박혀있으면 ""(same-origin) / 로컬은 8080 권장
-const rawBase = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "http://localhost:8080";
+// ✅ 배포 환경에선 보통 도메인이 같으므로 ""(상대경로)를 권장합니다.
+// 로컬 개발 시에는 vite.config.ts의 proxy 설정을 타도록 ""로 두는 것이 안전합니다.
+const rawBase = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
 const API_BASE = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase;
 
-console.debug("[AuthContext] API_BASE is set to:", API_BASE);
+console.debug("[AuthContext] API_BASE is set to:", API_BASE || "(relative path)");
 
 // ✅ input이 상대경로("/api/...")로 오면 API_BASE 붙여서 백엔드로 보냄
 function toAbsoluteUrl(input: RequestInfo | URL) {
   if (typeof input === "string") {
     if (input.startsWith("http://") || input.startsWith("https://")) return input;
-    if (input.startsWith("/")) return `${API_BASE}${input}`;
+    if (input.startsWith("/") && API_BASE) return `${API_BASE}${input}`;
   }
   return input;
 }

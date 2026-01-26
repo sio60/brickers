@@ -1,6 +1,6 @@
 // src/pages/KidsPage/components/BrickStackMiniGame.tsx
 import "./BrickStackMiniGame.css";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
@@ -11,8 +11,8 @@ const BRICK_HEIGHT = 0.4;    // 브릭 높이
 const INITIAL_BRICK_WIDTH = 2.5;  // 초기 브릭 너비
 const MOVE_SPEED = 3.5;      // 좌우 이동 속도
 const FALL_SPEED = 12;       // 낙하 속도
-const SPAWN_Y = 3;           // 스폰 높이
-const FLOOR_Y = -3;          // 바닥 Y 위치 (화면 하단으로 더 내림)
+const INITIAL_SPAWN_Y = 3;   // 초기 스폰 높이
+const FLOOR_Y = -3;          // 바닥 Y 위치
 
 type Brick = {
   id: string;
@@ -39,6 +39,7 @@ type ActiveBrick = {
   dir: 1 | -1;
   falling: boolean;
   targetY: number;
+  spawnY: number;
 };
 
 const COLORS = [
@@ -92,16 +93,26 @@ function Scene({
   activeRef,
   onDrop,
   currentColor,
+  gameOver,
 }: {
   bricks: Brick[];
   activeRef: React.MutableRefObject<ActiveBrick>;
   onDrop: () => void;
   currentColor: string;
+  gameOver: boolean;
 }) {
   const activeMesh = useRef<THREE.Mesh>(null);
 
-  useFrame((_, dt) => {
+  useFrame((state, dt) => {
+    // 1. 카메라 팔로우 로직
+    const stackHeight = bricks.length * BRICK_HEIGHT;
+    // 쌓인 높이에 따라 카메라 Y 목표값 계산 (기본 0, 쌓일수록 위로)
+    const targetCamY = Math.max(0, stackHeight - 2);
+    state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, targetCamY, 0.05);
+    state.camera.lookAt(0, state.camera.position.y - 1, 0);
+
     const a = activeRef.current;
+    if (gameOver) return;
 
     if (!a.falling) {
       // 좌우 이동
@@ -121,7 +132,7 @@ function Scene({
     } else {
       // 낙하
       const targetY = a.targetY;
-      const currentY = activeMesh.current?.position.y ?? SPAWN_Y;
+      const currentY = activeMesh.current?.position.y ?? a.spawnY;
       const newY = currentY - FALL_SPEED * dt;
 
       if (newY <= targetY) {
@@ -134,20 +145,19 @@ function Scene({
       }
     }
 
-    // 메쉬 위치 업데이트
+    // 메쉬 위치 업데이트 (이동 중일 때)
     if (activeMesh.current && !a.falling) {
-      activeMesh.current.position.set(a.x, SPAWN_Y, 0);
+      activeMesh.current.position.set(a.x, a.spawnY, 0);
     }
   });
 
   return (
     <>
-      {/* 조명 */}
       <ambientLight intensity={0.6} />
       <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
-      <directionalLight position={[-3, 5, -3]} intensity={0.3} />
+      <pointLight position={[-3, 5, 2]} intensity={50} />
 
-      {/* 바닥 - 화면 하단에 보이도록 */}
+      {/* 바닥 */}
       <mesh position={[0, FLOOR_Y - 0.2, 0]} receiveShadow>
         <boxGeometry args={[BOARD_WIDTH + 1, 0.4, 3]} />
         <meshStandardMaterial color="#e5e7eb" />
@@ -169,21 +179,23 @@ function Scene({
       ))}
 
       {/* 활성 브릭 */}
-      <RoundedBox
-        ref={activeMesh as any}
-        args={[activeRef.current.width - 0.05, BRICK_HEIGHT - 0.05, 1]}
-        radius={0.1}
-        smoothness={4}
-        position={[activeRef.current.x, SPAWN_Y, 0]}
-        castShadow
-        receiveShadow
-      >
-        <meshStandardMaterial color={currentColor} />
-      </RoundedBox>
+      {!gameOver && (
+        <RoundedBox
+          ref={activeMesh as any}
+          args={[activeRef.current.width - 0.05, BRICK_HEIGHT - 0.05, 1]}
+          radius={0.1}
+          smoothness={4}
+          position={[activeRef.current.x, activeRef.current.spawnY, 0]}
+          castShadow
+          receiveShadow
+        >
+          <meshStandardMaterial color={currentColor} />
+        </RoundedBox>
+      )}
 
-      {/* 클릭 영역 */}
-      <mesh position={[0, 3, 0]} onPointerDown={onDrop}>
-        <boxGeometry args={[BOARD_WIDTH + 2, 8, 4]} />
+      {/* 클릭 영역 (카메라 따라다니도록 충분히 크게 설정) */}
+      <mesh position={[0, activeRef.current.spawnY, 0]} onPointerDown={onDrop}>
+        <boxGeometry args={[BOARD_WIDTH + 10, 20, 10]} />
         <meshBasicMaterial transparent opacity={0} />
       </mesh>
     </>
@@ -202,10 +214,10 @@ export default function BrickStackMiniGame() {
     width: INITIAL_BRICK_WIDTH,
     dir: 1,
     falling: false,
-    targetY: FLOOR_Y + BRICK_HEIGHT / 2,  // 바닥 위에서 시작
+    targetY: FLOOR_Y + BRICK_HEIGHT / 2,
+    spawnY: INITIAL_SPAWN_Y,
   });
 
-  // 게임 리셋
   const resetGame = useCallback(() => {
     setBricks([]);
     setFallingPieces([]);
@@ -218,19 +230,18 @@ export default function BrickStackMiniGame() {
       dir: 1,
       falling: false,
       targetY: FLOOR_Y + BRICK_HEIGHT / 2,
+      spawnY: INITIAL_SPAWN_Y,
     };
   }, []);
 
-  // 떨어지는 조각 정리 (화면 밖으로 나감)
   useEffect(() => {
     if (fallingPieces.length === 0) return;
     const timer = setTimeout(() => {
       setFallingPieces([]);
     }, 2000);
     return () => clearTimeout(timer);
-  }, [fallingPieces]);
+  }, [fallingPieces.length]);
 
-  // 드롭 로직
   const onDrop = useCallback(() => {
     if (gameOver) return;
     const a = activeRef.current;
@@ -239,7 +250,6 @@ export default function BrickStackMiniGame() {
     const dropX = a.x;
     const dropWidth = a.width;
 
-    // 첫 번째 브릭은 그냥 쌓임
     if (bricks.length === 0) {
       a.falling = true;
       a.targetY = FLOOR_Y + BRICK_HEIGHT / 2;
@@ -255,7 +265,6 @@ export default function BrickStackMiniGame() {
         setBricks([newBrick]);
         setScore(1);
 
-        // 다음 브릭 스폰
         const nextColor = getRandomColor();
         setCurrentColor(nextColor);
         activeRef.current = {
@@ -264,12 +273,12 @@ export default function BrickStackMiniGame() {
           dir: 1,
           falling: false,
           targetY: FLOOR_Y + BRICK_HEIGHT / 2 + BRICK_HEIGHT,
+          spawnY: INITIAL_SPAWN_Y,
         };
-      }, 400);
+      }, 300);
       return;
     }
 
-    // 이전 브릭과 겹침 계산
     const topBrick = bricks[bricks.length - 1];
     const topLeft = topBrick.x - topBrick.width / 2;
     const topRight = topBrick.x + topBrick.width / 2;
@@ -280,14 +289,12 @@ export default function BrickStackMiniGame() {
     const overlapRight = Math.min(topRight, dropRight);
     const overlapWidth = overlapRight - overlapLeft;
 
-    // 겹치지 않음 = 게임 오버
-    if (overlapWidth <= 0) {
+    if (overlapWidth <= 0.1) { // 너무 작게 남으면 게임오버
       setGameOver(true);
-      // 브릭이 떨어지는 애니메이션
       setFallingPieces([{
         id: `fall-${Date.now()}`,
         x: dropX,
-        y: topBrick.y + BRICK_HEIGHT,
+        y: a.spawnY,
         width: dropWidth,
         velocityX: a.dir * 2,
         velocityY: 0,
@@ -297,23 +304,18 @@ export default function BrickStackMiniGame() {
       return;
     }
 
-    // 겹치는 부분만 남김
     const overlapCenterX = (overlapLeft + overlapRight) / 2;
     const newY = topBrick.y + BRICK_HEIGHT;
 
     a.falling = true;
     a.targetY = newY;
 
-    // 잘린 조각 (미스 부분) 생성
     const cutPieces: FallingPiece[] = [];
-
-    // 왼쪽 미스
     if (dropLeft < overlapLeft) {
       const cutWidth = overlapLeft - dropLeft;
-      const cutX = dropLeft + cutWidth / 2;
       cutPieces.push({
         id: `cut-left-${Date.now()}`,
-        x: cutX,
+        x: dropLeft + cutWidth / 2,
         y: newY,
         width: cutWidth,
         velocityX: -2,
@@ -322,14 +324,11 @@ export default function BrickStackMiniGame() {
         rotationSpeed: -4,
       });
     }
-
-    // 오른쪽 미스
     if (dropRight > overlapRight) {
       const cutWidth = dropRight - overlapRight;
-      const cutX = overlapRight + cutWidth / 2;
       cutPieces.push({
         id: `cut-right-${Date.now()}`,
-        x: cutX,
+        x: overlapRight + cutWidth / 2,
         y: newY,
         width: cutWidth,
         velocityX: 2,
@@ -340,7 +339,7 @@ export default function BrickStackMiniGame() {
     }
 
     if (cutPieces.length > 0) {
-      setFallingPieces(cutPieces);
+      setFallingPieces((prev) => [...prev, ...cutPieces]);
     }
 
     setTimeout(() => {
@@ -355,25 +354,22 @@ export default function BrickStackMiniGame() {
       setBricks((prev) => [...prev, newBrick]);
       setScore((s) => s + 1);
 
-      // 다음 브릭 스폰
       const nextColor = getRandomColor();
       setCurrentColor(nextColor);
+
+      // 다음 스폰 위치 설정 (현재 높이 + N)
+      const nextSpawnY = newY + INITIAL_SPAWN_Y - FLOOR_Y - (BRICK_HEIGHT / 2);
+
       activeRef.current = {
         x: -BOARD_WIDTH / 2 + overlapWidth / 2,
         width: overlapWidth,
         dir: 1,
         falling: false,
         targetY: newY + BRICK_HEIGHT,
+        spawnY: nextSpawnY,
       };
-    }, 350);
+    }, 250);
   }, [bricks, gameOver, currentColor]);
-
-  const camera = useMemo(() => {
-    // 카메라: 바닥이 화면 하단에 보이도록
-    const stackHeight = bricks.length * BRICK_HEIGHT;
-    const camY = Math.max(3, stackHeight * 0.2 + 2);
-    return { position: [0, camY, 9] as [number, number, number], fov: 50 };
-  }, [bricks.length]);
 
   return (
     <div className="brickGame">
@@ -387,12 +383,13 @@ export default function BrickStackMiniGame() {
       </div>
 
       <div className="brickGame__stage">
-        <Canvas shadows camera={camera}>
+        <Canvas shadows camera={{ position: [0, 0, 9], fov: 50 }}>
           <Scene
             bricks={bricks}
             activeRef={activeRef}
             onDrop={onDrop}
             currentColor={currentColor}
+            gameOver={gameOver}
           />
           {fallingPieces.map((p) => (
             <FallingPieceComponent key={p.id} piece={p} />

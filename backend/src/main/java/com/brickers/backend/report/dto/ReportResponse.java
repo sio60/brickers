@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 public class ReportResponse {
     private String id;
     private String reporterId;
+    private String reporterEmail; // ✅ 추가
     private String targetType;
     private String targetId;
     private ReportReason reason;
