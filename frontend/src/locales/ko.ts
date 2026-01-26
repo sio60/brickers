@@ -177,14 +177,24 @@ export const ko = {
         homeBtn: "홈으로",
         retryBtn: "다시 시도",
         error: "데이터를 불러오지 못했습니다.",
-        unknownError: "알 수 없는 오류"
+        unknownError: "알 수 없는 오류",
+        noPreview: "미리보기 없음",
+        anonymous: "익명"
     },
     admin: {
+        panelTitle: "관리자 패널",
         welcome: "전용 관리자 도구에 접속하셨습니다.",
         stats: {
             users: "총 사용자",
             jobs: "오늘의 작업",
             gallery: "신규 갤러리"
-        }
+        },
+        sidebar: {
+            dashboard: "대시보드",
+            users: "사용자 관리",
+            gallery: "갤러리 관리",
+            settings: "시스템 설정"
+        },
+        accessDenied: "관리자 권한이 없습니다. (현재 권한: {role})"
     }
 };

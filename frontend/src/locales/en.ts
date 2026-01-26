@@ -177,14 +177,24 @@ export const en = {
         homeBtn: "Go Home",
         retryBtn: "Retry",
         error: "Failed to load data.",
-        unknownError: "Unknown error"
+        unknownError: "Unknown error",
+        noPreview: "No Preview",
+        anonymous: "Anonymous"
     },
     admin: {
+        panelTitle: "Admin Panel",
         welcome: "You have accessed the exclusive administrator tools.",
         stats: {
             users: "Total Users",
             jobs: "Today's Jobs",
             gallery: "New Gallery"
-        }
+        },
+        sidebar: {
+            dashboard: "Dashboard",
+            users: "User Management",
+            gallery: "Gallery Management",
+            settings: "System Settings"
+        },
+        accessDenied: "Access denied. (Role: {role})"
     }
 };

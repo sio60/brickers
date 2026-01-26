@@ -4,23 +4,29 @@ import "./FloatingMenuButton.css";
 import mypageIcon from "../../../assets/mypage.png";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import { getMyProfile } from "../../../api/myApi";
+import { useAuth } from "../../Auth/AuthContext";
+import LoginModal from "../../MainPage/components/LoginModal";
 
 export default function FloatingMenuButton() {
     const navigate = useNavigate();
     const { t } = useLanguage();
+    const { isAuthenticated } = useAuth();
+
     const [isAdmin, setIsAdmin] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
     useEffect(() => {
-        getMyProfile().then(profile => {
-            console.log("Logged in user role:", profile.role);
-            if (profile.role === "ADMIN") {
-                setIsAdmin(true);
-            }
-        }).catch(err => {
-            console.error("Failed to fetch profile for admin check:", err);
-        });
-    }, []);
+        if (isAuthenticated) {
+            getMyProfile().then(profile => {
+                if (profile.role === "ADMIN") {
+                    setIsAdmin(true);
+                }
+            }).catch(console.error);
+        } else {
+            setIsAdmin(false);
+        }
+    }, [isAuthenticated]);
 
     const menuItems = [
         { id: "mypage", label: t.floatingMenu?.mypage || "My Page" },
@@ -52,6 +58,15 @@ export default function FloatingMenuButton() {
         }
     };
 
+    const handleMainBtnClick = () => {
+        if (!isAuthenticated) {
+            alert(t.common?.loginRequired || "Login required.");
+            setIsLoginModalOpen(true);
+            return;
+        }
+        setIsOpen(!isOpen);
+    };
+
     return (
         <>
             {/* 배경 오버레이 */}
@@ -79,12 +94,17 @@ export default function FloatingMenuButton() {
                 {/* 플로팅 버튼 */}
                 <button
                     className={`floatingMenu__btn ${isOpen ? "isOpen" : ""}`}
-                    onClick={() => setIsOpen(!isOpen)}
+                    onClick={handleMainBtnClick}
                     aria-label={t.floatingMenu.open}
                 >
                     <img src={mypageIcon} alt={t.floatingMenu.iconAlt} className="floatingMenu__btnIcon" />
                 </button>
             </div>
+
+            <LoginModal
+                isOpen={isLoginModalOpen}
+                onClose={() => setIsLoginModalOpen(false)}
+            />
         </>
     );
 }

@@ -1,3 +1,5 @@
+/* ✅ 한국어 폰트: Chiron GoRound TC (Google Fonts에서 로드) */
+
 html,
 body,
 #root {
@@ -13,15 +15,36 @@ body,
   box-sizing: border-box;
 }
 
+/* ✅ 폼 요소들이 부모 폰트를 상속받도록 강제 */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
 /* ✅ Canvas가 inline이면 아래쪽에 2~4px 틈 생겨서 스크롤 생길 수 있음 */
 canvas {
   display: block;
 }
 
 /* ✅ 언어별 전역 폰트 설정 (상속을 위해 모든 자식에게도 강제 적용) */
+body.lang-ko,
+body.lang-ko *,
 .lang-ko,
-.lang-ko *,
+.lang-ko * {
+  font-family: "Chiron GoRound TC", sans-serif !important;
+  font-optical-sizing: auto;
+}
+
+body.lang-ja,
+body.lang-ja *,
 .lang-ja,
 .lang-ja * {
   font-family: "Jua", sans-serif !important;
+}
+
+/* ✅ 영문 폰트 강제 (Bebas Neue) */
+.font-en {
+  font-family: "Bebas Neue", sans-serif !important;
 }
