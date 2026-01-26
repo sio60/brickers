@@ -75,6 +75,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
   };
 
 
+  
   const handleFile = (f: File) => {
     if (!f.type.startsWith("image/")) return;
     setFile(f);
