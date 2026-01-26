@@ -1,6 +1,9 @@
 package com.brickers.backend.job.repository;
 
 import com.brickers.backend.job.entity.GenerateJobEntity;
+
+import java.time.LocalDateTime;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -16,4 +19,6 @@ public interface GenerateJobRepository extends MongoRepository<GenerateJobEntity
     long countByStatus(JobStatus status);
 
     Page<GenerateJobEntity> findByStatusOrderByCreatedAtDesc(JobStatus status, Pageable pageable);
+
+    long countByStatusAndUpdatedAtAfter(JobStatus status, LocalDateTime after);
 }

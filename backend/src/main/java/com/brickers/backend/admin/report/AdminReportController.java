@@ -41,7 +41,7 @@ public class AdminReportController {
     public ReportResponse resolveReport(
             Authentication authentication,
             @PathVariable String reportId,
-            @Valid @RequestBody ReportResolveRequest req) {
+            @RequestBody ReportResolveRequest req) {
         return reportService.resolveReport(authentication, reportId, req);
     }
 

@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -25,5 +27,5 @@ public interface PaymentOrderRepository extends MongoRepository<PaymentOrder, St
     Page<PaymentOrder> findByUserIdAndStatus(String userId, PaymentStatus status, Pageable pageable);
 
     // [New] 매출 통계용 (기간별 결제 완료 건)
-    java.util.List<PaymentOrder> findByStatusAndPaidAtBetween(PaymentStatus status, java.time.LocalDateTime start, java.time.LocalDateTime end);
+    List<PaymentOrder> findByStatusAndPaidAtBetween(PaymentStatus status, java.time.LocalDateTime start,LocalDateTime end);
 }

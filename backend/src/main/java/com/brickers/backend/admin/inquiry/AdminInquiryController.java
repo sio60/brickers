@@ -7,11 +7,13 @@ import com.brickers.backend.inquiry.entity.InquiryStatus;
 import com.brickers.backend.inquiry.service.InquiryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin/inquiries")
+@PreAuthorize("hasAuthority('ROLE_ADMIN')")
 @RequiredArgsConstructor
 public class AdminInquiryController {
 

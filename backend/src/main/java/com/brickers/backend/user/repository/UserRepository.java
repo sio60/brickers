@@ -2,10 +2,12 @@ package com.brickers.backend.user.repository;
 
 import com.brickers.backend.user.entity.AccountState;
 import com.brickers.backend.user.entity.User;
+import com.brickers.backend.user.entity.UserRole;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 /**
@@ -25,5 +27,7 @@ public interface UserRepository extends MongoRepository<User, String> {
             AccountState accountState);
 
     // [New] 기간별 가입자 수 집계용
-    long countByCreatedAtBetween(java.time.LocalDateTime start, java.time.LocalDateTime end);
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    long countByRole(UserRole role);
 }
