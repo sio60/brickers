@@ -122,12 +122,20 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/inquiries/**").authenticated()
 
                                                 // -------------------------------
-                                                // ✅ Payment API (결제)
+                                                // ✅ Payment API (일회성 결제)
                                                 // -------------------------------
                                                 // 요금제 목록 및 웹훅은 공개 (웹훅은 내부 IP 체크 등 추가 보안 권장)
                                                 .requestMatchers(HttpMethod.GET, "/api/payments/plans").permitAll()
                                                 .requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
                                                 .requestMatchers("/api/payments/**").authenticated()
+
+                                                // -------------------------------
+                                                // ✅ Billing API (구독 결제)
+                                                // -------------------------------
+                                                // 요금제 목록 및 웹훅은 공개
+                                                .requestMatchers(HttpMethod.GET, "/api/billing/plans").permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/api/billing/webhook").permitAll()
+                                                .requestMatchers("/api/billing/**").authenticated()
 
                                                 // -------------------------------
                                                 // ✅ Admin API
