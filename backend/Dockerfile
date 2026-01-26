@@ -26,9 +26,11 @@ ENV AWS_SECRET_ACCESS_KEY=dummy
 # 3) OAuth (구글/카카오) 관련
 ENV GOOGLE_CLIENT_ID=dummy
 ENV GOOGLE_CLIENT_SECRET=dummy
+ENV GOOGLE_REDIRECT_URI=http://localhost:8080/auth/google/callback
 ENV KAKAO_CLIENT_ID=dummy
 ENV KAKAO_CLIENT_SECRET=dummy
 ENV KAKAO_ADMIN_KEY=dummy
+ENV KAKAO_REDIRECT_URI=http://localhost:8080/auth/kakao/callback
 
 # 4) JWT 및 기타
 ENV JWT_SECRET=dummy_secret_key_must_be_long_enough_for_build
