@@ -69,7 +69,7 @@ public class MyController {
     @PostMapping("/jobs/{jobId}/retry")
     public MyJobResponse retry(
             Authentication authentication,
-            @PathVariable String jobId,
+            @PathVariable("jobId") String jobId,
             @RequestBody(required = false) MyJobRetryRequest req) {
         return myService.retryJob(authentication, jobId, req);
     }

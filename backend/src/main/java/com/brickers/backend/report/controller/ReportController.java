@@ -40,13 +40,13 @@ public class ReportController {
 
     /** 내 신고 상세 */
     @GetMapping("/my/{reportId}")
-    public ReportResponse getMyReport(Authentication authentication, @PathVariable String reportId) {
+    public ReportResponse getMyReport(Authentication authentication, @PathVariable("reportId") String reportId) {
         return reportService.getMyReport(authentication, reportId);
     }
 
     /** 신고 취소 */
     @DeleteMapping("/my/{reportId}")
-    public ResponseEntity<?> cancelMyReport(Authentication authentication, @PathVariable String reportId) {
+    public ResponseEntity<?> cancelMyReport(Authentication authentication, @PathVariable("reportId") String reportId) {
         reportService.cancelMyReport(authentication, reportId);
         return ResponseEntity.ok(Map.of("message", "신고가 취소되었습니다."));
     }

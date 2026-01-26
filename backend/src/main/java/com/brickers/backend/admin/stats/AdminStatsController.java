@@ -21,7 +21,8 @@ public class AdminStatsController {
 
     /** 유저 가입자 통계 (기간별) */
     @GetMapping("/users")
-    public List<DailyStatsDto> getUserStats(@RequestParam(defaultValue = "30") int days) {
+    public List<DailyStatsDto> getUserStats(
+            @RequestParam(name = "days", defaultValue = "30") int days) {
         return statsService.getUserGrowthStats(days);
     }
 
@@ -33,7 +34,8 @@ public class AdminStatsController {
 
     /** 매출 통계 (기간별) */
     @GetMapping("/revenue")
-    public List<DailyStatsDto> getRevenueStats(@RequestParam(defaultValue = "30") int days) {
+    public List<DailyStatsDto> getRevenueStats(
+            @RequestParam(name = "days", defaultValue = "30") int days) {
         return statsService.getRevenueStats(days);
     }
 }

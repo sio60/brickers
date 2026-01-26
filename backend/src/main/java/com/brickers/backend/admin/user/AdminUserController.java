@@ -24,14 +24,14 @@ public class AdminUserController {
     /** 유저 목록 조회 */
     @GetMapping
     public Page<AdminUserDto> getAllUsers(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
         return adminUserService.getAllUsers(page, size);
     }
 
     /** 유저 상세 조회 */
     @GetMapping("/{userId}")
-    public AdminUserDto getUserDetail(@PathVariable String userId) {
+    public AdminUserDto getUserDetail(@PathVariable("userId") String userId) {
         return adminUserService.getUserDetail(userId);
     }
 
@@ -40,7 +40,7 @@ public class AdminUserController {
     @PostMapping("/{userId}/role")
     public AdminUserDto changeUserRole(
             Authentication auth,
-            @PathVariable String userId,
+            @PathVariable("userId") String userId,
             @RequestBody Map<String, String> body) {
         String role = body.get("role");
         String actorId = currentUserService.get(auth).getId(); // ✅ 현재 방식: principal == userId
@@ -50,13 +50,15 @@ public class AdminUserController {
 
     /** 유저 정지 */
     @PostMapping("/{userId}/suspend")
-    public AdminUserDto suspendUser(@PathVariable String userId, @RequestBody Map<String, String> body) {
+    public AdminUserDto suspendUser(
+            @PathVariable("userId") String userId,
+            @RequestBody Map<String, String> body) {
         return adminUserService.suspendUser(userId, body.get("reason"));
     }
 
     /** 유저 정지 해제 */
     @PostMapping("/{userId}/unsuspend")
-    public AdminUserDto unsuspendUser(@PathVariable String userId) {
+    public AdminUserDto unsuspendUser(@PathVariable("userId") String userId) {
         return adminUserService.unsuspendUser(userId);
     }
 }

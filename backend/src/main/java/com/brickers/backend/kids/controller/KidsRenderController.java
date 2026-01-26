@@ -33,7 +33,7 @@ public class KidsRenderController {
     }
 
     @GetMapping("/rendered/{filename}")
-    public ResponseEntity<byte[]> getRenderedImage(@PathVariable String filename) {
+    public ResponseEntity<byte[]> getRenderedImage(@PathVariable("filename") String filename) {
         try {
             Path outDir = Paths.get(System.getenv().getOrDefault("KIDS_RENDER_DIR", "./uploads/kids/out"));
             Path filePath = outDir.resolve(filename).normalize();

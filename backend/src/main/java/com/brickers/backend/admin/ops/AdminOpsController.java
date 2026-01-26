@@ -25,8 +25,8 @@ public class AdminOpsController {
     /** 도안 생성 로그 조회 (Real - Failed Jobs from DB) */
     @GetMapping("/logs/blueprints")
     public ResponseEntity<?> getBlueprintLogs(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
         return ResponseEntity.ok(adminOpsService.getBlueprintLogs(page, size));
     }
 
