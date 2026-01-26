@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./BrickBotModal.css";
+import { useLanguage } from "../../../contexts/LanguageContext";
 
 interface BrickBotModalProps {
     isOpen: boolean;
@@ -13,23 +14,183 @@ interface Message {
     actionType?: "create" | "gallery" | "mypage" | null;
 }
 
+const CHAT_TRANSLATIONS = {
+    ko: {
+        welcome: "안녕하세요! 궁금한 점이 있으신가요? 🤖",
+        suggestions: {
+            howTo: "레고 어떻게 만들어요?",
+            gallery: "갤러리는 뭐예요?",
+            inquiry: "문의하기",
+            report: "신고하기",
+            refund: "환불 요청"
+        },
+        toggleSuggestions: "이런 질문을 해보세요",
+        placeholder: "궁금한 내용을 입력하세요...",
+        send: "전송",
+        header: "BrickBot",
+        inquiry: {
+            modeTitle: "1:1 문의하기",
+            titlePlace: "문의 제목",
+            contentPlace: "문의 내용을 자세히 적어주세요.",
+            btn: "문의 접수",
+            confirm: "✅ 문의가 접수되었습니다! 관리자가 확인 후 빠르게 답변드리겠습니다."
+        },
+        report: {
+            modeTitle: "신고하기",
+            reasonLabel: "신고 사유",
+            contentPlace: "신고 내용을 적어주세요.",
+            btn: "신고 접수",
+            confirm: "🚨 신고가 접수되었습니다. 관리자가 검토 후 조치하겠습니다.",
+            reasons: {
+                SPAM: "스팸 / 부적절한 홍보",
+                INAPPROPRIATE: "부적절한 콘텐츠",
+                ABUSE: "욕설 / 비하 발언",
+                COPYRIGHT: "저작권 침해",
+                OTHER: "기타"
+            }
+        },
+        refund: {
+            modeTitle: "환불 요청",
+            desc: "최근 결제 내역 중 환불할 항목을 선택해주세요.",
+            empty: "결제 내역이 없습니다.",
+            btn: "환불 요청",
+            confirm: "💸 환불 요청이 접수되었습니다. 처리 결과는 알림으로 알려드릴게요."
+        },
+        cancel: "취소",
+        actions: {
+            create: "🧱 레고 만들기 시작",
+            gallery: "🖼️ 갤러리 구경하기",
+            mypage: "👤 내 정보 보기"
+        },
+        error: "죄송해요, 잠시 문제가 생겼어요. 다시 시도해주세요!"
+    },
+    en: {
+        welcome: "Hello! How can I help you today? 🤖",
+        suggestions: {
+            howTo: "How do I make Lego?",
+            gallery: "What is Gallery?",
+            inquiry: "Inquiry",
+            report: "Report",
+            refund: "Request Refund"
+        },
+        toggleSuggestions: "Suggested Questions",
+        placeholder: "Ask me anything...",
+        send: "Send",
+        header: "BrickBot",
+        inquiry: {
+            modeTitle: "1:1 Inquiry",
+            titlePlace: "Title",
+            contentPlace: "Please describe your inquiry.",
+            btn: "Submit Inquiry",
+            confirm: "✅ Inquiry submitted! We will get back to you soon."
+        },
+        report: {
+            modeTitle: "Report Details",
+            reasonLabel: "Reason",
+            contentPlace: "Please describe the issue.",
+            btn: "Submit Report",
+            confirm: "🚨 Report submitted. We will review it shortly.",
+            reasons: {
+                SPAM: "Spam / Promotion",
+                INAPPROPRIATE: "Inappropriate Content",
+                ABUSE: "Abusive Language",
+                COPYRIGHT: "Copyright Infringement",
+                OTHER: "Other"
+            }
+        },
+        refund: {
+            modeTitle: "Request Refund",
+            desc: "Select a payment to refund.",
+            empty: "No payment history.",
+            btn: "Request Refund",
+            confirm: "💸 Refund request submitted."
+        },
+        cancel: "Cancel",
+        actions: {
+            create: "🧱 Start Creating",
+            gallery: "🖼️ Visit Gallery",
+            mypage: "👤 My Page"
+        },
+        error: "Sorry, something went wrong. Please try again!"
+    },
+    ja: {
+        welcome: "こんにちは！何かお手伝いしましょうか？ 🤖",
+        suggestions: {
+            howTo: "どうやってレゴを作るの？",
+            gallery: "ギャラリーって何？",
+            inquiry: "お問い合わせ",
+            report: "通報する",
+            refund: "返金リクエスト"
+        },
+        toggleSuggestions: "こんな質問はどうですか？",
+        placeholder: "気になることを入力してください...",
+        send: "送信",
+        header: "BrickBot",
+        inquiry: {
+            modeTitle: "1:1 お問い合わせ",
+            titlePlace: "タイトル",
+            contentPlace: "お問い合わせ内容を詳しく書いてください。",
+            btn: "送信する",
+            confirm: "✅ お問い合わせを受け付けました！確認後、すぐにお答えします。"
+        },
+        report: {
+            modeTitle: "通報する",
+            reasonLabel: "通報理由",
+            contentPlace: "内容を書いてください。",
+            btn: "通報する",
+            confirm: "🚨 通報を受け付けました。管理者が確認して対応します。",
+            reasons: {
+                SPAM: "スパム / 不適切な宣伝",
+                INAPPROPRIATE: "不適切なコンテンツ",
+                ABUSE: "暴言 / 誹謗中傷",
+                COPYRIGHT: "著作権侵害",
+                OTHER: "その他"
+            }
+        },
+        refund: {
+            modeTitle: "返金リクエスト",
+            desc: "返金したい決済を選択してください。",
+            empty: "決済履歴がありません。",
+            btn: "リクエスト",
+            confirm: "💸 返金リクエストを受け付けました。"
+        },
+        cancel: "キャンセル",
+        actions: {
+            create: "🧱 レゴを作り始める",
+            gallery: "🖼️ ギャラリーを見る",
+            mypage: "👤 マイページ"
+        },
+        error: "申し訳ありません。問題が発生しました。もう一度お試しください！"
+    }
+};
+
 export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
     const navigate = useNavigate();
+    const { language } = useLanguage(); // 언어 컨텍스트 사용
+    const tChat = CHAT_TRANSLATIONS[language];
+
     const [messages, setMessages] = useState<Message[]>([
-        { role: "bot", content: "안녕하세요! 궁금한 점이 있으신가요? 🤖" },
+        { role: "bot", content: tChat.welcome },
     ]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // 예시 질문 목록
+    // 언어 변경 시 초기 메시지 갱신 (선택사항, 대화 유지 원하면 제거 가능)
+    useEffect(() => {
+        if (messages.length === 1 && messages[0].role === "bot") {
+            setMessages([{ role: "bot", content: tChat.welcome }]);
+        }
+    }, [language]);
+
+    // 예시 질문 목록 (언어 반응형)
     const suggestedQuestions = [
-        "레고 어떻게 만들어요?",
-        "갤러리는 뭐예요?",
-        "문의하기",
-        "신고하기",
-        "환불 요청",
+        tChat.suggestions.howTo,
+        tChat.suggestions.gallery,
+        tChat.suggestions.inquiry,
+        tChat.suggestions.report,
+        tChat.suggestions.refund,
     ];
 
     // 모드 상태: 기본 채팅('CHAT'), 문의('INQUIRY'), 신고('REPORT'), 환불('REFUND')
@@ -91,15 +252,15 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
 
     // 제안 질문 클릭 처리
     const handleSuggestionClick = (q: string) => {
-        if (q === "문의하기") {
+        if (q === tChat.suggestions.inquiry) {
             setMode("INQUIRY");
             setFormTitle("");
             setFormContent("");
-        } else if (q === "신고하기") {
+        } else if (q === tChat.suggestions.report) {
             setMode("REPORT");
             setFormContent("");
             setReportReason("SPAM");
-        } else if (q === "환불 요청") {
+        } else if (q === tChat.suggestions.refund) {
             setMode("REFUND");
             fetchPaymentHistory();
         } else {
@@ -117,7 +278,7 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                 const data = await res.json();
                 setRefundList(data.content || []);
             } else {
-                alert("결제 내역을 불러오는데 실패했습니다.");
+                alert("결제 내역을 불러오는데 실패했습니다."); // TODO: i18n
                 setMode("CHAT");
             }
         } catch (e) {
@@ -141,7 +302,7 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
             const res = await fetch(`${API_BASE}/api/chat/query`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: userMsg }),
+                body: JSON.stringify({ message: userMsg, language }), // 언어 정보 전송
             });
 
             if (!res.ok) throw new Error("API Error");
@@ -155,7 +316,7 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
         } catch (e) {
             setMessages((prev) => [
                 ...prev,
-                { role: "bot", content: "죄송해요, 잠시 문제가 생겼어요. 다시 시도해주세요!" },
+                { role: "bot", content: tChat.error },
             ]);
         } finally {
             setIsLoading(false);
@@ -182,7 +343,7 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
             });
             if (res.ok) {
                 setMode("CHAT");
-                setMessages(prev => [...prev, { role: "bot", content: "✅ 문의가 접수되었습니다! 관리자가 확인 후 빠르게 답변드리겠습니다." }]);
+                setMessages(prev => [...prev, { role: "bot", content: tChat.inquiry.confirm }]);
             } else {
                 alert("문의 접수 실패 (로그인 상태를 확인해주세요)");
             }
@@ -209,7 +370,7 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
             });
             if (res.ok) {
                 setMode("CHAT");
-                setMessages(prev => [...prev, { role: "bot", content: "🚨 신고가 접수되었습니다. 관리자가 검토 후 조치하겠습니다." }]);
+                setMessages(prev => [...prev, { role: "bot", content: tChat.report.confirm }]);
             } else {
                 alert("신고 접수 실패");
             }
@@ -229,7 +390,7 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
             });
             if (res.ok) {
                 setMode("CHAT");
-                setMessages(prev => [...prev, { role: "bot", content: "💸 환불 요청이 접수되었습니다. 처리 결과는 알림으로 알려드릴게요." }]);
+                setMessages(prev => [...prev, { role: "bot", content: tChat.refund.confirm }]);
             } else {
                 alert("환불 요청 실패");
             }
@@ -248,7 +409,9 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                 {/* 헤더 */}
                 <div className="brickbot-header">
                     <div className="brickbot-profile">
-                        <span className="brickbot-name">BrickBot {mode !== "CHAT" && ` - ${mode === "INQUIRY" ? "문의" : mode === "REPORT" ? "신고" : "환불"}`}</span>
+                        <span className="brickbot-name">
+                            {tChat.header} {mode !== "CHAT" && ` - ${mode === "INQUIRY" ? tChat.suggestions.inquiry : mode === "REPORT" ? tChat.suggestions.report : tChat.suggestions.refund}`}
+                        </span>
                     </div>
                     <button className="brickbot-close" onClick={onClose}>✕</button>
                 </div>
@@ -273,9 +436,9 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                                                 className="brickbot-action-btn"
                                                 onClick={() => handleActionClick(msg.actionType)}
                                             >
-                                                {msg.actionType === "create" && "🧱 레고 만들기 시작"}
-                                                {msg.actionType === "gallery" && "🖼️ 갤러리 구경하기"}
-                                                {msg.actionType === "mypage" && "👤 내 정보 보기"}
+                                                {msg.actionType === "create" && tChat.actions.create}
+                                                {msg.actionType === "gallery" && tChat.actions.gallery}
+                                                {msg.actionType === "mypage" && tChat.actions.mypage}
                                             </button>
                                         </div>
                                     )}
@@ -299,7 +462,7 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                                     className="brickbot-suggestions-toggle"
                                     onClick={() => setShowSuggestions(!showSuggestions)}
                                 >
-                                    <span>이런 질문을 해보세요</span>
+                                    <span>{tChat.toggleSuggestions}</span>
                                     <span className={`toggle-arrow ${showSuggestions ? 'open' : ''}`}>▲</span>
                                 </button>
                                 {showSuggestions && (
@@ -323,14 +486,14 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                         <div className="brickbot-input-area">
                             <textarea
                                 className="brickbot-input"
-                                placeholder="궁금한 내용을 입력하세요..."
+                                placeholder={tChat.placeholder}
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
                                 rows={1}
                             />
                             <button className="brickbot-send-btn" onClick={handleSend} disabled={!input.trim() || isLoading}>
-                                전송
+                                {tChat.send}
                             </button>
                         </div>
                     </>
@@ -339,25 +502,25 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                     <div className="brickbot-form-container" style={{ padding: "20px", display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
                         {mode === "INQUIRY" && (
                             <>
-                                <h3 style={{ fontSize: "18px", marginBottom: "16px" }}>1:1 문의하기</h3>
+                                <h3 style={{ fontSize: "18px", marginBottom: "16px" }}>{tChat.inquiry.modeTitle}</h3>
                                 <input
                                     className="brickbot-form-input"
-                                    placeholder="문의 제목"
+                                    placeholder={tChat.inquiry.titlePlace}
                                     value={formTitle}
                                     onChange={(e) => setFormTitle(e.target.value)}
                                     style={{ padding: "12px", border: "1px solid #ddd", borderRadius: "8px", marginBottom: "10px" }}
                                 />
                                 <textarea
                                     className="brickbot-form-textarea"
-                                    placeholder="문의 내용을 자세히 적어주세요."
+                                    placeholder={tChat.inquiry.contentPlace}
                                     value={formContent}
                                     onChange={(e) => setFormContent(e.target.value)}
                                     style={{ padding: "12px", border: "1px solid #ddd", borderRadius: "8px", minHeight: "150px", marginBottom: "20px", resize: "none" }}
                                 />
                                 <div style={{ display: "flex", gap: "10px" }}>
-                                    <button onClick={() => setMode("CHAT")} style={{ flex: 1, padding: "12px", borderRadius: "8px", border: "1px solid #ddd", background: "#fff", cursor: "pointer" }}>취소</button>
+                                    <button onClick={() => setMode("CHAT")} style={{ flex: 1, padding: "12px", borderRadius: "8px", border: "1px solid #ddd", background: "#fff", cursor: "pointer" }}>{tChat.cancel}</button>
                                     <button onClick={submitInquiry} disabled={isSubmitting} style={{ flex: 2, padding: "12px", borderRadius: "8px", border: "none", background: "#000", color: "#fff", cursor: "pointer", opacity: isSubmitting ? 0.7 : 1 }}>
-                                        {isSubmitting ? "전송 중..." : "문의 접수"}
+                                        {isSubmitting ? "..." : tChat.inquiry.btn}
                                     </button>
                                 </div>
                             </>
@@ -365,32 +528,32 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
 
                         {mode === "REPORT" && (
                             <>
-                                <h3 style={{ fontSize: "18px", marginBottom: "16px" }}>신고하기</h3>
+                                <h3 style={{ fontSize: "18px", marginBottom: "16px" }}>{tChat.report.modeTitle}</h3>
                                 <div style={{ marginBottom: "10px" }}>
-                                    <label style={{ fontSize: "13px", color: "#666", display: "block", marginBottom: "4px" }}>신고 사유</label>
+                                    <label style={{ fontSize: "13px", color: "#666", display: "block", marginBottom: "4px" }}>{tChat.report.reasonLabel}</label>
                                     <select
                                         value={reportReason}
                                         onChange={(e) => setReportReason(e.target.value)}
                                         style={{ width: "100%", padding: "12px", border: "1px solid #ddd", borderRadius: "8px" }}
                                     >
-                                        <option value="SPAM">스팸 / 부적절한 홍보</option>
-                                        <option value="INAPPROPRIATE">부적절한 콘텐츠</option>
-                                        <option value="ABUSE">욕설 / 비하 발언</option>
-                                        <option value="COPYRIGHT">저작권 침해</option>
-                                        <option value="OTHER">기타</option>
+                                        <option value="SPAM">{tChat.report.reasons.SPAM}</option>
+                                        <option value="INAPPROPRIATE">{tChat.report.reasons.INAPPROPRIATE}</option>
+                                        <option value="ABUSE">{tChat.report.reasons.ABUSE}</option>
+                                        <option value="COPYRIGHT">{tChat.report.reasons.COPYRIGHT}</option>
+                                        <option value="OTHER">{tChat.report.reasons.OTHER}</option>
                                     </select>
                                 </div>
                                 <textarea
                                     className="brickbot-form-textarea"
-                                    placeholder="신고 내용을 적어주세요."
+                                    placeholder={tChat.report.contentPlace}
                                     value={formContent}
                                     onChange={(e) => setFormContent(e.target.value)}
                                     style={{ padding: "12px", border: "1px solid #ddd", borderRadius: "8px", minHeight: "150px", marginBottom: "20px", resize: "none" }}
                                 />
                                 <div style={{ display: "flex", gap: "10px" }}>
-                                    <button onClick={() => setMode("CHAT")} style={{ flex: 1, padding: "12px", borderRadius: "8px", border: "1px solid #ddd", background: "#fff", cursor: "pointer" }}>취소</button>
+                                    <button onClick={() => setMode("CHAT")} style={{ flex: 1, padding: "12px", borderRadius: "8px", border: "1px solid #ddd", background: "#fff", cursor: "pointer" }}>{tChat.cancel}</button>
                                     <button onClick={submitReport} disabled={isSubmitting} style={{ flex: 2, padding: "12px", borderRadius: "8px", border: "none", background: "#f00", color: "#fff", cursor: "pointer", opacity: isSubmitting ? 0.7 : 1 }}>
-                                        {isSubmitting ? "전송 중..." : "신고 접수"}
+                                        {isSubmitting ? "..." : tChat.report.btn}
                                     </button>
                                 </div>
                             </>
@@ -398,11 +561,11 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
 
                         {mode === "REFUND" && (
                             <>
-                                <h3 style={{ fontSize: "18px", marginBottom: "16px" }}>환불 요청</h3>
-                                <p style={{ fontSize: "13px", color: "#666", marginBottom: "12px" }}>최근 결제 내역 중 환불할 항목을 선택해주세요.</p>
+                                <h3 style={{ fontSize: "18px", marginBottom: "16px" }}>{tChat.refund.modeTitle}</h3>
+                                <p style={{ fontSize: "13px", color: "#666", marginBottom: "12px" }}>{tChat.refund.desc}</p>
                                 <div style={{ flex: 1, overflowY: "auto", border: "1px solid #eee", borderRadius: "8px", marginBottom: "20px" }}>
                                     {refundList.length === 0 ? (
-                                        <div style={{ padding: "20px", textAlign: "center", color: "#999" }}>결제 내역이 없습니다.</div>
+                                        <div style={{ padding: "20px", textAlign: "center", color: "#999" }}>{tChat.refund.empty}</div>
                                     ) : (
                                         refundList.map((item) => (
                                             <div
@@ -428,9 +591,9 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                                     )}
                                 </div>
                                 <div style={{ display: "flex", gap: "10px" }}>
-                                    <button onClick={() => setMode("CHAT")} style={{ flex: 1, padding: "12px", borderRadius: "8px", border: "1px solid #ddd", background: "#fff", cursor: "pointer" }}>취소</button>
+                                    <button onClick={() => setMode("CHAT")} style={{ flex: 1, padding: "12px", borderRadius: "8px", border: "1px solid #ddd", background: "#fff", cursor: "pointer" }}>{tChat.cancel}</button>
                                     <button onClick={submitRefund} disabled={isSubmitting || !selectedOrderId} style={{ flex: 2, padding: "12px", borderRadius: "8px", border: "none", background: "#000", color: "#fff", cursor: "pointer", opacity: (isSubmitting || !selectedOrderId) ? 0.5 : 1 }}>
-                                        {isSubmitting ? "처리 중..." : "환불 요청"}
+                                        {isSubmitting ? "..." : tChat.refund.btn}
                                     </button>
                                 </div>
                             </>

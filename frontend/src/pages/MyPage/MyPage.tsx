@@ -9,7 +9,7 @@ import UpgradeModal from "../MainPage/components/UpgradeModal";
 import KidsLdrPreview from "../KidsPage/components/KidsLdrPreview";
 import { useLanguage } from "../../contexts/LanguageContext";
 
-type MenuItem = "profile" | "membership" | "jobs" | "gallery" | "settings" | "delete";
+type MenuItem = "profile" | "membership" | "jobs" | "gallery" | "inquiries" | "settings" | "delete";
 
 export default function MyPage() {
     const navigate = useNavigate();
@@ -21,6 +21,10 @@ export default function MyPage() {
     const [error, setError] = useState<{ message: string; status: number } | null>(null);
     const [activeMenu, setActiveMenu] = useState<MenuItem>("profile");
     const [retrying, setRetrying] = useState<string | null>(null);
+
+    // 문의 내역 상태
+    const [inquiries, setInquiries] = useState<any[]>([]);
+    const [inquiriesLoading, setInquiriesLoading] = useState(false);
 
     // 프로필 수정 관련 상태
     const [isEditing, setIsEditing] = useState(false);
@@ -123,33 +127,51 @@ export default function MyPage() {
         { id: "membership" as MenuItem, label: t.menu.membership },
         { id: "jobs" as MenuItem, label: t.menu.jobs },
         { id: "gallery" as MenuItem, label: t.menu.gallery },
+        { id: "inquiries" as MenuItem, label: t.menu.inquiries },
         { id: "settings" as MenuItem, label: t.menu.settings },
         { id: "delete" as MenuItem, label: t.menu.delete },
     ];
 
-    // 실시간 업데이트 (Polling)
+    // 실시간 업데이트 (Polling) 및 문의 내역 로드
     useEffect(() => {
         let intervalId: any;
 
         if (activeMenu === "jobs") {
             const fetchJobs = async () => {
                 try {
-                    // 전체 오버뷰 대신 job만 가져오는게 효율적이지만, 현재 API 구조상 overview 활용
                     const updated = await getMyOverview();
                     setData(updated);
                 } catch (e) {
                     console.error("Polling failed", e);
                 }
             };
-
-            // 3초마다 갱신
             intervalId = setInterval(fetchJobs, 3000);
+        }
+
+        if (activeMenu === "inquiries") {
+            fetchMyInquiries();
         }
 
         return () => {
             if (intervalId) clearInterval(intervalId);
         };
     }, [activeMenu]);
+
+    const fetchMyInquiries = async () => {
+        try {
+            setInquiriesLoading(true);
+            const token = localStorage.getItem('accessToken');
+            const res = await fetch("/api/inquiries/my?page=0&size=20", {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            setInquiries(data.content || []);
+        } catch (e) {
+            console.error("Failed to fetch inquiries", e);
+        } finally {
+            setInquiriesLoading(false);
+        }
+    };
 
 
     const renderContent = () => {
@@ -375,6 +397,39 @@ export default function MyPage() {
                         ) : (
                             <p className="mypage__empty">{t.jobs.empty}</p>
                         )}
+                    </div>
+                );
+
+            case "inquiries":
+                return (
+                    <div className="mypage__section">
+                        <h2 className="mypage__sectionTitle">{t.menu.inquiries}</h2>
+                        <div className="mypage__inquiriesList">
+                            {inquiriesLoading ? (
+                                <p className="mypage__loading">불러오는 중...</p>
+                            ) : inquiries.length > 0 ? (
+                                inquiries.map((iq) => (
+                                    <div key={iq.id} className="mypage__inquiryCard">
+                                        <div className="inquiry__header">
+                                            <span className={`inquiry__status ${iq.status}`}>{iq.status}</span>
+                                            <span className="inquiry__date">{new Date(iq.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                        <h3 className="inquiry__title">{iq.title}</h3>
+                                        <p className="inquiry__content">{iq.content}</p>
+
+                                        {iq.answer && (
+                                            <div className="inquiry__answer">
+                                                <div className="answer__badge">관리자 답변</div>
+                                                <p className="answer__text">{iq.answer.content}</p>
+                                                <span className="answer__date">{new Date(iq.answer.answeredAt).toLocaleString()}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="mypage__empty">문의 내역이 없습니다.</p>
+                            )}
+                        </div>
                     </div>
                 );
 
