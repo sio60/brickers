@@ -128,7 +128,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const authFetch = async (input: RequestInfo | URL, init: RequestInit = {}) => {
     const url = toAbsoluteUrl(input);
 
+    // 기본 헤더 설정 (body가 있으면 JSON 권장)
     const headers = new Headers(init.headers || {});
+    if (init.body && !headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
     if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
 
     const res = await fetch(url, { ...init, headers, credentials: "include" });
@@ -139,6 +143,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!newAccess) return res; // refresh 실패면 원래 401 그대로 반환
 
     const retryHeaders = new Headers(init.headers || {});
+    if (init.body && !retryHeaders.has("Content-Type")) {
+      retryHeaders.set("Content-Type", "application/json");
+    }
     retryHeaders.set("Authorization", `Bearer ${newAccess}`);
 
     return fetch(url, { ...init, headers: retryHeaders, credentials: "include" });

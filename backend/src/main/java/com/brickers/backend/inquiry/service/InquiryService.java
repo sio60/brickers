@@ -5,6 +5,7 @@ import com.brickers.backend.inquiry.entity.Inquiry;
 import com.brickers.backend.inquiry.entity.InquiryAnswer;
 import com.brickers.backend.inquiry.entity.InquiryStatus;
 import com.brickers.backend.inquiry.repository.InquiryRepository;
+import com.brickers.backend.user.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -23,11 +24,12 @@ import java.util.ArrayList;
 public class InquiryService {
 
     private final InquiryRepository inquiryRepository;
+    private final CurrentUserService currentUserService;
 
     // ========== User Side ==========
 
     public InquiryResponse createInquiry(Authentication auth, InquiryCreateRequest req) {
-        String userId = (String) auth.getPrincipal();
+        String userId = currentUserService.get(auth).getId();
 
         Inquiry inquiry = Inquiry.builder()
                 .userId(userId)
@@ -43,13 +45,13 @@ public class InquiryService {
     }
 
     public Page<InquiryResponse> getMyInquiries(Authentication auth, int page, int size) {
-        String userId = (String) auth.getPrincipal();
+        String userId = currentUserService.get(auth).getId();
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         return inquiryRepository.findByUserId(userId, pageable).map(InquiryResponse::from);
     }
 
     public InquiryResponse getMyInquiry(Authentication auth, String inquiryId) {
-        String userId = (String) auth.getPrincipal();
+        String userId = currentUserService.get(auth).getId();
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다."));
 
@@ -60,7 +62,7 @@ public class InquiryService {
     }
 
     public InquiryResponse updateMyInquiry(Authentication auth, String inquiryId, InquiryUpdateRequest req) {
-        String userId = (String) auth.getPrincipal();
+        String userId = currentUserService.get(auth).getId();
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다."));
 
@@ -83,7 +85,7 @@ public class InquiryService {
     }
 
     public void deleteMyInquiry(Authentication auth, String inquiryId) {
-        String userId = (String) auth.getPrincipal();
+        String userId = currentUserService.get(auth).getId();
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다."));
 
@@ -98,7 +100,7 @@ public class InquiryService {
     }
 
     public InquiryResponse addAttachment(Authentication auth, String inquiryId, String attachmentUrl) {
-        String userId = (String) auth.getPrincipal();
+        String userId = currentUserService.get(auth).getId();
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다."));
 
@@ -132,7 +134,7 @@ public class InquiryService {
     }
 
     public InquiryResponse createAnswer(Authentication auth, String inquiryId, InquiryAnswerRequest req) {
-        String adminId = (String) auth.getPrincipal();
+        String adminId = currentUserService.get(auth).getId();
         Inquiry inquiry = inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다."));
 
