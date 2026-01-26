@@ -37,6 +37,9 @@ ENV JWT_SECRET=dummy_secret_key_must_be_long_enough_for_build
 ENV FRONT_BASE_URL=http://localhost:5173
 ENV LOCAL_BASE_URL=http://localhost:8080
 
+# 5) OpenAI (챗봇용)
+ENV APP_OPENAI_API_KEY=sk-dummy-build-time-key
+
 # -----------------------------------------------------------------------------
 # 빌드 실행 (테스트 제외)
 # -----------------------------------------------------------------------------
