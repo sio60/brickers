@@ -62,6 +62,9 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.POST, "/api/kids/render").permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/api/kids/rendered/**").permitAll()
 
+                                                // Chatbot 공개
+                                                .requestMatchers("/api/chat/**").permitAll()
+
                                                 // -------------------------------
                                                 // ✅ Auth API
                                                 // -------------------------------
@@ -110,7 +113,6 @@ public class SecurityConfig {
                                                 // ✅ Admin API
                                                 // -------------------------------
                                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
 
                                                 // -------------------------------
                                                 // ✅ 나머지는 인증
