@@ -120,6 +120,26 @@ export default function MyPage() {
         }
     };
 
+    const getReportStatusLabel = (status: string) => {
+        const labels: Record<string, string> = t.reports.status;
+        return labels[status] || status;
+    };
+
+    const getReportReasonLabel = (reason: string) => {
+        const labels: Record<string, string> = t.reports.reasons;
+        return labels[reason] || reason;
+    };
+
+    const getReportTargetLabel = (type: string) => {
+        const labels: Record<string, string> = t.reports.targets;
+        return labels[type] || type;
+    };
+
+    const getInquiryStatusLabel = (status: string) => {
+        const labels: Record<string, string> = t.inquiries.status;
+        return labels[status] || status;
+    };
+
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -131,7 +151,7 @@ export default function MyPage() {
         { id: "jobs" as MenuItem, label: t.menu.jobs },
         { id: "gallery" as MenuItem, label: t.menu.gallery },
         { id: "inquiries" as MenuItem, label: t.menu.inquiries },
-        { id: "reports" as MenuItem, label: "내 신고함" }, // ✅ 추가
+        { id: "reports" as MenuItem, label: t.menu.reports },
         { id: "settings" as MenuItem, label: t.menu.settings },
         { id: "delete" as MenuItem, label: t.menu.delete },
     ];
@@ -446,7 +466,9 @@ export default function MyPage() {
                                 inquiries.map((iq) => (
                                     <div key={iq.id} className="mypage__inquiryCard">
                                         <div className="inquiry__header">
-                                            <span className={`inquiry__status ${iq.status}`}>{iq.status}</span>
+                                            <span className={`inquiry__status ${iq.status}`}>
+                                                {getInquiryStatusLabel(iq.status)}
+                                            </span>
                                             <span className="inquiry__date">{new Date(iq.createdAt).toLocaleDateString()}</span>
                                         </div>
                                         <h3 className="inquiry__title">{iq.title}</h3>
@@ -454,7 +476,7 @@ export default function MyPage() {
 
                                         {iq.answer && (
                                             <div className="inquiry__answer">
-                                                <div className="answer__badge">관리자 답변</div>
+                                                <div className="answer__badge">{t.inquiries.adminAnswer}</div>
                                                 <p className="answer__text">{iq.answer.content}</p>
                                                 <span className="answer__date">{new Date(iq.answer.answeredAt).toLocaleString()}</span>
                                             </div>
@@ -462,7 +484,7 @@ export default function MyPage() {
                                     </div>
                                 ))
                             ) : (
-                                <p className="mypage__empty">문의 내역이 없습니다.</p>
+                                <p className="mypage__empty">{t.inquiries.empty}</p>
                             )}
                         </div>
                     </div>
@@ -471,26 +493,31 @@ export default function MyPage() {
             case "reports":
                 return (
                     <div className="mypage__section">
-                        <h2 className="mypage__sectionTitle">내 신고함</h2>
+                        <h2 className="mypage__sectionTitle">{t.reports.title}</h2>
                         <div className="mypage__inquiriesList">
                             {listLoading ? (
-                                <p className="mypage__loading">불러오는 중...</p>
+                                <p className="mypage__loading">{t.common.loading}</p>
                             ) : reports.length > 0 ? (
                                 reports.map((rp) => (
-                                    <div key={rp.id} className="mypage__inquiryCard">
+                                    <div key={rp.id} className="mypage__inquiryCard report-card">
                                         <div className="inquiry__header">
-                                            <span className={`inquiry__status ${rp.status}`}>{rp.status}</span>
+                                            <span className={`inquiry__status ${rp.status}`}>
+                                                {getReportStatusLabel(rp.status)}
+                                            </span>
                                             <span className="inquiry__date">{new Date(rp.createdAt).toLocaleDateString()}</span>
                                         </div>
-                                        <h3 className="inquiry__title">{rp.reason}</h3>
-                                        <p className="inquiry__content">
-                                            Target: {rp.targetType} ({rp.targetId})<br />
-                                            {rp.details}
-                                        </p>
+                                        <div className="report__reason-group">
+                                            <span className="report__target-badge">{getReportTargetLabel(rp.targetType)}</span>
+                                            <h3 className="inquiry__title">{getReportReasonLabel(rp.reason)}</h3>
+                                        </div>
+                                        <div className="report__details">
+                                            <p className="inquiry__content">{rp.details}</p>
+                                            <span className="report__id-info">{t.reports.dataId}: {rp.targetId}</span>
+                                        </div>
 
                                         {rp.resolutionNote && (
                                             <div className="inquiry__answer">
-                                                <div className="answer__badge">관리자 조치 내용</div>
+                                                <div className="answer__badge">{t.reports.adminNote}</div>
                                                 <p className="answer__text">{rp.resolutionNote}</p>
                                                 {rp.resolvedAt && (
                                                     <span className="answer__date">{new Date(rp.resolvedAt).toLocaleString()}</span>
@@ -500,7 +527,7 @@ export default function MyPage() {
                                     </div>
                                 ))
                             ) : (
-                                <p className="mypage__empty">신고 내역이 없습니다.</p>
+                                <p className="mypage__empty">{t.reports.empty}</p>
                             )}
                         </div>
                     </div>
