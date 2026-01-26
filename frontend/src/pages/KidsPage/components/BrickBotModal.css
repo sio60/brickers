@@ -1,0 +1,239 @@
+/* BrickBotModal.css */
+.brickbot-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+}
+
+.brickbot-container {
+    width: 380px;
+    height: 600px;
+    background-color: #ffffff;
+    /* 흰색 배경 */
+    border: 2px solid #000000;
+    /* 검은색 테두리 */
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: popIn 0.3s ease-out;
+}
+
+@keyframes popIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* 헤더 */
+.brickbot-header {
+    height: 60px;
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 2px solid #f0f0f0;
+    /* 연한 구분선 */
+}
+
+.brickbot-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brickbot-avatar-frame {
+    display: none;
+    /* 상단 이미지 제거 확인 사살 */
+}
+
+.brickbot-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.brickbot-name {
+    font-weight: 700;
+    font-size: 18px;
+    color: #000;
+}
+
+.brickbot-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #000;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    /* 회전 애니메이션용 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.brickbot-close:hover {
+    transform: rotate(90deg);
+    /* 커서 올리면 회전 */
+}
+
+/* 채팅 영역 */
+.brickbot-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background-color: #ffffff;
+}
+
+.brickbot-msg-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    max-width: 85%;
+}
+
+.user-row {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.bot-row {
+    align-self: flex-start;
+}
+
+.brickbot-msg-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    /* 완전 원형 */
+    object-fit: cover;
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+    /* 찌그러짐 방지 */
+    margin-top: 0px;
+    /* 상단 정렬 맞춤 */
+}
+
+.brickbot-bubble {
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;
+    position: relative;
+    box-shadow: none;
+    /* 그림자 제거 (깔끔하게) */
+}
+
+.brickbot-bubble.bot {
+    background-color: #ffffff;
+    color: #000;
+    border: 2px solid #000;
+    /* 검은색 테두리 */
+    border-top-left-radius: 2px;
+}
+
+.brickbot-bubble.user {
+    background-color: #000000;
+    /* 검은색 배경 */
+    color: #ffffff;
+    /* 흰색 글씨 */
+    border-top-right-radius: 2px;
+}
+
+/* 타이핑 애니메이션 */
+.brickbot-bubble.typing {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 14px;
+}
+
+.brickbot-bubble.typing span {
+    width: 4px;
+    height: 4px;
+    background-color: #888;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.brickbot-bubble.typing span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.brickbot-bubble.typing span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(0);
+    }
+
+    40% {
+        transform: scale(1);
+    }
+}
+
+/* 입력 영역 */
+.brickbot-input-area {
+    background-color: #fff;
+    padding: 10px;
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid #eee;
+}
+
+.brickbot-input {
+    flex: 1;
+    border: none;
+    background-color: #f2f2f2;
+    border-radius: 18px;
+    padding: 10px 14px;
+    font-size: 14px;
+    resize: none;
+    outline: none;
+}
+
+.brickbot-send-btn {
+    background-color: #000000;
+    border: none;
+    border-radius: 18px;
+    padding: 0 16px;
+    font-weight: 600;
+    color: #ffffff;
+    /* 카카오 갈색 */
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.brickbot-send-btn:disabled {
+    background-color: #eee;
+    color: #aaa;
+    cursor: not-allowed;
+}

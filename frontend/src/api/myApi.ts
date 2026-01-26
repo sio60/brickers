@@ -169,8 +169,80 @@ export async function getMyGalleryItems(page = 0, size = 12): Promise<{ content:
 }
 
 // 내 북마크 목록 조회
-export async function getMyBookmarks(page = 0, size = 12): Promise<{ content: any[]; totalPages: number }> {
-    return request<{ content: any[]; totalPages: number }>(`${API_BASE}/api/gallery/bookmark/my?page=${page}&size=${size}`);
+export async function getMyBookmarks(page = 0, size = 12): Promise<{ content: MyBookmarkItem[]; totalPages: number }> {
+    return request<{ content: MyBookmarkItem[]; totalPages: number }>(`${API_BASE}/api/gallery/bookmarks/my?page=${page}&size=${size}`);
+}
+
+// ========== 갤러리 상세 & 상호작용 API ==========
+
+// 갤러리 응답 타입
+export interface GalleryItem {
+    id: string;
+    authorId: string;
+    authorNickname: string;
+    authorProfileImage: string;
+    title: string;
+    content: string;
+    tags: string[];
+    thumbnailUrl: string;
+    visibility: 'PUBLIC' | 'PRIVATE';
+    createdAt: string;
+    updatedAt: string;
+    likeCount: number;
+    dislikeCount: number;
+    viewCount: number;
+    // ✅ 추가: 현재 사용자의 북마크/반응 상태
+    bookmarked?: boolean;
+    myReaction?: 'LIKE' | 'DISLIKE' | null;
+}
+
+// 북마크 토글 응답 타입
+export interface BookmarkToggleResponse {
+    postId: string;
+    bookmarked: boolean;
+    toggledAt: string;
+}
+
+// 내 북마크 아이템 타입
+export interface MyBookmarkItem {
+    postId: string;
+    title: string;
+    thumbnailUrl: string;
+    tags: string[];
+    bookmarkedAt: string;
+    postCreatedAt: string;
+}
+
+// 반응 타입
+export type ReactionType = 'LIKE' | 'DISLIKE';
+
+// 반응 토글 응답 타입
+export interface ReactionToggleResponse {
+    postId: string;
+    myReaction: ReactionType | null;
+    likeCount: number;
+    dislikeCount: number;
+    toggledAt: string;
+}
+
+// 갤러리 상세 조회
+export async function getGalleryDetail(postId: string): Promise<GalleryItem> {
+    return request<GalleryItem>(`${API_BASE}/api/gallery/${postId}`);
+}
+
+// 북마크 토글 (추가/해제)
+export async function toggleGalleryBookmark(postId: string): Promise<BookmarkToggleResponse> {
+    return request<BookmarkToggleResponse>(`${API_BASE}/api/gallery/${postId}/bookmark`, {
+        method: 'POST',
+    });
+}
+
+// 좋아요/싫어요 토글
+export async function toggleGalleryReaction(postId: string, type: ReactionType): Promise<ReactionToggleResponse> {
+    return request<ReactionToggleResponse>(`${API_BASE}/api/gallery/${postId}/reaction`, {
+        method: 'POST',
+        body: JSON.stringify({ type }),
+    });
 }
 
 // 작업 재시도 (중단된 작업 이어하기)

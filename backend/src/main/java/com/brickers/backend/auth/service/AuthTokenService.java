@@ -24,10 +24,10 @@ public class AuthTokenService {
     @Value("${jwt.refresh-expiration}")
     private long refreshExpMs;
 
-    @Value("${app.cookie.secure:false}")
+    @Value("${app.cookie.secure:true}") // 기본값 true (보안 권장)
     private boolean cookieSecure;
 
-    @Value("${app.cookie.same-site:Lax}")
+    @Value("${app.cookie.same-site:Lax}") // 기본값 Lax (같은 도메인 권장)
     private String cookieSameSite;
 
     public IssuedTokens issueTokens(String userId, Map<String, Object> claims) {
@@ -52,7 +52,7 @@ public class AuthTokenService {
                 .httpOnly(true)
                 .secure(cookieSecure)
                 .path("/")
-                .sameSite(cookieSameSite) // 로컬:Lax / 배포:None
+                .sameSite(cookieSameSite) // 배포 환경: Lax/true 권장
                 .maxAge(refreshExpMs / 1000)
                 .build();
 

@@ -6,6 +6,7 @@ import { useLanguage } from "../../../contexts/LanguageContext";
 import { getMyProfile } from "../../../api/myApi";
 import { useAuth } from "../../Auth/AuthContext";
 import LoginModal from "../../MainPage/components/LoginModal";
+import BrickBotModal from "./BrickBotModal"; // [NEW]
 
 export default function FloatingMenuButton() {
     const navigate = useNavigate();
@@ -15,6 +16,9 @@ export default function FloatingMenuButton() {
     const [isAdmin, setIsAdmin] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+    // [NEW] 챗봇 모달 상태
+    const [isChatOpen, setIsChatOpen] = useState(false);
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -30,7 +34,7 @@ export default function FloatingMenuButton() {
 
     const menuItems = [
         { id: "mypage", label: t.floatingMenu?.mypage || "My Page" },
-        { id: "chatbot", label: t.floatingMenu?.chatbot || "ChatBot" },
+        { id: "chatbot", label: t.floatingMenu?.chatbot || "BrickBot" }, // Label Change
         { id: "gallery", label: t.floatingMenu?.gallery || "Gallery" },
     ];
 
@@ -46,8 +50,8 @@ export default function FloatingMenuButton() {
                 navigate("/mypage");
                 break;
             case "chatbot":
-                // TODO: 챗봇 연결
-                window.open("https://pf.kakao.com/_your_channel", "_blank");
+                // [NEW] Open Chat Modal
+                setIsChatOpen(true);
                 break;
             case "gallery":
                 navigate("/gallery");
@@ -104,6 +108,12 @@ export default function FloatingMenuButton() {
             <LoginModal
                 isOpen={isLoginModalOpen}
                 onClose={() => setIsLoginModalOpen(false)}
+            />
+
+            {/* [NEW] BrickBot Modal */}
+            <BrickBotModal
+                isOpen={isChatOpen}
+                onClose={() => setIsChatOpen(false)}
             />
         </>
     );
