@@ -133,6 +133,9 @@ jobs:
             FRONT_BASE_URL=${{ secrets.FRONT_BASE_URL }}
             BACKEND_PORT=${{ secrets.BACKEND_PORT }}
             FRONTEND_PORT=${{ secrets.FRONTEND_PORT }}
+
+            # OpenAI (챗봇용)
+            APP_OPENAI_API_KEY=${{ secrets.APP_OPENAI_API_KEY }}
             EOF
 
             echo "📄 Creating docker-compose.yml..."
@@ -149,6 +152,7 @@ jobs:
                   - .env
                 environment:
                   - AI_SERVER_URL=${AI_SERVER_URL}
+                  - APP_OPENAI_API_KEY=${APP_OPENAI_API_KEY}
                 networks:
                   - brickers-network
 
