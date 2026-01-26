@@ -374,8 +374,9 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                                         style={{ width: "100%", padding: "12px", border: "1px solid #ddd", borderRadius: "8px" }}
                                     >
                                         <option value="SPAM">스팸 / 부적절한 홍보</option>
-                                        <option value="INAPPROPRIATE_CONTENT">부적절한 콘텐츠</option>
-                                        <option value="ABUSIVE_LANGUAGE">욕설 / 비하 발언</option>
+                                        <option value="INAPPROPRIATE">부적절한 콘텐츠</option>
+                                        <option value="ABUSE">욕설 / 비하 발언</option>
+                                        <option value="COPYRIGHT">저작권 침해</option>
                                         <option value="OTHER">기타</option>
                                     </select>
                                 </div>
