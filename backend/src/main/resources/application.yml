@@ -69,6 +69,9 @@ ai:
     # 환경변수 AI_SERVER_URL이 없으면 기본값 localhost:8000 사용
     url: ${AI_SERVER_URL:http://localhost:8000}
 
+openai:
+  api-key: ${OPENAI_API_KEY}
+
 jwt:
   secret: ${JWT_SECRET}
   access-expiration: ${JWT_ACCESS_EXPIRATION:3600000}
