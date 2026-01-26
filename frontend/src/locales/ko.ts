@@ -43,6 +43,7 @@ export const ko = {
         jobs: "내 작업 목록",
         gallery: "내 갤러리",
         bookmarks: "북마크",
+        inquiries: "내 문의함",
         settings: "설정",
         delete: "회원탈퇴",
         admin: "관리자 전용"
