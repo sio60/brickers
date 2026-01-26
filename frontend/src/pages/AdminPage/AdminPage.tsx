@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { getMyProfile, getAdminStats } from "../../api/myApi";
 import type { AdminStats } from "../../api/myApi";
+import { useAuth } from "../Auth/AuthContext";
 import "./AdminPage.css";
 import Background3D from "../MainPage/components/Background3D";
 
@@ -25,6 +26,7 @@ type RefundRequest = { orderId: string; amount: number; status: string; requeste
 export default function AdminPage() {
     const { t } = useLanguage();
     const navigate = useNavigate();
+    const { authFetch } = useAuth();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "gallery" | "inquiries" | "reports" | "refunds">("dashboard");
@@ -67,12 +69,11 @@ export default function AdminPage() {
 
     const fetchInquiries = async () => {
         try {
-            const token = localStorage.getItem('accessToken');
-            const res = await fetch("/api/admin/inquiries?page=0&size=20", {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            setInquiries(data.content || []);
+            const res = await authFetch("/api/admin/inquiries?page=0&size=20");
+            if (res.ok) {
+                const data = await res.json();
+                setInquiries(data.content || []);
+            }
         } catch (e) { console.error(e); }
     };
 
@@ -84,13 +85,8 @@ export default function AdminPage() {
         }
 
         try {
-            const token = localStorage.getItem('accessToken');
-            const res = await fetch(`/api/admin/inquiries/${inquiryId}/answer`, {
+            const res = await authFetch(`/api/admin/inquiries/${inquiryId}/answer`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
                 body: JSON.stringify({ content })
             });
 
@@ -109,23 +105,21 @@ export default function AdminPage() {
 
     const fetchReports = async () => {
         try {
-            const token = localStorage.getItem('accessToken');
-            const res = await fetch("/api/admin/reports?page=0&size=20", {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            setReports(data.content || []);
+            const res = await authFetch("/api/admin/reports?page=0&size=20");
+            if (res.ok) {
+                const data = await res.json();
+                setReports(data.content || []);
+            }
         } catch (e) { console.error(e); }
     };
 
     const fetchRefunds = async () => {
         try {
-            const token = localStorage.getItem('accessToken');
-            const res = await fetch("/api/admin/payments/refund-requests?page=0&size=20", {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            setRefunds(data.content || []);
+            const res = await authFetch("/api/admin/payments/refund-requests?page=0&size=20");
+            if (res.ok) {
+                const data = await res.json();
+                setRefunds(data.content || []);
+            }
         } catch (e) { console.error(e); }
     };
 

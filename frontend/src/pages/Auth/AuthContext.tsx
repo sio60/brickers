@@ -152,6 +152,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    if (accessToken) {
+      localStorage.setItem('accessToken', accessToken);
+    } else {
+      localStorage.removeItem('accessToken');
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
     // 첫 진입/새로고침 시 access 복구
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
