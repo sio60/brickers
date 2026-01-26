@@ -22,6 +22,7 @@ public class AdminPaymentDto {
     private LocalDateTime updatedAt;
     private LocalDateTime canceledAt;
     private String cancelReason;
+    private String pgOrderId;
 
     public static AdminPaymentDto from(PaymentOrder order) {
         return AdminPaymentDto.builder()
@@ -37,6 +38,7 @@ public class AdminPaymentDto {
                 .updatedAt(order.getUpdatedAt())
                 .canceledAt(order.getCanceledAt())
                 .cancelReason(order.getCancelReason())
+                .pgOrderId(order.getPgOrderId())
                 .build();
     }
 }

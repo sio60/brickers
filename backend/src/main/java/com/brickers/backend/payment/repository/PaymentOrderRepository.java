@@ -17,6 +17,8 @@ public interface PaymentOrderRepository extends MongoRepository<PaymentOrder, St
     // 주문 번호로 조회
     Optional<PaymentOrder> findByOrderNo(String orderNo);
 
+    boolean existsByOrderNo(String orderNo);
+
     // PG 주문 ID로 조회
     Optional<PaymentOrder> findByPgOrderId(String pgOrderId);
 
@@ -27,5 +29,6 @@ public interface PaymentOrderRepository extends MongoRepository<PaymentOrder, St
     Page<PaymentOrder> findByUserIdAndStatus(String userId, PaymentStatus status, Pageable pageable);
 
     // [New] 매출 통계용 (기간별 결제 완료 건)
-    List<PaymentOrder> findByStatusAndPaidAtBetween(PaymentStatus status, java.time.LocalDateTime start,LocalDateTime end);
+    List<PaymentOrder> findByStatusAndPaidAtBetween(PaymentStatus status, java.time.LocalDateTime start,
+            LocalDateTime end);
 }
