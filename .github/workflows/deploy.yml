@@ -89,6 +89,7 @@ jobs:
             PRIMARY_MONGODB_URI=${{ secrets.PRIMARY_MONGODB_URI }}
 
             # AI / Python Service
+            AI_SERVER_URL=${{ secrets.AI_SERVER_URL }}
             AI_PORT=${{ secrets.AI_PORT }}
             AI_MONGODB_URI=${{ secrets.AI_MONGODB_URI }}
             AI_MONGODB_NAME=${{ secrets.AI_MONGODB_NAME }}
@@ -147,7 +148,7 @@ jobs:
                 env_file:
                   - .env
                 environment:
-                  - AI_SERVER_URL=${AI_SERVER_URL:-http://brickers-ai:8000}
+                  - AI_SERVER_URL=${AI_SERVER_URL}
                 networks:
                   - brickers-network
 
