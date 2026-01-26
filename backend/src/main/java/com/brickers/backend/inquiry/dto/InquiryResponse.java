@@ -14,6 +14,7 @@ import java.util.List;
 public class InquiryResponse {
     private String id;
     private String userId;
+    private String userEmail; // ✅ 추가
     private String title;
     private String content;
     private List<String> attachments;

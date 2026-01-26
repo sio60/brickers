@@ -5,6 +5,7 @@ import com.brickers.backend.job.entity.JobStage;
 import com.brickers.backend.job.entity.JobStatus;
 import com.brickers.backend.job.entity.KidsLevel;
 import com.brickers.backend.job.repository.GenerateJobRepository;
+import com.brickers.backend.upload_s3.service.StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
@@ -17,6 +18,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.Map;
 
 @Service
@@ -26,61 +28,78 @@ public class KidsService {
 
     private final WebClient aiWebClient;
     private final GenerateJobRepository generateJobRepository;
-    private final com.brickers.backend.upload_s3.service.StorageService storageService; // ✅ 추가
+    private final StorageService storageService;
+
+    // ---- timeouts ----
+    private static final Duration PROCESS_TIMEOUT = Duration.ofSeconds(300);
+    private static final Duration DOWNLOAD_TIMEOUT = Duration.ofSeconds(120);
 
     /**
      * 레고 생성 + Job DB 저장
-     * 
-     * @param userId 사용자 ID (로그인 시 전달, 비로그인 시 null)
+     *
+     * 흐름:
+     * 1) 원본 이미지 저장(가능하면)
+     * 2) Job 생성/저장(로그인 사용자만)
+     * 3) FastAPI /api/v1/kids/process-all 호출
+     * 4) 응답에서 preview / ldr 저장 + modelKey 업데이트
+     * 5) Job done or failed 처리
      */
     public Map<String, Object> generateBrick(String userId, MultipartFile file, String age, int budget) {
-        log.info("AI 생성 요청 시작: UserId={}, Age={}, Budget={}", userId, age, budget);
+        log.info("AI 생성 요청 시작: userId={}, age={}, budget={}, filename={}",
+                safe(userId), safe(age), budget, file != null ? file.getOriginalFilename() : null);
 
-        // ✅ 0. 입력 이미지 저장 (원본 보관)
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("file is empty");
+        }
+
+        boolean loggedIn = userId != null && !userId.isBlank();
+
+        // 0) 입력 이미지 저장(원본 보관) - 실패해도 계속 진행
         String sourceImageUrl = null;
-        if (userId != null && !userId.isBlank() && !file.isEmpty()) {
+        if (loggedIn) {
             try {
                 var stored = storageService.storeImage(userId, file);
                 sourceImageUrl = stored.url();
             } catch (Exception e) {
-                log.warn("이미지 저장 실패 (생성은 계속 진행): {}", e.getMessage());
+                log.warn("원본 이미지 저장 실패(생성 계속): {}", e.getMessage());
             }
         }
 
-        // ✅ 1. Job 엔티티 생성 (QUEUED 상태로 시작)
+        // 1) Job 생성 (로그인 사용자만 저장)
         GenerateJobEntity job = GenerateJobEntity.builder()
                 .userId(userId)
                 .level(ageToKidsLevel(age))
                 .status(JobStatus.QUEUED)
                 .stage(JobStage.THREE_D_PREVIEW)
                 .title(file.getOriginalFilename())
-                .sourceImageUrl(sourceImageUrl) // ✅ 저장된 이미지 URL
+                .sourceImageUrl(sourceImageUrl)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .stageUpdatedAt(LocalDateTime.now())
                 .build();
         job.ensureDefaults();
 
-        // 사용자가 로그인한 경우에만 저장
-        if (userId != null && !userId.isBlank()) {
+        if (loggedIn) {
             generateJobRepository.save(job);
             log.info("Job 생성 완료: jobId={}", job.getId());
         }
 
-        // ✅ 2. Job 상태를 RUNNING으로 변경
+        // 2) RUNNING 반영
         job.markRunning(JobStage.THREE_D_PREVIEW);
-        if (userId != null && !userId.isBlank()) {
+        if (loggedIn) {
             generateJobRepository.save(job);
         }
 
-        // 3. Python 서버로 보낼 데이터 포장 (Multipart)
+        // 3) FastAPI로 멀티파트 구성
         MultipartBodyBuilder builder = new MultipartBodyBuilder();
         builder.part("file", file.getResource());
         builder.part("age", age);
         builder.part("budget", budget);
+        // ✅ FastAPI는 returnLdrData 기본 true라 굳이 안 넣어도 되지만 명시해도 됨
+        builder.part("returnLdrData", "true");
 
         try {
-            // 4. Python 서버의 /api/v1/kids/process-all 호출
+            // 4) FastAPI 호출
             Map<String, Object> response = aiWebClient.post()
                     .uri("/api/v1/kids/process-all")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
@@ -88,63 +107,16 @@ public class KidsService {
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
                     })
-                    .timeout(Duration.ofSeconds(300))
+                    .timeout(PROCESS_TIMEOUT)
                     .block();
 
-            log.info("AI 생성 완료: {}", response);
+            log.info("AI 응답 수신: ok={}, keys={}",
+                    response != null ? response.get("ok") : null,
+                    response != null ? response.keySet() : null);
 
-            // ✅ 5. 성공 시 Job 완료 처리
-            if (userId != null && !userId.isBlank()) {
-                // 결과 URL 저장
-                if (response != null) {
-                    // Preview Image URL (만약 AI가 주면)
-                    if (response.containsKey("image_url")) {
-                        job.setPreviewImageUrl(String.valueOf(response.get("image_url")));
-                    }
-                    // ✅ LDR URL -> 파일 시스템 읽기 -> StorageService(S3/Local) 저장 -> modelKey 업데이트
-                    if (response.containsKey("ldrUrl")) {
-                        String originalLdrUrl = String.valueOf(response.get("ldrUrl"));
-                        try {
-                            // 1. 파일명 추출
-                            // 1. 파일명/경로 추출 (URL: /api/generated/brickify_.../result.ldr)
-                            String urlStr = originalLdrUrl;
-                            String relativePath = urlStr;
-                            if (urlStr.contains("/api/generated/")) {
-                                relativePath = urlStr
-                                        .substring(urlStr.indexOf("/api/generated/") + "/api/generated/".length());
-                            } else if (urlStr.contains("/generated/")) {
-                                relativePath = urlStr.substring(urlStr.indexOf("/generated/") + "/generated/".length());
-                            }
-
-                            // 파일명만 따지 말고, 하위 폴더 포함해서 경로 잡기
-                            String filename = relativePath;
-
-                            // 2. 로컬(Volume) 경로에서 파일 읽기
-                            // (Docker 배포 시 brickers-ai 결과물이 공유 볼륨에 있다고 가정)
-                            java.nio.file.Path sourcePath = java.nio.file.Paths.get("../brickers-ai/public/generated",
-                                    filename);
-
-                            byte[] ldrContent;
-                            if (java.nio.file.Files.exists(sourcePath)) {
-                                ldrContent = java.nio.file.Files.readAllBytes(sourcePath);
-                            } else {
-                                throw new java.io.FileNotFoundException("Generated file not found at " + sourcePath);
-                            }
-
-                            // 3. StorageService를 통해 저장 (S3 or Local Uploads)
-                            var stored = storageService.storeFile(userId, filename, ldrContent, "text/plain");
-
-                            // 4. 저장된 스토리지 URL로 교체 (DB 저장용)
-                            job.setModelKey(stored.url());
-                            log.info("LDR 파일 스토리지 이관 완료: {}", stored.url());
-
-                        } catch (Exception e) {
-                            log.error("LDR 파일 처리 실패: {}", e.getMessage());
-                            // 실패 시 원본 경로 유지
-                            job.setModelKey(originalLdrUrl);
-                        }
-                    }
-                }
+            // 5) 성공 시 Job 업데이트(로그인 사용자만)
+            if (loggedIn) {
+                applySuccessResultToJob(job, userId, response);
                 job.markDone();
                 generateJobRepository.save(job);
                 log.info("Job 완료: jobId={}", job.getId());
@@ -155,15 +127,144 @@ public class KidsService {
         } catch (Exception e) {
             log.error("AI 서버 통신 실패", e);
 
-            // ✅ 6. 실패 시 Job 실패 처리
-            if (userId != null && !userId.isBlank()) {
+            if (loggedIn) {
                 job.markFailed(e.getMessage());
                 generateJobRepository.save(job);
                 log.info("Job 실패 처리: jobId={}", job.getId());
             }
 
-            throw new RuntimeException("AI 서버가 응답하지 않습니다: " + e.getMessage());
+            throw new RuntimeException("AI 서버가 응답하지 않습니다: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * FastAPI 응답을 DB job에 반영
+     *
+     * - preview: correctedUrl 사용 (기존 image_url 키는 폐기/호환용으로만 체크)
+     * - ldr: ldrData (data URI base64) 우선, 없으면 ldrUrl을 HTTP GET으로 다운로드
+     * - 저장 후 job.modelKey = 저장된 URL
+     */
+    private void applySuccessResultToJob(GenerateJobEntity job, String userId, Map<String, Object> response) {
+        if (response == null)
+            return;
+
+        // ✅ preview URL (FastAPI: correctedUrl)
+        String previewUrl = firstNonBlank(
+                asString(response.get("correctedUrl")),
+                asString(response.get("image_url")) // 과거 호환
+        );
+        if (previewUrl != null) {
+            job.setPreviewImageUrl(previewUrl);
+        }
+
+        // ✅ LDR 처리
+        String ldrData = asString(response.get("ldrData")); // data:text/plain;base64,...
+        String ldrUrl = asString(response.get("ldrUrl")); // /api/generated/.../result.ldr
+
+        if (isBlank(ldrData) && isBlank(ldrUrl)) {
+            // LDR이 없으면 modelKey 업데이트 못함 (원하면 여기서 예외로 막아도 됨)
+            log.warn("응답에 ldrData/ldrUrl 둘 다 없음. jobId={}", job.getId());
+            return;
+        }
+
+        byte[] ldrBytes = null;
+
+        // 1) ldrData 우선
+        if (!isBlank(ldrData) && ldrData.startsWith("data:") && ldrData.contains("base64,")) {
+            try {
+                ldrBytes = decodeDataUriBase64(ldrData);
+            } catch (Exception e) {
+                log.warn("ldrData 디코딩 실패(ldrUrl fallback 시도): {}", e.getMessage());
+            }
+        }
+
+        // 2) ldrData 실패/없으면 ldrUrl로 다시 다운로드
+        if ((ldrBytes == null || ldrBytes.length == 0) && !isBlank(ldrUrl)) {
+            try {
+                ldrBytes = downloadBytesByUrl(ldrUrl);
+            } catch (Exception e) {
+                log.error("ldrUrl 다운로드 실패: url={}, err={}", ldrUrl, e.getMessage());
+            }
+        }
+
+        if (ldrBytes == null || ldrBytes.length == 0) {
+            // 최후: 원본 ldrUrl 유지(그래도 사용자에게 링크라도)
+            log.error("LDR 확보 실패(ldrData/ldrUrl 모두 실패). jobId={}, keep modelKey=ldrUrl",
+                    job.getId());
+            job.setModelKey(ldrUrl);
+            return;
+        }
+
+        // 저장 파일명: ldrUrl에서 마지막 파일명 추출, 없으면 result.ldr
+        String filename = extractFilenameFromUrl(ldrUrl, "result.ldr");
+
+        try {
+            var stored = storageService.storeFile(userId, filename, ldrBytes, "text/plain");
+            job.setModelKey(stored.url());
+            log.info("LDR 파일 스토리지 이관 완료: {}", stored.url());
+        } catch (Exception e) {
+            log.error("LDR 저장 실패(원본 ldrUrl 유지): {}", e.getMessage());
+            job.setModelKey(ldrUrl);
+        }
+    }
+
+    /**
+     * data:text/plain;base64,AAAA... -> bytes
+     */
+    private byte[] decodeDataUriBase64(String dataUri) {
+        int comma = dataUri.indexOf(',');
+        if (comma < 0)
+            throw new IllegalArgumentException("Invalid data URI");
+        String b64 = dataUri.substring(comma + 1);
+        return Base64.getDecoder().decode(b64);
+    }
+
+    /**
+     * FastAPI가 제공한 상대/절대 URL로부터 byte[] 다운로드
+     *
+     * - ldrUrl이 "/api/generated/..." (상대경로)면 baseUrl이 붙어서 호출됨
+     */
+    private byte[] downloadBytesByUrl(String url) {
+        return aiWebClient.get()
+                .uri(url)
+                .retrieve()
+                .bodyToMono(byte[].class)
+                .timeout(DOWNLOAD_TIMEOUT)
+                .block();
+    }
+
+    private String extractFilenameFromUrl(String url, String defaultName) {
+        if (isBlank(url))
+            return defaultName;
+        int q = url.indexOf('?');
+        String u = (q >= 0) ? url.substring(0, q) : url;
+        int slash = u.lastIndexOf('/');
+        if (slash >= 0 && slash < u.length() - 1) {
+            return u.substring(slash + 1);
+        }
+        return defaultName;
+    }
+
+    private String firstNonBlank(String... arr) {
+        if (arr == null)
+            return null;
+        for (String s : arr) {
+            if (!isBlank(s))
+                return s;
+        }
+        return null;
+    }
+
+    private String asString(Object o) {
+        return o == null ? null : String.valueOf(o);
+    }
+
+    private boolean isBlank(String s) {
+        return s == null || s.isBlank();
+    }
+
+    private String safe(String s) {
+        return s == null ? "null" : s;
     }
 
     /**

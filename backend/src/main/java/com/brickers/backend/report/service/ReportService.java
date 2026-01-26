@@ -8,6 +8,7 @@ import com.brickers.backend.report.entity.Report;
 import com.brickers.backend.report.entity.ReportStatus;
 import com.brickers.backend.report.repository.ReportRepository;
 import com.brickers.backend.user.entity.User;
+import com.brickers.backend.user.repository.UserRepository;
 import com.brickers.backend.user.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,7 @@ import java.util.NoSuchElementException;
 public class ReportService {
 
     private final ReportRepository reportRepository;
+    private final UserRepository userRepository;
     private final CurrentUserService currentUserService; // ✅ 추가
 
     // --- User Side ---
@@ -66,38 +68,42 @@ public class ReportService {
                 .updatedAt(now)
                 .build();
 
-        return ReportResponse.from(reportRepository.save(report));
+        ReportResponse resp = ReportResponse.from(reportRepository.save(report));
+        resp.setReporterEmail(user.getEmail());
+        return resp;
     }
 
     public Page<ReportResponse> getMyReports(Authentication auth, int page, int size) {
         User user = currentUserService.get(auth);
-        String userId = user.getId();
-
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return reportRepository.findByReporterId(userId, pageable).map(ReportResponse::from);
+        return reportRepository.findByReporterId(user.getId(), pageable).map(it -> {
+            ReportResponse resp = ReportResponse.from(it);
+            resp.setReporterEmail(user.getEmail());
+            return resp;
+        });
     }
 
     public ReportResponse getMyReport(Authentication auth, String reportId) {
         User user = currentUserService.get(auth);
-        String userId = user.getId();
 
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new NoSuchElementException("신고를 찾을 수 없습니다."));
 
-        if (!report.getReporterId().equals(userId)) {
+        if (!report.getReporterId().equals(user.getId())) {
             throw new IllegalArgumentException("본인의 신고만 조회 가능합니다.");
         }
-        return ReportResponse.from(report);
+        ReportResponse resp = ReportResponse.from(report);
+        resp.setReporterEmail(user.getEmail());
+        return resp;
     }
 
     public void cancelMyReport(Authentication auth, String reportId) {
         User user = currentUserService.get(auth);
-        String userId = user.getId();
 
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new IllegalArgumentException("신고를 찾을 수 없습니다."));
 
-        if (!report.getReporterId().equals(userId)) {
+        if (!report.getReporterId().equals(user.getId())) {
             throw new IllegalArgumentException("권한이 없습니다.");
         }
         if (report.getStatus() != ReportStatus.PENDING) {
@@ -112,13 +118,19 @@ public class ReportService {
 
     public Page<ReportResponse> getAllReports(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return reportRepository.findAll(pageable).map(ReportResponse::from);
+        return reportRepository.findAll(pageable).map(it -> {
+            ReportResponse resp = ReportResponse.from(it);
+            userRepository.findById(it.getReporterId()).ifPresent(user -> resp.setReporterEmail(user.getEmail()));
+            return resp;
+        });
     }
 
     public ReportResponse getReportDetail(String reportId) {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() -> new IllegalArgumentException("신고를 찾을 수 없습니다."));
-        return ReportResponse.from(report);
+        ReportResponse resp = ReportResponse.from(report);
+        userRepository.findById(report.getReporterId()).ifPresent(user -> resp.setReporterEmail(user.getEmail()));
+        return resp;
     }
 
     public ReportResponse resolveReport(Authentication authentication, String reportId, ReportResolveRequest req) {

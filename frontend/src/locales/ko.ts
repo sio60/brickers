@@ -43,6 +43,8 @@ export const ko = {
         jobs: "내 작업 목록",
         gallery: "내 갤러리",
         bookmarks: "북마크",
+        inquiries: "내 문의함",
+        reports: "내 신고함",
         settings: "설정",
         delete: "회원탈퇴",
         admin: "관리자 전용"
@@ -91,7 +93,39 @@ export const ko = {
     delete: {
         title: "회원탈퇴",
         desc: "정말 탈퇴하시겠습니까? 모든 데이터가 삭제되며 복구가 불가능합니다.",
-        btn: "회원탈퇴"
+        btn: "회원탈퇴",
+    },
+    inquiries: {
+        title: "내 문의함",
+        empty: "문의 내역이 없습니다.",
+        status: {
+            PENDING: "답변 대기",
+            ANSWERED: "답변 완료",
+        },
+        adminAnswer: "관리자 답변",
+    },
+    reports: {
+        title: "내 신고함",
+        empty: "신고 내역이 없습니다.",
+        status: {
+            PENDING: "검토 중",
+            RESOLVED: "처리 완료",
+            REJECTED: "반려",
+        },
+        reasons: {
+            SPAM: "스팸/광고",
+            ABUSE: "욕설/비하",
+            INAPPROPRIATE: "부적절한 내용",
+            GENERAL: "기타",
+        },
+        targets: {
+            POST: "게시글",
+            COMMENT: "댓글",
+            USER: "사용자",
+            GENERAL: "일반",
+        },
+        adminNote: "관리자 조치 내용",
+        dataId: "데이터 ID",
     },
     kids: {
         title: "난이도를 선택해 보세요",
