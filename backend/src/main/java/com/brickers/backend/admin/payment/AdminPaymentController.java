@@ -33,7 +33,7 @@ public class AdminPaymentController {
     }
 
     @GetMapping("/orders/by-orderNo/{orderNo}")
-    public AdminPaymentDto getOrderByOrderNo(@PathVariable String orderNo) {
+    public AdminPaymentDto getOrderByOrderNo(@PathVariable("orderNo") String orderNo) {
         return adminPaymentService.getOrderByOrderNo(orderNo);
     }
 
