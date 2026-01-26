@@ -231,7 +231,7 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, ste
           onStepCountChange={setTotalSteps}
         />
 
-        <OrbitControls enablePan={false} enableZoom autoRotate={!stepMode} autoRotateSpeed={1.2} />
+        <OrbitControls makeDefault enablePan={false} enableZoom />
       </Canvas>
     </div>
   );
