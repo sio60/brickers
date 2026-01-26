@@ -221,12 +221,12 @@
 }
 
 .brickbot-send-btn {
-    background-color: #fee500;
+    background-color: #000000;
     border: none;
     border-radius: 18px;
     padding: 0 16px;
     font-weight: 600;
-    color: #3c1e1e;
+    color: #ffffff;
     /* 카카오 갈색 */
     cursor: pointer;
     transition: background-color 0.2s;
