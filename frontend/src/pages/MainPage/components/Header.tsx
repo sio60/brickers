@@ -7,6 +7,8 @@ import UpgradeModal from "./UpgradeModal";
 import { useAuth } from "../../../pages/Auth/AuthContext";
 import { useLanguage } from "../../../contexts/LanguageContext";
 
+import AuthLogout from "../../../pages/Auth/AuthLogout";
+
 export default function Header() {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading, logout } = useAuth();
@@ -14,6 +16,7 @@ export default function Header() {
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // 업그레이드 여부 확인
   const [isPro, setIsPro] = useState(false);
@@ -28,10 +31,13 @@ export default function Header() {
     return () => window.removeEventListener("storage", checkPro);
   }, []);
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
+    setIsLoggingOut(true);
+  };
+
+  const handleLogoutComplete = async () => {
     await logout();
-    // 로컬스토리지 isPro 제거 (정책에 따라 다름, 여기선 일단 둠 or 제거)
-    // localStorage.removeItem("isPro"); 
+    setIsLoggingOut(false);
     navigate("/", { replace: true });
   };
 
@@ -68,7 +74,7 @@ export default function Header() {
           )}
 
           {!isLoading && isAuthenticated && (
-            <button className="header__login-btn" onClick={handleLogout}>
+            <button className="header__login-btn" onClick={handleLogoutClick}>
               {t.header.logout}
             </button>
           )}
@@ -84,6 +90,8 @@ export default function Header() {
         isOpen={isUpgradeModalOpen}
         onClose={() => setIsUpgradeModalOpen(false)}
       />
+
+      {isLoggingOut && <AuthLogout onLogoutComplete={handleLogoutComplete} />}
     </>
   );
 }
