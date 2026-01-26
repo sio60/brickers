@@ -43,6 +43,9 @@ services:
       
       # ✅ AI 서버 URL (Python FastAPI)
       - AI_SERVER_URL=${AI_SERVER_URL:-http://brickers-ai:8000}
+      
+      # ✅ OpenAI Key (추가됨)
+      - APP_OPENAI_API_KEY=${APP_OPENAI_API_KEY}
 
     networks:
       - brickers-network
