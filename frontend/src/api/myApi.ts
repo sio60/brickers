@@ -1,5 +1,8 @@
 // My API 서비스 - 프로필, 작업 관리
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const rawBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase;
+
+console.debug("[myApi] API_BASE is set to:", API_BASE);
 
 export class ApiError extends Error {
     status: number;
@@ -83,12 +86,22 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
 
         if (!res.ok) {
             // 에러 메시지 추출 시도
+            // 에러 메시지 추출 시도
             let errorMessage = '요청 실패';
             try {
-                const errorData = await res.json();
-                errorMessage = errorData.message || errorMessage;
+                const errorText = await res.text();
+                try {
+                    const errorData = JSON.parse(errorText);
+                    // 백엔드 ApiError 구조: { message: "...", error: "...", ... }
+                    errorMessage = errorData.message || errorData.error || errorMessage;
+                } catch {
+                    // JSON이 아니면 텍스트 그대로 사용 (HTML 에러 등 방지 위해 길이 제한)
+                    if (errorText && errorText.length < 200) {
+                        errorMessage = errorText;
+                    }
+                }
             } catch {
-                // JSON 파싱 실패 시 기본 메시지 사용
+                // 본문 읽기 실패 시 무시
             }
             throw new ApiError(errorMessage, res.status);
         }

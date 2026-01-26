@@ -32,21 +32,27 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(HttpServletRequest request) {
         String refreshRaw = readCookie(request, "refreshToken");
+        log.info("[Debug] Refresh cookie: {}", refreshRaw);
+
         if (refreshRaw == null)
             return ResponseEntity.status(401).build();
 
         try {
             String userId = tokenService.validateAndRotate(refreshRaw);
-            User user = userRepository.findById(userId).orElseThrow();
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+            user.ensureDefaults();
 
-            // access에 넣을 claims는 필요 시 추가 (role, provider 등)
-            var issued = tokenService.issueTokens(userId, Map.of("role", user.getRole().name()));
+            String roleName = (user.getRole() != null) ? user.getRole().name() : "USER";
+            log.info("[Refresh] Success for user: {}, role: {}", userId, roleName);
 
+            var issued = tokenService.issueTokens(userId, Map.of("role", roleName));
 
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, issued.refreshCookie().toString())
                     .body(Map.of("accessToken", issued.accessToken()));
         } catch (Exception e) {
+            log.warn("[Refresh] Failed: {}", e.getMessage());
             return ResponseEntity.status(401).build();
         }
     }

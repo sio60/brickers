@@ -19,7 +19,6 @@ export default function MyPageModal({ open, onClose }: Props) {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<MyOverview | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [retrying, setRetrying] = useState<string | null>(null);
     const [activeMenu, setActiveMenu] = useState<MenuItem>("jobs");
     const [galleryItems, setGalleryItems] = useState<any[]>([]);
     const { t } = useLanguage();
@@ -66,14 +65,11 @@ export default function MyPageModal({ open, onClose }: Props) {
 
     const handleRetry = async (jobId: string) => {
         try {
-            setRetrying(jobId);
             await retryJob(jobId);
             const updated = await getMyOverview();
             setData(updated);
         } catch (err) {
             alert("작업 재시도에 실패했습니다.");
-        } finally {
-            setRetrying(null);
         }
     };
 

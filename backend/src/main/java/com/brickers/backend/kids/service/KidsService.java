@@ -106,10 +106,18 @@ public class KidsService {
                         String originalLdrUrl = String.valueOf(response.get("ldrUrl"));
                         try {
                             // 1. 파일명 추출
-                            String filename = originalLdrUrl;
-                            if (filename.contains("/")) {
-                                filename = filename.substring(filename.lastIndexOf("/") + 1);
+                            // 1. 파일명/경로 추출 (URL: /api/generated/brickify_.../result.ldr)
+                            String urlStr = originalLdrUrl;
+                            String relativePath = urlStr;
+                            if (urlStr.contains("/api/generated/")) {
+                                relativePath = urlStr
+                                        .substring(urlStr.indexOf("/api/generated/") + "/api/generated/".length());
+                            } else if (urlStr.contains("/generated/")) {
+                                relativePath = urlStr.substring(urlStr.indexOf("/generated/") + "/generated/".length());
                             }
+
+                            // 파일명만 따지 말고, 하위 폴더 포함해서 경로 잡기
+                            String filename = relativePath;
 
                             // 2. 로컬(Volume) 경로에서 파일 읽기
                             // (Docker 배포 시 brickers-ai 결과물이 공유 볼륨에 있다고 가정)
