@@ -273,7 +273,10 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
         try {
             setIsLoading(true);
             // 페이지네이션 없이 일단 최근 10개만
-            const res = await fetch(`${API_BASE}/api/payments/my/history?page=0&size=10`);
+            const token = localStorage.getItem('accessToken');
+            const res = await fetch(`${API_BASE}/api/payments/my/history?page=0&size=10`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             if (res.ok) {
                 const data = await res.json();
                 setRefundList(data.content || []);
@@ -336,9 +339,13 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
         if (!formTitle.trim() || !formContent.trim()) return alert("제목과 내용을 입력해주세요.");
         setIsSubmitting(true);
         try {
+            const token = localStorage.getItem('accessToken');
             const res = await fetch(`${API_BASE}/api/inquiries`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify({ title: formTitle, content: formContent }),
             });
             if (res.ok) {
@@ -358,12 +365,16 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
         if (!formContent.trim()) return alert("신고 내용을 입력해주세요.");
         setIsSubmitting(true);
         try {
+            const token = localStorage.getItem('accessToken');
             const res = await fetch(`${API_BASE}/api/reports`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     targetType: "GENERAL",
-                    targetId: "0", // 챗봇 일반 신고는 0으로 처리 (백엔드 허용 필요하거나 임시조치)
+                    targetId: "0",
                     reason: reportReason,
                     details: formContent
                 }),
@@ -385,8 +396,10 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
         if (!selectedOrderId) return alert("환불할 내역을 선택해주세요.");
         setIsSubmitting(true);
         try {
+            const token = localStorage.getItem('accessToken');
             const res = await fetch(`${API_BASE}/api/payments/orders/${selectedOrderId}/cancel`, {
                 method: "POST",
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
                 setMode("CHAT");
