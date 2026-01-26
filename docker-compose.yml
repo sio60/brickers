@@ -31,6 +31,13 @@ services:
       - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
       - GOOGLE_LOCAL_REDIRECT_URI=${GOOGLE_LOCAL_REDIRECT_URI}
       
+      # ✅ 카카오 리다이렉트 URI (배포용)
+      - KAKAO_REDIRECT_URI=${KAKAO_REDIRECT_URI}
+      
+      # ✅ 쿠키 설정 (크로스 도메인 필수!)
+      - COOKIE_SECURE=${COOKIE_SECURE:-true}
+      - COOKIE_SAMESITE=${COOKIE_SAMESITE:-None}
+      
       # ✅ Base URL (CORS/리다이렉트용)
       - FRONT_BASE_URL=${FRONT_BASE_URL}
       
