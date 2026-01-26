@@ -70,12 +70,13 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
   const handleGoToSteps = () => {
     if (selectedUrl) {
       onClose();
-      navigate(`/kids/steps?url=${encodeURIComponent(selectedUrl)}`);
+      // 프리셋 모델인 경우 isPreset flag 추가
+      navigate(`/kids/steps?url=${encodeURIComponent(selectedUrl)}&isPreset=true`);
     }
   };
 
 
-  
+
   const handleFile = (f: File) => {
     if (!f.type.startsWith("image/")) return;
     setFile(f);
