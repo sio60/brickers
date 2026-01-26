@@ -35,39 +35,10 @@ public class MyService {
     private final GenerateJobRepository generateJobRepository;
     private final PaymentService paymentService;
 
-    private static final Set<String> ADMIN_EMAILS = Set.of(
-            "rladbskepgpt@naver.com",
-            "kurijuki11@gmail.com",
-            "mayjoonll@naver.com",
-            "mayjoonll@gmail.com",
-            "khwhj@naver.com",
-            "khwhj3577@gmail.com",
-            "ghks0115@gmail.com",
-            "passion.johnbyeon@gmail.com",
-            "sbpak10@naver.com",
-            "sbpak1@gmail.com");
-
     /** 내 프로필 조회 */
     public MyProfileResponse getMyProfile(Authentication authentication) {
         User user = currentUserService.get(authentication);
-        checkAndUpgradeAdmin(user);
         return toProfileResponse(user);
-    }
-
-    private void checkAndUpgradeAdmin(User user) {
-        if (user.getEmail() != null) {
-            String email = user.getEmail().trim().toLowerCase();
-            boolean isAdminEmail = ADMIN_EMAILS.stream().anyMatch(e -> e.equalsIgnoreCase(email));
-
-            if (isAdminEmail) {
-                if (user.getRole() != com.brickers.backend.user.entity.UserRole.ADMIN) {
-                    log.info("[AdminUpgrade] Upgrading user {} (email: {}) to ADMIN role", user.getId(),
-                            user.getEmail());
-                    user.setRole(com.brickers.backend.user.entity.UserRole.ADMIN);
-                    userRepository.save(user);
-                }
-            }
-        }
     }
 
     /** 내 프로필 수정(PATCH) */
@@ -195,7 +166,6 @@ public class MyService {
     /** ✅ 마이페이지 한 번에 로드: settings + 최근 내 글 + 최근 jobs */
     public MyOverviewResponse getMyOverview(Authentication authentication) {
         User user = currentUserService.get(authentication);
-        checkAndUpgradeAdmin(user);
         user.ensureDefaults();
 
         MySettingsResponse settings = MySettingsResponse.from(user);

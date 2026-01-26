@@ -23,4 +23,7 @@ public interface UserRepository extends MongoRepository<User, String> {
     // ✅ (선택) 정상 계정만 조회하고 싶을 때(나중에 로그인 차단/탈퇴처리 정책에 유용)
     Optional<User> findByProviderAndProviderIdAndAccountState(String provider, String providerId,
             AccountState accountState);
+
+    // [New] 기간별 가입자 수 집계용
+    long countByCreatedAtBetween(java.time.LocalDateTime start, java.time.LocalDateTime end);
 }

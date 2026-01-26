@@ -46,11 +46,22 @@ public class AdminJobController {
                 .orElseThrow(() -> new IllegalArgumentException("Job not found"));
     }
 
-    /** 작업 로그 조회 (목업 or LogRepository 필요) */
+    /** 작업 로그 조회 (DB 상태 기반) */
     @GetMapping("/{jobId}/logs")
     public ResponseEntity<?> getJobLogs(@PathVariable String jobId) {
-        // TODO: 실제 로그 테이블 조회 구현
-        return ResponseEntity.ok(Map.of("message", "Log view not implemented yet", "jobId", jobId));
+        GenerateJobEntity job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new IllegalArgumentException("Job not found"));
+
+        // 별도의 로그 컬렉션이 없으므로 엔티티의 상태 정보를 반환
+        return ResponseEntity.ok(Map.of(
+                "jobId", job.getId(),
+                "status", job.getStatus(),
+                "stage", job.getStage(),
+                "errorMessage", job.getErrorMessage(),
+                "createdAt", job.getCreatedAt(),
+                "updatedAt", job.getUpdatedAt(),
+                "history", "Detailed step logs not persisted yet (Check server logs)" // Honest message
+        ));
     }
 
     /** 작업 재시도 */

@@ -170,7 +170,7 @@ export async function getMyGalleryItems(page = 0, size = 12): Promise<{ content:
 
 // 내 북마크 목록 조회
 export async function getMyBookmarks(page = 0, size = 12): Promise<{ content: any[]; totalPages: number }> {
-    return request<{ content: any[]; totalPages: number }>(`${API_BASE}/api/gallery/bookmarks/my?page=${page}&size=${size}`);
+    return request<{ content: any[]; totalPages: number }>(`${API_BASE}/api/gallery/bookmark/my?page=${page}&size=${size}`);
 }
 
 // 작업 재시도 (중단된 작업 이어하기)
