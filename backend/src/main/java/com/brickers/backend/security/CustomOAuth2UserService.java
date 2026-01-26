@@ -5,7 +5,6 @@ import com.brickers.backend.user.entity.MembershipPlan;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.entity.UserRole;
 import com.brickers.backend.user.repository.UserRepository;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -17,11 +16,14 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * OAuth2 사용자 정보 처리 서비스
  * 카카오/구글 로그인 시 사용자 정보를 MongoDB에 저장
+ *
+ * ✅ 역할(role)은 DB를 소스 오브 트루스로 둔다:
+ * - 신규 생성: USER
+ * - 기존 유저: role 변경하지 않음(관리자 승격은 mongosh/관리자 API로 처리)
  */
 @Slf4j
 @Service
@@ -29,18 +31,6 @@ import java.util.Set;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
-
-    private static final Set<String> ADMIN_EMAILS = Set.of(
-            "rladbskepgpt@naver.com",
-            "kurijuki11@gmail.com",
-            "mayjoonll@naver.com",
-            "mayjoonll@gmail.com",
-            "khwhj@naver.com",
-            "khwhj3577@gmail.com",
-            "ghks0115@gmail.com",
-            "passion.johnbyeon@gmail.com",
-            "sbpak10@naver.com",
-            "sbpak1@gmail.com");
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -96,10 +86,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         final String providerFinal = provider;
         final String providerIdFinal = providerId;
-        final String emailFinal = (email != null && !email.isBlank()) ? email.trim() : null;
+
+        // email/nickname 정규화
+        final String emailFinal = (email != null && !email.isBlank()) ? email.trim().toLowerCase() : null;
         final String nicknameFinal = (nickname != null && !nickname.isBlank()) ? nickname.trim() : null;
 
-        // ✅ profileImage는 URL일 때만 저장(아니면 null)
+        // profileImage는 URL일 때만 저장(아니면 null)
         final String profileImageFinal = (profileImage != null && profileImage.trim().startsWith("http"))
                 ? profileImage.trim()
                 : null;
@@ -108,6 +100,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .map(existingUser -> {
                     existingUser.ensureDefaults();
 
+                    // 계정 상태 체크
                     if (existingUser.getAccountState() == AccountState.REQUESTED) {
                         throw new OAuth2AuthenticationException(new OAuth2Error("account_requested"), "탈퇴 요청된 계정입니다.");
                     }
@@ -119,46 +112,28 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     }
 
                     // ✅ email은 있으면 업데이트 (변경될 수 있음)
-                    if (emailFinal != null)
+                    if (emailFinal != null) {
                         existingUser.setEmail(emailFinal);
+                    }
 
                     // ✅ 닉네임/프로필 이미지는 "비어있을 때만" 채움 (유저 수정값 보호)
-                    // nickname: 기존 값이 비어있을 때만 채움 (유저 수정값 보호)
                     if ((existingUser.getNickname() == null || existingUser.getNickname().isBlank())
                             && nicknameFinal != null && !nicknameFinal.isBlank()) {
                         existingUser.setNickname(nicknameFinal);
                     }
 
-                    // profileImage: 기존 값이 비어있을 때만 채움 (유저 수정값 보호)
                     if ((existingUser.getProfileImage() == null || existingUser.getProfileImage().isBlank())
                             && profileImageFinal != null && !profileImageFinal.isBlank()) {
                         existingUser.setProfileImage(profileImageFinal);
                     }
 
+                    // ✅ role/membershipPlan 등 권한/과금 관련 값은 여기서 변경하지 않음
                     existingUser.setUpdatedAt(now);
                     existingUser.setLastLoginAt(now);
-
-                    // ✅ 기존 유저도 이메일이 매칭되면 Admin으로 승급 (운영 편의성)
-                    if (emailFinal != null) {
-                        String e = emailFinal.toLowerCase();
-                        if (ADMIN_EMAILS.stream().anyMatch(ae -> ae.equalsIgnoreCase(e))) {
-                            log.info("[OAuth2/Update] User matches admin email: {}", emailFinal);
-                            existingUser.setRole(UserRole.ADMIN);
-                        }
-                    }
 
                     return existingUser;
                 })
                 .orElseGet(() -> {
-                    UserRole role = UserRole.USER;
-                    if (emailFinal != null) {
-                        String e = emailFinal.toLowerCase();
-                        if (ADMIN_EMAILS.stream().anyMatch(ae -> ae.equalsIgnoreCase(e))) {
-                            log.info("[OAuth2/Create] New user matches admin email: {}", emailFinal);
-                            role = UserRole.ADMIN;
-                        }
-                    }
-
                     User newUser = User.builder()
                             .provider(providerFinal)
                             .providerId(providerIdFinal)
@@ -166,7 +141,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                             .nickname(nicknameFinal)
                             .profileImage(profileImageFinal)
                             .bio("자기소개를 해주세요!")
-                            .role(role)
+                            .role(UserRole.USER) // ✅ 신규는 무조건 USER
                             .membershipPlan(MembershipPlan.FREE)
                             .accountState(AccountState.ACTIVE)
                             .lastLoginAt(now)
@@ -183,5 +158,4 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         log.info("사용자 저장 완료 - id: {}, provider: {}, role: {}, membershipPlan: {}, accountState: {}",
                 user.getId(), providerFinal, user.getRole(), user.getMembershipPlan(), user.getAccountState());
     }
-
 }

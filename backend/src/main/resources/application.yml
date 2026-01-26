@@ -95,3 +95,15 @@ springdoc:
     path: /v3/api-docs
   default-produces-media-type: application/json
   default-consumes-media-type: application/json
+
+management:
+  endpoint:
+    health:
+      show-details: always
+    web:
+      exposure:
+        include: health,info
+  
+  health:
+    mongodb:
+      enabled: false

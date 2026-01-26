@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 
 import java.time.Instant;
 import java.util.Map;
@@ -92,6 +94,44 @@ public class GlobalExceptionHandler {
                 log.error("Unhandled error at {} {}", req.getMethod(), req.getRequestURI(), e);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                 .body(ApiError.of(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "서버 오류",
+                                                req.getRequestURI()));
+        }
+
+        // ✅ 404: 존재하지 않는 경로 (/actuator/health 등)
+        @ExceptionHandler(NoResourceFoundException.class)
+        public ResponseEntity<ApiError> handleNoResourceFound(
+                        NoResourceFoundException e,
+                        HttpServletRequest req) {
+
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .body(ApiError.of(
+                                                HttpStatus.NOT_FOUND,
+                                                "NOT_FOUND",
+                                                "존재하지 않는 경로입니다.",
+                                                req.getRequestURI()));
+        }
+
+        // ✅ 405: 잘못된 HTTP Method (GET → POST만 허용 등)
+        @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+        public ResponseEntity<ApiError> handleMethodNotSupported(
+                        HttpRequestMethodNotSupportedException e,
+                        HttpServletRequest req) {
+
+                return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                                .body(ApiError.of(
+                                                HttpStatus.METHOD_NOT_ALLOWED,
+                                                "METHOD_NOT_ALLOWED",
+                                                "지원하지 않는 HTTP 메서드입니다.",
+                                                req.getRequestURI()));
+        }
+
+        @ExceptionHandler(IllegalStateException.class)
+        public ResponseEntity<ApiError> handleIllegalState(
+                        IllegalStateException e,
+                        HttpServletRequest req) {
+                // retry not allowed 같은 "상태 전이 불가"는 409가 맞음
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                                .body(ApiError.of(HttpStatus.CONFLICT, "CONFLICT", e.getMessage(),
                                                 req.getRequestURI()));
         }
 

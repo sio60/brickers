@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.EnumSet;
 
 /**
  * 레고 생성 작업(Job)
@@ -20,7 +21,8 @@ import java.time.LocalDateTime;
 @Document(collection = "generate_jobs")
 @CompoundIndexes({
         // ✅ 마이페이지 목록/오버뷰에서 userId + 생성시각 desc 조회가 많으므로 인덱스 추천
-        @CompoundIndex(name = "ix_user_createdAt", def = "{'userId': 1, 'createdAt': -1}")
+        @CompoundIndex(name = "ix_user_createdAt", def = "{'userId': 1, 'createdAt': -1}"),
+        @CompoundIndex(name = "ix_status_createdAt", def = "{'status': 1, 'createdAt': -1}")
 })
 @Data
 @Builder
@@ -159,6 +161,9 @@ public class GenerateJobEntity {
 
     /** 취소 처리(선택) */
     public void markCanceled(String message) {
+        if (!canCancel()) {
+            throw new IllegalStateException("Cancel not allowed in status=" + status);
+        }
         this.status = JobStatus.CANCELED;
         this.errorMessage = message; // 취소 사유를 message에 넣어도 됨(필드 분리도 가능)
         this.stageUpdatedAt = LocalDateTime.now();
@@ -167,11 +172,24 @@ public class GenerateJobEntity {
 
     /** 재시도 요청(코어 붙으면 워커가 이 값 보고 해당 stage부터 재개) */
     public void requestRetry(JobStage fromStage) {
+        if (!canRetry()) {
+            throw new IllegalStateException("Retry not allowed in status=" + status);
+        }
         this.requestedFromStage = (fromStage != null) ? fromStage : this.stage;
         this.status = JobStatus.QUEUED;
         this.stage = this.requestedFromStage;
         this.errorMessage = null;
         this.stageUpdatedAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public boolean canRetry() {
+        // DONE은 재시도 금지 (결과 덮어쓰기/정산 꼬임 방지)
+        return EnumSet.of(JobStatus.FAILED, JobStatus.CANCELED).contains(this.status);
+    }
+
+    public boolean canCancel() {
+        // QUEUED / RUNNING만 취소 가능
+        return EnumSet.of(JobStatus.QUEUED, JobStatus.RUNNING).contains(this.status);
     }
 }

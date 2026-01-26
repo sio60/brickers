@@ -29,14 +29,14 @@ public class InquiryController {
     @GetMapping("/my")
     public Page<InquiryResponse> getMyInquiries(
             Authentication auth,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size) {
         return inquiryService.getMyInquiries(auth, page, size);
     }
 
     /** 내 문의 상세 */
     @GetMapping("/my/{inquiryId}")
-    public InquiryResponse getMyInquiry(Authentication auth, @PathVariable String inquiryId) {
+    public InquiryResponse getMyInquiry(Authentication auth, @PathVariable("inquiryId") String inquiryId) {
         return inquiryService.getMyInquiry(auth, inquiryId);
     }
 
@@ -44,14 +44,14 @@ public class InquiryController {
     @PatchMapping("/my/{inquiryId}")
     public InquiryResponse updateMyInquiry(
             Authentication auth,
-            @PathVariable String inquiryId,
+            @PathVariable("inquiryId") String inquiryId,
             @RequestBody InquiryUpdateRequest req) {
         return inquiryService.updateMyInquiry(auth, inquiryId, req);
     }
 
     /** 내 문의 삭제 */
     @DeleteMapping("/my/{inquiryId}")
-    public ResponseEntity<?> deleteMyInquiry(Authentication auth, @PathVariable String inquiryId) {
+    public ResponseEntity<?> deleteMyInquiry(Authentication auth, @PathVariable("inquiryId") String inquiryId) {
         inquiryService.deleteMyInquiry(auth, inquiryId);
         return ResponseEntity.ok(Map.of("message", "문의가 삭제되었습니다."));
     }
@@ -60,7 +60,7 @@ public class InquiryController {
     @PostMapping("/my/{inquiryId}/attachments")
     public InquiryResponse addAttachment(
             Authentication auth,
-            @PathVariable String inquiryId,
+            @PathVariable("inquiryId") String inquiryId,
             @RequestBody Map<String, String> body) {
         String url = body.get("url");
         if (url == null || url.isBlank()) {

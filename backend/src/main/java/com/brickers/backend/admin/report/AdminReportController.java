@@ -25,14 +25,14 @@ public class AdminReportController {
     /** 전체 신고 목록 (관리자) */
     @GetMapping
     public Page<ReportResponse> getAllReports(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
         return reportService.getAllReports(page, size);
     }
 
     /** 신고 상세 (관리자) */
     @GetMapping("/{reportId}")
-    public ReportResponse getReportDetail(@PathVariable String reportId) {
+    public ReportResponse getReportDetail(@PathVariable("reportId") String reportId) {
         return reportService.getReportDetail(reportId);
     }
 
@@ -40,14 +40,16 @@ public class AdminReportController {
     @PostMapping("/{reportId}/resolve")
     public ReportResponse resolveReport(
             Authentication authentication,
-            @PathVariable String reportId,
+            @PathVariable("reportId") String reportId,
             @Valid @RequestBody ReportResolveRequest req) {
         return reportService.resolveReport(authentication, reportId, req);
     }
 
     /** 신고 대상 삭제 */
     @DeleteMapping("/{reportId}/target")
-    public ResponseEntity<?> deleteTarget(Authentication authentication, @PathVariable String reportId) {
+    public ResponseEntity<?> deleteTarget(
+            Authentication authentication,
+            @PathVariable("reportId") String reportId) {
         reportService.deleteReportTarget(authentication, reportId);
         return ResponseEntity.ok(Map.of("message", "대상이 삭제 처리되었습니다."));
     }
