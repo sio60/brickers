@@ -74,7 +74,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
+            script: |
             set -e
             echo "🚀 Starting deployment on EC2..."
             
@@ -88,7 +88,6 @@ jobs:
             
             # MongoDB
             PRIMARY_MONGODB_URI=${{ secrets.PRIMARY_MONGODB_URI }}
-            
             
             # AI / Python Service
             AI_PORT=${{ secrets.AI_PORT }}
@@ -135,63 +134,61 @@ jobs:
             BACKEND_PORT=${{ secrets.BACKEND_PORT }}
             FRONTEND_PORT=${{ secrets.FRONTEND_PORT }}
             EOF
-            
+
             echo "📄 Creating docker-compose.yml..."
-            cat <<'COMPOSE' > docker-compose.yml
+            cat <<EOF > docker-compose.yml
             version: '3.8'
-            
+
             services:
               backend:
                 image: ${{ secrets.DOCKER_USERNAME }}/brickers-backend:latest
                 container_name: brickers-backend
                 ports:
-                  - "${BACKEND_PORT}:8080"
+                  - "${{ secrets.BACKEND_PORT }}:8080"
                 environment:
-                  - PRIMARY_MONGODB_URI=${PRIMARY_MONGODB_URI}
-                  - AWS_S3_BUCKET=${AWS_S3_BUCKET}
-                  - AWS_REGION=${AWS_REGION}
-                  - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-                  - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-                  - JWT_SECRET=${JWT_SECRET}
-                  - JWT_ACCESS_EXPIRATION=${JWT_ACCESS_EXPIRATION}
-                  - JWT_REFRESH_EXPIRATION=${JWT_REFRESH_EXPIRATION}
-                  - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
-                  - KAKAO_CLIENT_SECRET=${KAKAO_CLIENT_SECRET}
-                  - KAKAO_REDIRECT_URI=${KAKAO_REDIRECT_URI}
-                  - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-                  - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-                  - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
-                  - COOKIE_SECURE=${COOKIE_SECURE:-true}
-                  - COOKIE_SAMESITE=${COOKIE_SAMESITE:-None}
-                  - FRONT_BASE_URL=${FRONT_BASE_URL}
-                  - AI_SERVER_URL=${AI_SERVER_URL:-http://brickers-ai:8000}
+                  - PRIMARY_MONGODB_URI=\${PRIMARY_MONGODB_URI}
+                  - AWS_S3_BUCKET=\${AWS_S3_BUCKET}
+                  - AWS_REGION=\${AWS_REGION}
+                  - AWS_ACCESS_KEY_ID=\${AWS_ACCESS_KEY_ID}
+                  - AWS_SECRET_ACCESS_KEY=\${AWS_SECRET_ACCESS_KEY}
+                  - JWT_SECRET=\${JWT_SECRET}
+                  - JWT_ACCESS_EXPIRATION=\${JWT_ACCESS_EXPIRATION}
+                  - JWT_REFRESH_EXPIRATION=\${JWT_REFRESH_EXPIRATION}
+                  - KAKAO_CLIENT_ID=\${KAKAO_CLIENT_ID}
+                  - KAKAO_CLIENT_SECRET=\${KAKAO_CLIENT_SECRET}
+                  - KAKAO_REDIRECT_URI=\${KAKAO_REDIRECT_URI}
+                  - GOOGLE_CLIENT_ID=\${GOOGLE_CLIENT_ID}
+                  - GOOGLE_CLIENT_SECRET=\${GOOGLE_CLIENT_SECRET}
+                  - GOOGLE_REDIRECT_URI=\${GOOGLE_REDIRECT_URI}
+                  - COOKIE_SECURE=\${COOKIE_SECURE}
+                  - COOKIE_SAMESITE=\${COOKIE_SAMESITE}
+                  - FRONT_BASE_URL=\${FRONT_BASE_URL}
+                  - AI_SERVER_URL=\${AI_SERVER_URL:-http://brickers-ai:8000}
                 networks:
                   - brickers-network
-            
+
               frontend:
                 image: ${{ secrets.DOCKER_USERNAME }}/brickers-frontend:latest
                 container_name: brickers-frontend
                 ports:
-                  - "${FRONTEND_PORT}:80"
+                  - "${{ secrets.FRONTEND_PORT }}:80"
                 depends_on:
                   - backend
                 volumes:
                   - /etc/letsencrypt:/etc/letsencrypt
                 networks:
                   - brickers-network
-            
+
             networks:
               brickers-network:
                 driver: bridge
-            COMPOSE
-            
-            # YAML 들여쓰기 수정 (heredoc에서 앞 공백 제거)
-            sed -i 's/^            //' docker-compose.yml
+            EOF
             
             echo "📦 Pulling latest images..."
             docker-compose pull
             
             echo "🔁 Restarting containers..."
+            docker-compose down
             docker-compose up -d
             
             echo "🧹 Cleaning up unused images..."
