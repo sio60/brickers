@@ -21,34 +21,34 @@ public class AdminGalleryController {
     /** 전체 게시글 목록 (삭제된 것 포함) */
     @GetMapping
     public Page<AdminGalleryPostDto> getAllPosts(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
         return adminGalleryService.getAllPosts(page, size);
     }
 
     /** 게시글 상세 */
     @GetMapping("/{id}")
-    public AdminGalleryPostDto getPost(@PathVariable String id) {
+    public AdminGalleryPostDto getPost(@PathVariable("id") String id) {
         return adminGalleryService.getPost(id);
     }
 
     /** 게시글 삭제 (Soft Delete) */
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deletePost(@PathVariable String id) {
+    public ResponseEntity<?> deletePost(@PathVariable("id") String id) {
         adminGalleryService.deletePost(id);
         return ResponseEntity.ok(Map.of("message", "Deleted successfully"));
     }
 
     /** 게시글 숨김 (블라인드) */
     @PostMapping("/{id}/hide")
-    public ResponseEntity<?> hidePost(@PathVariable String id) {
+    public ResponseEntity<?> hidePost(@PathVariable("id") String id) {
         adminGalleryService.hidePost(id);
         return ResponseEntity.ok(Map.of("message", "Post hidden"));
     }
 
     /** 게시글 숨김 해제 */
     @PostMapping("/{id}/unhide")
-    public ResponseEntity<?> unhidePost(@PathVariable String id) {
+    public ResponseEntity<?> unhidePost(@PathVariable("id") String id) {
         adminGalleryService.unhidePost(id);
         return ResponseEntity.ok(Map.of("message", "Post unhidden (Public)"));
     }
