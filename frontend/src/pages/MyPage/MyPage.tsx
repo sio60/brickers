@@ -292,7 +292,22 @@ export default function MyPage() {
                                     </button>
                                 )}
                                 {profile.membershipPlan !== "FREE" && (
-                                    <p className="mypage__proPlan">{t.membership.proUser}</p>
+                                    <div className="mypage__subInfo">
+                                        <div className="mypage__infoRow">
+                                            <span className="mypage__label">결제일</span>
+                                            <span className="mypage__value">
+                                                {/* 임시 로직: 가입일을 결제일로 가정하거나 오늘 날짜 */}
+                                                {new Date().toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                        <div className="mypage__infoRow">
+                                            <span className="mypage__label">다음 결제일</span>
+                                            <span className="mypage__value">
+                                                {/* 임시 로직: 1달 후 */}
+                                                {new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         )}

@@ -27,8 +27,9 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
     const suggestedQuestions = [
         "레고 어떻게 만들어요?",
         "갤러리는 뭐예요?",
-        "멤버십 혜택이 뭐예요?",
-        "내 작품은 어디서 봐요?",
+        "문의하기",
+        "신고하기",
+        "환불 요청",
     ];
 
     // 로컬에서 백엔드 API 호출 주소

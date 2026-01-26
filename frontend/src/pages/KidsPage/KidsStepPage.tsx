@@ -475,7 +475,7 @@ export default function KidsStepPage() {
                 onError={() => setLoading(false)}
               />
 
-              <OrbitControls enablePan={false} enableZoom />
+              <OrbitControls makeDefault enablePan={false} enableZoom />
             </Canvas>
           </div>
 
@@ -532,23 +532,25 @@ export default function KidsStepPage() {
         </div>
       </div>
 
-      {/* 하단 액션 버튼들 */}
-      <div className="kidsStep__actionContainer">
-        <button className="kidsStep__actionBtn" onClick={downloadGlb}>
-          {t.kids.steps.downloadGlb}
-        </button>
+      {/* 하단 액션 버튼들 (프리셋이 아닐 때만 노출) */}
+      {params.get("isPreset") !== "true" && (
+        <div className="kidsStep__actionContainer">
+          <button className="kidsStep__actionBtn" onClick={downloadGlb}>
+            {t.kids.steps.downloadGlb}
+          </button>
 
-        <button className="kidsStep__actionBtn" onClick={downloadLdr}>
-          {t.kids.steps.downloadLdr}
-        </button>
+          <button className="kidsStep__actionBtn" onClick={downloadLdr}>
+            {t.kids.steps.downloadLdr}
+          </button>
 
-        <button
-          className="kidsStep__actionBtn kidsStep__actionBtn--gallery"
-          onClick={() => setIsGalleryModalOpen(true)}
-        >
-          {t.kids.steps.registerGallery}
-        </button>
-      </div>
+          <button
+            className="kidsStep__actionBtn kidsStep__actionBtn--gallery"
+            onClick={() => setIsGalleryModalOpen(true)}
+          >
+            {t.kids.steps.registerGallery}
+          </button>
+        </div>
+      )}
 
       {/* 갤러리 등록 모달 */}
       {isGalleryModalOpen && (
