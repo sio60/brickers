@@ -1,9 +1,12 @@
 name: Deploy to EC2
 
-on:
+"on":
   push:
     branches:
       - main
+
+permissions:
+  contents: read
 
 jobs:
   build-and-push:
@@ -13,7 +16,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 디스크 청소 (용량 부족 방지용)
       - name: Clean up disk space
         run: |
           echo "=== Before cleanup ==="
@@ -42,7 +44,6 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/brickers-backend:${{ github.sha }}
           provenance: false
           no-cache: true
-          # 백엔드 빌드 통과용 가짜 값 (실행 시엔 .env 값 사용됨)
           build-args: |
             AWS_S3_BUCKET=dummy
 
@@ -56,7 +57,6 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/brickers-frontend:${{ github.sha }}
           provenance: false
           no-cache: true
-          # 프론트엔드는 빌드 시점에 환경변수가 꼭 필요함
           build-args: |
             VITE_KAKAO_CLIENT_ID=${{ secrets.VITE_KAKAO_CLIENT_ID }}
             VITE_KAKAO_REDIRECT_URI=${{ secrets.VITE_KAKAO_REDIRECT_URI }}
@@ -75,20 +75,19 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            set -e
+            set -euo pipefail
             echo "🚀 Starting deployment on EC2..."
-            
-            # 프로젝트 폴더가 없으면 생성
+
             mkdir -p ~/brickers
             cd ~/brickers
-            
+
             echo "📄 Creating .env file..."
-            cat <<EOF > .env
+            cat > .env <<'EOF'
             DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
-            
+
             # MongoDB
             PRIMARY_MONGODB_URI=${{ secrets.PRIMARY_MONGODB_URI }}
-            
+
             # AI / Python Service
             AI_PORT=${{ secrets.AI_PORT }}
             AI_MONGODB_URI=${{ secrets.AI_MONGODB_URI }}
@@ -97,38 +96,38 @@ jobs:
             AI_VECTOR_INDEX=${{ secrets.AI_VECTOR_INDEX }}
             AI_VECTOR_FIELD=${{ secrets.AI_VECTOR_FIELD }}
             AI_EMBEDDING_DIMS=${{ secrets.AI_EMBEDDING_DIMS }}
-            
+
             # Frontend Vars (런타임 참조용)
             VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
             VITE_KAKAO_CLIENT_ID=${{ secrets.VITE_KAKAO_CLIENT_ID }}
             VITE_KAKAO_REDIRECT_URI=${{ secrets.VITE_KAKAO_REDIRECT_URI }}
-            
-            # Backend - JWT (필수)
+
+            # Backend - JWT
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             JWT_ACCESS_EXPIRATION=${{ secrets.JWT_ACCESS_EXPIRATION }}
             JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }}
-            
-            # Backend - AWS S3 (필수)
+
+            # Backend - AWS S3
             AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
             AWS_REGION=${{ secrets.AWS_REGION }}
             AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            
+
             # Backend - OAuth
             KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
-            KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }} 
+            KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
             KAKAO_ADMIN_KEY=${{ secrets.KAKAO_ADMIN_KEY }}
             KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}
-            
+
             GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
             GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
             GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }}
             GOOGLE_LOCAL_REDIRECT_URI=${{ secrets.GOOGLE_LOCAL_REDIRECT_URI }}
-            
-            # ✅ 쿠키 설정 (크로스 도메인 필수!)
+
+            # Cookie
             COOKIE_SECURE=true
             COOKIE_SAMESITE=None
-            
+
             # Base URLs & Ports
             FRONT_BASE_URL=${{ secrets.FRONT_BASE_URL }}
             BACKEND_PORT=${{ secrets.BACKEND_PORT }}
@@ -136,42 +135,27 @@ jobs:
             EOF
 
             echo "📄 Creating docker-compose.yml..."
-            cat <<EOF > docker-compose.yml
-            version: '3.8'
+            cat > docker-compose.yml <<'EOF'
+            version: "3.8"
 
             services:
               backend:
-                image: ${{ secrets.DOCKER_USERNAME }}/brickers-backend:latest
+                image: ${DOCKER_USERNAME}/brickers-backend:latest
                 container_name: brickers-backend
                 ports:
-                  - "${{ secrets.BACKEND_PORT }}:8080"
+                  - "${BACKEND_PORT}:8080"
+                env_file:
+                  - .env
                 environment:
-                  - PRIMARY_MONGODB_URI=\${PRIMARY_MONGODB_URI}
-                  - AWS_S3_BUCKET=\${AWS_S3_BUCKET}
-                  - AWS_REGION=\${AWS_REGION}
-                  - AWS_ACCESS_KEY_ID=\${AWS_ACCESS_KEY_ID}
-                  - AWS_SECRET_ACCESS_KEY=\${AWS_SECRET_ACCESS_KEY}
-                  - JWT_SECRET=\${JWT_SECRET}
-                  - JWT_ACCESS_EXPIRATION=\${JWT_ACCESS_EXPIRATION}
-                  - JWT_REFRESH_EXPIRATION=\${JWT_REFRESH_EXPIRATION}
-                  - KAKAO_CLIENT_ID=\${KAKAO_CLIENT_ID}
-                  - KAKAO_CLIENT_SECRET=\${KAKAO_CLIENT_SECRET}
-                  - KAKAO_REDIRECT_URI=\${KAKAO_REDIRECT_URI}
-                  - GOOGLE_CLIENT_ID=\${GOOGLE_CLIENT_ID}
-                  - GOOGLE_CLIENT_SECRET=\${GOOGLE_CLIENT_SECRET}
-                  - GOOGLE_REDIRECT_URI=\${GOOGLE_REDIRECT_URI}
-                  - COOKIE_SECURE=\${COOKIE_SECURE}
-                  - COOKIE_SAMESITE=\${COOKIE_SAMESITE}
-                  - FRONT_BASE_URL=\${FRONT_BASE_URL}
-                  - AI_SERVER_URL=\${AI_SERVER_URL:-http://brickers-ai:8000}
+                  - AI_SERVER_URL=${AI_SERVER_URL:-http://brickers-ai:8000}
                 networks:
                   - brickers-network
 
               frontend:
-                image: ${{ secrets.DOCKER_USERNAME }}/brickers-frontend:latest
+                image: ${DOCKER_USERNAME}/brickers-frontend:latest
                 container_name: brickers-frontend
                 ports:
-                  - "${{ secrets.FRONTEND_PORT }}:80"
+                  - "${FRONTEND_PORT}:80"
                 depends_on:
                   - backend
                 volumes:
@@ -183,15 +167,18 @@ jobs:
               brickers-network:
                 driver: bridge
             EOF
-            
+
+            echo "🔐 Docker Hub login..."
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
             echo "📦 Pulling latest images..."
-            docker-compose pull
-            
+            docker compose pull || docker-compose pull
+
             echo "🔁 Restarting containers..."
-            docker-compose down
-            docker-compose up -d
-            
+            docker compose down || docker-compose down
+            docker compose up -d || docker-compose up -d
+
             echo "🧹 Cleaning up unused images..."
             docker image prune -f
-            
+
             echo "✅ Deployment completed successfully!"
