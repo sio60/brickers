@@ -59,13 +59,16 @@ export default function UpgradeModal({ isOpen, onClose }: Props) {
             .then(async (paymentData: any) => {
                 console.log("Payment Success", paymentData);
 
-                // ✅ 백엔드에 멤버십 업그레이드 요청
+                // ✅ 백엔드에 멤버십 업그레이드 요청 (구글 페이 데이터 포함)
                 try {
                     const res = await authFetch('/api/my/membership/upgrade', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
+                        body: JSON.stringify({
+                            paymentData: paymentData
+                        })
                     });
 
                     if (res.ok) {

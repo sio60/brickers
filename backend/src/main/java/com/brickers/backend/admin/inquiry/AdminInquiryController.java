@@ -1,4 +1,4 @@
-package com.brickers.backend.inquiry.controller;
+package com.brickers.backend.admin.inquiry;
 
 import com.brickers.backend.inquiry.dto.InquiryAnswerRequest;
 import com.brickers.backend.inquiry.dto.InquiryResponse;

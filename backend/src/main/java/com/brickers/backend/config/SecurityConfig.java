@@ -106,11 +106,30 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
 
                                                 // -------------------------------
+                                                // ✅ Report API (신고)
+                                                // -------------------------------
+                                                // 신고 사유 목록은 공개
+                                                .requestMatchers(HttpMethod.GET, "/api/reports/reasons").permitAll()
+                                                // 나머지 신고 API는 인증 필요
+                                                .requestMatchers("/api/reports/**").authenticated()
 
+                                                // -------------------------------
+                                                // ✅ Inquiry API (문의)
+                                                // -------------------------------
+                                                .requestMatchers("/api/inquiries/**").authenticated()
+
+                                                // -------------------------------
+                                                // ✅ Payment API (결제)
+                                                // -------------------------------
+                                                // 요금제 목록 및 웹훅은 공개 (웹훅은 내부 IP 체크 등 추가 보안 권장)
+                                                .requestMatchers(HttpMethod.GET, "/api/payments/plans").permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
+                                                .requestMatchers("/api/payments/**").authenticated()
+
+                                                // -------------------------------
                                                 // ✅ Admin API
                                                 // -------------------------------
                                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
 
                                                 // -------------------------------
                                                 // ✅ 나머지는 인증

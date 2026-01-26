@@ -66,7 +66,7 @@ export default function AdminPage() {
                                 </div>
                                 <div className="admin__statCard">
                                     <h3>{t.admin.stats.jobs}</h3>
-                                    <p className="admin__statValue">{stats?.totalJobsCount ?? "--"}</p>
+                                    <p className="admin__statValue">{stats?.totalJobs ?? "--"}</p>
                                 </div>
                                 <div className="admin__statCard">
                                     <h3>{t.admin.stats.gallery}</h3>
