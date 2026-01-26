@@ -109,7 +109,7 @@ public class PaymentService {
     @Transactional
     public void processWebhook(PaymentWebhookRequest req) {
         // PG사 주문 ID 등을 기반으로 주문 조회
-        PaymentOrder order = orderRepository.findByOrderNo(req.getPgOrderId())
+        PaymentOrder order = orderRepository.findByPgOrderId(req.getPgOrderId())
                 .orElseThrow(() -> new IllegalArgumentException("해당 주문을 찾을 수 없습니다: " + req.getPgOrderId()));
 
         // TODO: PG사 상태값 맵핑 및 검증 로직 추가

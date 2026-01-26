@@ -233,10 +233,11 @@ export async function uploadImageToS3(file: File): Promise<string> {
 
 export interface AdminStats {
     totalUsers: number;
-    totalJobsCount: number;
+    totalJobs: number;
+    totalOrders: number;
     totalGalleryPosts: number;
 }
 
 export async function getAdminStats(): Promise<AdminStats> {
-    return request<AdminStats>(`${API_BASE}/api/my/admin/stats`);
+    return request<AdminStats>(`${API_BASE}/api/admin/dashboard`);
 }

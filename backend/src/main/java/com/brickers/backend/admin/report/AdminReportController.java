@@ -1,4 +1,4 @@
-package com.brickers.backend.report.controller;
+package com.brickers.backend.admin.report;
 
 import com.brickers.backend.report.dto.ReportResolveRequest;
 import com.brickers.backend.report.dto.ReportResponse;

@@ -2,7 +2,7 @@ package com.brickers.backend.user.controller;
 
 import com.brickers.backend.user.MySettingsResponse;
 import com.brickers.backend.user.dto.*;
-import com.brickers.backend.user.service.AdminService;
+
 import com.brickers.backend.user.service.MyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 public class MyController {
 
     private final MyService myService;
-    private final AdminService adminService;
 
     @GetMapping("/profile")
     public MyProfileResponse getMyProfile(Authentication authentication) {
@@ -73,11 +72,5 @@ public class MyController {
             @PathVariable String jobId,
             @RequestBody(required = false) MyJobRetryRequest req) {
         return myService.retryJob(authentication, jobId, req);
-    }
-
-    /** ✅ 어드민 통계 (MyController 내부로 통합) */
-    @GetMapping("/admin/stats")
-    public AdminService.AdminStats getAdminStats(Authentication authentication) {
-        return adminService.getStats();
     }
 }
