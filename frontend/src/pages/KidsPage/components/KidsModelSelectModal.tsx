@@ -193,7 +193,14 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                   ref={inputRef}
                   type="file"
                   accept="image/*"
-                  style={{ display: "none" }}
+                  style={{
+                    position: "absolute",
+                    width: 0,
+                    height: 0,
+                    padding: 0,
+                    overflow: "hidden",
+                    border: 0,
+                  }}
                   onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) handleFile(f);
