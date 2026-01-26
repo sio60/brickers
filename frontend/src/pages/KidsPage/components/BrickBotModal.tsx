@@ -20,7 +20,16 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
     ]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [showSuggestions, setShowSuggestions] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // 예시 질문 목록
+    const suggestedQuestions = [
+        "레고 어떻게 만들어요?",
+        "갤러리는 뭐예요?",
+        "멤버십 혜택이 뭐예요?",
+        "내 작품은 어디서 봐요?",
+    ];
 
     // 로컬에서 백엔드 API 호출 주소
     const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
@@ -75,6 +84,7 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
         setMessages((prev) => [...prev, { role: "user", content: userMsg }]);
         setInput("");
         setIsLoading(true);
+        setShowSuggestions(false); // 질문하면 제안 숨기기
 
         try {
             const res = await fetch(`${API_BASE}/api/chat/query`, {
@@ -160,6 +170,34 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                     )}
                     <div ref={messagesEndRef} />
                 </div>
+
+                {/* 예시 질문 토글 */}
+                {messages.length <= 1 && (
+                    <div className="brickbot-suggestions-wrapper">
+                        <button
+                            className="brickbot-suggestions-toggle"
+                            onClick={() => setShowSuggestions(!showSuggestions)}
+                        >
+                            <span>이런 질문을 해보세요</span>
+                            <span className={`toggle-arrow ${showSuggestions ? 'open' : ''}`}>▲</span>
+                        </button>
+                        {showSuggestions && (
+                            <div className="brickbot-suggestions">
+                                <div className="brickbot-suggestions-list">
+                                    {suggestedQuestions.map((q, idx) => (
+                                        <button
+                                            key={idx}
+                                            className="brickbot-suggestion-btn"
+                                            onClick={() => setInput(q)}
+                                        >
+                                            {q}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* 입력 영역 */}
                 <div className="brickbot-input-area">
