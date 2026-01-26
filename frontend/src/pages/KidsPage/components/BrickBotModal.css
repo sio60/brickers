@@ -237,3 +237,125 @@
     color: #aaa;
     cursor: not-allowed;
 }
+
+/* 액션 버튼 스타일 */
+.brickbot-msg-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.brickbot-msg-group.user {
+    align-items: flex-end;
+}
+
+.brickbot-msg-group.bot {
+    align-items: flex-start;
+}
+
+.brickbot-action-container {
+    margin-left: 50px;
+    /* 아바타 너비(40) + 간격(10) 만큼 띄움 */
+    margin-top: -4px;
+}
+
+.brickbot-action-btn {
+    background-color: #f0f4f8;
+    border: 1px solid #d1d9e6;
+    border-radius: 12px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.brickbot-action-btn:hover {
+    background-color: #e2e8f0;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* 예시 질문 토글 영역 */
+.brickbot-suggestions-wrapper {
+    border-top: 1px solid #eee;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+}
+
+.brickbot-suggestions-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.brickbot-suggestions-toggle:hover {
+    background-color: #f9f9f9;
+}
+
+.toggle-arrow {
+    display: inline-block;
+    transition: transform 0.3s ease;
+    font-size: 10px;
+}
+
+.toggle-arrow.open {
+    transform: rotate(180deg);
+}
+
+.brickbot-suggestions {
+    padding: 0 16px 16px 16px;
+    background-color: #fff;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.brickbot-suggestions-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.brickbot-suggestion-btn {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 16px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: #444;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.brickbot-suggestion-btn:hover {
+    background-color: #f0f0f0;
+    border-color: #ccc;
+    transform: translateY(-1px);
+    color: #000;
+}
