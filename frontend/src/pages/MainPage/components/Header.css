@@ -36,28 +36,20 @@
 
 .header__login-btn,
 .header__upgrade-btn {
-  background: black;
-  color: white;
-  border: none;
+  background: white;
+  color: black;
+  border: 2px solid black;
   border-radius: 8px;
   padding: 6px 12px;
   font-family: inherit;
   font-size: 16px;
   letter-spacing: 1px;
   cursor: pointer;
+  transition: all 0.2s ease-in-out;
 }
 
-.header__upgrade-btn {
-  background: white;
-  color: black;
-  border: 2px solid black;
-}
-
-.header__upgrade-btn:hover {
-  background: #f0f0f0;
-}
-
-
+.header__upgrade-btn:hover,
 .header__login-btn:hover {
-  background: #333;
+  background: black;
+  color: white;
 }
