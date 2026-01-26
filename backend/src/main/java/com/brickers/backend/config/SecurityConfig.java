@@ -70,10 +70,12 @@ public class SecurityConfig {
                                                 // -------------------------------
                                                 // ✅ Auth API
                                                 // -------------------------------
-                                                .requestMatchers(HttpMethod.POST, "/api/auth/refresh",
-                                                                "/api/auth/logout")
-                                                .permitAll()
+                                                // .requestMatchers(HttpMethod.POST, "/api/auth/refresh",
+                                                // "/api/auth/logout")
+                                                // .permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+                                                .requestMatchers("/api/auth/refresh", "/api/auth/logout").permitAll()
+                                                .requestMatchers("/actuator/**").permitAll()
 
                                                 // -------------------------------
                                                 // ✅ My API (JWT 필요)

@@ -25,7 +25,7 @@ public class GalleryBookmarkController {
     }
 
     /** 내 북마크 목록 */
-    @GetMapping("/bookmark/my")
+    @GetMapping("/bookmarks/my")
     public Page<MyBookmarkItemResponse> myBookmarks(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
