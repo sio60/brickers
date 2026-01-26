@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "../../contexts/LanguageContext";
+import { useAuth } from "../Auth/AuthContext";
 import "./MyPage.css";
 import { getMyOverview, getMyProfile, retryJob, updateMyProfile, ApiError } from "../../api/myApi";
 import type { MyOverview, MyProfile, MyJob } from "../../api/myApi";
@@ -7,13 +9,13 @@ import Background3D from "../MainPage/components/Background3D";
 import FloatingMenuButton from "../KidsPage/components/FloatingMenuButton";
 import UpgradeModal from "../MainPage/components/UpgradeModal";
 import KidsLdrPreview from "../KidsPage/components/KidsLdrPreview";
-import { useLanguage } from "../../contexts/LanguageContext";
 
 type MenuItem = "profile" | "membership" | "jobs" | "gallery" | "inquiries" | "settings" | "delete";
 
 export default function MyPage() {
     const navigate = useNavigate();
     const { language, setLanguage, t } = useLanguage();
+    const { authFetch } = useAuth();
 
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<MyOverview | null>(null);
@@ -160,12 +162,11 @@ export default function MyPage() {
     const fetchMyInquiries = async () => {
         try {
             setInquiriesLoading(true);
-            const token = localStorage.getItem('accessToken');
-            const res = await fetch("/api/inquiries/my?page=0&size=20", {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            setInquiries(data.content || []);
+            const res = await authFetch("/api/inquiries/my?page=0&size=20");
+            if (res.ok) {
+                const data = await res.json();
+                setInquiries(data.content || []);
+            }
         } catch (e) {
             console.error("Failed to fetch inquiries", e);
         } finally {
@@ -210,85 +211,98 @@ export default function MyPage() {
                             {isEditing ? t.profile.editTitle : t.profile.title}
                         </h2>
                         {profile && !isEditing && (
-                            <div className="mypage__profileCard">
-                                <img
-                                    src={profile.profileImage || "/default-avatar.png"}
-                                    alt="프로필"
-                                    className="mypage__avatar"
-                                />
-                                <div className="mypage__profileInfo">
-                                    <div className="mypage__infoRow">
-                                        <span className="mypage__label">{t.profile.nickname}</span>
-                                        <span className="mypage__value">{profile.nickname || "-"}</span>
+                            <div className="mypage__profileDashboard">
+                                <div className="mypage__profileHeader">
+                                    <div className="mypage__avatarWrapper">
+                                        <img
+                                            src={profile.profileImage || "/default-avatar.png"}
+                                            alt="프로필"
+                                            className="mypage__avatar"
+                                        />
                                     </div>
-                                    <div className="mypage__infoRow">
-                                        <span className="mypage__label">{t.profile.email}</span>
-                                        <span className="mypage__value">{profile.email}</span>
+                                    <div className="mypage__headerInfo">
+                                        <div className="mypage__nameGroup">
+                                            <h3 className="mypage__nickname">{profile.nickname || "User"}</h3>
+                                            <span className="mypage__roleBadge">{profile.membershipPlan}</span>
+                                        </div>
+                                        <p className="mypage__email">{profile.email}</p>
+                                        <p className="mypage__bio">{profile.bio || "자기소개를 입력해주세요!"}</p>
+                                        <button className="mypage__editBtnSimple" onClick={startEditing}>
+                                            {t.profile.editBtn}
+                                        </button>
                                     </div>
-                                    <div className="mypage__infoRow">
-                                        <span className="mypage__label">{t.profile.bio}</span>
-                                        <span className="mypage__value">{profile.bio || "-"}</span>
+                                </div>
+
+                                <div className="mypage__statsGrid">
+                                    <div className="mypage__statCard">
+                                        <span className="stat__label">내 작업</span>
+                                        <span className="stat__value">{data?.jobs.totalCount || 0}</span>
                                     </div>
-                                    <div className="mypage__infoRow">
-                                        <span className="mypage__label">{t.profile.joinedAt}</span>
-                                        <span className="mypage__value">
+                                    <div className="mypage__statCard">
+                                        <span className="stat__label">내 갤러리</span>
+                                        <span className="stat__value">{data?.gallery.totalCount || 0}</span>
+                                    </div>
+                                    <div className="mypage__statCard">
+                                        <span className="stat__label">가입일</span>
+                                        <span className="stat__value">
                                             {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "-"}
                                         </span>
                                     </div>
                                 </div>
-                                <button className="mypage__editBtn" onClick={startEditing}>
-                                    {t.profile.editBtn}
-                                </button>
                             </div>
                         )}
 
                         {/* 수정 모드 */}
                         {profile && isEditing && (
-                            <div className="mypage__profileCard">
-                                <img
-                                    src={profile.profileImage || "/default-avatar.png"}
-                                    alt="프로필"
-                                    className="mypage__avatar"
-                                />
-
-                                <div className="mypage__editForm">
-                                    <div className="mypage__formRow">
-                                        <label className="mypage__formLabel">{t.profile.nickname}</label>
-                                        <input
-                                            type="text"
-                                            className="mypage__formInput"
-                                            value={editNickname}
-                                            onChange={(e) => setEditNickname(e.target.value)}
-                                            placeholder="닉네임을 입력하세요"
-                                        />
-                                    </div>
-                                    <div className="mypage__formRow">
-                                        <label className="mypage__formLabel">{t.profile.bio}</label>
-                                        <textarea
-                                            className="mypage__formTextarea"
-                                            value={editBio}
-                                            onChange={(e) => setEditBio(e.target.value)}
-                                            placeholder="자기소개를 입력하세요"
-                                            rows={4}
-                                        />
-                                    </div>
+                            <div className="mypage__profileEditSection">
+                                <div className="mypage__avatarWrapper edit-mode">
+                                    <img
+                                        src={profile.profileImage || "/default-avatar.png"}
+                                        alt="프로필"
+                                        className="mypage__avatar"
+                                    />
                                 </div>
 
-                                <div className="mypage__editActions">
-                                    <button
-                                        className="mypage__cancelBtn"
-                                        onClick={cancelEditing}
-                                        disabled={saving}
-                                    >
-                                        {t.profile.cancelBtn}
-                                    </button>
-                                    <button
-                                        className="mypage__saveBtn"
-                                        onClick={saveProfile}
-                                        disabled={saving}
-                                    >
-                                        {saving ? t.profile.saving : t.profile.saveBtn}
-                                    </button>
+                                <div className="mypage__editContent">
+                                    <div className="mypage__editForm">
+                                        <div className="mypage__formRow">
+                                            <label className="mypage__formLabel">{t.profile.nickname}</label>
+                                            <input
+                                                type="text"
+                                                className="mypage__formInput"
+                                                value={editNickname}
+                                                onChange={(e) => setEditNickname(e.target.value)}
+                                                placeholder="닉네임을 입력하세요"
+                                            />
+                                        </div>
+                                        <div className="mypage__formRow">
+                                            <label className="mypage__formLabel">{t.profile.bio}</label>
+                                            <textarea
+                                                className="mypage__formTextarea"
+                                                value={editBio}
+                                                onChange={(e) => setEditBio(e.target.value)}
+                                                placeholder="자기소개를 입력하세요"
+                                                rows={4}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="mypage__editActions">
+                                        <button
+                                            className="mypage__cancelBtn"
+                                            onClick={cancelEditing}
+                                            disabled={saving}
+                                        >
+                                            {t.profile.cancelBtn}
+                                        </button>
+                                        <button
+                                            className="mypage__saveBtn"
+                                            onClick={saveProfile}
+                                            disabled={saving}
+                                        >
+                                            {saving ? t.profile.saving : t.profile.saveBtn}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         )}
