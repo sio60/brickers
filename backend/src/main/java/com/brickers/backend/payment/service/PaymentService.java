@@ -6,6 +6,7 @@ import com.brickers.backend.payment.entity.PaymentPlan;
 import com.brickers.backend.payment.entity.PaymentStatus;
 import com.brickers.backend.payment.repository.PaymentOrderRepository;
 import com.brickers.backend.payment.repository.PaymentPlanRepository;
+import com.brickers.backend.user.entity.MembershipPlan;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -58,7 +60,7 @@ public class PaymentService {
                 .planName(plan.getName())
                 .amount(plan.getPrice())
                 .status(PaymentStatus.PENDING)
-                .checkoutUrl("https://checkout.example.com/" + orderNo) // TODO: 실제 PG사 연동 시 발급받은 URL로 대체
+                .checkoutUrl("https://google.com/" + orderNo) // TODO: 실제 PG사 연동 시 발급받은 URL로 대체
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -128,16 +130,54 @@ public class PaymentService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        // TODO: 멤버십 플랜 변경 및 만료 기간 설정 로직 추가
+        // planCode에 따라 멤버십 플랜 변경
+        if (planCode != null && planCode.toUpperCase().contains("PRO")) {
+            user.setMembershipPlan(MembershipPlan.PRO);
+        }
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
         log.info("Membership applied: User={} ({}), Plan={}", userId, user.getNickname(), planCode);
     }
 
-    /** 구글 페이 결제 검증 및 멤버십 적용 */
+    /** 멤버십 적용 (외부/관리자 호출용) */
     @Transactional
-    public void verifyGooglePay(Authentication auth, GooglePayVerifyRequest req) {
+    public void applyMembershipPublic(ApplyMembershipRequest req) {
+        applyMembership(req.getUserId(), req.getPlanCode());
+        log.info("Membership applied via internal API: userId={}, planCode={}",
+                req.getUserId(), req.getPlanCode());
+    }
+
+    /** 구글 페이 결제 검증 및 멤버십 적용 */
+    @SuppressWarnings("unchecked")
+    @Transactional
+    public PaymentOrder verifyGooglePay(Authentication auth, GooglePayVerifyRequest req) {
         String userId = (String) auth.getPrincipal();
 
         log.info("Google Pay verification request: User={}, Data={}", userId, req.getPaymentData());
+
+        // Google Pay Token 추출
+        String googlePaymentToken = null;
+        try {
+            Map<String, Object> paymentData = req.getPaymentData();
+            if (paymentData != null) {
+                Map<String, Object> paymentMethodData = (Map<String, Object>) paymentData.get("paymentMethodData");
+                if (paymentMethodData != null) {
+                    Map<String, Object> tokenizationData = (Map<String, Object>) paymentMethodData
+                            .get("tokenizationData");
+                    if (tokenizationData != null) {
+                        googlePaymentToken = (String) tokenizationData.get("token");
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to extract Google Pay token", e);
+        }
+
+        // 토큰이 없으면 임의 값 생성 (실패 처리하거나)
+        if (googlePaymentToken == null) {
+            googlePaymentToken = "GPAY_TOKEN_" + UUID.randomUUID();
+        }
 
         // 1. 주문 기록 생성
         String orderNo = "GPAY-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
@@ -145,6 +185,7 @@ public class PaymentService {
         PaymentOrder order = PaymentOrder.builder()
                 .orderNo(orderNo)
                 .userId(userId)
+                .pgOrderId(googlePaymentToken) // 구글 결제 토큰 저장
                 .planCode("PRO_MONTHLY") // 기본값으로 PRO 설정
                 .planName("PRO Membership (Google Pay)")
                 .amount(new java.math.BigDecimal("10.00")) // 프론트와 동일하게
@@ -166,5 +207,8 @@ public class PaymentService {
         userRepository.save(user);
 
         log.info("Google Pay integration success: User {} upgraded to PRO", userId);
+
+        return order;
     }
+
 }

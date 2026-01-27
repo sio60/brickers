@@ -5,6 +5,8 @@ import com.brickers.backend.audit.service.AuditLogService;
 import com.brickers.backend.auth.service.AuthTokenService;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.repository.UserRepository;
+import com.brickers.backend.auth.repository.LoginHistoryRepository;
+import com.brickers.backend.auth.entity.LoginHistory;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ import java.util.Map;
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final UserRepository userRepository;
+    private final LoginHistoryRepository loginHistoryRepository;
     private final AuditLogService auditLogService;
     private final AuthTokenService tokenService;
 
@@ -39,7 +42,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         String userId = null;
         String provider = null;
-        String role = null;
+        String role = "USER"; // 기본값 설정
 
         if (authentication instanceof OAuth2AuthenticationToken token) {
             provider = token.getAuthorizedClientRegistrationId();
@@ -64,6 +67,13 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                             userId,
                             request,
                             Map.of("provider", provider));
+
+                    // ✅ [New] Login History
+                    loginHistoryRepository.save(LoginHistory.builder()
+                            .userId(userId)
+                            .ipAddress(request.getRemoteAddr())
+                            .userAgent(request.getHeader("User-Agent"))
+                            .build());
                 }
             }
         }
@@ -76,10 +86,9 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         // ✅ JWT 토큰 발급 (access는 응답 바디로 주는 게 아니라 refresh로 뽑는 구조라 refreshCookie만 심어도 됨)
         // 다만, 지금은 "로그인 성공 즉시 refresh-cookie 세팅"만 하고 프론트가 /api/auth/refresh를 호출하도록 설계.
-        User user = userRepository.findById(userId).orElseThrow();
         var issued = tokenService.issueTokens(userId, Map.of(
                 "provider", provider,
-                "role", user.getRole().name()));
+                "role", role));
 
         response.addHeader("Set-Cookie", issued.refreshCookie().toString());
 
