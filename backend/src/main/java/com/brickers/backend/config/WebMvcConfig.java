@@ -13,8 +13,16 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Value("${app.upload.root-dir:./uploads}")
     private String uploadDir;
 
+    @Value("${app.upload.provider:LOCAL}")
+    private String uploadProvider;
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // ✅ 배포 환경(S3)에서는 백엔드가 파일을 서빙하지 않음
+        if (!"LOCAL".equalsIgnoreCase(uploadProvider)) {
+            return;
+        }
+
         // 로컬 업로드 경로를 file URL 포맷으로 변환
         String uploadPath = Paths.get(uploadDir).toAbsolutePath().toUri().toString();
 
