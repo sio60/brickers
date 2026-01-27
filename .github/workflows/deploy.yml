@@ -63,6 +63,7 @@ jobs:
             VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
             VITE_FASTAPI_ORIGIN=${{ secrets.VITE_FASTAPI_ORIGIN }}
             VITE_API_ORIGIN=${{ secrets.VITE_API_ORIGIN }}
+            VITE_AI_API_URL=${{ secrets.VITE_AI_API_URL }}
 
   deploy:
     needs: build-and-push

@@ -160,7 +160,7 @@ export default function KidsPage() {
       <div className="kidsPage__center">
         {status === "loading" && (
           <>
-            <div className="kidsPage__title">{t.kids.generate.loading}</div>
+            {/* <div className="kidsPage__title">{t.kids.generate.loading}</div> */}
             {/* 디버그 로그 표시 */}
             <div style={{ fontSize: "12px", color: "#666", marginBottom: "8px", fontFamily: "monospace" }}>
               {debugLog}

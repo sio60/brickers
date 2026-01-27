@@ -17,7 +17,9 @@ export async function verifyPhysicality(file: File): Promise<VerificationResult>
     formData.append("file", file);
 
     try {
-        const response = await fetch("http://localhost:8000/verify", {
+        // ✅ 환경변수 사용 (배포 시 .env 수정 필요)
+        const baseUrl = import.meta.env.VITE_AI_API_URL || "http://localhost:8000";
+        const response = await fetch(`${baseUrl}/verify`, {
             method: "POST",
             body: formData,
         });
