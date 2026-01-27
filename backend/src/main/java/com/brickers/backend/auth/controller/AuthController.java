@@ -11,7 +11,6 @@ import com.brickers.backend.auth.jwt.JwtProvider;
 import com.brickers.backend.auth.refresh.RefreshToken;
 import com.brickers.backend.auth.refresh.RefreshTokenRepository;
 import com.brickers.backend.auth.service.AuthTokenService;
-import com.brickers.backend.auth.service.AuthTokenService.IssuedTokens;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.repository.UserRepository;
 import com.brickers.backend.auth.repository.LoginHistoryRepository;
@@ -21,7 +20,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -29,7 +27,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.util.List;
-
 import java.util.Map;
 
 @Slf4j
@@ -41,13 +38,10 @@ public class AuthController {
     private final AuthTokenService tokenService;
     private final AuditLogService auditLogService;
     private final UserRepository userRepository;
-<<<<<<< HEAD
     private final LoginHistoryRepository loginHistoryRepository;
-=======
     private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
     private final AuditLogRepository auditLogRepository;
->>>>>>> 981ecfba7f6d29351dc4de41ecd87ae4c24e27b2
 
     /** ✅ refresh-cookie로 access 재발급 + refresh rotation */
     @PostMapping("/refresh")
@@ -146,16 +140,20 @@ public class AuthController {
                 "authorities", authentication.getAuthorities()));
     }
 
-<<<<<<< HEAD
+    /**
+     * 내 로그인 히스토리 (Page 형태)
+     */
     @GetMapping("/login-history")
-    public Page<?> loginHistory(
+    public Page<?> getLoginHistory(
             Authentication authentication,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "10") int size) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            return Page.empty();
+        }
         String userId = (String) authentication.getPrincipal();
         return loginHistoryRepository.findByUserIdOrderByLoginAtDesc(userId, PageRequest.of(page, size));
-=======
-    // ============== 92~95번 API ==============
+    }
 
     /**
      * 92. 토큰 상태 확인
@@ -166,7 +164,11 @@ public class AuthController {
             Authentication authentication,
             HttpServletRequest request) {
 
-        boolean accessValid = authentication != null && authentication.getPrincipal() != null;
+        String userId = (authentication != null && authentication.getPrincipal() != null)
+                ? (String) authentication.getPrincipal()
+                : null;
+
+        boolean accessValid = (userId != null);
         String refreshRaw = readCookie(request, "refreshToken");
         boolean refreshValid = false;
 
@@ -179,7 +181,6 @@ public class AuthController {
             }
         }
 
-        String userId = accessValid ? (String) authentication.getPrincipal() : null;
         long activeSessions = 0;
         if (userId != null) {
             activeSessions = refreshTokenRepository.countByUserIdAndRevokedAtIsNull(userId);
@@ -232,13 +233,13 @@ public class AuthController {
     }
 
     /**
-     * 94. 최근 로그인 기록
+     * 94. 최근 로그인 기록 (AuditLog 기반)
      * GET /api/auth/logins
      */
     @GetMapping("/logins")
-    public ResponseEntity<?> loginHistory(
+    public ResponseEntity<?> recentLogins(
             Authentication authentication,
-            @RequestParam(defaultValue = "10") int limit) {
+            @RequestParam(name = "limit", defaultValue = "10") int limit) {
 
         if (authentication == null || authentication.getPrincipal() == null) {
             return ResponseEntity.status(401).body(Map.of("error", "인증이 필요합니다."));
@@ -285,7 +286,5 @@ public class AuthController {
         log.warn("[Suspicious Login Alert] userId={}, reason={}", userId, reason);
 
         return ResponseEntity.ok(Map.of("ok", true, "recorded", true));
->>>>>>> 981ecfba7f6d29351dc4de41ecd87ae4c24e27b2
     }
-
 }
