@@ -61,7 +61,7 @@ public class SecurityConfig {
                                                 .requestMatchers("/auth/**").permitAll()
 
                                                 // ✅ [New] System & Public APIs
-                                                .requestMatchers("/api/health", "/api/version", "/api/config/public")
+                                                .requestMatchers("/api/health", "/api/config/public", "/api/errors")
                                                 .permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/api/gallery/tags").permitAll()
 
