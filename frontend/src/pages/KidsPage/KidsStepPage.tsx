@@ -1,3 +1,4 @@
+// KidsStepPage.tsx
 import { Canvas } from "@react-three/fiber";
 import { Bounds, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
@@ -60,8 +61,8 @@ function LdrModel({
   onLoaded,
   onError,
 }: {
-  url: string; // 원본 메인 LDR (상대경로 기준용)
-  overrideMainLdrUrl?: string; // 현재 스텝용 blob url
+  url: string;
+  overrideMainLdrUrl?: string;
   partsLibraryPath?: string;
   ldconfigUrl?: string;
   onLoaded?: (group: THREE.Group) => void;
@@ -88,12 +89,9 @@ function LdrModel({
         try {
           const abs = new URL(fixed, window.location.href).href;
           if (abs === mainAbs) return overrideMainLdrUrl;
-        } catch {
-          // relative path 일 수도 있음 → 아래에서 처리
-        }
+        } catch {}
       }
 
-      // ✅ blob 상태에서 submodel 상대경로 깨지는 거 방지:
       const isAbsolute =
         fixed.startsWith("http://") ||
         fixed.startsWith("https://") ||
@@ -101,10 +99,11 @@ function LdrModel({
         fixed.startsWith("/") ||
         fixed.includes(":");
 
+      // blob 상태에서 submodel 상대경로 깨짐 방지
       if (overrideMainLdrUrl && !isAbsolute) {
         try {
           fixed = new URL(fixed, url).href;
-        } catch { }
+        } catch {}
       }
 
       // CDN parts/p 보정
@@ -135,7 +134,7 @@ function LdrModel({
 
     try {
       (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any);
-    } catch { }
+    } catch {}
 
     return l;
   }, [partsLibraryPath, url, overrideMainLdrUrl]);
@@ -157,7 +156,6 @@ function LdrModel({
         return;
       }
 
-      // LDraw -> Three 축 보정
       g.rotation.x = Math.PI;
 
       prev = g;
@@ -187,8 +185,11 @@ export default function KidsStepPage() {
   const nav = useNavigate();
   const { t } = useLanguage();
   const [params] = useSearchParams();
-  const url = params.get("url") || "";
 
+  const jobId = params.get("jobId") || "";
+  const urlParam = params.get("url") || "";
+
+  const [ldrUrl, setLdrUrl] = useState<string>(urlParam);
   const [loading, setLoading] = useState(true);
   const [stepIdx, setStepIdx] = useState(0);
   const [stepBlobUrls, setStepBlobUrls] = useState<string[]>([]);
@@ -204,20 +205,48 @@ export default function KidsStepPage() {
     arr.forEach((u) => {
       try {
         URL.revokeObjectURL(u);
-      } catch { }
+      } catch {}
     });
   };
 
+  // ✅ 1) url 없으면 jobId로 백엔드에서 ldrUrl 가져오기
   useEffect(() => {
     let alive = true;
 
     (async () => {
-      if (!url) return;
+      if (ldrUrl) return; // 이미 있으면 패스
+      if (!jobId) return;
+
+      try {
+        const res = await fetch(`/api/kids/jobs/${jobId}`);
+        if (!res.ok) throw new Error(`job fetch failed: ${res.status}`);
+        const data = await res.json();
+
+        const u = data.ldrUrl || data.ldr_url || "";
+        if (alive) setLdrUrl(u);
+      } catch (e) {
+        console.error("[KidsStepPage] failed to resolve ldrUrl by jobId:", e);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [jobId, ldrUrl]);
+
+  // ✅ 2) ldrUrl로 step blob 생성
+  useEffect(() => {
+    let alive = true;
+
+    (async () => {
+      if (!ldrUrl) return;
 
       setLoading(true);
       setStepIdx(0);
 
-      const res = await fetch(url);
+      const res = await fetch(ldrUrl);
+      if (!res.ok) throw new Error(`LDR fetch failed: ${res.status} ${res.statusText}`);
+
       const text = await res.text();
       const stepTexts = buildCumulativeStepTexts(text);
 
@@ -233,9 +262,7 @@ export default function KidsStepPage() {
       revokeAll(blobRef.current);
       blobRef.current = blobs;
       setStepBlobUrls(blobs);
-
-      // step 텍스트 준비 끝났다고 해서 로딩 끄면, Canvas 로딩 순간 깜빡임 있을 수 있어서
-      // 실제 모델 로딩 onLoaded에서 끄는 게 안정적임.
+      // 로딩 off는 onLoaded에서
     })().catch((e) => {
       console.error("[KidsStepPage] build steps failed:", e);
       revokeAll(blobRef.current);
@@ -247,12 +274,17 @@ export default function KidsStepPage() {
     return () => {
       alive = false;
     };
-  }, [url]);
+  }, [ldrUrl]);
+
+  useEffect(() => {
+    return () => revokeAll(blobRef.current);
+  }, []);
 
   const downloadLdr = async () => {
-    if (!url) return;
+    if (!ldrUrl) return;
     try {
-      const res = await fetch(url);
+      const res = await fetch(ldrUrl);
+      if (!res.ok) throw new Error("LDR download fetch failed");
       const text = await res.text();
       const blob = new Blob([text], { type: "text/plain" });
       const downloadUrl = window.URL.createObjectURL(blob);
@@ -267,16 +299,18 @@ export default function KidsStepPage() {
   };
 
   const downloadGlb = async () => {
-    const jobId = params.get("jobId");
     if (!jobId) {
-      // jobId가 없으면 기존 방식(클라이언트 export) 시도
       if (!modelGroupRef.current) return;
       const exporter = new GLTFExporter();
       exporter.parse(
         modelGroupRef.current,
         (result) => {
           const output = result instanceof ArrayBuffer ? result : JSON.stringify(result);
-          const blob = new Blob([output], { type: result instanceof ArrayBuffer ? "application/octet-stream" : "application/json" });
+          const blob = new Blob([output], {
+            type: result instanceof ArrayBuffer
+              ? "application/octet-stream"
+              : "application/json",
+          });
           const downloadUrl = window.URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = downloadUrl;
@@ -284,39 +318,30 @@ export default function KidsStepPage() {
           link.click();
           window.URL.revokeObjectURL(downloadUrl);
         },
-        (error) => {
-          console.error("GLB export failed:", error);
-        },
+        (error) => console.error("GLB export failed:", error),
         { binary: true }
       );
       return;
     }
 
     try {
-      // 백엔드에서 생성된 GLB URL 조회
       const res = await fetch(`/api/kids/jobs/${jobId}`);
       if (!res.ok) throw new Error("Failed to fetch job info");
       const data = await res.json();
 
-      const glbUrl = data.glbUrl;
-      console.log("[KidsStepPage] Downloading GLB from:", glbUrl); // ✅ 로그 추가
-
+      const glbUrl = data.glbUrl || data.glb_url;
       if (!glbUrl) {
-        alert("Server GLB not found, falling back to client export.");
-        // 실패 시 재귀적으로나 로직적으로 클라이언트 export 호출 가능하지만,
-        // 여기서는 그냥 알림만 주고 종료하거나 기존 로직 실행
+        alert("Server GLB not found.");
         return;
       }
 
-      // 다운로드
       const link = document.createElement("a");
       link.href = glbUrl;
       link.download = `brickers_${jobId}.glb`;
-      link.target = "_blank"; // S3 등 외부 링크일 경우 대비
+      link.target = "_blank";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
     } catch (e) {
       console.error("Failed to download server GLB:", e);
       alert("Failed to download GLB file.");
@@ -328,24 +353,15 @@ export default function KidsStepPage() {
       alert(t.kids.steps.galleryModal.placeholder);
       return;
     }
-    // jobId를 url 파라미터나 상태에서 가져와야 함. 
-    // 여기서는 편의상 임시로 'temp_id'를 사용하거나 
-    // ldrUrl 자체가 식별자가 될 수 있는지 확인 필요.
-    // 보통 KidsPage에서 생성 후 넘겨받을 때 jobId도 같이 넘겨주는 게 좋음.
-    // 현재는 url(blob)만 넘어오고 있으므로, 실제 연동 시에는 navigate할 때 jobId도 같이 넘겨야 함.
-    const searchParams = new URLSearchParams(window.location.search);
 
     setIsSubmitting(true);
     try {
-      // ✅ 백엔드 실제 스펙 GalleryCreateRequest에 맞춰 호출
       await registerToGallery({
         title: galleryTitle,
-        content: `Created in Kids Mode (Age: ${searchParams.get("age") || "Unknown"})`,
+        content: `Created in Kids Mode`,
         tags: ["Kids", "Lego"],
-        // thumbnailUrl은 현재 백엔드에서 jobId 연동 로직이 없으므로 빈값 혹은 
-        // 추후 백엔드에서 jobId를 받아 작업 썸네일을 자동 매칭하도록 개선 필요.
         thumbnailUrl: "/uploads/placeholder.png",
-        visibility: 'PUBLIC'
+        visibility: "PUBLIC",
       });
       alert(t.kids.steps.galleryModal.success);
       setIsGalleryModalOpen(false);
@@ -358,11 +374,7 @@ export default function KidsStepPage() {
     }
   };
 
-  useEffect(() => {
-    return () => revokeAll(blobRef.current);
-  }, []);
-
-  if (!url) {
+  if (!ldrUrl) {
     return (
       <div style={{ padding: 16 }}>
         <button onClick={() => nav(-1)}>← 뒤로</button>
@@ -381,38 +393,10 @@ export default function KidsStepPage() {
   const canNext = stepIdx < total - 1;
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#fff",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <div style={{ minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column" }}>
       {/* 상단바 */}
-      <div
-        style={{
-          height: 72,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 24px",
-          borderBottom: "1px solid rgba(0,0,0,0.06)",
-          background: "rgba(255,255,255,0.9)",
-          backdropFilter: "blur(6px)",
-        }}
-      >
-        <button
-          onClick={() => nav(-1)}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 999,
-            border: "1px solid rgba(0,0,0,0.12)",
-            background: "#fff",
-            fontWeight: 800,
-            cursor: "pointer",
-          }}
-        >
+      <div style={{ height: 72, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", borderBottom: "1px solid rgba(0,0,0,0.06)", background: "rgba(255,255,255,0.9)", backdropFilter: "blur(6px)" }}>
+        <button onClick={() => nav(-1)} style={{ padding: "10px 14px", borderRadius: 999, border: "1px solid rgba(0,0,0,0.12)", background: "#fff", fontWeight: 800, cursor: "pointer" }}>
           ← {t.kids.steps.back}
         </button>
 
@@ -420,88 +404,31 @@ export default function KidsStepPage() {
           BRICKERS
         </div>
 
-        <div
-          style={{
-            padding: "10px 14px",
-            borderRadius: 999,
-            border: "1px solid rgba(0,0,0,0.12)",
-            background: "#fff",
-            fontWeight: 900,
-          }}
-        >
+        <div style={{ padding: "10px 14px", borderRadius: 999, border: "1px solid rgba(0,0,0,0.12)", background: "#fff", fontWeight: 900 }}>
           {t.kids.steps.title.replace("{cur}", String(stepIdx + 1)).replace("{total}", String(total))}
         </div>
       </div>
 
       {/* 중앙 카드 */}
-      <div
-        style={{
-          flex: 1,
-          display: "grid",
-          placeItems: "center",
-          padding: "28px 20px 36px",
-        }}
-      >
-        <div
-          style={{
-            width: "min(1100px, 92vw)",
-            aspectRatio: "16 / 9",
-            borderRadius: 18,
-            background: "rgba(255,255,255,0.92)",
-            border: "2px solid rgba(0,0,0,0.55)",
-            boxShadow: "0 18px 40px rgba(0,0,0,0.14)",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          {/* 카드 타이틀 */}
-          <div
-            style={{
-              position: "absolute",
-              top: 14,
-              left: "50%",
-              transform: "translateX(-50%)",
-              zIndex: 6,
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "10px 16px",
-              borderRadius: 999,
-              background: "rgba(255,255,255,0.9)",
-              fontWeight: 900,
-            }}
-          >
+      <div style={{ flex: 1, display: "grid", placeItems: "center", padding: "28px 20px 36px" }}>
+        <div style={{ width: "min(1100px, 92vw)", aspectRatio: "16 / 9", borderRadius: 18, background: "rgba(255,255,255,0.92)", border: "2px solid rgba(0,0,0,0.55)", boxShadow: "0 18px 40px rgba(0,0,0,0.14)", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: 14, left: "50%", transform: "translateX(-50%)", zIndex: 6, display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderRadius: 999, background: "rgba(255,255,255,0.9)", fontWeight: 900 }}>
             {t.kids.steps.preview}
           </div>
 
-          {/* 로딩 오버레이 */}
           {loading && (
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                zIndex: 10,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "rgba(255,255,255,0.75)",
-                backdropFilter: "blur(4px)",
-                fontWeight: 900,
-                color: "#666",
-              }}
-            >
+            <div style={{ position: "absolute", inset: 0, zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.75)", backdropFilter: "blur(4px)", fontWeight: 900, color: "#666" }}>
               {t.kids.steps.loading}
             </div>
           )}
 
-          {/* Canvas */}
           <div style={{ position: "absolute", inset: 0 }}>
             <Canvas camera={{ position: [220, 0, 220], fov: 45 }} dpr={[1, 2]}>
               <ambientLight intensity={0.9} />
               <directionalLight position={[3, 5, 2]} intensity={1.0} />
 
               <LdrModel
-                url={url}
+                url={ldrUrl}
                 overrideMainLdrUrl={overrideMainLdrUrl}
                 onLoaded={(g) => {
                   setLoading(false);
@@ -514,7 +441,6 @@ export default function KidsStepPage() {
             </Canvas>
           </div>
 
-          {/* 카드 안 버튼 */}
           <button
             disabled={!canPrev}
             onClick={() => {
@@ -567,7 +493,6 @@ export default function KidsStepPage() {
         </div>
       </div>
 
-      {/* 하단 액션 버튼들 (프리셋이 아닐 때만 노출) */}
       {params.get("isPreset") !== "true" && (
         <div className="kidsStep__actionContainer">
           <button className="kidsStep__actionBtn" onClick={downloadGlb}>
@@ -587,7 +512,6 @@ export default function KidsStepPage() {
         </div>
       )}
 
-      {/* 갤러리 등록 모달 */}
       {isGalleryModalOpen && (
         <div className="galleryModalOverlay" onClick={() => setIsGalleryModalOpen(false)}>
           <div className="galleryModal" onClick={(e) => e.stopPropagation()}>
