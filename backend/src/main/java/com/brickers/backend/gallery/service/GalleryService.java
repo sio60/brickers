@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -223,11 +224,13 @@ public class GalleryService {
 
         if (userId != null) {
             // 북마크 상태 조회
-            Optional<GalleryBookmarkEntity> bookmark = galleryBookmarkRepository.findByUserIdAndPostId(userId, post.getId());
+            Optional<GalleryBookmarkEntity> bookmark = galleryBookmarkRepository.findByUserIdAndPostId(userId,
+                    post.getId());
             bookmarked = bookmark.isPresent();
 
             // 반응 상태 조회
-            Optional<GalleryReactionEntity> reaction = galleryReactionRepository.findByUserIdAndPostId(userId, post.getId());
+            Optional<GalleryReactionEntity> reaction = galleryReactionRepository.findByUserIdAndPostId(userId,
+                    post.getId());
             myReaction = reaction.map(r -> r.getType().name()).orElse(null);
         }
 
@@ -251,4 +254,7 @@ public class GalleryService {
                 .build();
     }
 
+    public List<String> getPopularTags() {
+        return galleryPostRepository.findAllTags();
+    }
 }

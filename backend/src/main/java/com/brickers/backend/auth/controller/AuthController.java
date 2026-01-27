@@ -7,6 +7,9 @@ import com.brickers.backend.auth.service.AuthTokenService;
 import com.brickers.backend.auth.service.AuthTokenService.IssuedTokens;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.repository.UserRepository;
+import com.brickers.backend.auth.repository.LoginHistoryRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +30,7 @@ public class AuthController {
     private final AuthTokenService tokenService;
     private final AuditLogService auditLogService;
     private final UserRepository userRepository;
+    private final LoginHistoryRepository loginHistoryRepository;
 
     /** ✅ refresh-cookie로 access 재발급 + refresh rotation */
     @PostMapping("/refresh")
@@ -123,6 +127,15 @@ public class AuthController {
         return ResponseEntity.ok(Map.of(
                 "principal", authentication.getPrincipal(),
                 "authorities", authentication.getAuthorities()));
+    }
+
+    @GetMapping("/login-history")
+    public Page<?> loginHistory(
+            Authentication authentication,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size) {
+        String userId = (String) authentication.getPrincipal();
+        return loginHistoryRepository.findByUserIdOrderByLoginAtDesc(userId, PageRequest.of(page, size));
     }
 
 }

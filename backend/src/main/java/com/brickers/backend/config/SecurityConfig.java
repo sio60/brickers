@@ -60,6 +60,11 @@ public class SecurityConfig {
                                                 // OAuth2 시작/콜백
                                                 .requestMatchers("/auth/**").permitAll()
 
+                                                // ✅ [New] System & Public APIs
+                                                .requestMatchers("/api/health", "/api/version", "/api/config/public")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/gallery/tags").permitAll()
+
                                                 // Kids API 공개
                                                 .requestMatchers(HttpMethod.POST, "/api/kids/render").permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/api/kids/rendered/**").permitAll()

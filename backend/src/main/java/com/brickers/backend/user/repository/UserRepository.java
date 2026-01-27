@@ -30,4 +30,8 @@ public interface UserRepository extends MongoRepository<User, String> {
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
     long countByRole(UserRole role);
+
+    boolean existsByNickname(String nickname);
+
+    boolean existsByEmail(String email);
 }

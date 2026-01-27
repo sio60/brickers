@@ -1,7 +1,7 @@
 package com.brickers.backend.payment.dto;
 
 import com.brickers.backend.payment.entity.PaymentOrder;
-import com.brickers.backend.payment.entity.PaymentStatus;
+// import com.brickers.backend.payment.entity.PaymentStatus; 
 import lombok.Builder;
 import lombok.Data;
 
@@ -15,21 +15,32 @@ public class PaymentOrderResponse {
     private String orderNo;
     private String planName;
     private BigDecimal amount;
-    private PaymentStatus status;
+    private String status;
     private String checkoutUrl;
     private LocalDateTime paidAt;
     private LocalDateTime createdAt;
+    private String pgOrderId;
 
     public static PaymentOrderResponse from(PaymentOrder order) {
-        return PaymentOrderResponse.builder()
-                .orderId(order.getId())
-                .orderNo(order.getOrderNo())
-                .planName(order.getPlanName())
-                .amount(order.getAmount())
-                .status(order.getStatus())
-                .checkoutUrl(order.getCheckoutUrl())
-                .paidAt(order.getPaidAt())
-                .createdAt(order.getCreatedAt())
-                .build();
+        try {
+            String statusStr = order.getStatus() != null ? order.getStatus().name() : "UNKNOWN";
+            return PaymentOrderResponse.builder()
+                    .orderId(order.getId())
+                    .orderNo(order.getOrderNo())
+                    .planName(order.getPlanName())
+                    .amount(order.getAmount())
+                    .status(statusStr)
+                    .checkoutUrl(order.getCheckoutUrl())
+                    .paidAt(order.getPaidAt())
+                    .createdAt(order.getCreatedAt())
+                    .pgOrderId(order.getPgOrderId())
+                    .build();
+        } catch (Throwable e) {
+            return PaymentOrderResponse.builder()
+                    .orderNo("DEBUG_ERROR")
+                    .pgOrderId("Error: " + e.getClass().getName() + ": " + e.getMessage())
+                    .status("FAILED")
+                    .build();
+        }
     }
 }
