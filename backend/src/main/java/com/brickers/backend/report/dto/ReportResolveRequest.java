@@ -1,14 +1,21 @@
 package com.brickers.backend.report.dto;
 
-import com.brickers.backend.report.entity.ReportStatus;
-import lombok.Data;
-
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class ReportResolveRequest {
-    private boolean approve;
+
+    @NotNull
+    private ResolveAction action; // APPROVE / REJECT
 
     @NotBlank
-    private String note;
+    private String note; // 관리자 메모 (필수)
+
+    public enum ResolveAction {
+        APPROVE, REJECT
+    }
 }

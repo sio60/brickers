@@ -7,11 +7,13 @@ import com.brickers.backend.inquiry.entity.InquiryStatus;
 import com.brickers.backend.inquiry.service.InquiryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin/inquiries")
+@PreAuthorize("hasAuthority('ROLE_ADMIN')")
 @RequiredArgsConstructor
 public class AdminInquiryController {
 
@@ -20,15 +22,16 @@ public class AdminInquiryController {
     /** 전체 문의 목록 (상태 필터 가능) */
     @GetMapping
     public Page<InquiryResponse> getAllInquiries(
-            @RequestParam(required = false) InquiryStatus status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size,
+            @RequestParam(name = "status", required = false) InquiryStatus status) {
         return inquiryService.getAllInquiries(status, page, size);
     }
 
     /** 문의 상세 */
     @GetMapping("/{inquiryId}")
-    public InquiryResponse getInquiryDetail(@PathVariable String inquiryId) {
+    public InquiryResponse getInquiryDetail(
+            @PathVariable("inquiryId") String inquiryId) {
         return inquiryService.getInquiryDetail(inquiryId);
     }
 
@@ -36,7 +39,7 @@ public class AdminInquiryController {
     @PostMapping("/{inquiryId}/answer")
     public InquiryResponse createAnswer(
             Authentication auth,
-            @PathVariable String inquiryId,
+            @PathVariable("inquiryId") String inquiryId,
             @RequestBody InquiryAnswerRequest req) {
         return inquiryService.createAnswer(auth, inquiryId, req);
     }
@@ -45,7 +48,7 @@ public class AdminInquiryController {
     @PatchMapping("/{inquiryId}/answer")
     public InquiryResponse updateAnswer(
             Authentication auth,
-            @PathVariable String inquiryId,
+            @PathVariable("inquiryId") String inquiryId,
             @RequestBody InquiryAnswerRequest req) {
         return inquiryService.updateAnswer(auth, inquiryId, req);
     }
@@ -53,7 +56,7 @@ public class AdminInquiryController {
     /** 상태 변경 */
     @PostMapping("/{inquiryId}/status")
     public InquiryResponse changeStatus(
-            @PathVariable String inquiryId,
+            @PathVariable("inquiryId") String inquiryId,
             @RequestBody InquiryStatusRequest req) {
         return inquiryService.changeStatus(inquiryId, req);
     }

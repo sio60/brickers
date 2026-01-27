@@ -77,12 +77,23 @@ public class PaymentOrder {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void markRefunded(String reason) {
+        this.status = PaymentStatus.REFUNDED;
+        this.cancelReason = reason;
+        this.canceledAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public void markFailed() {
         this.status = PaymentStatus.FAILED;
         this.updatedAt = LocalDateTime.now();
     }
 
-    public boolean canCancel() {
+    public boolean canCancelByUser() {
         return this.status == PaymentStatus.PENDING;
+    }
+
+    public boolean canCancelByAdmin() {
+        return this.status == PaymentStatus.PENDING || this.status == PaymentStatus.COMPLETED;
     }
 }

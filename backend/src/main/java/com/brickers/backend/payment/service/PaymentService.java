@@ -90,7 +90,7 @@ public class PaymentService {
             throw new IllegalArgumentException("접근 권한이 없습니다.");
         }
 
-        if (!order.canCancel()) {
+        if (!order.canCancelByUser()) {
             throw new IllegalStateException("취소 가능한 상태가 아닙니다.");
         }
 

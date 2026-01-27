@@ -1,5 +1,6 @@
 package com.brickers.backend.admin.dashboard;
 
+import com.brickers.backend.gallery.repository.GalleryPostRepository;
 import com.brickers.backend.job.repository.GenerateJobRepository;
 import com.brickers.backend.payment.repository.PaymentOrderRepository;
 import com.brickers.backend.user.repository.UserRepository;
@@ -23,7 +24,7 @@ public class AdminDashboardController {
     private final UserRepository userRepository;
     private final GenerateJobRepository jobRepository;
     private final PaymentOrderRepository paymentOrderRepository;
-    private final com.brickers.backend.gallery.repository.GalleryPostRepository galleryPostRepository;
+    private final GalleryPostRepository galleryPostRepository;
 
     @GetMapping
     public AdminDashboardStats getDashboardStats() {

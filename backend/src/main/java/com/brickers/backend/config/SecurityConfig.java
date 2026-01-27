@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -18,6 +19,7 @@ import org.springframework.web.cors.*;
 
 import java.util.List;
 
+@EnableMethodSecurity(prePostEnabled = true)
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -68,10 +70,12 @@ public class SecurityConfig {
                                                 // -------------------------------
                                                 // ✅ Auth API
                                                 // -------------------------------
-                                                .requestMatchers(HttpMethod.POST, "/api/auth/refresh",
-                                                                "/api/auth/logout")
-                                                .permitAll()
+                                                // .requestMatchers(HttpMethod.POST, "/api/auth/refresh",
+                                                // "/api/auth/logout")
+                                                // .permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+                                                .requestMatchers("/api/auth/refresh", "/api/auth/logout").permitAll()
+                                                .requestMatchers("/actuator/**").permitAll()
 
                                                 // -------------------------------
                                                 // ✅ My API (JWT 필요)
@@ -122,7 +126,7 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/inquiries/**").authenticated()
 
                                                 // -------------------------------
-                                                // ✅ Payment API (결제)
+                                                // ✅ Payment API (일회성 결제)
                                                 // -------------------------------
                                                 // 요금제 목록 및 웹훅은 공개 (웹훅은 내부 IP 체크 등 추가 보안 권장)
                                                 .requestMatchers(HttpMethod.GET, "/api/payments/plans").permitAll()
@@ -134,6 +138,14 @@ public class SecurityConfig {
                                                 // ✅ Kids API 공개 (네 실제 매핑 경로에 맞춰 추가)
                                                 .requestMatchers("/api/v1/kids/**").permitAll()
                                                 .requestMatchers("/api/kids/**").permitAll()
+                                                // -------------------------------
+                                                // ✅ Billing API (구독 결제)
+                                                // -------------------------------
+                                                // 요금제 목록 및 웹훅은 공개
+                                                .requestMatchers(HttpMethod.GET, "/api/billing/plans").permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/api/billing/webhook").permitAll()
+                                                .requestMatchers("/api/billing/**").authenticated()
+
                                                 // -------------------------------
                                                 // ✅ Admin API
                                                 // -------------------------------

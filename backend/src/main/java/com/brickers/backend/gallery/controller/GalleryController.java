@@ -55,7 +55,7 @@ public class GalleryController {
      */
     @GetMapping("/{id}")
     public GalleryResponse detail(
-            @PathVariable String id,
+            @PathVariable("id") String id,
             Authentication authOrNull,
             HttpServletRequest request) {
         String viewerKey = galleryViewService.buildViewerKey(authOrNull, request);
@@ -67,7 +67,7 @@ public class GalleryController {
     /** 게시글 수정 (작성자만) */
     @PatchMapping("/{id}")
     public GalleryResponse update(
-            @PathVariable String id,
+            @PathVariable("id") String id,
             Authentication auth,
             @RequestBody GalleryUpdateRequest req) {
         return galleryService.update(id, auth, req);
@@ -75,7 +75,7 @@ public class GalleryController {
 
     /** 게시글 삭제 (작성자만) */
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable String id, Authentication auth) {
+    public void delete(@PathVariable("id") String id, Authentication auth) {
         galleryService.delete(id, auth);
     }
 
@@ -92,7 +92,7 @@ public class GalleryController {
     /** 좋아요/싫어요 토글 */
     @PostMapping("/{id}/reaction")
     public ReactionToggleResponse toggleReaction(
-            @PathVariable String id,
+            @PathVariable("id") String id,
             Authentication auth,
             @RequestBody ReactionToggleRequest req) {
         return galleryReactionService.toggle(auth, id, req);

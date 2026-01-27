@@ -1,5 +1,6 @@
 package com.brickers.backend.report.service;
 
+import com.brickers.backend.common.exception.ConflictException;
 import com.brickers.backend.report.dto.ReportCreateRequest;
 import com.brickers.backend.report.dto.ReportResolveRequest;
 import com.brickers.backend.report.dto.ReportResponse;
@@ -11,12 +12,16 @@ import com.brickers.backend.user.repository.UserRepository;
 import com.brickers.backend.user.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 import java.time.LocalDateTime;
 import java.util.NoSuchElementException;
@@ -128,17 +133,27 @@ public class ReportService {
         return resp;
     }
 
-    public ReportResponse resolveReport(Authentication auth, String reportId, ReportResolveRequest req) {
-        User admin = currentUserService.get(auth);
-        String adminId = admin.getId();
+    public ReportResponse resolveReport(Authentication authentication, String reportId, ReportResolveRequest req) {
+        User admin = currentUserService.get(authentication);
 
         Report report = reportRepository.findById(reportId)
-                .orElseThrow(() -> new IllegalArgumentException("신고를 찾을 수 없습니다."));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "신고를 찾을 수 없습니다."));
 
-        if (req.isApprove()) {
-            report.resolve(adminId, req.getNote());
+        // ✅ PENDING만 처리 가능 (RESOLVED/REJECTED/CANCELED는 재처리 불가)
+        if (report.getStatus() != ReportStatus.PENDING) {
+            throw new ResponseStatusException(CONFLICT,
+                    "이미 처리된 신고입니다. (status=" + report.getStatus() + ")");
+        }
+
+        var action = req.getAction();
+        var note = req.getNote();
+
+        if (action == ReportResolveRequest.ResolveAction.APPROVE) {
+            report.resolve(admin.getId(), note);
+        } else if (action == ReportResolveRequest.ResolveAction.REJECT) {
+            report.reject(admin.getId(), note);
         } else {
-            report.reject(adminId, req.getNote());
+            throw new ResponseStatusException(NOT_FOUND, "Invalid action: " + action);
         }
 
         return ReportResponse.from(reportRepository.save(report));

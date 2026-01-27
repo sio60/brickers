@@ -45,6 +45,9 @@ public class Report {
     private LocalDateTime resolvedAt;
 
     public void resolve(String adminId, String note) {
+        if (this.status != ReportStatus.PENDING) {
+            throw new IllegalStateException("이미 처리된 신고입니다. status=" + this.status);
+        }
         this.status = ReportStatus.RESOLVED;
         this.resolvedBy = adminId;
         this.resolutionNote = note;
@@ -53,6 +56,9 @@ public class Report {
     }
 
     public void reject(String adminId, String note) {
+        if (this.status != ReportStatus.PENDING) {
+            throw new IllegalStateException("이미 처리된 신고입니다. status=" + this.status);
+        }
         this.status = ReportStatus.REJECTED;
         this.resolvedBy = adminId;
         this.resolutionNote = note;
