@@ -32,13 +32,13 @@ public class PaymentController {
 
     /** 결제 주문 상태 조회 */
     @GetMapping("/orders/{orderId}")
-    public PaymentOrderResponse getOrder(Authentication auth, @PathVariable String orderId) {
+    public PaymentOrderResponse getOrder(Authentication auth, @PathVariable("orderId") String orderId) {
         return paymentService.getOrder(auth, orderId);
     }
 
     /** 결제 취소 요청 */
     @PostMapping("/orders/{orderId}/cancel")
-    public ResponseEntity<?> cancelOrder(Authentication auth, @PathVariable String orderId) {
+    public ResponseEntity<?> cancelOrder(Authentication auth, @PathVariable("orderId") String orderId) {
         paymentService.cancelOrder(auth, orderId);
         return ResponseEntity.ok(Map.of("message", "결제 취소 요청이 처리되었습니다."));
     }

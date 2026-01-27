@@ -7,15 +7,15 @@ import KidsLdrPreview from "./components/KidsLdrPreview";
 import KidsLoadingScreen from "./components/KidsLoadingScreen";
 import { useLanguage } from "../../contexts/LanguageContext";
 
-// 응답 타입: ldrUrl 대신 ldrData(문자열)를 받습니다.
-type GenerateResp = {
-  ok: boolean;
-  reqId: string;
-  prompt: string;
-  ldrData: string;
-  parts: number;
-  finalTarget: number;
-};
+// 응답 타입 (참고용)
+// type GenerateResp = {
+//   ok: boolean;
+//   reqId: string;
+//   prompt: string;
+//   ldrData: string;
+//   parts: number;
+//   finalTarget: number;
+// };
 
 export default function KidsPage() {
   const navigate = useNavigate();
@@ -35,6 +35,7 @@ export default function KidsPage() {
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [ldrUrl, setLdrUrl] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
+  const [showToast, setShowToast] = useState(false);
 
   const processingRef = useRef(false);
 
@@ -52,66 +53,90 @@ export default function KidsPage() {
         formData.append("age", age);
         formData.append("budget", String(budget));
 
-        // Spring Boot로 요청
-        const res = await fetch("/api/kids/generate", {
+        // 1. 생성 요청 (즉시 응답: jobId)
+        const startRes = await fetch("/api/kids/generate", {
           method: "POST",
           body: formData,
         });
 
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`Server Error: ${errText}`);
+        if (!startRes.ok) {
+          const errText = await startRes.text();
+          throw new Error(`Start Error: ${errText}`);
         }
 
-        const data: GenerateResp = await res.json();
+        const startData = await startRes.json();
+        const jobId = startData.jobId;
+        if (!jobId) throw new Error("No jobId received");
 
-        // ✅ [핵심 로직] Base64 문자열 -> Blob -> URL 변환
-        if (data.ldrData) {
-          try {
-            // "data:text/plain;base64," 뒷부분만 잘라내기
-            const base64Content = data.ldrData.split(',')[1];
+        setJobId(jobId);
 
-            // 디코딩 (브라우저 내장 함수 atob 사용)
-            const binaryString = window.atob(base64Content);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-              bytes[i] = binaryString.charCodeAt(i);
+        // 2. 폴링 (Polling)
+        // 최대 10분, 2초 간격 = 300번 시도
+        const POLL_INTERVAL = 2000;
+        const MAX_ATTEMPTS = 300;
+
+        let finalData: any = null;
+
+        for (let i = 0; i < MAX_ATTEMPTS; i++) {
+          await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL));
+
+          const statusRes = await fetch(`/api/kids/jobs/${jobId}`);
+          if (!statusRes.ok) {
+            console.warn(`[KidsPage] Polling failed: Status ${statusRes.status} for jobId ${jobId}`);
+            if (statusRes.status === 404) {
+              // 404면 작업이 없어진 것이므로 중단 고려할 수 있지만, 
+              // 초기 생성 직후 DB 인덱싱 지연 가능성 대비해서 조금 더 시도하거나 로그만 찍음
+              console.error(`[KidsPage] Job not found (404). ID: ${jobId}`);
             }
-
-            // 가상의 파일 객체(Blob) 생성
-            const blob = new Blob([bytes], { type: 'text/plain' });
-            // 가짜 URL 생성 (예: blob:http://localhost:5173/xxxx-xxxx...)
-            const tempUrl = URL.createObjectURL(blob);
-
-            setLdrUrl(tempUrl);
-            setJobId(data.reqId);
-            setStatus("done");
-          } catch (err) {
-            console.error("Base64 converting error:", err);
-            throw new Error("File conversion failed");
+            continue;
           }
-        } else {
-          throw new Error("No LDR data received");
+
+          const statusData = await statusRes.json();
+          // statusData: { status: "RUNNING" | "DONE" | "FAILED", ... }
+
+          if (statusData.status === "FAILED") {
+            throw new Error(statusData.errorMessage || "Generation failed");
+          }
+
+          if (statusData.status === "DONE") {
+            // 완료! 여기서 결과 데이터(ldrData/ldrUrl 등)가 들어있는지 확인
+            // GenerateJobEntity에는 modelKey, previewImageUrl 등이 있음.
+            // 하지만 LDR Data 자체는 DB에 없을 수도 있음 (Storage URL만 있을 수 있음).
+            // -> 만약 ldrData가 필요하다면, DB 조회 시 modelKey(URL)를 fetch해서 가져와야 함.
+            // 
+            // 현재 KidsService.getJobStatus는 Entity를 그대로 반환.
+            // Entity의 modelKey가 ldrUrl 역할.
+            // ldrData(Base64)는 DB에 저장되지 않으므로, URL을 다운로드해야 함.
+            finalData = statusData;
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 5000); // 5초 후 자동 숨김
+            break;
+          }
+
+          // QUEUED or RUNNING -> continue
         }
+
+        if (!finalData) throw new Error("Timeout: Generation took too long");
+
+        // 3. 결과 처리
+        // Status가 DONE이면 ldrUrl에 LDR URL이 있음 (이전: modelKey)
+        const modelUrl = finalData.ldrUrl || finalData.modelKey; // 레거시 호환
+        if (!modelUrl) throw new Error("No model URL in job result");
+
+        // ✅ 더 이상 blob으로 변환하거나 로컬 URL을 생성하지 않음 (이전 페이지 이관 시 폐기됨)
+        // 서버에서 전달해준 modelUrl(예: /uploads/...)을 직접 사용
+        setLdrUrl(modelUrl);
+        setStatus("done");
 
       } catch (e) {
         console.error("Brick generation failed:", e);
         setStatus("error");
-      } finally {
-        // 에러 발생 시에는 재시도 가능하도록 락 해제 고려할 수 있으나,
-        // 현재는 status가 error로 남으므로 자동 재진입 안 함.
-        // processingRef는 true로 둬도 무방. (단, 명시적 재시도 버튼 구현 시 초기화 필요)
       }
     };
 
     runProcess();
 
-    // Cleanup: 컴포넌트가 꺼질 때 메모리 해제
-    return () => {
-      if (ldrUrl) URL.revokeObjectURL(ldrUrl);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Cleanup 제거 (더 이상 ldrUrl이 blob이 아니므로 revoke 필요 없음)
   }, [rawFile, age, budget]);
 
   // 로딩바용 퍼센트 (가짜)
@@ -163,6 +188,26 @@ export default function KidsPage() {
                 <br />
               </React.Fragment>
             ))}
+          </div>
+        )}
+
+        {/* 커스텀 토스트 메시지 (우측 상단 고정) */}
+        {showToast && (
+          <div style={{
+            position: "fixed",
+            top: "80px", // 헤더 아래
+            right: "20px",
+            background: "#ffffff",
+            border: "2px solid #000000",
+            color: "#000000",
+            padding: "16px 24px",
+            zIndex: 9999,
+            fontWeight: "bold",
+            fontSize: "16px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            borderRadius: "8px",
+          }}>
+            {t.kids.generate.complete}
           </div>
         )}
       </div>

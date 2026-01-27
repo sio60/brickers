@@ -43,6 +43,7 @@ export const ja = {
         jobs: "作業履歴",
         gallery: "マイギャラリー",
         bookmarks: "ブックマーク",
+        reports: "報告・通報履歴",
         settings: "設定",
         delete: "退会",
         admin: "管理者専用"
@@ -91,7 +92,39 @@ export const ja = {
     delete: {
         title: "退会",
         desc: "本当に退会しますか？すべてのデータが削除され、復旧は不可能です。",
-        btn: "退会"
+        btn: "退회",
+    },
+    inquiries: {
+        title: "問い合わせ履歴",
+        empty: "お問い合わせ履歴がありません。",
+        status: {
+            PENDING: "回答待ち",
+            ANSWERED: "回答完了",
+        },
+        adminAnswer: "管理者からの回答",
+    },
+    reports: {
+        title: "報告・通報履歴",
+        empty: "通報・報告履歴がありません。",
+        status: {
+            PENDING: "確認中",
+            RESOLVED: "対応完了",
+            REJECTED: "却下",
+        },
+        reasons: {
+            SPAM: "スパム/広告",
+            ABUSE: "暴言/誹謗中傷",
+            INAPPROPRIATE: "不適切な内容",
+            GENERAL: "その他",
+        },
+        targets: {
+            POST: "投稿",
+            COMMENT: "コメント",
+            USER: "ユーザー",
+            GENERAL: "一般",
+        },
+        adminNote: "管理者からの対応内容",
+        dataId: "データID",
     },
     kids: {
         title: "難易度を選択してください",
@@ -102,6 +135,7 @@ export const ja = {
         generate: {
             loading: "AIがレゴを作成しています...",
             creating: "作成中...",
+            complete: "生成が完了しました！マイページで確認してください。",
             ready: "レゴが完成しました！",
             next: "次へ →",
             error: "おっと！問題が発生しました。\n後でもう一度お試しください。"

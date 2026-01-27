@@ -29,8 +29,17 @@ public class KidsController {
                 ? String.valueOf(authentication.getPrincipal())
                 : null;
 
-        // 서비스에게 일 시키기
-        Map<String, Object> result = kidsService.generateBrick(userId, file, age, budget);
+        // 서비스에게 일 시키기 (Async 시작)
+        Map<String, Object> result = kidsService.startGeneration(userId, file, age, budget);
         return ResponseEntity.ok(result);
+    }
+
+    // Polling용 상태 조회
+    @GetMapping("/jobs/{jobId}")
+    public ResponseEntity<?> getJobStatus(@PathVariable("jobId") String jobId) {
+        // 간단 조회 로직은 서비스나 리포지토리 바로 호출
+        // (원칙적으로 Service 거치는 게 좋으나 편의상 Repository 사용 고려, 여기서는 Service에 메소드 추가 권장)
+        // -> KidsService에 getJobStatus 추가 후 호출
+        return ResponseEntity.ok(kidsService.getJobStatus(jobId));
     }
 }

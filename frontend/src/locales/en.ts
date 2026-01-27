@@ -43,6 +43,7 @@ export const en = {
         jobs: "My Jobs",
         gallery: "My Gallery",
         bookmarks: "Bookmarks",
+        reports: "My Reports",
         settings: "Settings",
         delete: "Delete Account",
         admin: "Admin Only"
@@ -91,7 +92,39 @@ export const en = {
     delete: {
         title: "Delete Account",
         desc: "Are you sure? All data will be deleted irrecoverably.",
-        btn: "Delete Account"
+        btn: "Delete Account",
+    },
+    inquiries: {
+        title: "My Inquiries",
+        empty: "No inquiries yet.",
+        status: {
+            PENDING: "Pending",
+            ANSWERED: "Answered",
+        },
+        adminAnswer: "Admin Answer",
+    },
+    reports: {
+        title: "My Reports",
+        empty: "No reports yet.",
+        status: {
+            PENDING: "Pending",
+            RESOLVED: "Resolved",
+            REJECTED: "Rejected",
+        },
+        reasons: {
+            SPAM: "Spam/Ad",
+            ABUSE: "Abuse/Insult",
+            INAPPROPRIATE: "Inappropriate",
+            GENERAL: "General",
+        },
+        targets: {
+            POST: "Post",
+            COMMENT: "Comment",
+            USER: "User",
+            GENERAL: "General",
+        },
+        adminNote: "Admin Resolution",
+        dataId: "Data ID",
     },
     kids: {
         title: "Select Your Level",
@@ -102,6 +135,7 @@ export const en = {
         generate: {
             loading: "AI is making your brick...",
             creating: "Creating...",
+            complete: "Generation complete! Please check My Page.",
             ready: "Your Brick is Ready!",
             next: "NEXT →",
             error: "Oops! Something went wrong.\nPlease try again later."

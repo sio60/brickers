@@ -2,9 +2,12 @@ package com.brickers.backend.job.repository;
 
 import com.brickers.backend.job.entity.GenerateJobEntity;
 import com.brickers.backend.job.entity.JobStatus;
+
+import java.time.LocalDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import com.brickers.backend.job.entity.JobStatus;
 
 public interface GenerateJobRepository extends MongoRepository<GenerateJobEntity, String> {
 
@@ -14,4 +17,11 @@ public interface GenerateJobRepository extends MongoRepository<GenerateJobEntity
 
     // 완료된 작업 수
     long countByUserIdAndStatus(String userId, JobStatus status);
+
+    // [New] 전체 통계용
+    long countByStatus(JobStatus status);
+
+    Page<GenerateJobEntity> findByStatusOrderByCreatedAtDesc(JobStatus status, Pageable pageable);
+
+    long countByStatusAndUpdatedAtAfter(JobStatus status, LocalDateTime after);
 }

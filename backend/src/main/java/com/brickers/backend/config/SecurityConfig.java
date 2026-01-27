@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -18,6 +19,7 @@ import org.springframework.web.cors.*;
 
 import java.util.List;
 
+@EnableMethodSecurity(prePostEnabled = true)
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -68,10 +70,11 @@ public class SecurityConfig {
                                                 // -------------------------------
                                                 // ✅ Auth API
                                                 // -------------------------------
-                                                .requestMatchers(HttpMethod.POST, "/api/auth/refresh",
-                                                                "/api/auth/logout")
-                                                .permitAll()
+                                                // .requestMatchers(HttpMethod.POST, "/api/auth/refresh",
+                                                // "/api/auth/logout")
+                                                // .permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+                                                .requestMatchers("/api/auth/refresh", "/api/auth/logout").permitAll()
                                                 // 토큰 상태 확인 (공개 - 토큰 없어도 확인 가능)
                                                 .requestMatchers(HttpMethod.GET, "/api/auth/status").permitAll()
                                                 // 모든 세션 로그아웃 (인증 필요)
@@ -80,6 +83,7 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.GET, "/api/auth/logins").authenticated()
                                                 // 비정상 로그인 알림 (내부용 - 일단 공개)
                                                 .requestMatchers(HttpMethod.POST, "/api/auth/alert").permitAll()
+                                                .requestMatchers("/actuator/**").permitAll()
 
                                                 // -------------------------------
                                                 // ✅ Users API (공개 프로필)
@@ -145,7 +149,14 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.GET, "/api/payments/plans").permitAll()
                                                 .requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
                                                 .requestMatchers("/api/payments/**").authenticated()
+                                                // ✅ preflight는 무조건 통과 (JWT 필터/시큐리티에서 401 막기)
+                                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                                                // ✅ Kids API 공개 (네 실제 매핑 경로에 맞춰 추가)
+                                                .requestMatchers("/api/v1/kids/**").permitAll()
+                                                .requestMatchers("/api/kids/**").permitAll()
+                                                // ✅ AI 생성 정적 파일 공개 (중요!)
+                                                .requestMatchers("/api/generated/**").permitAll()
                                                 // -------------------------------
                                                 // ✅ Billing API (구독 결제)
                                                 // -------------------------------

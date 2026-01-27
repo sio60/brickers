@@ -52,16 +52,23 @@ app:
   
   # 업로드 설정
   upload:
-    provider: S3
-    public-base-url: ${UPLOAD_PUBLIC_BASE_URL:https://YOUR_BUCKET.s3.ap-northeast-2.amazonaws.com}
+    # LOCAL or S3 (환경변수로 분기)
+    provider: ${UPLOAD_PROVIDER:LOCAL}
+    public-base-url: ${UPLOAD_PUBLIC_BASE_URL:http://localhost:8080/uploads}
+    # 로컬 저장소 설정
+    local:
+      root-dir: ${LOCAL_UPLOAD_ROOT_DIR:./uploads}
+      public-prefix: ${LOCAL_UPLOAD_PUBLIC_PREFIX:/uploads}
+    # S3 설정
     s3:
-      bucket: ${AWS_S3_BUCKET}
-      # 환경변수 AWS_REGION이 없으면 기본값 ap-northeast-2 사용
+      bucket: ${AWS_S3_BUCKET:brickers-s3-bucket}
       region: ${AWS_REGION:ap-northeast-2}
+      access-key: ${AWS_ACCESS_KEY_ID:}
+      secret-key: ${AWS_SECRET_ACCESS_KEY:}
       presign-exp-seconds: ${AWS_PRESIGN_EXP_SECONDS:120}
       key-prefix: ${AWS_S3_KEY_PREFIX:uploads}
-      max-bytes: ${UPLOAD_MAX_BYTES:10485760}
-      allowed-content-types: image/png,image/jpeg,image/webp
+      max-bytes: ${UPLOAD_MAX_BYTES:52428800}
+      allowed-content-types: image/png,image/jpeg,image/webp,application/octet-stream,text/plain
 
 # ✅ AI 서버 설정 (들여쓰기 주의: ai가 최상위)
 ai:
@@ -95,3 +102,15 @@ springdoc:
     path: /v3/api-docs
   default-produces-media-type: application/json
   default-consumes-media-type: application/json
+
+management:
+  endpoint:
+    health:
+      show-details: always
+    web:
+      exposure:
+        include: health,info
+  
+  health:
+    mongodb:
+      enabled: false
