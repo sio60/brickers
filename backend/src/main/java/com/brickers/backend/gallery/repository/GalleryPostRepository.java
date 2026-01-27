@@ -33,4 +33,7 @@ public interface GalleryPostRepository extends MongoRepository<GalleryPostEntity
 
         // ✅ 내 게시글
         Page<GalleryPostEntity> findByDeletedFalseAndAuthorId(String authorId, Pageable pageable);
+
+        // 작성자의 게시글 수
+        long countByAuthorIdAndDeletedFalse(String authorId);
 }

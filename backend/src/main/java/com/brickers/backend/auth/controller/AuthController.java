@@ -1,8 +1,15 @@
 package com.brickers.backend.auth.controller;
 
 import com.brickers.backend.audit.entity.AuditEventType;
+import com.brickers.backend.audit.entity.AuditLog;
+import com.brickers.backend.audit.repository.AuditLogRepository;
 import com.brickers.backend.audit.service.AuditLogService;
+import com.brickers.backend.auth.dto.LoginHistoryResponse;
+import com.brickers.backend.auth.dto.TokenStatusResponse;
 import com.brickers.backend.auth.dto.UserMeResponse;
+import com.brickers.backend.auth.jwt.JwtProvider;
+import com.brickers.backend.auth.refresh.RefreshToken;
+import com.brickers.backend.auth.refresh.RefreshTokenRepository;
 import com.brickers.backend.auth.service.AuthTokenService;
 import com.brickers.backend.auth.service.AuthTokenService.IssuedTokens;
 import com.brickers.backend.user.entity.User;
@@ -11,10 +18,14 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.Instant;
+import java.util.List;
 
 import java.util.Map;
 
@@ -27,6 +38,9 @@ public class AuthController {
     private final AuthTokenService tokenService;
     private final AuditLogService auditLogService;
     private final UserRepository userRepository;
+    private final JwtProvider jwtProvider;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final AuditLogRepository auditLogRepository;
 
     /** ✅ refresh-cookie로 access 재발급 + refresh rotation */
     @PostMapping("/refresh")
@@ -123,6 +137,138 @@ public class AuthController {
         return ResponseEntity.ok(Map.of(
                 "principal", authentication.getPrincipal(),
                 "authorities", authentication.getAuthorities()));
+    }
+
+    // ============== 92~95번 API ==============
+
+    /**
+     * 92. 토큰 상태 확인
+     * GET /api/auth/status
+     */
+    @GetMapping("/status")
+    public ResponseEntity<TokenStatusResponse> tokenStatus(
+            Authentication authentication,
+            HttpServletRequest request) {
+
+        boolean accessValid = authentication != null && authentication.getPrincipal() != null;
+        String refreshRaw = readCookie(request, "refreshToken");
+        boolean refreshValid = false;
+
+        if (refreshRaw != null) {
+            try {
+                String hash = tokenService.hashToken(refreshRaw);
+                refreshValid = refreshTokenRepository.findByTokenHashAndRevokedAtIsNull(hash).isPresent();
+            } catch (Exception e) {
+                refreshValid = false;
+            }
+        }
+
+        String userId = accessValid ? (String) authentication.getPrincipal() : null;
+        long activeSessions = 0;
+        if (userId != null) {
+            activeSessions = refreshTokenRepository.countByUserIdAndRevokedAtIsNull(userId);
+        }
+
+        return ResponseEntity.ok(TokenStatusResponse.builder()
+                .accessValid(accessValid)
+                .refreshValid(refreshValid)
+                .activeSessions(activeSessions)
+                .build());
+    }
+
+    /**
+     * 93. 모든 세션 로그아웃
+     * POST /api/auth/logout-all
+     */
+    @PostMapping("/logout-all")
+    public ResponseEntity<?> logoutAll(Authentication authentication, HttpServletRequest request) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "인증이 필요합니다."));
+        }
+
+        String userId = (String) authentication.getPrincipal();
+
+        // 모든 활성 refresh 토큰 폐기
+        List<RefreshToken> activeTokens = refreshTokenRepository.findByUserIdAndRevokedAtIsNull(userId);
+        int revokedCount = 0;
+        for (RefreshToken token : activeTokens) {
+            token.setRevokedAt(Instant.now());
+            refreshTokenRepository.save(token);
+            revokedCount++;
+        }
+
+        // 감사 로그
+        auditLogService.log(
+                AuditEventType.LOGOUT_ALL,
+                userId,
+                userId,
+                request,
+                Map.of("revokedCount", revokedCount));
+
+        // 현재 쿠키 제거
+        var clear = tokenService.clearRefreshCookie();
+
+        log.info("[Logout-All] userId={}, revokedCount={}", userId, revokedCount);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, clear.toString())
+                .body(Map.of("ok", true, "revokedSessions", revokedCount));
+    }
+
+    /**
+     * 94. 최근 로그인 기록
+     * GET /api/auth/logins
+     */
+    @GetMapping("/logins")
+    public ResponseEntity<?> loginHistory(
+            Authentication authentication,
+            @RequestParam(defaultValue = "10") int limit) {
+
+        if (authentication == null || authentication.getPrincipal() == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "인증이 필요합니다."));
+        }
+
+        String userId = (String) authentication.getPrincipal();
+
+        List<AuditLog> logs = auditLogRepository.findByTargetUserIdAndEventTypeInOrderByCreatedAtDesc(
+                userId,
+                List.of(AuditEventType.LOGIN, AuditEventType.LOGOUT, AuditEventType.LOGOUT_ALL),
+                PageRequest.of(0, Math.min(limit, 50)));
+
+        List<LoginHistoryResponse> history = logs.stream()
+                .map(LoginHistoryResponse::from)
+                .toList();
+
+        return ResponseEntity.ok(Map.of("logins", history));
+    }
+
+    /**
+     * 95. 비정상 로그인 알림 (내부용)
+     * POST /api/auth/alert
+     */
+    @PostMapping("/alert")
+    public ResponseEntity<?> suspiciousLoginAlert(
+            @RequestBody Map<String, Object> alertData,
+            HttpServletRequest request) {
+
+        String userId = (String) alertData.get("userId");
+        String reason = (String) alertData.getOrDefault("reason", "unknown");
+
+        if (userId == null || userId.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "userId는 필수입니다."));
+        }
+
+        // 감사 로그에 비정상 로그인 기록
+        auditLogService.log(
+                AuditEventType.SUSPICIOUS_LOGIN,
+                userId,
+                "system",
+                request,
+                Map.of("reason", reason, "alertData", alertData));
+
+        log.warn("[Suspicious Login Alert] userId={}, reason={}", userId, reason);
+
+        return ResponseEntity.ok(Map.of("ok", true, "recorded", true));
     }
 
 }
