@@ -147,21 +147,21 @@
     color: #000;
 }
 
-.admin__listItem.inquiry {
+.admin__listItem {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    padding: 32px;
+    gap: 16px;
+    padding: 24px 8px;
     background: #fff;
-    border: 3px solid #000;
-    border-radius: 32px;
-    margin-bottom: 24px;
-    transition: all 0.2s;
+    border-radius: 0;
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s;
 }
 
-.admin__listItem.inquiry:hover {
-    transform: translate(-4px, -4px);
-    box-shadow: 8px 8px 0 #000;
+.admin__listItem:hover {
+    background: #fcfcfc;
+    transform: none;
+    box-shadow: none;
 }
 
 .inquiry__main h4 {
@@ -169,114 +169,153 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 20px;
-    font-weight: 900;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.inquiry__main p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #444;
+}
+
+.inquiry__main .meta {
+    font-size: 12px;
+    color: #999;
+    margin-top: 8px;
 }
 
 .inquiry__answer-section {
-    border-top: 2px solid #000;
-    padding-top: 24px;
-    margin-top: 12px;
+    padding-top: 16px;
+    margin-top: 0;
+    border-top: 1px dashed #eee;
 }
 
 .answer__form {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
 }
 
 .answer__form textarea {
     width: 100%;
-    min-height: 120px;
-    padding: 16px;
-    border-radius: 16px;
-    border: 3px solid #000;
+    min-height: 100px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #000;
     font-family: inherit;
-    font-size: 15px;
+    font-size: 14px;
     resize: none;
-    background: #fdfdfd;
+    background: #fff;
 }
 
 .answer__form textarea:focus {
     outline: none;
-    box-shadow: 4px 4px 0 #000;
+    box-shadow: none;
+    border-color: #ffe135;
 }
 
 .answer__form button {
     align-self: flex-end;
-    padding: 12px 32px;
+    padding: 10px 24px;
     background: #000;
     color: #fff;
     border: none;
-    border-radius: 12px;
-    font-weight: 900;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 800;
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .answer__form button:hover {
-    transform: scale(1.05);
+    transform: translateY(-2px);
+    background: #ffe135;
+    color: #000;
 }
 
 .admin__answer.active {
-    background: #fdfdfd;
-    padding: 24px;
-    border-radius: 20px;
-    border: 3px solid #000;
+    background: transparent;
+    padding: 16px 0 0 20px;
+    border-radius: 0;
+    border: none;
+    position: relative;
+}
+
+.admin__answer.active::before {
+    content: "↳";
+    position: absolute;
+    left: 0;
+    top: 16px;
+    font-size: 18px;
+    color: #000;
+    font-weight: bold;
 }
 
 .answer__label {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 900;
-    color: #fff;
-    background: #000;
+    color: #000;
+    background: transparent;
+    border: 1px solid #000;
     display: inline-block;
-    padding: 4px 10px;
+    padding: 2px 8px;
     border-radius: 4px;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
 .answer__content {
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.6;
     color: #000;
-    font-weight: 500;
+    font-weight: 400;
 }
 
 .answer__date {
-    font-size: 12px;
-    color: #666;
-    margin-top: 12px;
+    font-size: 11px;
+    color: #999;
+    margin-top: 8px;
     text-align: right;
 }
 
 .status-badge {
-    padding: 6px 16px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 900;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 800;
     text-transform: uppercase;
-    border: 2px solid #000;
+    border: 1px solid #000;
 }
 
-.status-badge.OPEN {
+.status-badge.OPEN,
+.status-badge.PENDING {
     background: #fff;
     color: #000;
 }
 
-.status-badge.ANSWERED {
+.status-badge.ANSWERED,
+.status-badge.RESOLVED {
     background: #000;
     color: #fff;
 }
 
-.status-badge.CLOSED {
-    background: #666;
-    color: #fff;
-    border-color: #666;
+.status-badge.CLOSED,
+.status-badge.REJECTED {
+    background: #eee;
+    color: #666;
+    border-color: #ddd;
 }
 
 .empty-msg {
     text-align: center;
     color: #999;
     padding: 40px;
+    font-size: 14px;
+}
+
+/* 탭 전환 디자인 일관성 */
+.admin__list {
+    display: flex;
+    flex-direction: column;
+    border-top: 2px solid #000;
 }
