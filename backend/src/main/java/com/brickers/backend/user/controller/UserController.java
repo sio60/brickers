@@ -1,12 +1,14 @@
 package com.brickers.backend.user.controller;
 
+import com.brickers.backend.user.repository.UserRepository;
+import com.brickers.backend.job.repository.GenerateJobRepository;
+import com.brickers.backend.gallery.repository.GalleryPostRepository;
+import lombok.RequiredArgsConstructor;
 import com.brickers.backend.user.dto.PublicProfileResponse;
 import com.brickers.backend.user.dto.UserActivitySummaryResponse;
 import com.brickers.backend.user.entity.AccountState;
 import com.brickers.backend.user.entity.User;
-import com.brickers.backend.user.repository.UserRepository;
 import com.brickers.backend.user.service.UserService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,14 +26,16 @@ import java.util.Map;
 public class UserController {
 
     private final UserRepository userRepository;
+    private final GenerateJobRepository jobRepository;
+    private final GalleryPostRepository galleryPostRepository;
     private final UserService userService;
 
     /**
-     * 96. 닉네임 중복 체크
+     * ✅ 닉네임 중복 체크
      * GET /api/users/check-nickname?nickname=xxx
      */
     @GetMapping("/check-nickname")
-    public ResponseEntity<?> checkNickname(@RequestParam String nickname) {
+    public ResponseEntity<?> checkNickname(@RequestParam(name = "nickname") String nickname) {
         if (nickname == null || nickname.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "닉네임을 입력해주세요."));
         }
@@ -58,11 +62,11 @@ public class UserController {
     }
 
     /**
-     * 97. 이메일 존재 확인
+     * ✅ 이메일 존재 확인
      * GET /api/users/check-email?email=xxx
      */
     @GetMapping("/check-email")
-    public ResponseEntity<?> checkEmail(@RequestParam String email) {
+    public ResponseEntity<?> checkEmail(@RequestParam(name = "email") String email) {
         if (email == null || email.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "이메일을 입력해주세요."));
         }
@@ -75,11 +79,11 @@ public class UserController {
     }
 
     /**
-     * 98. 프로필 공개 조회
+     * ✅ 프로필 공개 조회
      * GET /api/users/{userId}
      */
     @GetMapping("/{userId}")
-    public ResponseEntity<?> getPublicProfile(@PathVariable String userId) {
+    public ResponseEntity<?> getUserProfile(@PathVariable(name = "userId") String userId) {
         User user = userRepository.findById(userId).orElse(null);
 
         if (user == null) {
@@ -104,11 +108,11 @@ public class UserController {
     }
 
     /**
-     * 99. 활동 요약
+     * ✅ 활동 요약 (상세)
      * GET /api/users/{userId}/summary
      */
     @GetMapping("/{userId}/summary")
-    public ResponseEntity<?> getActivitySummary(@PathVariable String userId) {
+    public ResponseEntity<?> getActivitySummary(@PathVariable(name = "userId") String userId) {
         User user = userRepository.findById(userId).orElse(null);
 
         if (user == null) {
@@ -121,7 +125,20 @@ public class UserController {
         }
 
         UserActivitySummaryResponse summary = userService.getActivitySummary(userId);
-
         return ResponseEntity.ok(summary);
+    }
+
+    /**
+     * ✅ 활동 통계 (간단)
+     * GET /api/users/{userId}/stats
+     */
+    @GetMapping("/{userId}/stats")
+    public Map<String, Object> getUserStats(@PathVariable(name = "userId") String userId) {
+        long totalJobs = jobRepository.countByUserId(userId);
+        long totalPosts = galleryPostRepository.countByAuthorIdAndDeletedFalse(userId);
+
+        return Map.of(
+                "totalPosts", totalPosts,
+                "totalJobs", totalJobs);
     }
 }

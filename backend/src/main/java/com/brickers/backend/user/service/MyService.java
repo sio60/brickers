@@ -20,6 +20,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 
 @Slf4j
@@ -239,6 +242,49 @@ public class MyService {
         generateJobRepository.save(job);
 
         return MyJobResponse.from(job);
+    }
+
+    public List<MyActivityResponse> getActivity(Authentication authentication) {
+        User user = currentUserService.get(authentication);
+
+        List<MyActivityResponse> activities = new ArrayList<>();
+
+        // 1. 내 최근 게시글 가져오기 (10개)
+        var myPostsPage = galleryService.listMine(authentication, 0, 10, "latest");
+        for (var post : myPostsPage.getContent()) {
+            activities.add(MyActivityResponse.builder()
+                    .type("POST")
+                    .createdAt(post.getCreatedAt())
+                    .data(post)
+                    .build());
+        }
+
+        // 2. 내 최근 작업 가져오기 (10개)
+        var jobsPage = generateJobRepository.findByUserIdOrderByCreatedAtDesc(
+                user.getId(),
+                PageRequest.of(0, 10));
+        for (var job : jobsPage.getContent()) {
+            job.ensureDefaults();
+            activities.add(MyActivityResponse.builder()
+                    .type("JOB")
+                    .createdAt(job.getCreatedAt())
+                    .data(MyJobResponse.from(job))
+                    .build());
+        }
+
+        // 3. 통합 정렬 (최신순)
+        activities.sort(Comparator.comparing(MyActivityResponse::getCreatedAt).reversed());
+
+        return activities;
+    }
+
+    /** 프로필 이미지 삭제 (초기화) */
+    public MyProfileResponse removeProfileImage(Authentication authentication) {
+        User user = currentUserService.get(authentication);
+        user.setProfileImage(""); // Empty string to remove
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+        return toProfileResponse(user);
     }
 
     /** 응답 DTO 매핑 */

@@ -1,11 +1,13 @@
 package com.brickers.backend.user.controller;
 
+import com.brickers.backend.payment.dto.GooglePayVerifyRequest;
 import com.brickers.backend.user.MySettingsResponse;
 import com.brickers.backend.user.dto.*;
 
 import com.brickers.backend.user.service.MyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import java.util.List;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,11 +23,21 @@ public class MyController {
         return myService.getMyProfile(authentication);
     }
 
+    @GetMapping("/activity")
+    public List<MyActivityResponse> getActivity(Authentication authentication) {
+        return myService.getActivity(authentication);
+    }
+
     @PatchMapping("/profile")
     public MyProfileResponse updateMyProfile(
             Authentication authentication,
             @RequestBody MyProfileUpdateRequest req) {
         return myService.updateMyProfile(authentication, req);
+    }
+
+    @PostMapping("/profile-image/remove")
+    public MyProfileResponse removeProfileImage(Authentication authentication) {
+        return myService.removeProfileImage(authentication);
     }
 
     @GetMapping("/membership")
@@ -36,7 +48,7 @@ public class MyController {
     @PostMapping("/membership/upgrade")
     public MyMembershipResponse upgradeMembership(
             Authentication authentication,
-            @RequestBody(required = false) com.brickers.backend.payment.dto.GooglePayVerifyRequest req) {
+            @RequestBody(required = false) GooglePayVerifyRequest req) {
         return myService.upgradeMembership(authentication, req);
     }
 
@@ -54,8 +66,8 @@ public class MyController {
     @GetMapping("/jobs")
     public Page<MyJobResponse> myJobs(
             Authentication authentication,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size) {
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "12") int size) {
         return myService.listMyJobs(authentication, page, size);
     }
 

@@ -142,7 +142,7 @@ jobs:
 
             echo "📄 Creating docker-compose.yml..."
             cat > docker-compose.yml <<'EOF'
-            version: "3.8"
+       
 
             services:
               backend:
@@ -150,13 +150,53 @@ jobs:
                 container_name: brickers-backend
                 ports:
                   - "${BACKEND_PORT}:8080"
-                env_file:
-                  - .env
                 environment:
-                  - AI_SERVER_URL=${AI_SERVER_URL}
-                  - APP_OPENAI_API_KEY=${APP_OPENAI_API_KEY}
-                  - UPLOAD_PROVIDER=${UPLOAD_PROVIDER}
+                  # ✅ MongoDB 설정
+                  - PRIMARY_MONGODB_URI=${PRIMARY_MONGODB_URI}
+
+                  # ✅ AWS S3 설정
+                  - AWS_S3_BUCKET=${AWS_S3_BUCKET}
+                  - AWS_REGION=${AWS_REGION}
+                  - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+                  - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+                  - UPLOAD_PROVIDER=${UPLOAD_PROVIDER:-S3}
                   - UPLOAD_PUBLIC_BASE_URL=${UPLOAD_PUBLIC_BASE_URL}
+
+                  # ✅ JWT 설정
+                  - JWT_SECRET=${JWT_SECRET}
+                  - JWT_ACCESS_EXPIRATION=${JWT_ACCESS_EXPIRATION}
+                  - JWT_REFRESH_EXPIRATION=${JWT_REFRESH_EXPIRATION}
+
+                  # ✅ OAuth 설정
+                  - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
+                  - KAKAO_CLIENT_SECRET=${KAKAO_CLIENT_SECRET}
+                  - KAKAO_ADMIN_KEY=${KAKAO_ADMIN_KEY}
+
+                  - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+                  - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+                  - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
+                  - GOOGLE_LOCAL_REDIRECT_URI=${GOOGLE_LOCAL_REDIRECT_URI}
+
+                  # ✅ 카카오 리다이렉트 URI
+                  - KAKAO_REDIRECT_URI=${KAKAO_REDIRECT_URI}
+
+                  # ✅ 쿠키 설정
+                  - COOKIE_SECURE=${COOKIE_SECURE:-true}
+                  - COOKIE_SAMESITE=${COOKIE_SAMESITE:-None}
+
+                  # ✅ Base URL
+                  - FRONT_BASE_URL=${FRONT_BASE_URL}
+
+                  # ✅ AI 서버 URL
+                  - AI_SERVER_URL=${AI_SERVER_URL}
+
+                  # ✅ OpenAI Key
+                  - APP_OPENAI_API_KEY=${APP_OPENAI_API_KEY}
+
+                  # ✅ (추가) Kids AI 처리 타임아웃
+                  - PROCESS_TIMEOUT=900
+                  - DOWNLOAD_TIMEOUT=120
+
                 networks:
                   - brickers-network
 

@@ -4,8 +4,9 @@ import lombok.Builder;
 
 @Builder
 public record UploadResponse(
-                String url, // "/uploads/....png"
-                String originalName,
-                String contentType,
-                long size) {
+        String id, // ✅ 업로드 고유 ID (UploadFile 엔티티 ID)
+        String url, // "/uploads/....png"
+        String originalName,
+        String contentType,
+        long size) {
 }

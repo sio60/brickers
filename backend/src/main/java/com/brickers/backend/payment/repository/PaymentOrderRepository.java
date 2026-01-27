@@ -31,4 +31,7 @@ public interface PaymentOrderRepository extends MongoRepository<PaymentOrder, St
     // [New] 매출 통계용 (기간별 결제 완료 건)
     List<PaymentOrder> findByStatusAndPaidAtBetween(PaymentStatus status, java.time.LocalDateTime start,
             LocalDateTime end);
+
+    // [New] 상태별 결제 내역 조회 (통계용)
+    List<PaymentOrder> findByStatus(PaymentStatus status);
 }

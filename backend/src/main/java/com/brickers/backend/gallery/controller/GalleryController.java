@@ -1,7 +1,6 @@
 package com.brickers.backend.gallery.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
@@ -10,9 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.brickers.backend.gallery.dto.*;
 import com.brickers.backend.gallery.service.*;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/gallery")
@@ -29,23 +26,29 @@ public class GalleryController {
         return galleryService.create(auth, req);
     }
 
+    /** 인기 태그 목록 */
+    @GetMapping("/tags")
+    public List<String> tags() {
+        return galleryService.getPopularTags();
+    }
+
     /** 공개 게시글 목록 */
     @GetMapping
     public Page<GalleryResponse> listPublic(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size,
-            @RequestParam(defaultValue = "latest") String sort) {
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "12") int size,
+            @RequestParam(name = "sort", defaultValue = "latest") String sort) {
         return galleryService.listPublic(page, size, sort);
     }
 
     /** 🔍 공개 게시글 검색 */
     @GetMapping("/search")
     public Page<GalleryResponse> search(
-            @RequestParam(required = false) String q,
-            @RequestParam(required = false) String tag,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size,
-            @RequestParam(defaultValue = "latest") String sort) {
+            @RequestParam(name = "q", required = false) String q,
+            @RequestParam(name = "tag", required = false) String tag,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "12") int size,
+            @RequestParam(name = "sort", defaultValue = "latest") String sort) {
         return galleryService.searchPublic(q, tag, page, size, sort);
     }
 
@@ -82,9 +85,9 @@ public class GalleryController {
     /** 내 게시글 목록 */
     @GetMapping("/my")
     public Page<GalleryResponse> my(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size,
-            @RequestParam(defaultValue = "latest") String sort,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "12") int size,
+            @RequestParam(name = "sort", defaultValue = "latest") String sort,
             Authentication auth) {
         return galleryService.listMine(auth, page, size, sort);
     }
