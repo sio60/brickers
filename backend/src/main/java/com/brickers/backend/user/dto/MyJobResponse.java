@@ -25,8 +25,14 @@ public class MyJobResponse {
 
     private String previewImageUrl;
 
-    /** LDR 파일 URL (AI 서버 경로) */
-    private String modelKey;
+    /** 보정 이미지 URL */
+    private String correctedImageUrl;
+
+    /** GLB 파일 URL */
+    private String glbUrl;
+
+    /** LDR 파일 URL */
+    private String ldrUrl;
 
     /** 결과물 존재 여부(모델/도면/BOM 중 하나라도 있으면 true) */
     private boolean hasResult;
@@ -39,7 +45,14 @@ public class MyJobResponse {
     private LocalDateTime stageUpdatedAt;
 
     public static MyJobResponse from(GenerateJobEntity j) {
-        boolean hasResult = (j.getModelKey() != null && !j.getModelKey().isBlank())
+        // ldrUrl 우선, 없으면 레거시 modelKey fallback
+        String ldrUrl = j.getLdrUrl();
+        if (ldrUrl == null || ldrUrl.isBlank()) {
+            ldrUrl = j.getModelKey(); // 레거시 호환
+        }
+
+        boolean hasResult = (ldrUrl != null && !ldrUrl.isBlank())
+                || (j.getGlbUrl() != null && !j.getGlbUrl().isBlank())
                 || (j.getBlueprintPdfKey() != null && !j.getBlueprintPdfKey().isBlank())
                 || (j.getBomKey() != null && !j.getBomKey().isBlank());
 
@@ -51,7 +64,9 @@ public class MyJobResponse {
                 .title(j.getTitle())
                 .sourceImageUrl(j.getSourceImageUrl())
                 .previewImageUrl(j.getPreviewImageUrl())
-                .modelKey(j.getModelKey()) // ✅ 추가
+                .correctedImageUrl(j.getCorrectedImageUrl())
+                .glbUrl(j.getGlbUrl())
+                .ldrUrl(ldrUrl)
                 .hasResult(hasResult)
                 .errorMessage(j.getErrorMessage())
                 .createdAt(j.getCreatedAt())

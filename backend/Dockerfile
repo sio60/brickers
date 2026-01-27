@@ -17,11 +17,13 @@ ENV MONGO_USER=admin
 ENV MONGO_PASSWORD=password
 ENV PRIMARY_MONGODB_URI=mongodb://localhost:27017/brickers
 
-# 2) AWS S3 관련 (이게 문제였음)
+# 2) AWS S3 관련 (이가 문제였음)
 ENV AWS_S3_BUCKET=build-time-dummy-bucket
 ENV AWS_REGION=ap-northeast-2
 ENV AWS_ACCESS_KEY_ID=dummy
 ENV AWS_SECRET_ACCESS_KEY=dummy
+ENV UPLOAD_PROVIDER=LOCAL
+ENV UPLOAD_PUBLIC_BASE_URL=http://localhost:8080/uploads
 
 # 3) OAuth (구글/카카오) 관련
 ENV GOOGLE_CLIENT_ID=dummy

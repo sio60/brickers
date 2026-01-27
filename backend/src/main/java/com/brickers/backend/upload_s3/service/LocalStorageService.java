@@ -1,8 +1,7 @@
 package com.brickers.backend.upload_s3.service;
 
-import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -12,8 +11,11 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
 
-@Service
-@RequiredArgsConstructor
+/**
+ * 로컬 파일 시스템에 저장하는 StorageService 구현체
+ * 로컬 개발 환경에서 사용
+ */
+@Setter
 public class LocalStorageService implements StorageService {
 
     private static final Map<String, String> EXT_BY_CONTENT_TYPE = Map.of(
