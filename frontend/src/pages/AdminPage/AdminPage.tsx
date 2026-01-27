@@ -125,7 +125,10 @@ export default function AdminPage() {
         try {
             const res = await authFetch(`/api/admin/reports/${reportId}/resolve`, {
                 method: "POST",
-                body: JSON.stringify({ approve, note })
+                body: JSON.stringify({
+                    action: approve ? "APPROVE" : "REJECT",
+                    note
+                })
             });
 
             if (res.ok) {
