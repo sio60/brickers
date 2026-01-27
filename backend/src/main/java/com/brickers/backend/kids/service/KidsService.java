@@ -31,7 +31,7 @@ public class KidsService {
     private final StorageService storageService;
 
     // ---- timeouts ----
-    private static final Duration PROCESS_TIMEOUT = Duration.ofSeconds(300);
+    private static final Duration PROCESS_TIMEOUT = Duration.ofSeconds(600);
     private static final Duration DOWNLOAD_TIMEOUT = Duration.ofSeconds(120);
 
     /**
@@ -44,9 +44,14 @@ public class KidsService {
      * 4) 응답에서 preview / ldr 저장 + modelKey 업데이트
      * 5) Job done or failed 처리
      */
-    public Map<String, Object> generateBrick(String userId, MultipartFile file, String age, int budget) {
-        log.info("AI 생성 요청 시작: userId={}, age={}, budget={}, filename={}",
-                safe(userId), safe(age), budget, file != null ? file.getOriginalFilename() : null);
+    /**
+     * 비동기 생성 요청 진입점
+     * 1) Job 생성 (QUEUED)
+     * 2) Async 메소드 호출 (백그라운드 처리)
+     * 3) JobID 반환 (즉시 응답)
+     */
+    public Map<String, Object> startGeneration(String userId, MultipartFile file, String age, int budget) {
+        log.info("AI 생성 요청 접수: userId={}, age={}, budget={}", safe(userId), safe(age), budget);
 
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("file is empty");
@@ -54,7 +59,7 @@ public class KidsService {
 
         boolean loggedIn = userId != null && !userId.isBlank();
 
-        // 0) 입력 이미지 저장(원본 보관) - 실패해도 계속 진행
+        // 0) 입력 이미지 저장(원본 보관)
         String sourceImageUrl = null;
         if (loggedIn) {
             try {
@@ -65,9 +70,16 @@ public class KidsService {
             }
         }
 
-        // 1) Job 생성 (로그인 사용자만 저장)
+        // 1) Job 생성 (로그인 사용자만 저장 - 비로그인은 임시 처리 불가하므로 예외 처리 필요할 수 있음)
+        // 현재 로직상 비로그인도 생성은 되지만 저장이 안되면 조회가 불가능함.
+        // --> 비로그인도 async 하려면 Job 저장이 필수적이므로, 임시 userId라도 쓰거나 해야 함.
+        // 일단 기존 로직 유지하되, 비로그인일 경우 Async 처리가 애매해짐(polling 불가).
+        // 정책: 비로그인은 지원 안 함 or 임시 세션 ID 사용. 여기서는 일단 Job을 무조건 저장하도록 변경 권장.
+        // (기존 코드는 loggedIn check가 많았으나, Async 전환 시 Job ID가 필수이므로 저장해야 함)
+
+        // 비로그인 사용자도 Job 저장 (userId=null or "anonymous")
         GenerateJobEntity job = GenerateJobEntity.builder()
-                .userId(userId)
+                .userId(userId) // null allowable
                 .level(ageToKidsLevel(age))
                 .status(JobStatus.QUEUED)
                 .stage(JobStage.THREE_D_PREVIEW)
@@ -79,27 +91,45 @@ public class KidsService {
                 .build();
         job.ensureDefaults();
 
-        if (loggedIn) {
-            generateJobRepository.save(job);
-            log.info("Job 생성 완료: jobId={}", job.getId());
+        generateJobRepository.save(job);
+        log.info("Job 생성 완료(Queued): jobId={}", job.getId());
+
+        // 2) 비동기 처리 시작
+        processGenerationAsync(job.getId(), file, age, budget);
+
+        // 3) 즉시 응답
+        return Map.of(
+                "jobId", job.getId(),
+                "status", JobStatus.QUEUED);
+    }
+
+    /**
+     * 실제 AI 처리 (별도 스레드)
+     */
+    @org.springframework.scheduling.annotation.Async
+    public void processGenerationAsync(String jobId, MultipartFile file, String age, int budget) {
+        log.info("Async 작업 시작: jobId={}", jobId);
+
+        // Job 조회
+        GenerateJobEntity job = generateJobRepository.findById(jobId).orElse(null);
+        if (job == null) {
+            log.error("Job not found via Async: {}", jobId);
+            return;
         }
 
-        // 2) RUNNING 반영
+        // RUNNING 마킹
         job.markRunning(JobStage.THREE_D_PREVIEW);
-        if (loggedIn) {
-            generateJobRepository.save(job);
-        }
+        generateJobRepository.save(job);
 
-        // 3) FastAPI로 멀티파트 구성
+        // FastAPI 멀티파트 구성
         MultipartBodyBuilder builder = new MultipartBodyBuilder();
         builder.part("file", file.getResource());
         builder.part("age", age);
         builder.part("budget", budget);
-        // ✅ FastAPI는 returnLdrData 기본 true라 굳이 안 넣어도 되지만 명시해도 됨
         builder.part("returnLdrData", "true");
 
         try {
-            // 4) FastAPI 호출
+            // FastAPI 호출 (오래 걸림)
             Map<String, Object> response = aiWebClient.post()
                     .uri("/api/v1/kids/process-all")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
@@ -108,32 +138,20 @@ public class KidsService {
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
                     })
                     .timeout(PROCESS_TIMEOUT)
-                    .block();
+                    .block(); // 비동기 스레드 내에서는 block() 해도 됨
 
-            log.info("AI 응답 수신: ok={}, keys={}",
-                    response != null ? response.get("ok") : null,
-                    response != null ? response.keySet() : null);
+            log.info("AI 응답 수신(Async): jobId={}, ok={}", jobId, response != null ? response.get("ok") : false);
 
-            // 5) 성공 시 Job 업데이트(로그인 사용자만)
-            if (loggedIn) {
-                applySuccessResultToJob(job, userId, response);
-                job.markDone();
-                generateJobRepository.save(job);
-                log.info("Job 완료: jobId={}", job.getId());
-            }
-
-            return response;
+            // 결과 반영
+            applySuccessResultToJob(job, job.getUserId(), response);
+            job.markDone();
+            generateJobRepository.save(job);
+            log.info("Job 완료(Async): jobId={}", jobId);
 
         } catch (Exception e) {
-            log.error("AI 서버 통신 실패", e);
-
-            if (loggedIn) {
-                job.markFailed(e.getMessage());
-                generateJobRepository.save(job);
-                log.info("Job 실패 처리: jobId={}", job.getId());
-            }
-
-            throw new RuntimeException("AI 서버가 응답하지 않습니다: " + e.getMessage(), e);
+            log.error("AI 서버 통신 실패(Async): jobId={}", jobId, e);
+            job.markFailed(e.getMessage());
+            generateJobRepository.save(job);
         }
     }
 
@@ -270,6 +288,14 @@ public class KidsService {
     /**
      * age 문자열을 KidsLevel로 변환
      */
+    /**
+     * Polling용 Job 상태 조회
+     */
+    public GenerateJobEntity getJobStatus(String jobId) {
+        return generateJobRepository.findById(jobId)
+                .orElseThrow(() -> new IllegalArgumentException("Job not found: " + jobId));
+    }
+
     private KidsLevel ageToKidsLevel(String age) {
         if (age == null)
             return KidsLevel.LEVEL_1;
