@@ -138,6 +138,8 @@ public class SecurityConfig {
                                                 // ✅ Kids API 공개 (네 실제 매핑 경로에 맞춰 추가)
                                                 .requestMatchers("/api/v1/kids/**").permitAll()
                                                 .requestMatchers("/api/kids/**").permitAll()
+                                                // ✅ AI 생성 정적 파일 공개 (중요!)
+                                                .requestMatchers("/api/generated/**").permitAll()
                                                 // -------------------------------
                                                 // ✅ Billing API (구독 결제)
                                                 // -------------------------------
