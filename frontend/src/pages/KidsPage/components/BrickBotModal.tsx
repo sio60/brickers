@@ -12,7 +12,7 @@ interface BrickBotModalProps {
 interface Message {
     role: "user" | "bot";
     content: string;
-    actionType?: "create" | "gallery" | "mypage" | null;
+    actions?: ("create" | "gallery" | "mypage")[];
 }
 
 const CHAT_TRANSLATIONS = {
@@ -214,26 +214,34 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
         if (isOpen && mode === "CHAT") scrollToBottom();
     }, [messages, isOpen, mode]);
 
-    // 태그 파싱 헬퍼 함수
-    const parseBotResponse = (text: string): { cleanText: string, action: Message['actionType'] } => {
-        let action: Message['actionType'] = null;
+    // 태그 파싱 헬퍼 함수 - 모든 플레이스홀더 제거 및 다중 액션 지원
+    type ActionType = "create" | "gallery" | "mypage";
+
+    const parseBotResponse = (text: string): { cleanText: string, actions: ActionType[] } => {
+        const actions: ActionType[] = [];
         let cleanText = text;
 
-        if (text.includes("{{NAV_CREATE}}")) {
-            action = "create";
-            cleanText = text.replace("{{NAV_CREATE}}", "");
-        } else if (text.includes("{{NAV_GALLERY}}")) {
-            action = "gallery";
-            cleanText = text.replace("{{NAV_GALLERY}}", "");
-        } else if (text.includes("{{NAV_MYPAGE}}")) {
-            action = "mypage";
-            cleanText = text.replace("{{NAV_MYPAGE}}", "");
+        // 모든 플레이스홀더 검사 및 제거
+        if (cleanText.includes("{{NAV_CREATE}}")) {
+            actions.push("create");
+        }
+        if (cleanText.includes("{{NAV_GALLERY}}")) {
+            actions.push("gallery");
+        }
+        if (cleanText.includes("{{NAV_MYPAGE}}")) {
+            actions.push("mypage");
         }
 
-        return { cleanText, action };
+        // 모든 플레이스홀더 제거 (정규식으로 한번에)
+        cleanText = cleanText.replace(/\{\{NAV_CREATE\}\}/g, "")
+            .replace(/\{\{NAV_GALLERY\}\}/g, "")
+            .replace(/\{\{NAV_MYPAGE\}\}/g, "")
+            .trim();
+
+        return { cleanText, actions };
     };
 
-    const handleActionClick = (action: Message['actionType']) => {
+    const handleActionClick = (action: ActionType) => {
         if (!action) return;
         onClose(); // 모달 닫고 이동
         switch (action) {
@@ -312,8 +320,8 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
             const data = await res.json();
 
             // 응답 파싱
-            const { cleanText, action } = parseBotResponse(data.reply);
-            setMessages((prev) => [...prev, { role: "bot", content: cleanText, actionType: action }]);
+            const { cleanText, actions } = parseBotResponse(data.reply);
+            setMessages((prev) => [...prev, { role: "bot", content: cleanText, actions: actions.length > 0 ? actions : undefined }]);
 
         } catch (e) {
             setMessages((prev) => [
@@ -448,16 +456,19 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                                             {msg.content}
                                         </div>
                                     </div>
-                                    {msg.role === "bot" && msg.actionType && (
+                                    {msg.role === "bot" && msg.actions && msg.actions.length > 0 && (
                                         <div className="brickbot-action-container">
-                                            <button
-                                                className="brickbot-action-btn"
-                                                onClick={() => handleActionClick(msg.actionType)}
-                                            >
-                                                {msg.actionType === "create" && tChat.actions.create}
-                                                {msg.actionType === "gallery" && tChat.actions.gallery}
-                                                {msg.actionType === "mypage" && tChat.actions.mypage}
-                                            </button>
+                                            {msg.actions.map((act, actIdx) => (
+                                                <button
+                                                    key={actIdx}
+                                                    className="brickbot-action-btn"
+                                                    onClick={() => handleActionClick(act)}
+                                                >
+                                                    {act === "create" && tChat.actions.create}
+                                                    {act === "gallery" && tChat.actions.gallery}
+                                                    {act === "mypage" && tChat.actions.mypage}
+                                                </button>
+                                            ))}
                                         </div>
                                     )}
                                 </div>

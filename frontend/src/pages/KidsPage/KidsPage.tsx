@@ -35,6 +35,7 @@ export default function KidsPage() {
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [ldrUrl, setLdrUrl] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
+  const [showToast, setShowToast] = useState(false);
 
   const processingRef = useRef(false);
 
@@ -81,9 +82,12 @@ export default function KidsPage() {
 
           const statusRes = await fetch(`/api/kids/jobs/${jobId}`);
           if (!statusRes.ok) {
-            // 일시적 에러일 수 있으니 로그만 찍고 계속 시도할 수도 있지만,
-            // 여기선 404 등 명확한 에러면 중단
-            if (statusRes.status === 404) throw new Error("Job lost");
+            console.warn(`[KidsPage] Polling failed: Status ${statusRes.status} for jobId ${jobId}`);
+            if (statusRes.status === 404) {
+              // 404면 작업이 없어진 것이므로 중단 고려할 수 있지만, 
+              // 초기 생성 직후 DB 인덱싱 지연 가능성 대비해서 조금 더 시도하거나 로그만 찍음
+              console.error(`[KidsPage] Job not found (404). ID: ${jobId}`);
+            }
             continue;
           }
 
@@ -104,6 +108,8 @@ export default function KidsPage() {
             // Entity의 modelKey가 ldrUrl 역할.
             // ldrData(Base64)는 DB에 저장되지 않으므로, URL을 다운로드해야 함.
             finalData = statusData;
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 5000); // 5초 후 자동 숨김
             break;
           }
 
@@ -113,37 +119,29 @@ export default function KidsPage() {
         if (!finalData) throw new Error("Timeout: Generation took too long");
 
         // 3. 결과 처리
-        // Status가 DONE이면 modelKey에 LDR URL이 있음.
-        const modelUrl = finalData.modelKey;
-        if (!modelUrl) throw new Error("No model URL in job result");
+        // Status가 DONE이면 ldrUrl에 LDR URL이 있음 (이전: modelKey)
+        const modelUrl = finalData.ldrUrl || finalData.modelKey; // 레거시 호환
+        console.log("[KidsPage] Final Job Data:", finalData);
 
-        // LDR 내용을 다운로드 (Base64 변환 로직 호환을 위해 텍스트로 읽음)
-        // 만약 modelKey가 "/uploads/..." 형태라면 바로 fetch 가능
-        const ldrRes = await fetch(modelUrl);
-        if (!ldrRes.ok) throw new Error("Failed to download LDR file");
+        if (!modelUrl) {
+          const keys = Object.keys(finalData || {}).join(", ");
+          throw new Error(`No model URL in job result. Received keys: ${keys}`);
+        }
 
-        // binary(blob) 생성
-        const ldrBlob = await ldrRes.blob();
-        const tempUrl = URL.createObjectURL(ldrBlob);
-
-        setLdrUrl(tempUrl);
+        // ✅ 더 이상 blob으로 변환하거나 로컬 URL을 생성하지 않음 (이전 페이지 이관 시 폐기됨)
+        // 서버에서 전달해준 modelUrl(예: /uploads/...)을 직접 사용
+        setLdrUrl(modelUrl);
         setStatus("done");
 
       } catch (e) {
         console.error("Brick generation failed:", e);
         setStatus("error");
-      } finally {
-        // 락 해제 X (재진입 방지)
       }
     };
 
     runProcess();
 
-    // Cleanup: 컴포넌트가 꺼질 때 메모리 해제
-    return () => {
-      if (ldrUrl) URL.revokeObjectURL(ldrUrl);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Cleanup 제거 (더 이상 ldrUrl이 blob이 아니므로 revoke 필요 없음)
   }, [rawFile, age, budget]);
 
   // 로딩바용 퍼센트 (가짜)
@@ -195,6 +193,26 @@ export default function KidsPage() {
                 <br />
               </React.Fragment>
             ))}
+          </div>
+        )}
+
+        {/* 커스텀 토스트 메시지 (우측 상단 고정) */}
+        {showToast && (
+          <div style={{
+            position: "fixed",
+            top: "80px", // 헤더 아래
+            right: "20px",
+            background: "#ffffff",
+            border: "2px solid #000000",
+            color: "#000000",
+            padding: "16px 24px",
+            zIndex: 9999,
+            fontWeight: "bold",
+            fontSize: "16px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            borderRadius: "8px",
+          }}>
+            {t.kids.generate.complete}
           </div>
         )}
       </div>

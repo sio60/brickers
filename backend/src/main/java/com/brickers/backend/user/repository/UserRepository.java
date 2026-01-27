@@ -26,6 +26,15 @@ public interface UserRepository extends MongoRepository<User, String> {
     Optional<User> findByProviderAndProviderIdAndAccountState(String provider, String providerId,
             AccountState accountState);
 
+    // 닉네임 존재 여부 확인
+    boolean existsByNickname(String nickname);
+
+    // 이메일 존재 여부 확인
+    boolean existsByEmail(String email);
+
+    // 닉네임으로 사용자 찾기
+    Optional<User> findByNickname(String nickname);
+
     // [New] 기간별 가입자 수 집계용
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 

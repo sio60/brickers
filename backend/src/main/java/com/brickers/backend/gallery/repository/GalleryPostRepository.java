@@ -33,6 +33,7 @@ public interface GalleryPostRepository extends MongoRepository<GalleryPostEntity
       """)
   Page<GalleryPostEntity> searchByTitleOrContent(Visibility visibility, String q, Pageable pageable);
 
+<<<<<<< HEAD
   // ✅ 내 게시글
   Page<GalleryPostEntity> findByDeletedFalseAndAuthorId(String authorId, Pageable pageable);
 
@@ -47,4 +48,11 @@ public interface GalleryPostRepository extends MongoRepository<GalleryPostEntity
       "{ '$limit': 50 }"
   })
   List<String> findAllTags();
+=======
+        // ✅ 내 게시글
+        Page<GalleryPostEntity> findByDeletedFalseAndAuthorId(String authorId, Pageable pageable);
+
+        // 작성자의 게시글 수
+        long countByAuthorIdAndDeletedFalse(String authorId);
+>>>>>>> 981ecfba7f6d29351dc4de41ecd87ae4c24e27b2
 }

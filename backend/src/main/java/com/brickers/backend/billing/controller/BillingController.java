@@ -1,6 +1,7 @@
 package com.brickers.backend.billing.controller;
 
 import com.brickers.backend.billing.dto.*;
+import com.brickers.backend.billing.scheduler.SubscriptionScheduler;
 import com.brickers.backend.billing.service.BillingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -17,6 +18,7 @@ import java.util.Map;
 public class BillingController {
 
     private final BillingService billingService;
+    private final SubscriptionScheduler subscriptionScheduler;
 
     /**
      * 요금제 조회
@@ -109,5 +111,27 @@ public class BillingController {
             return ResponseEntity.ok(Map.of("subscribed", false));
         }
         return ResponseEntity.ok(sub);
+    }
+
+    // ============== 테스트용 (개발 환경에서만 사용) ==============
+
+    /**
+     * 만료 스케줄러 수동 실행 (테스트용)
+     * POST /api/billing/test/expire
+     */
+    @PostMapping("/test/expire")
+    public ResponseEntity<?> testExpireScheduler() {
+        subscriptionScheduler.processExpiredSubscriptions();
+        return ResponseEntity.ok(Map.of("message", "스케줄러 실행 완료"));
+    }
+
+    /**
+     * 웹훅 테스트용 (테스트용)
+     * POST /api/billing/test/webhook
+     */
+    @PostMapping("/test/webhook")
+    public ResponseEntity<?> testWebhook(@RequestBody String message) {
+        billingService.processWebhook(message);
+        return ResponseEntity.ok(Map.of("message", "웹훅 처리 완료"));
     }
 }
