@@ -7,6 +7,8 @@ import KidsLdrPreview from "./components/KidsLdrPreview";
 import KidsLoadingScreen from "./components/KidsLoadingScreen";
 import { useLanguage } from "../../contexts/LanguageContext";
 
+// ... imports
+
 export default function KidsPage() {
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -14,7 +16,7 @@ export default function KidsPage() {
   const location = useLocation();
   const age = (params.get("age") ?? "4-5") as "4-5" | "6-7" | "8-10";
 
-  // ✅ (선택) 백엔드 AGE_TO_BUDGET(20/60/120)과 맞추고 싶으면 아래로 변경해도 됨
+  // ... (existing constants)
   const budget = useMemo(() => {
     if (age === "4-5") return 50;
     if (age === "6-7") return 100;
@@ -30,6 +32,7 @@ export default function KidsPage() {
   const [ldrUrl, setLdrUrl] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
+  const [debugLog, setDebugLog] = useState<string>(""); // ✅ 디버그용 로그
 
   const processingRef = useRef(false);
 
@@ -40,9 +43,8 @@ export default function KidsPage() {
     let alive = true;
     const abort = new AbortController();
 
-    // ✅ Spring PROCESS_TIMEOUT=900 기준 (프론트는 약간 짧게 885초에서 타임아웃)
     const PROCESS_TIMEOUT_SEC = 900;
-    const FRONT_TIMEOUT_SEC = 885; // 여유 15초
+    const FRONT_TIMEOUT_SEC = 885;
     const POLL_INTERVAL = 2000;
 
     const maxAttempts = Math.ceil((FRONT_TIMEOUT_SEC * 1000) / POLL_INTERVAL);
@@ -52,6 +54,7 @@ export default function KidsPage() {
     const runProcess = async () => {
       processingRef.current = true;
       setStatus("loading");
+      setDebugLog("작업 시작...");
 
       try {
         const formData = new FormData();
@@ -60,6 +63,7 @@ export default function KidsPage() {
         formData.append("budget", String(budget));
 
         // 1) 생성 요청
+        setDebugLog("이미지 업로드 중...");
         const startRes = await fetch("/api/kids/generate", {
           method: "POST",
           body: formData,
@@ -77,6 +81,7 @@ export default function KidsPage() {
 
         if (!alive) return;
         setJobId(jid);
+        setDebugLog(`작업 생성 완료 [${jid}]`);
 
         // 2) 폴링
         let finalData: any = null;
@@ -90,14 +95,13 @@ export default function KidsPage() {
           });
 
           if (!statusRes.ok) {
-            // 404는 인덱싱 지연 등으로 잠깐 나올 수 있어 그냥 continue
-            console.warn(
-              `[KidsPage] Polling failed: ${statusRes.status} jobId=${jid}`
-            );
+            console.warn(`[KidsPage] Polling failed: ${statusRes.status}`);
+            setDebugLog(`서버 응답 지연 중... (${statusRes.status})`);
             continue;
           }
 
           const statusData = await statusRes.json();
+          setDebugLog(`진행 중... [${statusData.stage || statusData.status}] (${i}/${maxAttempts})`);
 
           if (statusData.status === "FAILED") {
             throw new Error(statusData.errorMessage || "Generation failed");
@@ -113,26 +117,27 @@ export default function KidsPage() {
 
         if (!finalData) {
           throw new Error(
-            `Timeout: exceeded ${FRONT_TIMEOUT_SEC}s (server PROCESS_TIMEOUT=${PROCESS_TIMEOUT_SEC}s)`
+            `Timeout: exceeded ${FRONT_TIMEOUT_SEC}s`
           );
         }
 
         // 3) 결과 처리
         const modelUrl = finalData.ldrUrl || finalData.modelKey;
         console.log("[KidsPage] Final Job Data:", finalData);
+        setDebugLog("결과물 로딩 중...");
 
         if (!modelUrl) {
-          const keys = Object.keys(finalData || {}).join(", ");
-          throw new Error(`No model URL in job result. keys=${keys}`);
+          throw new Error("No model URL in job result");
         }
 
         if (!alive) return;
 
         setLdrUrl(modelUrl);
         setStatus("done");
-      } catch (e) {
+      } catch (e: any) {
         if (!alive) return;
         console.error("Brick generation failed:", e);
+        setDebugLog(`오류 발생: ${e.message}`);
         setStatus("error");
       }
     };
@@ -141,23 +146,25 @@ export default function KidsPage() {
 
     return () => {
       alive = false;
-      try {
-        abort.abort();
-      } catch {}
+      try { abort.abort(); } catch { }
     };
   }, [rawFile, age, budget, status]);
 
-  // 로딩바용 퍼센트 (가짜)
   const percent = status === "done" ? 100 : status === "loading" ? 60 : 0;
 
   return (
     <div className="kidsPage">
-      <Background3D entryDirection="float" />
+      {/* ✅ 로딩 중일 때(미니게임 실행 시)는 Background3D 숨김 (WebGL Context 충돌 방지) */}
+      {status !== "loading" && <Background3D entryDirection="float" />}
 
       <div className="kidsPage__center">
         {status === "loading" && (
           <>
             <div className="kidsPage__title">{t.kids.generate.loading}</div>
+            {/* 디버그 로그 표시 */}
+            <div style={{ fontSize: "12px", color: "#666", marginBottom: "8px", fontFamily: "monospace" }}>
+              {debugLog}
+            </div>
             <KidsLoadingScreen percent={percent} />
           </>
         )}
@@ -190,12 +197,10 @@ export default function KidsPage() {
 
         {status === "error" && (
           <div className="kidsPage__error">
-            {t.kids.generate.error.split("\n").map((line: string, i: number) => (
-              <React.Fragment key={i}>
-                {line}
-                <br />
-              </React.Fragment>
-            ))}
+            <div style={{ fontWeight: "bold", marginBottom: "8px" }}>작업 실패</div>
+            {t.kids.generate.error}
+            <br />
+            <span style={{ fontSize: "0.8em", color: "#d32f2f" }}>{debugLog}</span>
           </div>
         )}
 

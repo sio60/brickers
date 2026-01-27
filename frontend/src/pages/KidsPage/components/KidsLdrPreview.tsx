@@ -15,6 +15,8 @@ type Props = {
   partsLibraryPath?: string;
   ldconfigUrl?: string;
   stepMode?: boolean; // ✅ Step mode flag
+  onLoaded?: () => void;
+  onError?: (err: any) => void;
 };
 
 function disposeObject3D(root: THREE.Object3D) {
@@ -33,6 +35,8 @@ function LdrModel({
   stepMode = false,
   currentStep = 1,
   onStepCountChange,
+  onLoaded,
+  onError,
 }: Props & { currentStep?: number; onStepCountChange?: (count: number) => void }) {
   const loader = useMemo(() => {
     THREE.Cache.enabled = true;
@@ -61,7 +65,8 @@ function LdrModel({
       return fixed;
     });
 
-    manager.onError = (path) => console.error("[LDraw] failed to load:", path);
+    manager.onError = (path) => console.error("[LDraw] failed to load asset:", path);
+    // manager.onProgress = (url, loaded, total) => console.log(`[LDraw] Loading... ${(loaded / total * 100).toFixed(0)}%`);
 
     const l = new LDrawLoader(manager);
     l.setPartsLibraryPath(partsLibraryPath);
@@ -81,44 +86,43 @@ function LdrModel({
     let prev: THREE.Group | null = null;
 
     (async () => {
-      setGroup(null);
+      try {
+        setGroup(null);
+        console.log("[LdrModel] Loading LDR from:", url);
 
-      await loader.preloadMaterials(ldconfigUrl);
-      const g = await loader.loadAsync(url);
+        await loader.preloadMaterials(ldconfigUrl);
+        const g = await loader.loadAsync(url);
 
-      if (cancelled) {
-        disposeObject3D(g);
-        return;
+        if (cancelled) {
+          disposeObject3D(g);
+          return;
+        }
+
+        console.log("[LdrModel] Loaded successfully. Children:", g.children.length);
+        g.rotation.x = Math.PI;
+
+        if (onStepCountChange) {
+          onStepCountChange(g.children.length);
+        }
+
+        prev = g;
+        setGroup(g);
+        onLoaded?.();
+      } catch (e) {
+        console.error("[LdrModel] Failed to load LDR:", e);
+        onError?.(e);
       }
-
-      g.rotation.x = Math.PI;
-
-      // Group children might represent steps or parts.
-      // Typically, LDrawLoader puts everything in one group, or nested groups.
-      // If we assume a flat list of parts for simplicity in "fake step mode":
-      if (onStepCountChange) {
-        // If specific step groups exist, count them. Otherwise count basic children (parts).
-        // LDrawLoader usually puts steps in "userData.numSteps"? No standard.
-        // Let's just treat total children as total "parts" to show one by one if we want animation,
-        // but for "Steps", LDraw often groups them.
-        // For now, let's just expose the total children count as max steps.
-        onStepCountChange(g.children.length);
-      }
-
-      prev = g;
-      setGroup(g);
-    })().catch((e) => console.error("[LDraw] load failed:", e));
+    })();
 
     return () => {
       cancelled = true;
       if (prev) disposeObject3D(prev);
     };
-  }, [url, ldconfigUrl, loader, onStepCountChange]);
+  }, [url, ldconfigUrl, loader, onStepCountChange, onLoaded, onError]);
 
   // Handle visibility for steps
   useEffect(() => {
     if (!group || !stepMode) return;
-
     group.children.forEach((child, index) => {
       child.visible = index < currentStep;
     });
@@ -135,6 +139,7 @@ function LdrModel({
 
 export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, stepMode = false }: Props) {
   const [loading, setLoading] = useState(true);
+  const [errorMSG, setErrorMSG] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [totalSteps, setTotalSteps] = useState(1);
 
@@ -153,23 +158,41 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, ste
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
 
-      {loading && (
+      {loading && !errorMSG && (
         <div style={{
           position: "absolute",
           inset: 0,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "rgba(248,249,250,0.9)",
+          background: "rgba(248,249,250,0.8)",
           zIndex: 10,
         }}>
-          <div style={{ textAlign: "center", color: "#666" }}>
-            3D 로딩 중...
+          <div style={{ textAlign: "center", color: "#666", fontWeight: "bold" }}>
+            3D 모델 불러오는 중...<br />
+            <span style={{ fontSize: "0.8em", fontWeight: "normal" }}>잠시만 기다려주세요</span>
           </div>
         </div>
       )}
 
-      {stepMode && !loading && (
+      {errorMSG && (
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "rgba(255,240,240,0.9)",
+          zIndex: 20,
+        }}>
+          <div style={{ textAlign: "center", color: "#d32f2f" }}>
+            <div style={{ fontWeight: "bold", marginBottom: "8px" }}>모델 로딩 실패</div>
+            <div style={{ fontSize: "0.8em" }}>{errorMSG}</div>
+          </div>
+        </div>
+      )}
+
+      {stepMode && !loading && !errorMSG && (
         <div style={{
           position: "absolute",
           bottom: "20px",
@@ -215,12 +238,16 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, ste
       )}
 
       <Canvas
-        camera={{ position: [200, 0, 200], fov: 45 }}
+        camera={{ position: [200, 200, 200], fov: 45 }}
         dpr={[1, 2]}
-        onCreated={() => setLoading(false)}
+        // Canvas 생성 그 자체가 아니라, 모델 로딩 완료 시 setLoading(false)
+        onCreated={() => {
+          // Canvas ready
+        }}
       >
         <ambientLight intensity={0.9} />
-        <directionalLight position={[3, 5, 2]} intensity={1.0} />
+        <directionalLight position={[10, 20, 10]} intensity={1.2} />
+        <directionalLight position={[-10, -20, -10]} intensity={0.5} />
 
         <LdrModel
           url={url}
@@ -229,9 +256,14 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, ste
           stepMode={stepMode}
           currentStep={currentStep}
           onStepCountChange={setTotalSteps}
+          onLoaded={() => setLoading(false)}
+          onError={(e) => {
+            setLoading(false);
+            setErrorMSG(e?.message || "Unknown error");
+          }}
         />
 
-        <OrbitControls makeDefault enablePan={false} enableZoom />
+        <OrbitControls makeDefault enablePan={false} enableZoom minDistance={10} maxDistance={1000} />
       </Canvas>
     </div>
   );
