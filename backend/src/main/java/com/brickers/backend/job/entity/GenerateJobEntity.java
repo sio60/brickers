@@ -65,7 +65,17 @@ public class GenerateJobEntity {
     /** 3D 프리뷰 이미지 URL 또는 key */
     private String previewImageUrl; // 지금은 url로 둠 (나중에 key로 전환 가능)
 
-    /** 모델 산출물 key (예: model.glb / model.ldr) */
+    /** 보정된 이미지 URL (나노바나나 보정 결과) */
+    private String correctedImageUrl;
+
+    /** GLB 파일 URL (3D 모델) */
+    private String glbUrl;
+
+    /** LDR 파일 URL (레고 조립 설명서) */
+    private String ldrUrl;
+
+    /** 모델 산출물 key (예: model.glb / model.ldr) - 레거시 호환용 */
+    @Deprecated
     private String modelKey;
 
     /** 도면/PDF key */

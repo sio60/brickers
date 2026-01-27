@@ -266,26 +266,61 @@ export default function KidsStepPage() {
     }
   };
 
-  const downloadGlb = () => {
-    if (!modelGroupRef.current) return;
-    const exporter = new GLTFExporter();
-    exporter.parse(
-      modelGroupRef.current,
-      (result) => {
-        const output = result instanceof ArrayBuffer ? result : JSON.stringify(result);
-        const blob = new Blob([output], { type: result instanceof ArrayBuffer ? "application/octet-stream" : "application/json" });
-        const downloadUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = downloadUrl;
-        link.download = "brickers_model.glb";
-        link.click();
-        window.URL.revokeObjectURL(downloadUrl);
-      },
-      (error) => {
-        console.error("GLB export failed:", error);
-      },
-      { binary: true }
-    );
+  const downloadGlb = async () => {
+    const jobId = params.get("jobId");
+    if (!jobId) {
+      // jobId가 없으면 기존 방식(클라이언트 export) 시도
+      if (!modelGroupRef.current) return;
+      const exporter = new GLTFExporter();
+      exporter.parse(
+        modelGroupRef.current,
+        (result) => {
+          const output = result instanceof ArrayBuffer ? result : JSON.stringify(result);
+          const blob = new Blob([output], { type: result instanceof ArrayBuffer ? "application/octet-stream" : "application/json" });
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = downloadUrl;
+          link.download = "brickers_model.glb";
+          link.click();
+          window.URL.revokeObjectURL(downloadUrl);
+        },
+        (error) => {
+          console.error("GLB export failed:", error);
+        },
+        { binary: true }
+      );
+      return;
+    }
+
+    try {
+      // 백엔드에서 생성된 GLB URL 조회
+      const res = await fetch(`/api/kids/jobs/${jobId}`);
+      if (!res.ok) throw new Error("Failed to fetch job info");
+      const data = await res.json();
+
+      const glbUrl = data.glbUrl;
+      console.log("[KidsStepPage] Downloading GLB from:", glbUrl); // ✅ 로그 추가
+
+      if (!glbUrl) {
+        alert("Server GLB not found, falling back to client export.");
+        // 실패 시 재귀적으로나 로직적으로 클라이언트 export 호출 가능하지만,
+        // 여기서는 그냥 알림만 주고 종료하거나 기존 로직 실행
+        return;
+      }
+
+      // 다운로드
+      const link = document.createElement("a");
+      link.href = glbUrl;
+      link.download = `brickers_${jobId}.glb`;
+      link.target = "_blank"; // S3 등 외부 링크일 경우 대비
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+    } catch (e) {
+      console.error("Failed to download server GLB:", e);
+      alert("Failed to download GLB file.");
+    }
   };
 
   const handleRegisterGallery = async () => {

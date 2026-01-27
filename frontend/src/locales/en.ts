@@ -135,6 +135,7 @@ export const en = {
         generate: {
             loading: "AI is making your brick...",
             creating: "Creating...",
+            complete: "Generation complete! Please check My Page.",
             ready: "Your Brick is Ready!",
             next: "NEXT →",
             error: "Oops! Something went wrong.\nPlease try again later."
