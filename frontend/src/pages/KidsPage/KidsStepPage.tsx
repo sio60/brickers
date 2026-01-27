@@ -89,7 +89,7 @@ function LdrModel({
         try {
           const abs = new URL(fixed, window.location.href).href;
           if (abs === mainAbs) return overrideMainLdrUrl;
-        } catch {}
+        } catch { }
       }
 
       const isAbsolute =
@@ -103,7 +103,7 @@ function LdrModel({
       if (overrideMainLdrUrl && !isAbsolute) {
         try {
           fixed = new URL(fixed, url).href;
-        } catch {}
+        } catch { }
       }
 
       // CDN parts/p 보정
@@ -134,7 +134,7 @@ function LdrModel({
 
     try {
       (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any);
-    } catch {}
+    } catch { }
 
     return l;
   }, [partsLibraryPath, url, overrideMainLdrUrl]);
@@ -205,7 +205,7 @@ export default function KidsStepPage() {
     arr.forEach((u) => {
       try {
         URL.revokeObjectURL(u);
-      } catch {}
+      } catch { }
     });
   };
 
@@ -241,6 +241,7 @@ export default function KidsStepPage() {
     (async () => {
       if (!ldrUrl) return;
 
+      console.log("[KidsStepPage] Loading LDR from:", ldrUrl);
       setLoading(true);
       setStepIdx(0);
 
@@ -248,7 +249,10 @@ export default function KidsStepPage() {
       if (!res.ok) throw new Error(`LDR fetch failed: ${res.status} ${res.statusText}`);
 
       const text = await res.text();
+      console.log("[KidsStepPage] LDR content length:", text.length);
+
       const stepTexts = buildCumulativeStepTexts(text);
+      console.log("[KidsStepPage] Generated steps:", stepTexts.length);
 
       const blobs = stepTexts.map((t) =>
         URL.createObjectURL(new Blob([t], { type: "text/plain" }))

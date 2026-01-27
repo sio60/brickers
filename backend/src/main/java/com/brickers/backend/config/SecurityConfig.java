@@ -132,8 +132,10 @@ public class SecurityConfig {
                                                 // ✅ Upload API (인증 필요)
                                                 .requestMatchers(HttpMethod.POST, "/api/uploads/**").authenticated()
 
-                                                // ✅ 업로드된 파일 서빙은 공개(또는 필요시 인증)
-                                                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                                                // ✅ 업로드된 파일 서빙 및 AI 생성 결과물 공개 (로컬 프록시 포함)
+                                                .requestMatchers(HttpMethod.GET, "/api/uploads/**", "/uploads/**")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/generated/**").permitAll()
 
                                                 // -------------------------------
                                                 // ✅ Report API (신고)
@@ -161,8 +163,7 @@ public class SecurityConfig {
                                                 // ✅ Kids API 공개 (네 실제 매핑 경로에 맞춰 추가)
                                                 .requestMatchers("/api/v1/kids/**").permitAll()
                                                 .requestMatchers("/api/kids/**").permitAll()
-                                                // ✅ AI 생성 정적 파일 공개 (중요!)
-                                                .requestMatchers("/api/generated/**").permitAll()
+
                                                 // -------------------------------
                                                 // ✅ Billing API (구독 결제)
                                                 // -------------------------------
