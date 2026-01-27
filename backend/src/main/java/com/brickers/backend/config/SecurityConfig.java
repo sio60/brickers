@@ -78,7 +78,8 @@ public class SecurityConfig {
                                                 // 토큰 상태 확인 (공개 - 토큰 없어도 확인 가능)
                                                 .requestMatchers(HttpMethod.GET, "/api/auth/status").permitAll()
                                                 // 모든 세션 로그아웃 (인증 필요)
-                                                .requestMatchers(HttpMethod.POST, "/api/auth/logout-all").authenticated()
+                                                .requestMatchers(HttpMethod.POST, "/api/auth/logout-all")
+                                                .authenticated()
                                                 // 로그인 이력 (인증 필요)
                                                 .requestMatchers(HttpMethod.GET, "/api/auth/logins").authenticated()
                                                 // 비정상 로그인 알림 (내부용 - 일단 공개)
@@ -179,6 +180,7 @@ public class SecurityConfig {
 
                                 .oauth2Login(oauth2 -> oauth2
                                                 .authorizationEndpoint(a -> a.baseUri("/auth"))
+                                                .redirectionEndpoint(r -> r.baseUri("/auth/*/callback"))
                                                 .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
                                                 .successHandler(oAuth2LoginSuccessHandler)
                                                 .failureUrl(frontBaseUrl + "/auth/failure"))
