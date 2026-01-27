@@ -19,11 +19,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
         String uploadPath = Paths.get(uploadDir).toAbsolutePath().toUri().toString();
 
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations(uploadPath);
+                .addResourceLocations(uploadPath)
+                .setCachePeriod(3600);
 
         // ✅ AI 생성 결과물 서빙 (brickers-ai/public/generated 폴더)
-        // backend 실행 위치(root) 기준 상위 폴더 접근
-        String generatedPath = Paths.get("../brickers-ai/public/generated").toAbsolutePath().toUri().toString();
+        // backend 실행 위치(root) 기준 상위 폴더 접근 (backend -> brickers -> finalproj ->
+        // brickers-ai)
+        String generatedPath = Paths.get("../../brickers-ai/public/generated").toAbsolutePath().toUri().toString();
         registry.addResourceHandler("/api/generated/**")
                 .addResourceLocations(generatedPath);
     }
