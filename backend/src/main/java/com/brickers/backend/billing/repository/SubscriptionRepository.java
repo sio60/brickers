@@ -28,4 +28,10 @@ public interface SubscriptionRepository extends MongoRepository<Subscription, St
 
     // 만료 예정 구독 목록 (자동 갱신 알림용)
     List<Subscription> findByStatusAndAutoRenewTrue(SubscriptionStatus status);
+
+    // 만료된 구독 조회 (스케줄러용) - 현재 시간 이전에 만료되어야 할 ACTIVE/CANCELED 구독
+    List<Subscription> findByStatusInAndExpiresAtBefore(List<SubscriptionStatus> statuses, java.time.LocalDateTime expiresAt);
+
+    // Google Play orderId로 조회 (RTDN 웹훅용)
+    java.util.Optional<Subscription> findByProductIdAndPurchaseToken(String productId, String purchaseToken);
 }

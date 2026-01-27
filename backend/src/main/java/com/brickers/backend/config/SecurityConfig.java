@@ -72,6 +72,23 @@ public class SecurityConfig {
                                                                 "/api/auth/logout")
                                                 .permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+                                                // 토큰 상태 확인 (공개 - 토큰 없어도 확인 가능)
+                                                .requestMatchers(HttpMethod.GET, "/api/auth/status").permitAll()
+                                                // 모든 세션 로그아웃 (인증 필요)
+                                                .requestMatchers(HttpMethod.POST, "/api/auth/logout-all").authenticated()
+                                                // 로그인 이력 (인증 필요)
+                                                .requestMatchers(HttpMethod.GET, "/api/auth/logins").authenticated()
+                                                // 비정상 로그인 알림 (내부용 - 일단 공개)
+                                                .requestMatchers(HttpMethod.POST, "/api/auth/alert").permitAll()
+
+                                                // -------------------------------
+                                                // ✅ Users API (공개 프로필)
+                                                // -------------------------------
+                                                .requestMatchers(HttpMethod.GET, "/api/users/check-nickname",
+                                                                "/api/users/check-email",
+                                                                "/api/users/*",
+                                                                "/api/users/*/summary")
+                                                .permitAll()
 
                                                 // -------------------------------
                                                 // ✅ My API (JWT 필요)
@@ -135,6 +152,8 @@ public class SecurityConfig {
                                                 // 요금제 목록 및 웹훅은 공개
                                                 .requestMatchers(HttpMethod.GET, "/api/billing/plans").permitAll()
                                                 .requestMatchers(HttpMethod.POST, "/api/billing/webhook").permitAll()
+                                                // 테스트용 (개발 환경에서만 - 배포 시 제거)
+                                                .requestMatchers("/api/billing/test/**").permitAll()
                                                 .requestMatchers("/api/billing/**").authenticated()
 
                                                 // -------------------------------
@@ -149,7 +168,6 @@ public class SecurityConfig {
 
                                 .oauth2Login(oauth2 -> oauth2
                                                 .authorizationEndpoint(a -> a.baseUri("/auth"))
-                                                .redirectionEndpoint(r -> r.baseUri("/auth/*/callback"))
                                                 .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
                                                 .successHandler(oAuth2LoginSuccessHandler)
                                                 .failureUrl(frontBaseUrl + "/auth/failure"))

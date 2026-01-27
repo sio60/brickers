@@ -23,4 +23,13 @@ public interface UserRepository extends MongoRepository<User, String> {
     // ✅ (선택) 정상 계정만 조회하고 싶을 때(나중에 로그인 차단/탈퇴처리 정책에 유용)
     Optional<User> findByProviderAndProviderIdAndAccountState(String provider, String providerId,
             AccountState accountState);
+
+    // 닉네임 존재 여부 확인
+    boolean existsByNickname(String nickname);
+
+    // 이메일 존재 여부 확인
+    boolean existsByEmail(String email);
+
+    // 닉네임으로 사용자 찾기
+    Optional<User> findByNickname(String nickname);
 }

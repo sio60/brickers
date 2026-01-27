@@ -109,4 +109,11 @@ public class AuthTokenService {
 
     public record IssuedTokens(String accessToken, ResponseCookie refreshCookie) {
     }
+
+    /**
+     * 토큰 해시 (외부에서 사용 가능)
+     */
+    public String hashToken(String token) {
+        return TokenHash.sha256(token);
+    }
 }
