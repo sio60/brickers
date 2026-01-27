@@ -92,7 +92,7 @@ public class KidsService {
         job.ensureDefaults();
 
         generateJobRepository.save(job);
-        log.info("Job 생성 완료(Queued): jobId={}", job.getId());
+        log.info("[Brickers] Job saved to DB. jobId={}, userId={}", job.getId(), userId);
 
         // 2) 비동기 처리 시작
         processGenerationAsync(job.getId(), file, age, budget);
@@ -158,36 +158,62 @@ public class KidsService {
     /**
      * FastAPI 응답을 DB job에 반영
      *
-     * - preview: correctedUrl 사용 (기존 image_url 키는 폐기/호환용으로만 체크)
-     * - ldr: ldrData (data URI base64) 우선, 없으면 ldrUrl을 HTTP GET으로 다운로드
-     * - 저장 후 job.modelKey = 저장된 URL
+     * - correctedUrl: 보정 이미지 다운로드 → 저장 → correctedImageUrl
+     * - modelUrl(GLB): 다운로드 → 저장 → glbUrl
+     * - ldrData/ldrUrl: LDR 저장 → ldrUrl
      */
     private void applySuccessResultToJob(GenerateJobEntity job, String userId, Map<String, Object> response) {
         if (response == null)
             return;
 
-        // ✅ preview URL (FastAPI: correctedUrl)
-        String previewUrl = firstNonBlank(
-                asString(response.get("correctedUrl")),
-                asString(response.get("image_url")) // 과거 호환
-        );
-        if (previewUrl != null) {
-            job.setPreviewImageUrl(previewUrl);
+        // ✅ 1) 보정 이미지 저장 (correctedUrl)
+        String correctedUrl = asString(response.get("correctedUrl"));
+        if (!isBlank(correctedUrl)) {
+            try {
+                byte[] imageBytes = downloadBytesByUrl(correctedUrl);
+                if (imageBytes != null && imageBytes.length > 0) {
+                    String filename = extractFilenameFromUrl(correctedUrl, "corrected.png");
+                    var stored = storageService.storeFile(userId, filename, imageBytes, "image/png");
+                    job.setCorrectedImageUrl(stored.url());
+                    job.setPreviewImageUrl(stored.url()); // preview도 동일하게 설정
+                    log.info("✅ 보정 이미지 저장 완료: {}", stored.url());
+                }
+            } catch (Exception e) {
+                log.warn("보정 이미지 저장 실패(원본 URL 유지): {}", e.getMessage());
+                job.setCorrectedImageUrl(correctedUrl);
+                job.setPreviewImageUrl(correctedUrl);
+            }
         }
 
-        // ✅ LDR 처리
-        String ldrData = asString(response.get("ldrData")); // data:text/plain;base64,...
-        String ldrUrl = asString(response.get("ldrUrl")); // /api/generated/.../result.ldr
+        // ✅ 2) GLB 파일 저장 (modelUrl)
+        String modelUrl = asString(response.get("modelUrl"));
+        if (!isBlank(modelUrl)) {
+            try {
+                byte[] glbBytes = downloadBytesByUrl(modelUrl);
+                if (glbBytes != null && glbBytes.length > 0) {
+                    String filename = extractFilenameFromUrl(modelUrl, "model.glb");
+                    var stored = storageService.storeFile(userId, filename, glbBytes, "application/octet-stream");
+                    job.setGlbUrl(stored.url());
+                    log.info("✅ GLB 파일 저장 완료: {}", stored.url());
+                }
+            } catch (Exception e) {
+                log.warn("GLB 저장 실패(원본 URL 유지): {}", e.getMessage());
+                job.setGlbUrl(modelUrl);
+            }
+        }
 
-        if (isBlank(ldrData) && isBlank(ldrUrl)) {
-            // LDR이 없으면 modelKey 업데이트 못함 (원하면 여기서 예외로 막아도 됨)
+        // ✅ 3) LDR 파일 저장
+        String ldrData = asString(response.get("ldrData")); // data:text/plain;base64,...
+        String ldrUrlFromResponse = asString(response.get("ldrUrl")); // /api/generated/.../result.ldr
+
+        if (isBlank(ldrData) && isBlank(ldrUrlFromResponse)) {
             log.warn("응답에 ldrData/ldrUrl 둘 다 없음. jobId={}", job.getId());
             return;
         }
 
         byte[] ldrBytes = null;
 
-        // 1) ldrData 우선
+        // 1) ldrData 우선 (base64 디코딩)
         if (!isBlank(ldrData) && ldrData.startsWith("data:") && ldrData.contains("base64,")) {
             try {
                 ldrBytes = decodeDataUriBase64(ldrData);
@@ -196,33 +222,30 @@ public class KidsService {
             }
         }
 
-        // 2) ldrData 실패/없으면 ldrUrl로 다시 다운로드
-        if ((ldrBytes == null || ldrBytes.length == 0) && !isBlank(ldrUrl)) {
+        // 2) ldrData 실패하면 ldrUrl로 다운로드
+        if ((ldrBytes == null || ldrBytes.length == 0) && !isBlank(ldrUrlFromResponse)) {
             try {
-                ldrBytes = downloadBytesByUrl(ldrUrl);
+                ldrBytes = downloadBytesByUrl(ldrUrlFromResponse);
             } catch (Exception e) {
-                log.error("ldrUrl 다운로드 실패: url={}, err={}", ldrUrl, e.getMessage());
+                log.error("ldrUrl 다운로드 실패: url={}, err={}", ldrUrlFromResponse, e.getMessage());
             }
         }
 
         if (ldrBytes == null || ldrBytes.length == 0) {
-            // 최후: 원본 ldrUrl 유지(그래도 사용자에게 링크라도)
-            log.error("LDR 확보 실패(ldrData/ldrUrl 모두 실패). jobId={}, keep modelKey=ldrUrl",
-                    job.getId());
-            job.setModelKey(ldrUrl);
+            log.error("LDR 확보 실패. jobId={}, keep ldrUrl={}", job.getId(), ldrUrlFromResponse);
+            job.setLdrUrl(ldrUrlFromResponse);
             return;
         }
 
-        // 저장 파일명: ldrUrl에서 마지막 파일명 추출, 없으면 result.ldr
-        String filename = extractFilenameFromUrl(ldrUrl, "result.ldr");
-
+        // LDR 저장
+        String filename = extractFilenameFromUrl(ldrUrlFromResponse, "result.ldr");
         try {
             var stored = storageService.storeFile(userId, filename, ldrBytes, "text/plain");
-            job.setModelKey(stored.url());
-            log.info("LDR 파일 스토리지 이관 완료: {}", stored.url());
+            job.setLdrUrl(stored.url());
+            log.info("✅ LDR 파일 저장 완료: {}", stored.url());
         } catch (Exception e) {
             log.error("LDR 저장 실패(원본 ldrUrl 유지): {}", e.getMessage());
-            job.setModelKey(ldrUrl);
+            job.setLdrUrl(ldrUrlFromResponse);
         }
     }
 
@@ -292,8 +315,9 @@ public class KidsService {
      * Polling용 Job 상태 조회
      */
     public GenerateJobEntity getJobStatus(String jobId) {
+        log.info("[Brickers] Polling Job Status. jobId={}", jobId);
         return generateJobRepository.findById(jobId)
-                .orElseThrow(() -> new IllegalArgumentException("Job not found: " + jobId));
+                .orElseThrow(() -> new java.util.NoSuchElementException("Job not found: " + jobId));
     }
 
     private KidsLevel ageToKidsLevel(String age) {

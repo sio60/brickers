@@ -135,6 +135,7 @@ export const ja = {
         generate: {
             loading: "AIがレゴを作成しています...",
             creating: "作成中...",
+            complete: "生成が完了しました！マイページで確認してください。",
             ready: "レゴが完成しました！",
             next: "次へ →",
             error: "おっと！問題が発生しました。\n後でもう一度お試しください。"

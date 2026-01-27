@@ -19,7 +19,9 @@ public class AdminJobDto {
     private String sourceImageUrl;
     private String errorMessage;
     private String previewImageUrl;
-    private String modelKey;
+    private String correctedImageUrl;
+    private String glbUrl;
+    private String ldrUrl;
     private String blueprintPdfKey;
     private String bomKey;
     private LocalDateTime createdAt;
@@ -27,6 +29,12 @@ public class AdminJobDto {
     private LocalDateTime stageUpdatedAt;
 
     public static AdminJobDto from(GenerateJobEntity job) {
+        // ldrUrl 우선, 없으면 레거시 modelKey fallback
+        String ldrUrl = job.getLdrUrl();
+        if (ldrUrl == null || ldrUrl.isBlank()) {
+            ldrUrl = job.getModelKey(); // 레거시 호환
+        }
+
         return AdminJobDto.builder()
                 .id(job.getId())
                 .userId(job.getUserId())
@@ -36,7 +44,9 @@ public class AdminJobDto {
                 .sourceImageUrl(job.getSourceImageUrl())
                 .errorMessage(job.getErrorMessage())
                 .previewImageUrl(job.getPreviewImageUrl())
-                .modelKey(job.getModelKey())
+                .correctedImageUrl(job.getCorrectedImageUrl())
+                .glbUrl(job.getGlbUrl())
+                .ldrUrl(ldrUrl)
                 .blueprintPdfKey(job.getBlueprintPdfKey())
                 .bomKey(job.getBomKey())
                 .createdAt(job.getCreatedAt())

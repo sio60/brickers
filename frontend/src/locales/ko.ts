@@ -136,6 +136,7 @@ export const ko = {
         generate: {
             loading: "AI가 레고를 만들고 있어요...",
             creating: "생성 중...",
+            complete: "생성이 완료되었습니다! 마이페이지에서 확인해주세요.",
             ready: "레고가 완성되었어요!",
             next: "다음으로 →",
             error: "앗! 문제가 발생했어요.\n나중에 다시 시도해 주세요."

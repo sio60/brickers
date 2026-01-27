@@ -15,6 +15,8 @@ services:
       - AWS_REGION=${AWS_REGION}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - UPLOAD_PROVIDER=${UPLOAD_PROVIDER:-S3}
+      - UPLOAD_PUBLIC_BASE_URL=${UPLOAD_PUBLIC_BASE_URL}
       
       # ✅ [추가] JWT 설정 (이게 없으면 로그인 안 됨)
       - JWT_SECRET=${JWT_SECRET}
