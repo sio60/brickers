@@ -121,7 +121,12 @@ export default function KidsPage() {
         // 3. 결과 처리
         // Status가 DONE이면 ldrUrl에 LDR URL이 있음 (이전: modelKey)
         const modelUrl = finalData.ldrUrl || finalData.modelKey; // 레거시 호환
-        if (!modelUrl) throw new Error("No model URL in job result");
+        console.log("[KidsPage] Final Job Data:", finalData);
+
+        if (!modelUrl) {
+          const keys = Object.keys(finalData || {}).join(", ");
+          throw new Error(`No model URL in job result. Received keys: ${keys}`);
+        }
 
         // ✅ 더 이상 blob으로 변환하거나 로컬 URL을 생성하지 않음 (이전 페이지 이관 시 폐기됨)
         // 서버에서 전달해준 modelUrl(예: /uploads/...)을 직접 사용
