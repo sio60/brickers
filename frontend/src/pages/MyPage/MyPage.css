@@ -791,234 +791,155 @@
 }
 
 /* 내 문의함/신고함 카드 상세 스타일 */
+/* 내 문의함/신고함 리스트 스타일 (심플 리스트 버전) */
+.mypage__inquiriesList {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    /* 리스트 형태이므로 간격 제거 */
+    border-top: 2px solid #000;
+}
+
 .mypage__inquiryCard {
     background: #fff;
-    border: 3px solid #000;
-    border-radius: 32px;
-    padding: 32px;
-    position: relative;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+    padding: 24px 8px;
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s ease;
 }
 
 .mypage__inquiryCard:hover {
-    transform: translateY(-4px);
-    box-shadow: 10px 10px 0 #ffe135;
+    background: #fcfcfc;
+    transform: none;
+    box-shadow: none;
 }
 
 .inquiry__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 }
 
 .inquiry__status {
-    padding: 6px 16px;
-    border-radius: 100px;
-    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
-    border: 2px solid #000;
-}
-
-.inquiry__status.PENDING {
+    border: 1px solid #000;
     background: #fff;
     color: #000;
 }
 
-.inquiry__status.RESOLVED,
-.inquiry__status.ANSWERED {
-    background: #22c55e;
+.inquiry__status.ANSWERED,
+.inquiry__status.RESOLVED {
+    background: #000;
     color: #fff;
 }
 
-.inquiry__status.REJECTED {
-    background: #eee;
-    color: #666;
-}
-
 .inquiry__date {
-    font-size: 14px;
-    color: #888;
-    font-weight: 600;
+    font-size: 12px;
+    color: #999;
+    font-weight: 500;
 }
 
 .inquiry__title {
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 800;
-    margin: 0 0 12px;
+    margin: 0 0 8px;
     color: #000;
 }
 
 .inquiry__content {
-    font-size: 15px;
-    color: #444;
+    font-size: 14px;
     line-height: 1.6;
+    color: #444;
     margin: 0;
     white-space: pre-wrap;
 }
 
-/* 신고함 전용 스타일 */
+.inquiry__answer {
+    margin-top: 16px;
+    padding: 16px 0 0 20px;
+    /* 왼쪽 여백으로 구분 */
+    background: transparent;
+    border: none;
+    border-top: 1px dashed #eee;
+    position: relative;
+}
+
+.inquiry__answer::before {
+    content: "↳";
+    position: absolute;
+    left: 0;
+    top: 16px;
+    font-size: 18px;
+    color: #000;
+    font-weight: bold;
+}
+
+.answer__badge {
+    font-size: 10px;
+    font-weight: 900;
+    color: #000;
+    background: transparent;
+    border: 1px solid #000;
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.answer__text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #000;
+    margin: 0 0 8px;
+    font-weight: 400;
+}
+
+.answer__date {
+    display: block;
+    font-size: 11px;
+    color: #999;
+    text-align: right;
+}
+
+/* 신고함 공통 스타일 유지 */
+.report-card.mypage__inquiryCard {
+    border-bottom: 1px solid #eee;
+}
+
 .report__reason-group {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: 8px;
+    margin-bottom: 8px;
 }
 
 .report__target-badge {
-    padding: 4px 10px;
+    padding: 2px 8px;
     background: #000;
     color: #fff;
-    border-radius: 8px;
-    font-size: 11px;
+    border-radius: 4px;
+    font-size: 10px;
     font-weight: 700;
 }
 
 .report__details {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 16px;
-    background: #f9f9f9;
-    border-radius: 16px;
+    gap: 4px;
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
 }
 
 .report__id-info {
-    font-size: 12px;
-    color: #aaa;
-    font-weight: 500;
-    align-self: flex-end;
-}
-
-/* 답변 스타일 */
-.inquiry__answer {
-    margin-top: 24px;
-    padding: 24px;
-    background: #fffbe6;
-    border: 2px solid #ffe135;
-    border-radius: 20px;
-    position: relative;
-}
-
-.answer__badge {
-    display: inline-block;
-    padding: 4px 12px;
-    background: #ffe135;
-    color: #000;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 800;
-    margin-bottom: 12px;
-}
-
-.answer__text {
-    font-size: 15px;
-    color: #333;
-    line-height: 1.6;
-    margin: 0 0 12px;
-}
-
-.answer__date {
-    display: block;
-    font-size: 12px;
-    color: #999;
-    text-align: right;
-}
-
-.mypage__inquiryCard {
-    background: #fff;
-    padding: 32px;
-    border-radius: 32px;
-    border: 3px solid #000;
-    transition: all 0.2s ease;
-}
-
-.mypage__inquiryCard:hover {
-    transform: translate(-4px, -4px);
-    box-shadow: 8px 8px 0 #000;
-}
-
-.inquiry__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.inquiry__status {
-    padding: 6px 16px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 900;
-    text-transform: uppercase;
-    border: 2px solid #000;
-    background: #fff;
-    color: #000;
-}
-
-.inquiry__status.OPEN {
-    background: #fff;
-    color: #000;
-}
-
-.inquiry__status.ANSWERED {
-    background: #000;
-    color: #fff;
-}
-
-.inquiry__date {
-    font-size: 13px;
-    color: #666;
-    font-weight: 500;
-}
-
-.inquiry__title {
-    font-size: 20px;
-    font-weight: 900;
-    margin: 0 0 16px;
-    color: #000;
-}
-
-.inquiry__content {
-    font-size: 15px;
-    line-height: 1.7;
-    color: #333;
-    margin: 0;
-}
-
-.inquiry__answer {
-    margin-top: 32px;
-    padding: 24px;
-    background: #fdfdfd;
-    border-radius: 24px;
-    border: 3px solid #000;
-    position: relative;
-}
-
-.answer__badge {
     font-size: 11px;
-    font-weight: 900;
-    color: #fff;
-    background: #000;
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 4px;
-    margin-bottom: 12px;
-}
-
-.answer__text {
-    font-size: 15px;
-    line-height: 1.6;
-    color: #000;
-    margin: 0 0 12px;
+    color: #ccc;
     font-weight: 500;
-}
-
-.answer__date {
-    display: block;
-    font-size: 12px;
-    color: #666;
-    text-align: right;
+    align-self: flex-start;
 }
