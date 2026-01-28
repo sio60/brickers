@@ -42,9 +42,10 @@ ENV LOCAL_BASE_URL=http://localhost:8080
 # 5) OpenAI (챗봇용)
 ENV APP_OPENAI_API_KEY=sk-dummy-build-time-key
 
-# 6) SQS 설정
+# 6) SQS 설정 (2개 Queue 분리)
 ENV AWS_SQS_ENABLED=false
-ENV AWS_SQS_QUEUE_URL=https://sqs.ap-northeast-2.amazonaws.com/dummy/DummyQueue
+ENV AWS_SQS_REQUEST_QUEUE_URL=https://sqs.ap-northeast-2.amazonaws.com/dummy/DummyRequestQueue
+ENV AWS_SQS_RESULT_QUEUE_URL=https://sqs.ap-northeast-2.amazonaws.com/dummy/DummyResultQueue
 
 # -----------------------------------------------------------------------------
 # 빌드 실행 (테스트 제외)

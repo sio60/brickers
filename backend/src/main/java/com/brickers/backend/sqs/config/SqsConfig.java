@@ -22,12 +22,9 @@ public class SqsConfig {
     @Value("${aws.secretAccessKey:}")
     private String secretAccessKey;
 
-    @Value("${aws.sqs.queue.url}")
-    private String queueUrl;
-
     @Bean
     public SqsClient sqsClient() {
-        log.info("✅ SQS Client 초기화 | region={} | queueUrl={}", awsRegion, queueUrl);
+        log.info("✅ SQS Client 초기화 | region={}", awsRegion);
 
         // IAM Role 사용 (EC2) vs Access Key 사용 (로컬)
         if (accessKeyId != null && !accessKeyId.isBlank()) {
