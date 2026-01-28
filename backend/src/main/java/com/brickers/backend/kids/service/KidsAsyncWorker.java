@@ -117,6 +117,7 @@ public class KidsAsyncWorker {
                     totalElapsed, totalElapsed / 1000, aiElapsed / 1000, saveElapsed);
             log.info("📦 결과: glbUrl={}", job.getGlbUrl() != null ? "✅" : "❌");
             log.info("📦 결과: ldrUrl={}", job.getLdrUrl() != null ? "✅" : "❌");
+            log.info("📦 결과: bomUrl={}", job.getBomUrl() != null ? "✅" : "❌");
             log.info("📦 결과: previewUrl={}", job.getPreviewImageUrl() != null ? "✅" : "❌");
             log.info("═══════════════════════════════════════════════════════════════");
 
@@ -157,6 +158,13 @@ public class KidsAsyncWorker {
         if (!isBlank(ldrUrl)) {
             log.info("   ✅ [SAVE] LDR S3 URL 직접 사용 | url={}", truncateUrl(ldrUrl));
             job.setLdrUrl(ldrUrl);
+        }
+
+        // 4. bomUrl (BOM 파일)
+        String bomUrl = asString(response.get("bomUrl"));
+        if (!isBlank(bomUrl)) {
+            log.info("   ✅ [SAVE] BOM S3 URL 직접 사용 | url={}", truncateUrl(bomUrl));
+            job.setBomUrl(bomUrl);
         }
 
         // ⚠️ ldrData (base64)가 있으면 여전히 디코딩 후 S3 업로드 필요 (S3 미사용 환경 대비)
