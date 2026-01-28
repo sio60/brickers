@@ -228,8 +228,8 @@ export default function KidsPage() {
 
   return (
     <div className="kidsPage">
-      {/* ✅ 로딩 중일 때(미니게임 실행 시)는 Background3D 숨김 (WebGL Context 충돌 방지) */}
-      {status !== "loading" && <Background3D entryDirection="float" />}
+      {/* ✅ 테스트: Background3D + WebGL 완전히 비활성화 */}
+      {/* {status !== "loading" && <Background3D entryDirection="float" />} */}
 
       <div className="kidsPage__center">
         {status === "loading" && (
