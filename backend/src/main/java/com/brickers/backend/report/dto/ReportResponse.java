@@ -3,6 +3,8 @@ package com.brickers.backend.report.dto;
 import com.brickers.backend.report.entity.Report;
 import com.brickers.backend.report.entity.ReportReason;
 import com.brickers.backend.report.entity.ReportStatus;
+import com.brickers.backend.report.entity.ReportTargetType;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -14,7 +16,7 @@ public class ReportResponse {
     private String id;
     private String reporterId;
     private String reporterEmail; // ✅ 추가
-    private String targetType;
+    private ReportTargetType targetType;
     private String targetId;
     private ReportReason reason;
     private String details;

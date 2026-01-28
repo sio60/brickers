@@ -6,6 +6,10 @@ import com.brickers.backend.job.entity.JobStatus;
 import com.brickers.backend.job.entity.KidsLevel;
 import com.brickers.backend.job.repository.GenerateJobRepository;
 import com.brickers.backend.upload_s3.service.StorageService;
+import com.brickers.backend.user.entity.MembershipPlan;
+import com.brickers.backend.user.entity.User;
+import com.brickers.backend.user.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,11 +26,25 @@ public class KidsService {
     private final GenerateJobRepository generateJobRepository;
     private final StorageService storageService;
     private final KidsAsyncWorker kidsAsyncWorker;
+    private final UserRepository userRepository;
 
     public Map<String, Object> startGeneration(String userId, MultipartFile file, String age, int budget) {
         log.info("AI 생성 요청 접수: userId={}, age={}, budget={}", safe(userId), safe(age), budget);
 
-        if (file == null || file.isEmpty()) throw new IllegalArgumentException("file is empty");
+        // ✅ 보안 강화: 서버 측 멤버십 권한 확인
+        if (userId == null) {
+            throw new IllegalStateException("로그인이 필요한 서비스입니다.");
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. id=" + userId));
+
+        if (user.getMembershipPlan() != MembershipPlan.PRO) {
+            log.warn("[Security] Unauthorized AI generation attempt by non-PRO user. userId={}", userId);
+            throw new IllegalStateException("PRO 사용자 전용 기능입니다. 업그레이드가 필요합니다.");
+        }
+
+        if (file == null || file.isEmpty())
+            throw new IllegalArgumentException("file is empty");
 
         // ✅ async 안정성: bytes로 복사
         byte[] fileBytes;
@@ -72,8 +90,7 @@ public class KidsService {
                 originalFilename,
                 contentType,
                 age,
-                budget
-        );
+                budget);
 
         // 3) 즉시 응답
         return Map.of("jobId", job.getId(), "status", JobStatus.QUEUED);
@@ -86,7 +103,8 @@ public class KidsService {
     }
 
     private KidsLevel ageToKidsLevel(String age) {
-        if (age == null) return KidsLevel.LEVEL_1;
+        if (age == null)
+            return KidsLevel.LEVEL_1;
         return switch (age.toLowerCase()) {
             case "3-5", "35" -> KidsLevel.LEVEL_1;
             case "6-7", "67" -> KidsLevel.LEVEL_2;

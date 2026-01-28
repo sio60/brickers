@@ -63,6 +63,10 @@ public class PaymentOrder {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    // 소프트 삭제 여부 (신고 조치 등)
+    @Builder.Default
+    private boolean deleted = false;
+
     public void markCompleted(String pgPaymentKey) {
         this.status = PaymentStatus.COMPLETED;
         this.pgPaymentKey = pgPaymentKey;

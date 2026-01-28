@@ -60,7 +60,9 @@ public class PaymentService {
                 .planName(plan.getName())
                 .amount(plan.getPrice())
                 .status(PaymentStatus.PENDING)
-                .checkoutUrl("https://google.com/" + orderNo) // TODO: 실제 PG사 연동 시 발급받은 URL로 대체
+                // ✅ 웹 결제 시 주문 확인 URL (실제 PG사 연동 시 PG사에서 발급받은 URL로 대체)
+                // 현재는 인앱 결제(Google Pay/BillingService) 사용으로 checkoutUrl 미사용
+                .checkoutUrl("/api/payments/orders/" + orderNo + "/status")
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -114,12 +116,33 @@ public class PaymentService {
         PaymentOrder order = orderRepository.findByPgOrderId(req.getPgOrderId())
                 .orElseThrow(() -> new IllegalArgumentException("해당 주문을 찾을 수 없습니다: " + req.getPgOrderId()));
 
-        // TODO: PG사 상태값 맵핑 및 검증 로직 추가
-        if ("SUCCESS".equals(req.getStatus())) {
+        // ✅ 상태 검증: 이미 처리된 주문인지 확인
+        if (order.getStatus() != PaymentStatus.PENDING) {
+            log.warn("Webhook for already processed order: orderNo={}, status={}",
+                    order.getOrderNo(), order.getStatus());
+            return;
+        }
+
+        // ✅ 금액 검증 (PG사에서 받은 금액과 주문 금액 일치 확인)
+        if (req.getAmount() != null && !req.getAmount().equals(order.getAmount())) {
+            log.error("Amount mismatch! expected={}, received={}, orderNo={}",
+                    order.getAmount(), req.getAmount(), order.getOrderNo());
+            order.markFailed();
+            orderRepository.save(order);
+            throw new IllegalStateException("결제 금액 불일치");
+        }
+
+        // ✅ PG사 상태값 처리
+        if ("SUCCESS".equals(req.getStatus()) || "COMPLETED".equals(req.getStatus())
+                || "DONE".equals(req.getStatus())) {
             order.markCompleted(req.getPaymentKey());
             applyMembership(order.getUserId(), order.getPlanCode());
-        } else {
+            log.info("Payment completed: orderNo={}, userId={}", order.getOrderNo(), order.getUserId());
+        } else if ("FAILED".equals(req.getStatus()) || "CANCELED".equals(req.getStatus())) {
             order.markFailed();
+            log.warn("Payment failed: orderNo={}, status={}", order.getOrderNo(), req.getStatus());
+        } else {
+            log.warn("Unknown payment status: {}, orderNo={}", req.getStatus(), order.getOrderNo());
         }
 
         orderRepository.save(order);
