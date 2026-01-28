@@ -1,6 +1,6 @@
 // src/pages/KidsPage/components/KidsLoadingScreen.tsx
 import "./KidsLoadingScreen.css";
-import BrickStackMiniGame from "./BrickStackMiniGame";
+// import BrickStackMiniGame from "./BrickStackMiniGame"; // 테스트: WebGL 비활성화
 import { useLanguage } from "../../../contexts/LanguageContext";
 
 type Props = {

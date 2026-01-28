@@ -1,7 +1,7 @@
 import "./KidsPage.css";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import Background3D from "../MainPage/components/Background3D";
+// import Background3D from "../MainPage/components/Background3D"; // 테스트: WebGL 비활성화
 import KidsLdrPreview from "./components/KidsLdrPreview";
 import KidsLoadingScreen from "./components/KidsLoadingScreen";
 import { useLanguage } from "../../contexts/LanguageContext";
