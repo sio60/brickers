@@ -52,9 +52,10 @@ services:
       - PROCESS_TIMEOUT=900
       - DOWNLOAD_TIMEOUT=120
 
-      # ✅ SQS 설정
+      # ✅ SQS 설정 (2개 Queue 분리)
       - AWS_SQS_ENABLED=${AWS_SQS_ENABLED:-true}
-      - AWS_SQS_QUEUE_URL=${AWS_SQS_QUEUE_URL}
+      - AWS_SQS_REQUEST_QUEUE_URL=${AWS_SQS_REQUEST_QUEUE_URL}
+      - AWS_SQS_RESULT_QUEUE_URL=${AWS_SQS_RESULT_QUEUE_URL}
 
     networks:
       - brickers-network
