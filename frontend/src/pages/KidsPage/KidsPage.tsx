@@ -53,27 +53,36 @@ export default function KidsPage() {
       processingRef.current = true;
       setStatus("loading");
       setDebugLog("작업 시작...");
+      console.log("[KidsPage] 🚀 runProcess 시작 | file:", rawFile.name, rawFile.type, rawFile.size);
 
       try {
         // 1. Presigned URL 요청
         setDebugLog("S3 업로드 준비 중...");
+        console.log("[KidsPage] 📤 Step 1: Presigned URL 요청 중...");
         const presign = await getPresignUrl(rawFile.type, rawFile.name);
+        console.log("[KidsPage] ✅ Step 1 완료 | uploadUrl:", presign.uploadUrl?.substring(0, 80) + "...");
+        console.log("[KidsPage]    publicUrl:", presign.publicUrl);
 
         // 2. S3에 직접 업로드
         setDebugLog("이미지 업로드 중...");
+        console.log("[KidsPage] 📤 Step 2: S3 업로드 시작...");
         const uploadRes = await fetch(presign.uploadUrl, {
           method: "PUT",
           body: rawFile,
           headers: { "Content-Type": rawFile.type },
           signal: abort.signal,
         });
+        console.log("[KidsPage] ✅ Step 2 완료 | S3 Upload status:", uploadRes.status);
 
         if (!uploadRes.ok) {
+          console.error("[KidsPage] ❌ S3 Upload 실패 | status:", uploadRes.status);
           throw new Error(`S3 Upload Error: ${uploadRes.status}`);
         }
 
         // 3. Backend에 S3 URL 전달 (JSON)
         setDebugLog("작업 생성 요청 중...");
+        console.log("[KidsPage] 📤 Step 3: /api/kids/generate 호출 시작...");
+        console.log("[KidsPage]    payload:", { sourceImageUrl: presign.publicUrl, age, budget });
         const startRes = await fetch("/api/kids/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -84,25 +93,33 @@ export default function KidsPage() {
           }),
           signal: abort.signal,
         });
+        console.log("[KidsPage] ✅ Step 3 응답 받음 | status:", startRes.status);
 
         if (!startRes.ok) {
           const errText = await startRes.text();
+          console.error("[KidsPage] ❌ /api/kids/generate 실패 | status:", startRes.status, "| error:", errText);
           throw new Error(`Start Error: ${errText}`);
         }
 
         const startData = await startRes.json();
+        console.log("[KidsPage] ✅ Step 3 완료 | response:", startData);
         const jid = startData.jobId;
         if (!jid) throw new Error("No jobId received");
 
         if (!alive) return;
         setJobId(jid);
         setDebugLog(`작업 생성 완료 [${jid}]`);
+        console.log("[KidsPage] 🎯 Job 생성 완료 | jobId:", jid);
 
         // 2) 폴링
         let finalData: any = null;
+        console.log("[KidsPage] 🔄 Step 4: 폴링 시작 | maxAttempts:", maxAttempts, "| interval:", POLL_INTERVAL);
 
         for (let i = 0; i < maxAttempts; i++) {
-          if (!alive) return;
+          if (!alive) {
+            console.log("[KidsPage] ⚠️ 폴링 중단 (alive=false)");
+            return;
+          }
           await sleep(POLL_INTERVAL);
 
           const statusRes = await fetch(`/api/kids/jobs/${jid}`, {
@@ -110,13 +127,14 @@ export default function KidsPage() {
           });
 
           if (!statusRes.ok) {
-            console.warn(`[KidsPage] Polling failed: ${statusRes.status}`);
+            console.warn(`[KidsPage] ⚠️ Polling failed: ${statusRes.status}`);
             setDebugLog(`서버 응답 지연 중... (${statusRes.status})`);
             continue;
           }
 
           const statusData = await statusRes.json();
           const stage = statusData.stage || statusData.status || "QUEUED";
+          console.log(`[KidsPage] 📊 Poll #${i + 1} | status: ${statusData.status} | stage: ${stage}`);
           setCurrentStage(stage); // ✅ stage 업데이트
 
           // ✅ Stale Job 감지 (10분 동안 진행 없음)
@@ -135,10 +153,12 @@ export default function KidsPage() {
           setDebugLog(`진행 중... [${stage}] (${i}/${maxAttempts})${warningMsg}`);
 
           if (statusData.status === "FAILED") {
+            console.error("[KidsPage] ❌ Job FAILED | error:", statusData.errorMessage);
             throw new Error(statusData.errorMessage || "Generation failed");
           }
 
           if (statusData.status === "DONE") {
+            console.log("[KidsPage] ✅ Job DONE! | ldrUrl:", statusData.ldrUrl);
             finalData = statusData;
             setShowToast(true);
             setTimeout(() => setShowToast(false), 5000);
@@ -147,6 +167,7 @@ export default function KidsPage() {
         }
 
         if (!finalData) {
+          console.error("[KidsPage] ❌ Timeout | exceeded", FRONT_TIMEOUT_SEC, "seconds");
           throw new Error(
             `Timeout: exceeded ${FRONT_TIMEOUT_SEC}s`
           );
@@ -154,10 +175,11 @@ export default function KidsPage() {
 
         // 3) 결과 처리
         const modelUrl = finalData.ldrUrl || finalData.modelKey;
-        console.log("[KidsPage] Final Job Data:", finalData);
+        console.log("[KidsPage] 🎉 Final Job Data:", finalData);
         setDebugLog("결과물 로딩 중...");
 
         if (!modelUrl) {
+          console.error("[KidsPage] ❌ No model URL in result");
           throw new Error("No model URL in job result");
         }
 
@@ -165,9 +187,10 @@ export default function KidsPage() {
 
         setLdrUrl(modelUrl);
         setStatus("done");
+        console.log("[KidsPage] ✅ 전체 프로세스 완료! | ldrUrl:", modelUrl);
       } catch (e: any) {
         if (!alive) return;
-        console.error("Brick generation failed:", e);
+        console.error("[KidsPage] ❌ Brick generation failed:", e);
         setDebugLog(`오류 발생: ${e.message}`);
         setStatus("error");
       }
