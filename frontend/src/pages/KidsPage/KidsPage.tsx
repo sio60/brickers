@@ -241,7 +241,7 @@ export default function KidsPage() {
 
   return (
     <div className="kidsPage">
-      {status !== "loading" && <Background3D entryDirection="float" />}
+      <Background3D entryDirection="float" />
 
       <div className="kidsPage__center">
         {status === "loading" && (
