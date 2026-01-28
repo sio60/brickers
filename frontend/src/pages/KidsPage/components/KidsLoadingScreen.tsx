@@ -22,10 +22,10 @@ export default function KidsLoadingScreen({ percent }: Props) {
         </div>
       </div>
 
-      {/* 게임 영역 */}
-      <div className="kidsLoading__gameWrap">
+      {/* 게임 영역 - 테스트: WebGL 비활성화 */}
+      {/* <div className="kidsLoading__gameWrap">
         <BrickStackMiniGame />
-      </div>
+      </div> */}
     </div>
   );
 }
