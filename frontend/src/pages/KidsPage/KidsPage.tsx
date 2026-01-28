@@ -1,7 +1,7 @@
 import "./KidsPage.css";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-// import Background3D from "../MainPage/components/Background3D"; // 테스트: WebGL 비활성화
+import Background3D from "../MainPage/components/Background3D";
 import KidsLdrPreview from "./components/KidsLdrPreview";
 import KidsLoadingScreen from "./components/KidsLoadingScreen";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -241,8 +241,7 @@ export default function KidsPage() {
 
   return (
     <div className="kidsPage">
-      {/* ✅ 테스트: Background3D + WebGL 완전히 비활성화 */}
-      {/* {status !== "loading" && <Background3D entryDirection="float" />} */}
+      {status !== "loading" && <Background3D entryDirection="float" />}
 
       <div className="kidsPage__center">
         {status === "loading" && (
