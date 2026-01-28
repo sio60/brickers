@@ -139,6 +139,10 @@ jobs:
 
             # OpenAI (챗봇용)
             APP_OPENAI_API_KEY=${{ secrets.APP_OPENAI_API_KEY }}
+
+            # SQS
+            AWS_SQS_ENABLED=true
+            AWS_SQS_QUEUE_URL=${{ secrets.AWS_SQS_QUEUE_URL }}
             EOF
 
             echo "📄 Creating docker-compose.yml..."
@@ -197,6 +201,10 @@ jobs:
                   # ✅ (추가) Kids AI 처리 타임아웃
                   - PROCESS_TIMEOUT=900
                   - DOWNLOAD_TIMEOUT=120
+
+                  # ✅ SQS 설정
+                  - AWS_SQS_ENABLED=${AWS_SQS_ENABLED:-true}
+                  - AWS_SQS_QUEUE_URL=${AWS_SQS_QUEUE_URL}
 
                 networks:
                   - brickers-network

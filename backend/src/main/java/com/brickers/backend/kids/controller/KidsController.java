@@ -39,4 +39,17 @@ public class KidsController {
     public ResponseEntity<?> getJobStatus(@PathVariable String jobId) {
         return ResponseEntity.ok(kidsService.getJobStatus(jobId));
     }
+
+    /**
+     * Job stage 업데이트 (AI Server에서 중간 진행 상황 전송용)
+     */
+    @PatchMapping("/jobs/{jobId}/stage")
+    public ResponseEntity<Void> updateJobStage(
+            @PathVariable String jobId,
+            @RequestBody Map<String, String> body
+    ) {
+        String stageName = body.get("stage");
+        kidsService.updateJobStage(jobId, stageName);
+        return ResponseEntity.ok().build();
+    }
 }
