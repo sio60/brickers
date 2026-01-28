@@ -13,6 +13,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/kids")
 @RequiredArgsConstructor
+@lombok.extern.slf4j.Slf4j
 public class KidsController {
 
     private final KidsService kidsService;
@@ -22,9 +23,14 @@ public class KidsController {
             Authentication authentication,
             @RequestBody KidsGenerateRequest request
     ) {
+        log.info("📥 [KidsController] /api/kids/generate 요청 수신");
+        log.info("   - sourceImageUrl: {}", request.getSourceImageUrl());
+        log.info("   - age: {}, budget: {}", request.getAge(), request.getBudget());
+
         String userId = (authentication != null && authentication.getPrincipal() != null)
                 ? String.valueOf(authentication.getPrincipal())
                 : null;
+        log.info("   - userId: {}", userId);
 
         Map<String, Object> result = kidsService.startGeneration(
                 userId,
@@ -32,6 +38,7 @@ public class KidsController {
                 request.getAge(),
                 request.getBudget()
         );
+        log.info("✅ [KidsController] 응답: {}", result);
         return ResponseEntity.ok(result);
     }
 
