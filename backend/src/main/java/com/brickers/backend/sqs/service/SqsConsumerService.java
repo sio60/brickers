@@ -22,9 +22,8 @@ import java.util.Set;
 
 /**
  * SQS Consumer Service
- * - SQS에서 RESULT 메시지를 폴링하여 GenerateJobEntity 업데이트
- * - Long polling (WaitTimeSeconds=10) 사용
- * - 중복 처리 방지 (in-memory cache)
+ * - RESULT Queue에서 AI Server 처리 결과 수신
+ * - GenerateJobEntity 업데이트
  */
 @Service
 @RequiredArgsConstructor
@@ -37,8 +36,8 @@ public class SqsConsumerService {
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
 
-    @Value("${aws.sqs.queue.url}")
-    private String queueUrl;
+    @Value("${aws.sqs.queue.result-url}")
+    private String resultQueueUrl;  // AI → Backend (RESULT 수신용)
 
     @Value("${aws.sqs.polling.max-messages:10}")
     private int maxMessages;
@@ -52,14 +51,13 @@ public class SqsConsumerService {
 
     /**
      * SQS 메시지 폴링 (5초마다)
-     * - Long polling으로 불필요한 요청 최소화
-     * - RESULT 타입 메시지만 처리
+     * - RESULT Queue만 폴링 (REQUEST는 별도 Queue로 분리됨)
      */
     @Scheduled(fixedDelay = 5000, initialDelay = 10000)
     public void pollMessages() {
         try {
             ReceiveMessageRequest request = ReceiveMessageRequest.builder()
-                    .queueUrl(queueUrl)
+                    .queueUrl(resultQueueUrl)
                     .maxNumberOfMessages(maxMessages)
                     .waitTimeSeconds(waitTimeSeconds)
                     .build();
@@ -67,7 +65,7 @@ public class SqsConsumerService {
             List<Message> messages = sqsClient.receiveMessage(request).messages();
 
             if (!messages.isEmpty()) {
-                log.info("📥 [SQS Consumer] 메시지 수신 | count={}", messages.size());
+                log.info("📥 [SQS Consumer] RESULT 메시지 수신 | count={}", messages.size());
             }
 
             for (Message message : messages) {
@@ -80,7 +78,7 @@ public class SqsConsumerService {
     }
 
     /**
-     * 메시지 처리
+     * RESULT 메시지 처리
      */
     private void processMessage(Message message) {
         String messageId = message.messageId();
@@ -97,9 +95,9 @@ public class SqsConsumerService {
             // JSON 파싱
             SqsMessage sqsMessage = objectMapper.readValue(message.body(), SqsMessage.class);
 
-            // RESULT 타입만 처리
+            // RESULT 타입 확인 (안전장치)
             if (sqsMessage.getType() != SqsMessage.MessageType.RESULT) {
-                log.warn("⚠️ [SQS Consumer] REQUEST 타입 메시지 무시 | messageId={} | type={}",
+                log.warn("⚠️ [SQS Consumer] RESULT Queue에 잘못된 메시지 | messageId={} | type={}",
                         messageId, sqsMessage.getType());
                 deleteMessage(receiptHandle);
                 return;
@@ -122,13 +120,11 @@ public class SqsConsumerService {
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             log.error("❌ [SQS Consumer] JSON 파싱 실패 | messageId={} | error={}",
                     messageId, e.getMessage());
-            // 파싱 실패 메시지는 삭제 (재처리 불가)
             deleteMessage(receiptHandle);
 
         } catch (java.util.NoSuchElementException e) {
             log.error("❌ [SQS Consumer] Job not found | messageId={} | error={}",
                     messageId, e.getMessage());
-            // Job이 없는 메시지는 삭제 (재처리 불가)
             deleteMessage(receiptHandle);
 
         } catch (Exception e) {
@@ -171,7 +167,7 @@ public class SqsConsumerService {
     private void deleteMessage(String receiptHandle) {
         try {
             DeleteMessageRequest deleteRequest = DeleteMessageRequest.builder()
-                    .queueUrl(queueUrl)
+                    .queueUrl(resultQueueUrl)
                     .receiptHandle(receiptHandle)
                     .build();
 
@@ -187,7 +183,6 @@ public class SqsConsumerService {
      */
     private void addToCache(String messageId) {
         if (processedMessageIds.size() >= MAX_CACHE_SIZE) {
-            // 캐시 크기 제한 - 오래된 항목 제거 (간단한 전략: 전체 클리어)
             processedMessageIds.clear();
             log.debug("🧹 [SQS Consumer] 캐시 클리어 | maxSize={}", MAX_CACHE_SIZE);
         }
