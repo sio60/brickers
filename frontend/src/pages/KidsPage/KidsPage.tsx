@@ -70,12 +70,24 @@ export default function KidsPage() {
         // 2. S3에 직접 업로드
         setDebugLog("이미지 업로드 중...");
         console.log("[KidsPage] 📤 Step 2: S3 업로드 시작...");
-        const uploadRes = await fetch(presign.uploadUrl, {
-          method: "PUT",
-          body: rawFile,
-          headers: { "Content-Type": rawFile.type },
-          signal: abort.signal,
-        });
+        console.log("[KidsPage] 📤 fetch 호출 직전 | url:", presign.uploadUrl?.substring(0, 100));
+
+        let uploadRes: Response;
+        try {
+          uploadRes = await fetch(presign.uploadUrl, {
+            method: "PUT",
+            body: rawFile,
+            headers: { "Content-Type": rawFile.type },
+            signal: abort.signal,
+          });
+          console.log("[KidsPage] ✅ fetch 완료 | status:", uploadRes.status);
+        } catch (fetchError: any) {
+          console.error("[KidsPage] ❌ fetch 자체 에러:", fetchError);
+          console.error("[KidsPage] ❌ 에러 타입:", fetchError?.name);
+          console.error("[KidsPage] ❌ 에러 메시지:", fetchError?.message);
+          throw fetchError;
+        }
+
         console.log("[KidsPage] ✅ Step 2 완료 | S3 Upload status:", uploadRes.status);
 
         if (!uploadRes.ok) {
