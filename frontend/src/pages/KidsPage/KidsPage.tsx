@@ -218,7 +218,8 @@ export default function KidsPage() {
       alive = false;
       try { abort.abort(); } catch { }
     };
-  }, [rawFile, age, budget, status]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawFile, age, budget]); // status 제거 - status 변경 시 cleanup이 abort를 호출해서 fetch 취소됨
 
   // ✅ stage 기반 진행률 계산
   const percent = useMemo(() => {
