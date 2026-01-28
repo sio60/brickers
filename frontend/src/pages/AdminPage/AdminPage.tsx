@@ -92,7 +92,7 @@ export default function AdminPage() {
     const handleAnswerSubmit = async (inquiryId: string) => {
         const content = answerTexts[inquiryId];
         if (!content || !content.trim()) {
-            alert("답변 내용을 입력하세요.");
+            alert(t.admin.inquiry.inputRequired);
             return;
         }
 
@@ -103,22 +103,22 @@ export default function AdminPage() {
             });
 
             if (res.ok) {
-                alert("답변이 등록되었습니다.");
+                alert(t.admin.inquiry.success);
                 setAnswerTexts(prev => ({ ...prev, [inquiryId]: "" }));
                 fetchInquiries();
             } else {
-                alert("답변 등록에 실패했습니다.");
+                alert(t.admin.failed);
             }
         } catch (e) {
             console.error(e);
-            alert("오류가 발생했습니다.");
+            alert(t.admin.error);
         }
     };
 
     const handleReportResolve = async (reportId: string, approve: boolean) => {
         const note = answerTexts[reportId];
         if (!note || !note.trim()) {
-            alert("조치 내용을 입력하세요.");
+            alert(t.admin.report.inputRequired);
             return;
         }
 
@@ -132,15 +132,15 @@ export default function AdminPage() {
             });
 
             if (res.ok) {
-                alert(approve ? "조치가 완료되었습니다." : "신고가 반려되었습니다.");
+                alert(approve ? t.admin.report.resolved : t.admin.report.rejected);
                 setAnswerTexts(prev => ({ ...prev, [reportId]: "" }));
                 fetchReports();
             } else {
-                alert("처리에 실패했습니다.");
+                alert(t.admin.failed);
             }
         } catch (e) {
             console.error(e);
-            alert("오류가 발생했습니다.");
+            alert(t.admin.error);
         }
     };
 
@@ -174,9 +174,9 @@ export default function AdminPage() {
                     <aside className="admin__sidebar">
                         <div className="admin__sidebarTitle">{t.admin.panelTitle}</div>
                         <button className={`admin__sidebarItem ${activeTab === "dashboard" ? "active" : ""}`} onClick={() => setActiveTab("dashboard")}>{t.admin.sidebar.dashboard}</button>
-                        <button className={`admin__sidebarItem ${activeTab === "inquiries" ? "active" : ""}`} onClick={() => setActiveTab("inquiries")}>문의 관리</button>
-                        <button className={`admin__sidebarItem ${activeTab === "reports" ? "active" : ""}`} onClick={() => setActiveTab("reports")}>신고 관리</button>
-                        <button className={`admin__sidebarItem ${activeTab === "refunds" ? "active" : ""}`} onClick={() => setActiveTab("refunds")}>환불 관리</button>
+                        <button className={`admin__sidebarItem ${activeTab === "inquiries" ? "active" : ""}`} onClick={() => setActiveTab("inquiries")}>{t.admin.sidebar.inquiries}</button>
+                        <button className={`admin__sidebarItem ${activeTab === "reports" ? "active" : ""}`} onClick={() => setActiveTab("reports")}>{t.admin.sidebar.reports}</button>
+                        <button className={`admin__sidebarItem ${activeTab === "refunds" ? "active" : ""}`} onClick={() => setActiveTab("refunds")}>{t.admin.sidebar.refunds}</button>
                         <button className={`admin__sidebarItem ${activeTab === "users" ? "active" : ""}`} onClick={() => setActiveTab("users")}>{t.admin.sidebar.users}</button>
                         <button className={`admin__sidebarItem ${activeTab === "gallery" ? "active" : ""}`} onClick={() => setActiveTab("gallery")}>{t.admin.sidebar.gallery}</button>
                     </aside>
@@ -185,9 +185,9 @@ export default function AdminPage() {
                         <header className="admin__header">
                             <h1 className="admin__title">
                                 {activeTab === "dashboard" && t.floatingMenu.admin}
-                                {activeTab === "inquiries" && "문의 관리"}
-                                {activeTab === "reports" && "신고 관리"}
-                                {activeTab === "refunds" && "환불 관리"}
+                                {activeTab === "inquiries" && t.admin.sidebar.inquiries}
+                                {activeTab === "reports" && t.admin.sidebar.reports}
+                                {activeTab === "refunds" && t.admin.sidebar.refunds}
                             </h1>
                             <button className="admin__closeBtn" onClick={() => navigate(-1)}>✕</button>
                         </header>
@@ -225,24 +225,24 @@ export default function AdminPage() {
                                         <div className="inquiry__answer-section">
                                             {item.answer ? (
                                                 <div className="admin__answer active">
-                                                    <div className="answer__label">관리자 답변</div>
+                                                    <div className="answer__label">{t.admin.inquiry.adminAnswer}</div>
                                                     <div className="answer__content">{item.answer.content}</div>
                                                     <div className="answer__date">{new Date(item.answer.answeredAt).toLocaleString()}</div>
                                                 </div>
                                             ) : (
                                                 <div className="answer__form">
                                                     <textarea
-                                                        placeholder="답변을 입력하세요..."
+                                                        placeholder={t.admin.inquiry.placeholder}
                                                         value={answerTexts[item.id] || ""}
                                                         onChange={(e) => setAnswerTexts(prev => ({ ...prev, [item.id]: e.target.value }))}
                                                     />
-                                                    <button onClick={() => handleAnswerSubmit(item.id)}>답변 등록</button>
+                                                    <button onClick={() => handleAnswerSubmit(item.id)}>{t.admin.inquiry.submit}</button>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
                                 ))}
-                                {inquiries.length === 0 && <p className="empty-msg">문의 내역이 없습니다.</p>}
+                                {inquiries.length === 0 && <p className="empty-msg">{t.admin.inquiry.empty}</p>}
                             </div>
                         )}
 
@@ -263,13 +263,13 @@ export default function AdminPage() {
                                         <div className="inquiry__answer-section">
                                             {item.status !== "PENDING" ? (
                                                 <div className="admin__answer active">
-                                                    <div className="answer__label">{item.status === "RESOLVED" ? "조치 완료" : "신고 반려"}</div>
+                                                    <div className="answer__label">{item.status === "RESOLVED" ? t.admin.report.actionComplete : t.admin.report.actionRejected}</div>
                                                     <div className="answer__content">{item.resolutionNote}</div>
                                                 </div>
                                             ) : (
                                                 <div className="answer__form">
                                                     <textarea
-                                                        placeholder="조치 내용이나 반려 사유를 입력하세요..."
+                                                        placeholder={t.admin.report.placeholder}
                                                         value={answerTexts[item.id] || ""}
                                                         onChange={(e) => setAnswerTexts(prev => ({ ...prev, [item.id]: e.target.value }))}
                                                     />
@@ -278,10 +278,10 @@ export default function AdminPage() {
                                                             onClick={() => handleReportResolve(item.id, false)}
                                                             style={{ background: '#eee', color: '#000' }}
                                                         >
-                                                            반려
+                                                            {t.admin.report.reject}
                                                         </button>
                                                         <button onClick={() => handleReportResolve(item.id, true)}>
-                                                            조치 승인
+                                                            {t.admin.report.resolve}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -289,7 +289,7 @@ export default function AdminPage() {
                                         </div>
                                     </div>
                                 ))}
-                                {reports.length === 0 && <p className="empty-msg">신고 내역이 없습니다.</p>}
+                                {reports.length === 0 && <p className="empty-msg">{t.admin.report.empty}</p>}
                             </div>
                         )}
 
@@ -298,15 +298,14 @@ export default function AdminPage() {
                                 {refunds.map(item => (
                                     <div key={item.orderId} className="admin__listItem">
                                         <h4>Order #{item.orderId} <span className={`status-badge ${item.status}`}>{item.status}</span></h4>
-                                        <p>Amount: {item.amount}원</p>
-                                        <div className="meta">User: {item.userId} (Email lookup needed) • {new Date(item.requestedAt).toLocaleDateString()}</div>
-                                        {/* 승인 버튼 예시 */}
+                                        <p>{t.admin.refund.amount}: {item.amount}</p>
+                                        <div className="meta">User: {item.userId} • {new Date(item.requestedAt).toLocaleDateString()}</div>
                                         <div className="actions">
-                                            <button onClick={() => alert("기능 구현 중")}>승인</button>
+                                            <button onClick={() => alert(t.admin.refund.inProgress)}>{t.admin.refund.approve}</button>
                                         </div>
                                     </div>
                                 ))}
-                                {refunds.length === 0 && <p className="empty-msg">환불 요청이 없습니다.</p>}
+                                {refunds.length === 0 && <p className="empty-msg">{t.admin.refund.empty}</p>}
                             </div>
                         )}
                     </main>

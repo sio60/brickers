@@ -147,6 +147,7 @@ export interface GalleryCreateRequest {
     content?: string;
     tags?: string[];
     thumbnailUrl?: string;
+    ldrUrl?: string; // LDR 파일 URL (3D 뷰어용)
     visibility?: 'PUBLIC' | 'PRIVATE';
 }
 
@@ -185,6 +186,7 @@ export interface GalleryItem {
     content: string;
     tags: string[];
     thumbnailUrl: string;
+    ldrUrl?: string; // LDR 파일 URL (3D 뷰어용)
     visibility: 'PUBLIC' | 'PRIVATE';
     createdAt: string;
     updatedAt: string;

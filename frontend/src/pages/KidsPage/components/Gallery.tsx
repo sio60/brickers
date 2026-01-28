@@ -11,6 +11,7 @@ import { useLanguage } from "../../../contexts/LanguageContext";
 import "./Gallery.css";
 import Background3D from "../../MainPage/components/Background3D";
 import { useNavigate } from "react-router-dom";
+import KidsLdrPreview from "./KidsLdrPreview";
 
 export default function Gallery() {
     const { t } = useLanguage();
@@ -215,12 +216,21 @@ export default function Gallery() {
                             <>
                                 <button className="gallery__modalClose" onClick={closeModal}>✕</button>
 
-                                {selectedItem.thumbnailUrl && (
+                                {/* LDR 파일이 있으면 3D 뷰어 표시, 없으면 썸네일 이미지 */}
+                                {selectedItem.ldrUrl ? (
+                                    <div className="gallery__modal3DViewer">
+                                        <KidsLdrPreview url={selectedItem.ldrUrl} />
+                                    </div>
+                                ) : selectedItem.thumbnailUrl ? (
                                     <img
                                         src={selectedItem.thumbnailUrl}
                                         alt={selectedItem.title}
                                         className="gallery__modalImage"
                                     />
+                                ) : (
+                                    <div className="gallery__modalNoImage">
+                                        {t.common.noImage || "No Image"}
+                                    </div>
                                 )}
 
                                 <h2 className="gallery__modalTitle">{selectedItem.title}</h2>
