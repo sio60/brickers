@@ -82,7 +82,11 @@ public class GenerateJobEntity {
     private String blueprintPdfKey;
 
     /** BOM JSON key */
+    @Deprecated
     private String bomKey;
+
+    /** BOM JSON URL (S3) */
+    private String bomUrl;
 
     /** 실패 시 에러 메시지 */
     private String errorMessage;

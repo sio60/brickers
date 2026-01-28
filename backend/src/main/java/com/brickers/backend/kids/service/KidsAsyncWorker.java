@@ -8,9 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -38,151 +36,162 @@ public class KidsAsyncWorker {
     @Value("${KIDS_AI_DOWNLOAD_TIMEOUT_SEC:180}")
     private long downloadTimeoutSec;
 
-    private Duration processTimeout() { return Duration.ofSeconds(processTimeoutSec); }
-    private Duration downloadTimeout() { return Duration.ofSeconds(downloadTimeoutSec); }
+    private Duration processTimeout() {
+        return Duration.ofSeconds(processTimeoutSec);
+    }
+
+    private Duration downloadTimeout() {
+        return Duration.ofSeconds(downloadTimeoutSec);
+    }
 
     @Async("kidsExecutor")
     public void processGenerationAsync(
             String jobId,
             String userId,
-            byte[] fileBytes,
-            String originalFilename,
-            String contentType,
+            String sourceImageUrl,
             String age,
-            int budget
-    ) {
-        log.info("[KidsAsyncWorker] start jobId={}", jobId);
+            int budget) {
+        long totalStart = System.currentTimeMillis();
+        log.info("═══════════════════════════════════════════════════════════════");
+        log.info("🚀 [KIDS-WORKER] 작업 시작 | jobId={} | userId={} | age={} | budget={}",
+                jobId, userId, age, budget);
+        log.info("📁 원본 이미지 URL: {}", sourceImageUrl);
+        log.info("═══════════════════════════════════════════════════════════════");
 
         GenerateJobEntity job = generateJobRepository.findById(jobId).orElse(null);
         if (job == null) {
-            log.error("[KidsAsyncWorker] job not found: {}", jobId);
+            log.error("❌ [KIDS-WORKER] Job을 찾을 수 없음: jobId={}", jobId);
             return;
         }
 
         job.markRunning(JobStage.THREE_D_PREVIEW);
         generateJobRepository.save(job);
+        log.info("📌 [STEP 1/5] Job 상태 업데이트: RUNNING | stage=THREE_D_PREVIEW");
 
         String safeUserId = (userId == null || userId.isBlank()) ? "anonymous" : userId;
-        String safeContentType = (contentType == null || contentType.isBlank()) ? "application/octet-stream" : contentType;
-
-        // ✅ ByteArrayResource로 멀티파트 구성 (MultipartFile 수명문제 없음)
-        ByteArrayResource fileResource = new ByteArrayResource(fileBytes) {
-            @Override
-            public String getFilename() {
-                return (originalFilename == null || originalFilename.isBlank()) ? "upload.png" : originalFilename;
-            }
-        };
-
-        MultipartBodyBuilder builder = new MultipartBodyBuilder();
-        builder.part("file", fileResource).contentType(MediaType.parseMediaType(safeContentType));
-        builder.part("age", age);
-        builder.part("budget", String.valueOf(budget));
-        builder.part("returnLdrData", "true");
 
         try {
+            log.info("📌 [STEP 2/5] AI 서버 요청 시작 | endpoint=/api/v1/kids/process-all | timeout={}sec",
+                    processTimeoutSec);
+            long aiStart = System.currentTimeMillis();
+
             Map<String, Object> response = aiWebClient.post()
                     .uri("/api/v1/kids/process-all")
-                    .contentType(MediaType.MULTIPART_FORM_DATA)
-                    .body(BodyInserters.fromMultipartData(builder.build()))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(BodyInserters.fromValue(Map.of(
+                            "sourceImageUrl", sourceImageUrl,
+                            "age", age,
+                            "budget", budget
+                    )))
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+                    })
                     .timeout(processTimeout())
                     .block();
 
+            long aiElapsed = System.currentTimeMillis() - aiStart;
+            log.info("✅ [STEP 2/5] AI 서버 응답 수신 완료 | 소요시간={}ms ({}초)", aiElapsed, aiElapsed / 1000);
+
+            if (response != null) {
+                log.info("📊 AI 응답 요약: ok={} | reqId={} | parts={} | finalTarget={}",
+                        response.get("ok"), response.get("reqId"),
+                        response.get("parts"), response.get("finalTarget"));
+            }
+
+            log.info("📌 [STEP 3/5] 결과물 저장 시작 (S3 업로드)...");
+            long saveStart = System.currentTimeMillis();
+
             applySuccessResultToJob(job, safeUserId, response);
 
+            long saveElapsed = System.currentTimeMillis() - saveStart;
+            log.info("✅ [STEP 3/5] 결과물 저장 완료 | 소요시간={}ms", saveElapsed);
+
+            log.info("📌 [STEP 4/5] Job 상태 업데이트: DONE");
             job.markDone();
             generateJobRepository.save(job);
-            log.info("[KidsAsyncWorker] done jobId={}", jobId);
+
+            long totalElapsed = System.currentTimeMillis() - totalStart;
+            log.info("═══════════════════════════════════════════════════════════════");
+            log.info("🎉 [KIDS-WORKER] 작업 완료! | jobId={}", jobId);
+            log.info("⏱️ 총 소요시간: {}ms ({}초) | AI처리: {}초 | 저장: {}ms",
+                    totalElapsed, totalElapsed / 1000, aiElapsed / 1000, saveElapsed);
+            log.info("📦 결과: glbUrl={}", job.getGlbUrl() != null ? "✅" : "❌");
+            log.info("📦 결과: ldrUrl={}", job.getLdrUrl() != null ? "✅" : "❌");
+            log.info("📦 결과: bomUrl={}", job.getBomUrl() != null ? "✅" : "❌");
+            log.info("📦 결과: previewUrl={}", job.getPreviewImageUrl() != null ? "✅" : "❌");
+            log.info("═══════════════════════════════════════════════════════════════");
 
         } catch (Exception e) {
-            log.error("[KidsAsyncWorker] failed jobId={} err={}", jobId, e.getMessage(), e);
+            long totalElapsed = System.currentTimeMillis() - totalStart;
+            log.error("═══════════════════════════════════════════════════════════════");
+            log.error("❌ [KIDS-WORKER] 작업 실패! | jobId={} | 소요시간={}ms", jobId, totalElapsed);
+            log.error("❌ 에러 메시지: {}", e.getMessage());
+            log.error("═══════════════════════════════════════════════════════════════", e);
             job.markFailed(e.getMessage());
             generateJobRepository.save(job);
         }
     }
 
     private void applySuccessResultToJob(GenerateJobEntity job, String userId, Map<String, Object> response) {
-        if (response == null) return;
+        if (response == null)
+            return;
 
-        // correctedUrl 저장
+        // ✅ S3 URL 직접 저장 (다운로드/업로드 제거)
+
+        // 1. correctedUrl
         String correctedUrl = asString(response.get("correctedUrl"));
         if (!isBlank(correctedUrl)) {
-            try {
-                byte[] imageBytes = downloadBytesByUrl(correctedUrl);
-                String filename = "corrected.png";
-                var stored = storageService.storeFile(userId, filename, imageBytes, "image/png");
-                job.setCorrectedImageUrl(stored.url());
-                job.setPreviewImageUrl(stored.url());
-            } catch (Exception e) {
-                log.warn("[KidsAsyncWorker] corrected save failed: {}", e.getMessage());
-                job.setCorrectedImageUrl(correctedUrl);
-                job.setPreviewImageUrl(correctedUrl);
-            }
+            log.info("   ✅ [SAVE] corrected S3 URL 직접 사용 | url={}", truncateUrl(correctedUrl));
+            job.setCorrectedImageUrl(correctedUrl);
+            job.setPreviewImageUrl(correctedUrl);
         }
 
-        // modelUrl(GLB) 저장
+        // 2. modelUrl (GLB)
         String modelUrl = asString(response.get("modelUrl"));
         if (!isBlank(modelUrl)) {
-            try {
-                byte[] glbBytes = downloadBytesByUrl(modelUrl);
-                String filename = "model.glb";
-                var stored = storageService.storeFile(userId, filename, glbBytes, "application/octet-stream");
-                job.setGlbUrl(stored.url());
-            } catch (Exception e) {
-                log.warn("[KidsAsyncWorker] glb save failed: {}", e.getMessage());
-                job.setGlbUrl(modelUrl);
-            }
+            log.info("   ✅ [SAVE] GLB S3 URL 직접 사용 | url={}", truncateUrl(modelUrl));
+            job.setGlbUrl(modelUrl);
         }
 
-        // ldrData or ldrUrl
-        String ldrData = asString(response.get("ldrData"));
+        // 3. ldrUrl
         String ldrUrl = asString(response.get("ldrUrl"));
-
-        byte[] ldrBytes = null;
-
-        if (!isBlank(ldrData) && ldrData.startsWith("data:") && ldrData.contains("base64,")) {
-            try {
-                ldrBytes = decodeDataUriBase64(ldrData);
-            } catch (Exception e) {
-                log.warn("[KidsAsyncWorker] ldrData decode failed, fallback to ldrUrl: {}", e.getMessage());
-            }
-        }
-
-        if ((ldrBytes == null || ldrBytes.length == 0) && !isBlank(ldrUrl)) {
-            try {
-                ldrBytes = downloadBytesByUrl(ldrUrl);
-            } catch (Exception e) {
-                log.warn("[KidsAsyncWorker] ldrUrl download failed: {}", e.getMessage());
-            }
-        }
-
-        if (ldrBytes == null || ldrBytes.length == 0) {
+        if (!isBlank(ldrUrl)) {
+            log.info("   ✅ [SAVE] LDR S3 URL 직접 사용 | url={}", truncateUrl(ldrUrl));
             job.setLdrUrl(ldrUrl);
-            return;
         }
 
-        try {
-            var stored = storageService.storeFile(userId, "result.ldr", ldrBytes, "text/plain");
-            job.setLdrUrl(stored.url());
-        } catch (Exception e) {
-            log.warn("[KidsAsyncWorker] ldr save failed: {}", e.getMessage());
-            job.setLdrUrl(ldrUrl);
+        // 4. bomUrl (BOM 파일)
+        String bomUrl = asString(response.get("bomUrl"));
+        if (!isBlank(bomUrl)) {
+            log.info("   ✅ [SAVE] BOM S3 URL 직접 사용 | url={}", truncateUrl(bomUrl));
+            job.setBomUrl(bomUrl);
+        }
+
+        // ⚠️ ldrData (base64)가 있으면 여전히 디코딩 후 S3 업로드 필요 (S3 미사용 환경 대비)
+        String ldrData = asString(response.get("ldrData"));
+        if (!isBlank(ldrData) && ldrData.startsWith("data:")) {
+            log.info("   📥 [SAVE] LDR base64 디코딩 후 S3 업로드");
+            try {
+                byte[] ldrBytes = decodeDataUriBase64(ldrData);
+                var stored = storageService.storeFile(userId, "result.ldr", ldrBytes, "text/plain");
+                job.setLdrUrl(stored.url());
+                log.info("   ✅ [SAVE] LDR base64 → S3 업로드 완료 | url={}", truncateUrl(stored.url()));
+            } catch (Exception e) {
+                log.warn("   ⚠️ [SAVE] LDR base64 디코딩 실패: {}", e.getMessage());
+                // ldrUrl fallback은 위에서 이미 처리됨
+            }
         }
     }
 
-    private byte[] downloadBytesByUrl(String url) {
-        return aiWebClient.get()
-                .uri(url)
-                .retrieve()
-                .bodyToMono(byte[].class)
-                .timeout(downloadTimeout())
-                .block();
+    private String truncateUrl(String url) {
+        if (url == null || url.length() <= 80) return url;
+        return url.substring(0, 77) + "...";
     }
 
     private byte[] decodeDataUriBase64(String dataUri) {
         int comma = dataUri.indexOf(',');
-        if (comma < 0) throw new IllegalArgumentException("Invalid data URI");
+        if (comma < 0)
+            throw new IllegalArgumentException("Invalid data URI");
         String b64 = dataUri.substring(comma + 1);
         return Base64.getDecoder().decode(b64);
     }

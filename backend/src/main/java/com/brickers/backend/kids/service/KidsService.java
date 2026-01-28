@@ -10,10 +10,11 @@ import com.brickers.backend.user.entity.MembershipPlan;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.repository.UserRepository;
 
+import com.brickers.backend.sqs.service.SqsProducerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -27,42 +28,17 @@ public class KidsService {
     private final StorageService storageService;
     private final KidsAsyncWorker kidsAsyncWorker;
     private final UserRepository userRepository;
+    private final SqsProducerService sqsProducerService;
 
-    public Map<String, Object> startGeneration(String userId, MultipartFile file, String age, int budget) {
-        log.info("AI 생성 요청 접수: userId={}, age={}, budget={}", safe(userId), safe(age), budget);
+    @Value("${aws.sqs.enabled:false}")
+    private boolean sqsEnabled;
 
-        // ✅ 보안 강화: 서버 측 멤버십 권한 확인
-        if (userId == null) {
-            throw new IllegalStateException("로그인이 필요한 서비스입니다.");
-        }
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. id=" + userId));
+    public Map<String, Object> startGeneration(String userId, String sourceImageUrl, String age, int budget) {
+        log.info("AI 생성 요청 접수: userId={}, sourceImageUrl={}, age={}, budget={}",
+                safe(userId), sourceImageUrl, safe(age), budget);
 
-        if (user.getMembershipPlan() != MembershipPlan.PRO) {
-            log.warn("[Security] Unauthorized AI generation attempt by non-PRO user. userId={}", userId);
-            throw new IllegalStateException("PRO 사용자 전용 기능입니다. 업그레이드가 필요합니다.");
-        }
-
-        if (file == null || file.isEmpty())
-            throw new IllegalArgumentException("file is empty");
-
-        // ✅ async 안정성: bytes로 복사
-        byte[] fileBytes;
-        try {
-            fileBytes = file.getBytes();
-        } catch (Exception e) {
-            throw new IllegalArgumentException("failed to read multipart bytes: " + e.getMessage(), e);
-        }
-        String originalFilename = file.getOriginalFilename();
-        String contentType = file.getContentType();
-
-        // 0) 입력 이미지 저장 (원본 보관)
-        String sourceImageUrl = null;
-        try {
-            var stored = storageService.storeImage(userId, file);
-            sourceImageUrl = stored.url();
-        } catch (Exception e) {
-            log.warn("원본 이미지 저장 실패(생성 계속): {}", e.getMessage());
+        if (sourceImageUrl == null || sourceImageUrl.isBlank()) {
+            throw new IllegalArgumentException("sourceImageUrl is required");
         }
 
         // 1) Job 생성/저장
@@ -71,8 +47,7 @@ public class KidsService {
                 .level(ageToKidsLevel(age))
                 .status(JobStatus.QUEUED)
                 .stage(JobStage.THREE_D_PREVIEW)
-                .title(originalFilename)
-                .sourceImageUrl(sourceImageUrl)
+                .sourceImageUrl(sourceImageUrl) // Frontend가 업로드한 S3 URL
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .stageUpdatedAt(LocalDateTime.now())
@@ -82,15 +57,22 @@ public class KidsService {
         generateJobRepository.save(job);
         log.info("[Brickers] Job saved to DB. jobId={}, userId={}", job.getId(), safe(userId));
 
-        // 2) ✅ 진짜 Async 워커로 넘김 (같은 클래스 self-call 문제 제거)
-        kidsAsyncWorker.processGenerationAsync(
-                job.getId(),
-                userId,
-                fileBytes,
-                originalFilename,
-                contentType,
-                age,
-                budget);
+        // 2) SQS 또는 Async 워커로 작업 전달
+        if (sqsEnabled) {
+            // ✅ SQS로 작업 요청 전송
+            log.info("[Brickers] SQS로 작업 요청 전송 | jobId={}", job.getId());
+            sqsProducerService.sendJobRequest(
+                    job.getId(),
+                    userId,
+                    sourceImageUrl,
+                    age,
+                    budget);
+        } else {
+            // ⚠️ 기존 방식 (직접 호출) - 개발/테스트용
+            log.info("[Brickers] 직접 호출 모드 (SQS 비활성화) | jobId={}", job.getId());
+            // kidsAsyncWorker는 제거됨 (SQS 전환)
+            throw new UnsupportedOperationException("SQS 모드를 활성화해주세요");
+        }
 
         // 3) 즉시 응답
         return Map.of("jobId", job.getId(), "status", JobStatus.QUEUED);
@@ -100,6 +82,35 @@ public class KidsService {
         log.info("[Brickers] Polling Job Status. jobId={}", jobId);
         return generateJobRepository.findById(jobId)
                 .orElseThrow(() -> new java.util.NoSuchElementException("Job not found: " + jobId));
+    }
+
+    /**
+     * Job stage 업데이트 (AI Server에서 호출)
+     */
+    public void updateJobStage(String jobId, String stageName) {
+        log.info("[Brickers] Job Stage 업데이트 | jobId={} | stage={}", jobId, stageName);
+
+        GenerateJobEntity job = generateJobRepository.findById(jobId)
+                .orElseThrow(() -> new java.util.NoSuchElementException("Job not found: " + jobId));
+
+        // String → JobStage enum 변환
+        JobStage stage;
+        try {
+            stage = JobStage.valueOf(stageName);
+        } catch (IllegalArgumentException e) {
+            log.warn("[Brickers] 알 수 없는 stage 무시 | jobId={} | stageName={}", jobId, stageName);
+            return;
+        }
+
+        // Job 상태를 RUNNING으로 변경 (첫 stage 업데이트 시)
+        if (job.getStatus() == JobStatus.QUEUED) {
+            job.markRunning(stage);
+        } else {
+            job.moveToStage(stage);
+        }
+
+        generateJobRepository.save(job);
+        log.info("[Brickers] ✅ Job Stage 업데이트 완료 | jobId={} | stage={}", jobId, stage);
     }
 
     private KidsLevel ageToKidsLevel(String age) {

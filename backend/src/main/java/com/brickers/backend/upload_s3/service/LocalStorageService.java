@@ -29,7 +29,7 @@ public class LocalStorageService implements StorageService {
     @Value("${app.upload.root-dir:./uploads}")
     private String rootDir;
 
-    @Value("${app.upload.public-prefix:/uploads}")
+    @Value("${app.upload.public-prefix:/api/uploads}")
     private String publicPrefix;
 
     @Override
