@@ -1,12 +1,12 @@
 package com.brickers.backend.kids.controller;
 
+import com.brickers.backend.kids.dto.KidsGenerateRequest;
 import com.brickers.backend.kids.service.KidsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -17,18 +17,21 @@ public class KidsController {
 
     private final KidsService kidsService;
 
-    @PostMapping(value = "/generate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/generate", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> generateBrick(
             Authentication authentication,
-            @RequestPart("file") MultipartFile file,
-            @RequestParam("age") String age,
-            @RequestParam("budget") int budget
+            @RequestBody KidsGenerateRequest request
     ) {
         String userId = (authentication != null && authentication.getPrincipal() != null)
                 ? String.valueOf(authentication.getPrincipal())
                 : null;
 
-        Map<String, Object> result = kidsService.startGeneration(userId, file, age, budget);
+        Map<String, Object> result = kidsService.startGeneration(
+                userId,
+                request.getSourceImageUrl(),
+                request.getAge(),
+                request.getBudget()
+        );
         return ResponseEntity.ok(result);
     }
 

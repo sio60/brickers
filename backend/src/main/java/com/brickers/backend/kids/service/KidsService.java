@@ -5,11 +5,9 @@ import com.brickers.backend.job.entity.JobStage;
 import com.brickers.backend.job.entity.JobStatus;
 import com.brickers.backend.job.entity.KidsLevel;
 import com.brickers.backend.job.repository.GenerateJobRepository;
-import com.brickers.backend.upload_s3.service.StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -20,31 +18,14 @@ import java.util.Map;
 public class KidsService {
 
     private final GenerateJobRepository generateJobRepository;
-    private final StorageService storageService;
     private final KidsAsyncWorker kidsAsyncWorker;
 
-    public Map<String, Object> startGeneration(String userId, MultipartFile file, String age, int budget) {
-        log.info("AI 생성 요청 접수: userId={}, age={}, budget={}", safe(userId), safe(age), budget);
+    public Map<String, Object> startGeneration(String userId, String sourceImageUrl, String age, int budget) {
+        log.info("AI 생성 요청 접수: userId={}, sourceImageUrl={}, age={}, budget={}",
+                safe(userId), sourceImageUrl, safe(age), budget);
 
-        if (file == null || file.isEmpty()) throw new IllegalArgumentException("file is empty");
-
-        // ✅ async 안정성: bytes로 복사
-        byte[] fileBytes;
-        try {
-            fileBytes = file.getBytes();
-        } catch (Exception e) {
-            throw new IllegalArgumentException("failed to read multipart bytes: " + e.getMessage(), e);
-        }
-        String originalFilename = file.getOriginalFilename();
-        String contentType = file.getContentType();
-
-        // 0) 입력 이미지 저장 (원본 보관)
-        String sourceImageUrl = null;
-        try {
-            var stored = storageService.storeImage(userId, file);
-            sourceImageUrl = stored.url();
-        } catch (Exception e) {
-            log.warn("원본 이미지 저장 실패(생성 계속): {}", e.getMessage());
+        if (sourceImageUrl == null || sourceImageUrl.isBlank()) {
+            throw new IllegalArgumentException("sourceImageUrl is required");
         }
 
         // 1) Job 생성/저장
@@ -53,8 +34,7 @@ public class KidsService {
                 .level(ageToKidsLevel(age))
                 .status(JobStatus.QUEUED)
                 .stage(JobStage.THREE_D_PREVIEW)
-                .title(originalFilename)
-                .sourceImageUrl(sourceImageUrl)
+                .sourceImageUrl(sourceImageUrl)  // Frontend가 업로드한 S3 URL
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .stageUpdatedAt(LocalDateTime.now())
@@ -64,13 +44,11 @@ public class KidsService {
         generateJobRepository.save(job);
         log.info("[Brickers] Job saved to DB. jobId={}, userId={}", job.getId(), safe(userId));
 
-        // 2) ✅ 진짜 Async 워커로 넘김 (같은 클래스 self-call 문제 제거)
+        // 2) Async 워커로 넘김 (URL 전달)
         kidsAsyncWorker.processGenerationAsync(
                 job.getId(),
                 userId,
-                fileBytes,
-                originalFilename,
-                contentType,
+                sourceImageUrl,
                 age,
                 budget
         );

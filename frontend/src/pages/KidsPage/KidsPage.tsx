@@ -6,8 +6,7 @@ import Background3D from "../MainPage/components/Background3D";
 import KidsLdrPreview from "./components/KidsLdrPreview";
 import KidsLoadingScreen from "./components/KidsLoadingScreen";
 import { useLanguage } from "../../contexts/LanguageContext";
-
-// ... imports
+import { getPresignUrl } from "../../api/myApi";
 
 export default function KidsPage() {
   const navigate = useNavigate();
@@ -57,16 +56,33 @@ export default function KidsPage() {
       setDebugLog("작업 시작...");
 
       try {
-        const formData = new FormData();
-        formData.append("file", rawFile);
-        formData.append("age", age);
-        formData.append("budget", String(budget));
+        // 1. Presigned URL 요청
+        setDebugLog("S3 업로드 준비 중...");
+        const presign = await getPresignUrl(rawFile.type, rawFile.name);
 
-        // 1) 생성 요청
+        // 2. S3에 직접 업로드
         setDebugLog("이미지 업로드 중...");
+        const uploadRes = await fetch(presign.uploadUrl, {
+          method: "PUT",
+          body: rawFile,
+          headers: { "Content-Type": rawFile.type },
+          signal: abort.signal,
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error(`S3 Upload Error: ${uploadRes.status}`);
+        }
+
+        // 3. Backend에 S3 URL 전달 (JSON)
+        setDebugLog("작업 생성 요청 중...");
         const startRes = await fetch("/api/kids/generate", {
           method: "POST",
-          body: formData,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sourceImageUrl: presign.publicUrl,
+            age,
+            budget,
+          }),
           signal: abort.signal,
         });
 
