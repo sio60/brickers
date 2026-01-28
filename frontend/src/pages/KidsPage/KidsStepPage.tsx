@@ -115,11 +115,22 @@ function LdrModel({
       ) {
         if (fixed.endsWith(".dat")) {
           const filename = fixed.split("/").pop() || "";
-          const isPart = /^[0-9]/.test(filename);
-          fixed = fixed.replace(
-            "/ldraw/",
-            isPart ? "/ldraw/parts/" : "/ldraw/p/"
-          );
+
+          // Primitive 패턴: n-n*.dat (예: 4-4edge, 1-4cyli, stug-*, rect*, box* 등)
+          const isPrimitive = /^\d+-\d+/.test(filename) ||
+                              /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud)/.test(filename);
+
+          // Subpart 패턴: 파트번호 + s + 숫자.dat (예: 3003s02.dat)
+          const isSubpart = /^\d+s\d+\.dat$/.test(filename);
+
+          if (isSubpart) {
+            fixed = fixed.replace("/ldraw/", "/ldraw/parts/s/");
+          } else if (isPrimitive) {
+            fixed = fixed.replace("/ldraw/", "/ldraw/p/");
+          } else {
+            // 일반 파트 (숫자로 시작하는 .dat 파일)
+            fixed = fixed.replace("/ldraw/", "/ldraw/parts/");
+          }
         }
       }
 
