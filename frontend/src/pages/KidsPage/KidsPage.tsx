@@ -31,6 +31,7 @@ export default function KidsPage() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [debugLog, setDebugLog] = useState<string>(""); // ✅ 디버그용 로그
+  const [currentStage, setCurrentStage] = useState<string>("QUEUED"); // ✅ 현재 stage
 
   const processingRef = useRef(false);
 
@@ -41,7 +42,7 @@ export default function KidsPage() {
     let alive = true;
     const abort = new AbortController();
 
-    const FRONT_TIMEOUT_SEC = 885;
+    const FRONT_TIMEOUT_SEC = 1200;  // 20분 (AI 처리 최대 30분이므로 여유 있게)
     const POLL_INTERVAL = 2000;
 
     const maxAttempts = Math.ceil((FRONT_TIMEOUT_SEC * 1000) / POLL_INTERVAL);
@@ -115,7 +116,23 @@ export default function KidsPage() {
           }
 
           const statusData = await statusRes.json();
-          setDebugLog(`진행 중... [${statusData.stage || statusData.status}] (${i}/${maxAttempts})`);
+          const stage = statusData.stage || statusData.status || "QUEUED";
+          setCurrentStage(stage); // ✅ stage 업데이트
+
+          // ✅ Stale Job 감지 (10분 동안 진행 없음)
+          let warningMsg = "";
+          if (statusData.status === "RUNNING" && statusData.stageUpdatedAt) {
+            const stageUpdatedTime = new Date(statusData.stageUpdatedAt).getTime();
+            const now = Date.now();
+            const minutesSinceUpdate = Math.floor((now - stageUpdatedTime) / 60000);
+
+            if (minutesSinceUpdate > 10) {
+              warningMsg = ` ⚠️ AI 서버 응답 없음 (${minutesSinceUpdate}분 경과)`;
+              console.warn(`[KidsPage] Stale job detected | jobId=${jid} | minutes=${minutesSinceUpdate}`);
+            }
+          }
+
+          setDebugLog(`진행 중... [${stage}] (${i}/${maxAttempts})${warningMsg}`);
 
           if (statusData.status === "FAILED") {
             throw new Error(statusData.errorMessage || "Generation failed");
@@ -164,7 +181,23 @@ export default function KidsPage() {
     };
   }, [rawFile, age, budget, status]);
 
-  const percent = status === "done" ? 100 : status === "loading" ? 60 : 0;
+  // ✅ stage 기반 진행률 계산
+  const percent = useMemo(() => {
+    if (status === "done") return 100;
+    if (status !== "loading") return 0;
+
+    // stage 기반 진행률
+    const stageProgress: Record<string, number> = {
+      "QUEUED": 15,
+      "RUNNING": 25,
+      "THREE_D_PREVIEW": 50,  // Tripo 3D 생성 중
+      "MODEL": 80,             // Brickify LDR 변환 중
+      "BLUEPRINT": 90,
+      "DONE": 100,
+    };
+
+    return stageProgress[currentStage] || 15;
+  }, [status, currentStage]);
 
   return (
     <div className="kidsPage">

@@ -76,6 +76,21 @@ ai:
     # 환경변수 AI_SERVER_URL이 없으면 기본값 localhost:8000 사용
     url: ${AI_SERVER_URL:http://localhost:8000}
 
+# ✅ AWS 설정 (들여쓰기 주의: aws가 최상위)
+aws:
+  region: ${AWS_REGION:ap-northeast-2}
+  accessKeyId: ${AWS_ACCESS_KEY_ID:}
+  secretAccessKey: ${AWS_SECRET_ACCESS_KEY:}
+  sqs:
+    enabled: ${AWS_SQS_ENABLED:false}
+    queue:
+      url: ${AWS_SQS_QUEUE_URL:}
+    polling:
+      fixed-delay: 5000        # 5초마다 폴링
+      initial-delay: 10000     # 시작 10초 후
+      max-messages: 10         # 배치 크기
+      wait-time: 10            # Long polling
+
 openai:
   api-key: ${APP_OPENAI_API_KEY}
 
