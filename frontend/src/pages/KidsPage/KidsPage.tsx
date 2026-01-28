@@ -1,4 +1,3 @@
-import React from "react";
 import "./KidsPage.css";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -42,7 +41,6 @@ export default function KidsPage() {
     let alive = true;
     const abort = new AbortController();
 
-    const PROCESS_TIMEOUT_SEC = 900;
     const FRONT_TIMEOUT_SEC = 885;
     const POLL_INTERVAL = 2000;
 
