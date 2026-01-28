@@ -239,8 +239,8 @@ export default function KidsStepPage() {
         const u = data.ldrUrl || data.ldr_url || "";
         if (alive) {
           setLdrUrl(u);
-          // 썸네일 URL 저장 (previewImageUrl 또는 sourceImageUrl)
-          setJobThumbnailUrl(data.previewImageUrl || data.sourceImageUrl || null);
+          // 썸네일 URL 저장 (완전 원본 이미지 사용)
+          setJobThumbnailUrl(data.sourceImageUrl || null);
         }
       } catch (e) {
         console.error("[KidsStepPage] failed to resolve ldrUrl by jobId:", e);
