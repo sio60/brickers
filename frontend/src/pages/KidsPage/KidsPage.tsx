@@ -52,6 +52,10 @@ export default function KidsPage() {
     const runProcess = async () => {
       processingRef.current = true;
       setStatus("loading");
+
+      // ✅ React가 Background3D를 언마운트할 시간 확보 (WebGL Context Lost 방지)
+      await sleep(200);
+
       setDebugLog("작업 시작...");
       console.log("[KidsPage] 🚀 runProcess 시작 | file:", rawFile.name, rawFile.type, rawFile.size);
 
