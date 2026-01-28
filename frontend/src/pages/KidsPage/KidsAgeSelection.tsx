@@ -108,7 +108,7 @@ export default function KidsAgeSelection() {
 
   return (
     <div className="kidsAgeSelection">
-      {/* <Background3D entryDirection="top" /> */}
+      <Background3D entryDirection="top" />
       <h1 className="kidsAgeSelection__title">{t.kids.title}</h1>
 
       <div className="kidsAgeSelection__buttons">
