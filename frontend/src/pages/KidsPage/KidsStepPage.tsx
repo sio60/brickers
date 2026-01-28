@@ -212,6 +212,9 @@ export default function KidsStepPage() {
   const [galleryTitle, setGalleryTitle] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Job 정보 (썸네일 URL)
+  const [jobThumbnailUrl, setJobThumbnailUrl] = useState<string | null>(null);
+
   const revokeAll = (arr: string[]) => {
     arr.forEach((u) => {
       try {
@@ -234,7 +237,11 @@ export default function KidsStepPage() {
         const data = await res.json();
 
         const u = data.ldrUrl || data.ldr_url || "";
-        if (alive) setLdrUrl(u);
+        if (alive) {
+          setLdrUrl(u);
+          // 썸네일 URL 저장 (previewImageUrl 또는 sourceImageUrl)
+          setJobThumbnailUrl(data.previewImageUrl || data.sourceImageUrl || null);
+        }
       } catch (e) {
         console.error("[KidsStepPage] failed to resolve ldrUrl by jobId:", e);
       }
@@ -346,7 +353,7 @@ export default function KidsStepPage() {
 
       const glbUrl = data.glbUrl || data.glb_url;
       if (!glbUrl) {
-        alert("Server GLB not found.");
+        alert(t.kids.steps.glbNotFound);
         return;
       }
 
@@ -359,7 +366,7 @@ export default function KidsStepPage() {
       document.body.removeChild(link);
     } catch (e) {
       console.error("Failed to download server GLB:", e);
-      alert("Failed to download GLB file.");
+      alert(t.kids.steps.glbDownloadFail);
     }
   };
 
@@ -373,9 +380,10 @@ export default function KidsStepPage() {
     try {
       await registerToGallery({
         title: galleryTitle,
-        content: `Created in Kids Mode`,
+        content: t.kids.steps.galleryModal.content,
         tags: ["Kids", "Lego"],
-        thumbnailUrl: "/uploads/placeholder.png",
+        thumbnailUrl: jobThumbnailUrl || undefined,
+        ldrUrl: ldrUrl || undefined,
         visibility: "PUBLIC",
       });
       alert(t.kids.steps.galleryModal.success);
@@ -392,8 +400,8 @@ export default function KidsStepPage() {
   if (!ldrUrl) {
     return (
       <div style={{ padding: 16 }}>
-        <button onClick={() => nav(-1)}>← 뒤로</button>
-        <div style={{ marginTop: 12 }}>스텝을 볼 URL이 없습니다.</div>
+        <button onClick={() => nav(-1)}>← {t.kids.steps.back}</button>
+        <div style={{ marginTop: 12 }}>{t.kids.steps.noUrl}</div>
       </div>
     );
   }

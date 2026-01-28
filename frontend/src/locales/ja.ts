@@ -60,7 +60,9 @@ export const ja = {
         saveBtn: "保存",
         saving: "保存中...",
         alertSaved: "プロフィールを更新しました。",
-        alertFailed: "プロフィールの更新に失敗しました。"
+        alertFailed: "プロフィールの更新に失敗しました。",
+        imageAlt: "プロフィール",
+        defaultNickname: "ユーザー"
     },
     membership: {
         title: "メンバーシップ情報",
@@ -81,13 +83,19 @@ export const ja = {
         retryFail: "再試行に失敗しました。",
         modalError: "失敗した作業です：",
         modalPending: "現在生成中か、3Dモデルの準備ができていません。",
-        modalNoData: "モデルデータを読み込めませんでした。"
+        modalNoData: "モデルデータを読み込めませんでした。",
+        stillGenerating: "まだ生成中です。少々お待ちください。",
+        retryConfirm: "生成に失敗したか中断された作業です。再試行しますか？",
+        settingsTbd: "設定機能準備中"
     },
     settings: {
         title: "設定",
         notification: "通知設定",
         language: "言語設定",
-        changeBtn: "変更"
+        changeBtn: "変更",
+        langKo: "한국어",
+        langEn: "English",
+        langJa: "日本語"
     },
     delete: {
         title: "退会",
@@ -138,12 +146,25 @@ export const ja = {
             complete: "生成が完了しました！マイページで確認してください。",
             ready: "レゴが完成しました！",
             next: "次へ →",
-            error: "おっと！問題が発生しました。\n後でもう一度お試しください。"
+            error: "おっと！問題が発生しました。\n後でもう一度お試しください。",
+            failed: "作業失敗",
+            starting: "作業開始...",
+            uploadPrepare: "S3アップロード準備中...",
+            uploading: "画像アップロード中...",
+            creating2: "作業作成中...",
+            jobCreated: "作業作成完了",
+            inProgress: "進行中...",
+            loadingResult: "結果読み込み中...",
+            serverDelay: "サーバー応答遅延中...",
+            aiNoResponse: "AIサーバー応答なし",
+            errorOccurred: "エラー発生"
         },
         modelSelect: {
             title: "ブリック生成",
             sub: "モデル選択または画像アップロード",
+            autoGenSub: "モデルを選択すると自動的に生成されます。",
             pick: "選択",
+            picked: "選択済み",
             uploadTitle: "画像アップロード",
             uploadSub: "クリック または ファイルをドラッグしてください",
             uploadHint: "JPG / PNG / WEBP",
@@ -156,6 +177,7 @@ export const ja = {
         },
         steps: {
             back: "戻る",
+            noUrl: "ステップを表示するURLがありません。",
             title: "ステップ {cur} / {total}",
             preview: "ブリックプレビュー",
             loading: "ステップ読み込み中...",
@@ -170,8 +192,11 @@ export const ja = {
                 confirm: "登録する",
                 cancel: "キャンセル",
                 success: "ギャラリーに登録されました！",
-                fail: "ギャラリー登録に失敗しました。"
+                fail: "ギャラリー登録に失敗しました。",
+                content: "キッズモードで作成"
             },
+            glbNotFound: "サーバーにGLBファイルが見つかりません。",
+            glbDownloadFail: "GLBファイルのダウンロードに失敗しました。",
             emptyGallery: "登録された作品がありません。",
             galleryTable: {
                 title: "タイトル",
@@ -217,9 +242,54 @@ export const ja = {
             dashboard: "ダッシュボード",
             users: "ユーザー管理",
             gallery: "ギャラリー管理",
-            settings: "システム設定"
+            settings: "システム設定",
+            inquiries: "問い合わせ管理",
+            reports: "報告管理",
+            refunds: "払い戻し管理"
         },
-        accessDenied: "管理者権限がありません。(現在の権限: {role})"
+        accessDenied: "管理者権限がありません。(現在の権限: {role})",
+        inquiry: {
+            adminAnswer: "管理者の回答",
+            placeholder: "回答を入力してください...",
+            submit: "回答登録",
+            success: "回答が登録されました。",
+            empty: "問い合わせ履歴がありません。",
+            inputRequired: "回答内容を入力してください。"
+        },
+        report: {
+            resolve: "措置承認",
+            reject: "却下",
+            placeholder: "措置内容または却下理由を入力してください...",
+            resolved: "措置が完了しました。",
+            rejected: "報告が却下されました。",
+            empty: "報告履歴がありません。",
+            inputRequired: "措置内容を入力してください。",
+            actionComplete: "措置完了",
+            actionRejected: "報告却下"
+        },
+        refund: {
+            approve: "承認",
+            empty: "払い戻し要請がありません。",
+            amount: "金額",
+            inProgress: "機能開発中"
+        },
+        error: "エラーが発生しました。",
+        failed: "処理に失敗しました。"
+    },
+    mypage: {
+        stats: {
+            jobs: "作業履歴",
+            gallery: "マイギャラリー",
+            joinedAt: "加入日"
+        },
+        bioPlaceholder: "自己紹介を入力してください！",
+        nicknamePlaceholder: "ニックネームを入力",
+        bioInputPlaceholder: "自己紹介を入力してください",
+        noTitle: "タイトルなし",
+        payment: {
+            date: "決済日",
+            nextDate: "次回決済日"
+        }
     },
     common: {
         loading: "読み込み中...",
@@ -229,6 +299,7 @@ export const ja = {
         error: "データを読み込めませんでした。",
         unknownError: "不明なエラー",
         noPreview: "プレビューなし",
+        noImage: "画像なし",
         anonymous: "匿名"
     }
 };

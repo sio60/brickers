@@ -1,11 +1,13 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
+import { useLanguage } from "../../contexts/LanguageContext";
 import "./AuthSuccess.css";
 
 export default function AuthSuccess() {
   const { refresh } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   useEffect(() => {
     let mounted = true;
@@ -55,7 +57,7 @@ export default function AuthSuccess() {
 
   return (
     <div className="authSuccess__container">
-      <div className="authSuccess__text">login...</div>
+      <div className="authSuccess__text">{t.auth.processing}</div>
       <div className="authSuccess__ballWrapper">
         <div className="authSuccess__ball"></div>
         <div className="authSuccess__shadow"></div>

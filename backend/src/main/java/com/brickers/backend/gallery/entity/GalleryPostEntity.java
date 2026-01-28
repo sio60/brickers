@@ -31,6 +31,9 @@ public class GalleryPostEntity {
     // 업로드 없이 URL만 받는 단계
     private String thumbnailUrl;
 
+    // LDR 파일 URL (3D 뷰어용)
+    private String ldrUrl;
+
     @Builder.Default
     private Visibility visibility = Visibility.PUBLIC;
 

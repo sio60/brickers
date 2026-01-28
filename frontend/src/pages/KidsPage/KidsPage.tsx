@@ -56,19 +56,19 @@ export default function KidsPage() {
       // ✅ React가 Background3D를 언마운트할 시간 확보 (WebGL Context Lost 방지)
       await sleep(200);
 
-      setDebugLog("작업 시작...");
+      setDebugLog(t.kids.generate.starting);
       console.log("[KidsPage] 🚀 runProcess 시작 | file:", rawFile.name, rawFile.type, rawFile.size);
 
       try {
         // 1. Presigned URL 요청
-        setDebugLog("S3 업로드 준비 중...");
+        setDebugLog(t.kids.generate.uploadPrepare);
         console.log("[KidsPage] 📤 Step 1: Presigned URL 요청 중...");
         const presign = await getPresignUrl(rawFile.type, rawFile.name);
         console.log("[KidsPage] ✅ Step 1 완료 | uploadUrl:", presign.uploadUrl?.substring(0, 80) + "...");
         console.log("[KidsPage]    publicUrl:", presign.publicUrl);
 
         // 2. S3에 직접 업로드
-        setDebugLog("이미지 업로드 중...");
+        setDebugLog(t.kids.generate.uploading);
         console.log("[KidsPage] 📤 Step 2: S3 업로드 시작...");
         console.log("[KidsPage] 📤 fetch 호출 직전 | url:", presign.uploadUrl?.substring(0, 100));
 
@@ -96,7 +96,7 @@ export default function KidsPage() {
         }
 
         // 3. Backend에 S3 URL 전달 (JSON)
-        setDebugLog("작업 생성 요청 중...");
+        setDebugLog(t.kids.generate.creating2);
         console.log("[KidsPage] 📤 Step 3: /api/kids/generate 호출 시작...");
         console.log("[KidsPage]    payload:", { sourceImageUrl: presign.publicUrl, age, budget });
         const startRes = await fetch("/api/kids/generate", {
@@ -124,7 +124,7 @@ export default function KidsPage() {
 
         if (!alive) return;
         setJobId(jid);
-        setDebugLog(`작업 생성 완료 [${jid}]`);
+        setDebugLog(`${t.kids.generate.jobCreated} [${jid}]`);
         console.log("[KidsPage] 🎯 Job 생성 완료 | jobId:", jid);
 
         // 2) 폴링
@@ -144,7 +144,7 @@ export default function KidsPage() {
 
           if (!statusRes.ok) {
             console.warn(`[KidsPage] ⚠️ Polling failed: ${statusRes.status}`);
-            setDebugLog(`서버 응답 지연 중... (${statusRes.status})`);
+            setDebugLog(`${t.kids.generate.serverDelay} (${statusRes.status})`);
             continue;
           }
 
@@ -161,12 +161,12 @@ export default function KidsPage() {
             const minutesSinceUpdate = Math.floor((now - stageUpdatedTime) / 60000);
 
             if (minutesSinceUpdate > 10) {
-              warningMsg = ` ⚠️ AI 서버 응답 없음 (${minutesSinceUpdate}분 경과)`;
+              warningMsg = ` ⚠️ ${t.kids.generate.aiNoResponse} (${minutesSinceUpdate}m)`;
               console.warn(`[KidsPage] Stale job detected | jobId=${jid} | minutes=${minutesSinceUpdate}`);
             }
           }
 
-          setDebugLog(`진행 중... [${stage}] (${i}/${maxAttempts})${warningMsg}`);
+          setDebugLog(`${t.kids.generate.inProgress} [${stage}] (${i}/${maxAttempts})${warningMsg}`);
 
           if (statusData.status === "FAILED") {
             console.error("[KidsPage] ❌ Job FAILED | error:", statusData.errorMessage);
@@ -192,7 +192,7 @@ export default function KidsPage() {
         // 3) 결과 처리
         const modelUrl = finalData.ldrUrl || finalData.modelKey;
         console.log("[KidsPage] 🎉 Final Job Data:", finalData);
-        setDebugLog("결과물 로딩 중...");
+        setDebugLog(t.kids.generate.loadingResult);
 
         if (!modelUrl) {
           console.error("[KidsPage] ❌ No model URL in result");
@@ -207,7 +207,7 @@ export default function KidsPage() {
       } catch (e: any) {
         if (!alive) return;
         console.error("[KidsPage] ❌ Brick generation failed:", e);
-        setDebugLog(`오류 발생: ${e.message}`);
+        setDebugLog(`${t.kids.generate.errorOccurred}: ${e.message}`);
         setStatus("error");
       }
     };
@@ -283,7 +283,7 @@ export default function KidsPage() {
 
         {status === "error" && (
           <div className="kidsPage__error">
-            <div style={{ fontWeight: "bold", marginBottom: "8px" }}>작업 실패</div>
+            <div style={{ fontWeight: "bold", marginBottom: "8px" }}>{t.kids.generate.failed}</div>
             {t.kids.generate.error}
             <br />
             <span style={{ fontSize: "0.8em", color: "#d32f2f" }}>{debugLog}</span>
