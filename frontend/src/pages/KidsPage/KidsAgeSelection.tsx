@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./KidsAgeSelection.css";
-// import Background3D from "../MainPage/components/Background3D"; // 테스트: WebGL 비활성화
+import Background3D from "../MainPage/components/Background3D";
 
 import img35 from "../../assets/35.png";
 import img67 from "../../assets/67.png";
