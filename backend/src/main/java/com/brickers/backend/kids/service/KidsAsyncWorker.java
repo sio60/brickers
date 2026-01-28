@@ -8,9 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -50,17 +48,14 @@ public class KidsAsyncWorker {
     public void processGenerationAsync(
             String jobId,
             String userId,
-            byte[] fileBytes,
-            String originalFilename,
-            String contentType,
+            String sourceImageUrl,
             String age,
             int budget) {
         long totalStart = System.currentTimeMillis();
         log.info("═══════════════════════════════════════════════════════════════");
         log.info("🚀 [KIDS-WORKER] 작업 시작 | jobId={} | userId={} | age={} | budget={}",
                 jobId, userId, age, budget);
-        log.info("📁 파일 정보: name={} | size={}KB | type={}",
-                originalFilename, fileBytes.length / 1024, contentType);
+        log.info("📁 원본 이미지 URL: {}", sourceImageUrl);
         log.info("═══════════════════════════════════════════════════════════════");
 
         GenerateJobEntity job = generateJobRepository.findById(jobId).orElse(null);
@@ -74,22 +69,6 @@ public class KidsAsyncWorker {
         log.info("📌 [STEP 1/5] Job 상태 업데이트: RUNNING | stage=THREE_D_PREVIEW");
 
         String safeUserId = (userId == null || userId.isBlank()) ? "anonymous" : userId;
-        String safeContentType = (contentType == null || contentType.isBlank()) ? "application/octet-stream"
-                : contentType;
-
-        // ✅ ByteArrayResource로 멀티파트 구성 (MultipartFile 수명문제 없음)
-        ByteArrayResource fileResource = new ByteArrayResource(fileBytes) {
-            @Override
-            public String getFilename() {
-                return (originalFilename == null || originalFilename.isBlank()) ? "upload.png" : originalFilename;
-            }
-        };
-
-        MultipartBodyBuilder builder = new MultipartBodyBuilder();
-        builder.part("file", fileResource).contentType(MediaType.parseMediaType(safeContentType));
-        builder.part("age", age);
-        builder.part("budget", String.valueOf(budget));
-        builder.part("returnLdrData", "true");
 
         try {
             log.info("📌 [STEP 2/5] AI 서버 요청 시작 | endpoint=/api/v1/kids/process-all | timeout={}sec",
@@ -98,8 +77,12 @@ public class KidsAsyncWorker {
 
             Map<String, Object> response = aiWebClient.post()
                     .uri("/api/v1/kids/process-all")
-                    .contentType(MediaType.MULTIPART_FORM_DATA)
-                    .body(BodyInserters.fromMultipartData(builder.build()))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(BodyInserters.fromValue(Map.of(
+                            "sourceImageUrl", sourceImageUrl,
+                            "age", age,
+                            "budget", budget
+                    )))
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
                     })
@@ -152,109 +135,49 @@ public class KidsAsyncWorker {
         if (response == null)
             return;
 
-        // correctedUrl 저장
+        // ✅ S3 URL 직접 저장 (다운로드/업로드 제거)
+
+        // 1. correctedUrl
         String correctedUrl = asString(response.get("correctedUrl"));
         if (!isBlank(correctedUrl)) {
-            log.info("   📥 [SAVE] corrected 이미지 다운로드 중... | url={}", truncateUrl(correctedUrl));
-            try {
-                long start = System.currentTimeMillis();
-                byte[] imageBytes = downloadBytesByUrl(correctedUrl);
-                log.info("   📥 [SAVE] corrected 다운로드 완료 | size={}KB | {}ms",
-                        imageBytes.length / 1024, System.currentTimeMillis() - start);
-
-                start = System.currentTimeMillis();
-                var stored = storageService.storeFile(userId, "corrected.png", imageBytes, "image/png");
-                log.info("   📤 [SAVE] corrected S3 업로드 완료 | {}ms | url={}",
-                        System.currentTimeMillis() - start, truncateUrl(stored.url()));
-                job.setCorrectedImageUrl(stored.url());
-                job.setPreviewImageUrl(stored.url());
-            } catch (Exception e) {
-                log.warn("   ⚠️ [SAVE] corrected 저장 실패 (원본 URL 사용): {}", e.getMessage());
-                job.setCorrectedImageUrl(correctedUrl);
-                job.setPreviewImageUrl(correctedUrl);
-            }
+            log.info("   ✅ [SAVE] corrected S3 URL 직접 사용 | url={}", truncateUrl(correctedUrl));
+            job.setCorrectedImageUrl(correctedUrl);
+            job.setPreviewImageUrl(correctedUrl);
         }
 
-        // modelUrl(GLB) 저장
+        // 2. modelUrl (GLB)
         String modelUrl = asString(response.get("modelUrl"));
         if (!isBlank(modelUrl)) {
-            log.info("   📥 [SAVE] GLB 모델 다운로드 중... | url={}", truncateUrl(modelUrl));
-            try {
-                long start = System.currentTimeMillis();
-                byte[] glbBytes = downloadBytesByUrl(modelUrl);
-                log.info("   📥 [SAVE] GLB 다운로드 완료 | size={}KB | {}ms",
-                        glbBytes.length / 1024, System.currentTimeMillis() - start);
-
-                start = System.currentTimeMillis();
-                var stored = storageService.storeFile(userId, "model.glb", glbBytes, "application/octet-stream");
-                log.info("   📤 [SAVE] GLB S3 업로드 완료 | {}ms | url={}",
-                        System.currentTimeMillis() - start, truncateUrl(stored.url()));
-                job.setGlbUrl(stored.url());
-            } catch (Exception e) {
-                log.warn("   ⚠️ [SAVE] GLB 저장 실패 (원본 URL 사용): {}", e.getMessage());
-                job.setGlbUrl(modelUrl);
-            }
+            log.info("   ✅ [SAVE] GLB S3 URL 직접 사용 | url={}", truncateUrl(modelUrl));
+            job.setGlbUrl(modelUrl);
         }
 
-        // ldrData or ldrUrl
-        String ldrData = asString(response.get("ldrData"));
+        // 3. ldrUrl
         String ldrUrl = asString(response.get("ldrUrl"));
-
-        byte[] ldrBytes = null;
-
-        if (!isBlank(ldrData) && ldrData.startsWith("data:") && ldrData.contains("base64,")) {
-            log.info("   📥 [SAVE] LDR base64 데이터 디코딩 중...");
-            try {
-                ldrBytes = decodeDataUriBase64(ldrData);
-                log.info("   📥 [SAVE] LDR base64 디코딩 완료 | size={}KB", ldrBytes.length / 1024);
-            } catch (Exception e) {
-                log.warn("   ⚠️ [SAVE] LDR base64 디코딩 실패, URL 다운로드로 fallback: {}", e.getMessage());
-            }
-        }
-
-        if ((ldrBytes == null || ldrBytes.length == 0) && !isBlank(ldrUrl)) {
-            log.info("   📥 [SAVE] LDR 파일 다운로드 중... | url={}", truncateUrl(ldrUrl));
-            try {
-                long start = System.currentTimeMillis();
-                ldrBytes = downloadBytesByUrl(ldrUrl);
-                log.info("   📥 [SAVE] LDR 다운로드 완료 | size={}KB | {}ms",
-                        ldrBytes.length / 1024, System.currentTimeMillis() - start);
-            } catch (Exception e) {
-                log.warn("   ⚠️ [SAVE] LDR 다운로드 실패: {}", e.getMessage());
-            }
-        }
-
-        if (ldrBytes == null || ldrBytes.length == 0) {
-            log.warn("   ⚠️ [SAVE] LDR 데이터 없음, 원본 URL 사용");
+        if (!isBlank(ldrUrl)) {
+            log.info("   ✅ [SAVE] LDR S3 URL 직접 사용 | url={}", truncateUrl(ldrUrl));
             job.setLdrUrl(ldrUrl);
-            return;
         }
 
-        try {
-            long start = System.currentTimeMillis();
-            var stored = storageService.storeFile(userId, "result.ldr", ldrBytes, "text/plain");
-            log.info("   📤 [SAVE] LDR S3 업로드 완료 | {}ms | url={}",
-                    System.currentTimeMillis() - start, truncateUrl(stored.url()));
-            job.setLdrUrl(stored.url());
-        } catch (Exception e) {
-            log.warn("   ⚠️ [SAVE] LDR 저장 실패 (원본 URL 사용): {}", e.getMessage());
-            job.setLdrUrl(ldrUrl);
+        // ⚠️ ldrData (base64)가 있으면 여전히 디코딩 후 S3 업로드 필요 (S3 미사용 환경 대비)
+        String ldrData = asString(response.get("ldrData"));
+        if (!isBlank(ldrData) && ldrData.startsWith("data:")) {
+            log.info("   📥 [SAVE] LDR base64 디코딩 후 S3 업로드");
+            try {
+                byte[] ldrBytes = decodeDataUriBase64(ldrData);
+                var stored = storageService.storeFile(userId, "result.ldr", ldrBytes, "text/plain");
+                job.setLdrUrl(stored.url());
+                log.info("   ✅ [SAVE] LDR base64 → S3 업로드 완료 | url={}", truncateUrl(stored.url()));
+            } catch (Exception e) {
+                log.warn("   ⚠️ [SAVE] LDR base64 디코딩 실패: {}", e.getMessage());
+                // ldrUrl fallback은 위에서 이미 처리됨
+            }
         }
     }
 
     private String truncateUrl(String url) {
-        if (url == null)
-            return "null";
-        return url.length() > 80 ? url.substring(0, 40) + "..." + url.substring(url.length() - 30) : url;
-    }
-
-    private byte[] downloadBytesByUrl(String url) {
-        return aiWebClient.get()
-                .uri(url)
-                .retrieve()
-                .bodyToMono(byte[].class)
-                .timeout(downloadTimeout())
-                .block();
+        if (url == null || url.length() <= 80) return url;
+        return url.substring(0, 77) + "...";
     }
 
     private byte[] decodeDataUriBase64(String dataUri) {
