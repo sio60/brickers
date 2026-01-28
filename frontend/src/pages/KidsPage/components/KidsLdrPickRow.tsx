@@ -1,4 +1,5 @@
 import "./KidsLdrPickRow.css";
+import { useLanguage } from "../../../contexts/LanguageContext";
 
 type LdrItem = { id: string; label: string; url: string; thumbnail?: string };
 
@@ -9,10 +10,12 @@ type Props = {
 };
 
 export default function KidsLdrPickRow({ items, selectedId, onSelect }: Props) {
+  const { t } = useLanguage();
+
   return (
     <div className="kidsLdrRow">
-      <div className="kidsLdrRow__title">모델 선택</div>
-      <div className="kidsLdrRow__sub">원하는 모델을 선택하면 자동으로 생성됩니다.</div>
+      <div className="kidsLdrRow__title">{t.kids.modelSelect.title}</div>
+      <div className="kidsLdrRow__sub">{t.kids.modelSelect.autoGenSub}</div>
 
       <div className="kidsLdrRow__grid">
         {items.map((item) => {
@@ -32,7 +35,7 @@ export default function KidsLdrPickRow({ items, selectedId, onSelect }: Props) {
                   />
                 ) : (
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#999" }}>
-                    No Preview
+                    {t.common.noPreview}
                   </div>
                 )}
               </div>
@@ -40,7 +43,7 @@ export default function KidsLdrPickRow({ items, selectedId, onSelect }: Props) {
               <div className="kidsLdrCard__footer">
                 <div className="kidsLdrCard__label">{item.label}</div>
                 <div className="kidsLdrCard__pick">
-                  {isSelected ? "선택됨" : "선택"}
+                  {isSelected ? t.kids.modelSelect.picked : t.kids.modelSelect.pick}
                 </div>
               </div>
             </div>
