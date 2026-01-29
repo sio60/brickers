@@ -1,52 +1,82 @@
 # =============================================================================
-# 1. Build Stage
+# Unified Frontend Dockerfile - Next.js + Nginx
 # =============================================================================
-FROM node:20-alpine AS build
+
+# 1. Base
+FROM node:20-alpine AS base
+
+# 2. Dependencies
+FROM base AS deps
 WORKDIR /app
 
-# 패키지 설치 (캐싱 활용을 위해 package.json과 lock 파일 먼저 복사)
-COPY package.json package-lock.json ./
-
-# npm install 보다 더 빠르고 정확한 npm ci 사용 (lock 파일 기준 설치)
+# gallery-app의 패키지 파일 복사 및 설치
+COPY gallery-app/package.json gallery-app/package-lock.json* ./
 RUN npm ci --legacy-peer-deps
 
-# 소스 코드 복사
-COPY . .
+# 3. Builder
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY gallery-app/ .
 
-# -----------------------------------------------------------------------------
-# [환경 변수 주입]
-# Vite는 빌드 시점(Build Time)에 환경변수가 주입되어야 합니다.
-# GitHub Actions에서 --build-arg로 넘겨준 값을 받아서 ENV로 설정합니다.
-# -----------------------------------------------------------------------------
-ARG VITE_KAKAO_CLIENT_ID
-ARG VITE_KAKAO_REDIRECT_URI
-ARG VITE_API_BASE_URL
-ARG VITE_FASTAPI_ORIGIN
-ARG VITE_API_ORIGIN
-ARG VITE_AI_API_URL
+# 빌드 타임 환경변수
+ARG NEXT_PUBLIC_API_BASE_URL
+ARG REVALIDATE_SECRET
 
-ENV VITE_KAKAO_CLIENT_ID=$VITE_KAKAO_CLIENT_ID
-ENV VITE_KAKAO_REDIRECT_URI=$VITE_KAKAO_REDIRECT_URI
-ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-ENV VITE_FASTAPI_ORIGIN=$VITE_FASTAPI_ORIGIN
-ENV VITE_API_ORIGIN=$VITE_API_ORIGIN
-ENV VITE_AI_API_URL=$VITE_AI_API_URL
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+ENV REVALIDATE_SECRET=$REVALIDATE_SECRET
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# 빌드 실행 -> /app/dist 폴더 생성됨
 RUN npm run build
 
+# 4. Production Runner
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# public 폴더 복사
+COPY --from=builder /app/public ./public
+
+# Next.js cache 디렉토리 설정
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# standalone output 복사
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
 # =============================================================================
-# 2. Run Stage
+# 5. Final Stage with Nginx + Node.js
 # =============================================================================
-FROM nginx:alpine
+FROM nginx:alpine AS final
 
-# 빌드 결과물(dist)을 Nginx 기본 경로로 복사
-COPY --from=build /app/dist /usr/share/nginx/html
+# Node.js 설치 (npm은 불필요)
+RUN apk add --no-cache nodejs
 
-# 커스텀 Nginx 설정을 복사 (SPA 라우팅 문제 해결용)
-# 만약 프로젝트 루트에 nginx.conf가 없다면 이 줄은 에러가 납니다.
-# 파일이 없다면 아래 [참고]를 봐주세요.
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# supervisord 설치
+RUN apk add --no-cache supervisor
 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Nginx 설정 복사
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Next.js 앱 복사
+WORKDIR /app
+COPY --from=runner /app ./
+
+# supervisord 설정
+RUN mkdir -p /etc/supervisor.d /var/log/supervisor
+COPY frontend/supervisord.conf /etc/supervisor.d/supervisord.ini
+
+# 환경변수
+ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
+
+EXPOSE 80 443 3000
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]

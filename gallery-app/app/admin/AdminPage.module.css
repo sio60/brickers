@@ -1,0 +1,388 @@
+.page {
+    min-height: 100vh;
+    width: 100%;
+    position: relative;
+    padding-top: 80px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    position: relative;
+    z-index: 5;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 40px;
+    height: 80vh;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.2);
+    border: 3px solid #000;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.layout {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 240px;
+    background: #000;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 40px 0;
+}
+
+.sidebarTitle {
+    padding: 0 32px 24px;
+    font-size: 20px;
+    font-weight: 900;
+    color: #ffe135;
+    border-bottom: 1px solid #333;
+    margin-bottom: 24px;
+}
+
+.sidebarItem {
+    padding: 16px 32px;
+    border: none;
+    background: transparent;
+    text-align: left;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #888;
+}
+
+.sidebarItem:hover {
+    color: #fff;
+    background: #222;
+}
+
+.sidebarItem.active {
+    color: #000;
+    background: #ffe135;
+}
+
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 48px;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #eee;
+    margin-bottom: 32px;
+}
+
+.title {
+    font-size: 28px;
+    font-weight: 900;
+    margin: 0;
+    color: #000;
+}
+
+.closeBtn {
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #000;
+}
+
+.closeBtn:hover {
+    transform: rotate(90deg) scale(1.1);
+}
+
+.dashboard {
+    color: #444;
+}
+
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+    margin-top: 32px;
+}
+
+.statCard {
+    background: #f8f9fa;
+    padding: 24px;
+    border-radius: 20px;
+    border: 2px solid #eee;
+}
+
+.statCard h3 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #888;
+}
+
+.statValue {
+    font-size: 32px;
+    font-weight: 950;
+    margin: 0;
+    color: #000;
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    border-top: 2px solid #000;
+}
+
+.listItem {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px 8px;
+    background: #fff;
+    border-radius: 0;
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s;
+}
+
+.listItem:hover {
+    background: #fcfcfc;
+}
+
+.listItem h4 {
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.listItem p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #444;
+    margin: 0;
+}
+
+.inquiry {}
+
+.inquiryMain h4 {
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.inquiryMain p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #444;
+    margin: 0;
+}
+
+.meta {
+    font-size: 12px;
+    color: #999;
+    margin-top: 8px;
+}
+
+.answerSection {
+    padding-top: 16px;
+    margin-top: 0;
+    border-top: 1px dashed #eee;
+}
+
+.answerForm {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.answerForm textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #000;
+    font-family: inherit;
+    font-size: 14px;
+    resize: none;
+    background: #fff;
+}
+
+.answerForm textarea:focus {
+    outline: none;
+    box-shadow: none;
+    border-color: #ffe135;
+}
+
+.answerForm button {
+    align-self: flex-end;
+    padding: 10px 24px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.answerForm button:hover {
+    transform: translateY(-2px);
+    background: #ffe135;
+    color: #000;
+}
+
+.answer.active {
+    background: transparent;
+    padding: 16px 0 0 20px;
+    border-radius: 0;
+    border: none;
+    position: relative;
+}
+
+.answer.active::before {
+    content: "↳";
+    position: absolute;
+    left: 0;
+    top: 16px;
+    font-size: 18px;
+    color: #000;
+    font-weight: bold;
+}
+
+.answerLabel {
+    font-size: 10px;
+    font-weight: 900;
+    color: #000;
+    background: transparent;
+    border: 1px solid #000;
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.answerContent {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #000;
+    font-weight: 400;
+}
+
+.answerDate {
+    font-size: 11px;
+    color: #999;
+    margin-top: 8px;
+    text-align: right;
+}
+
+.statusBadge {
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    border: 1px solid #000;
+}
+
+.OPEN,
+.PENDING {
+    background: #fff;
+    color: #000;
+}
+
+.ANSWERED,
+.RESOLVED {
+    background: #000;
+    color: #fff;
+}
+
+.CLOSED,
+.REJECTED {
+    background: #eee;
+    color: #666;
+    border-color: #ddd;
+}
+
+.emptyMsg {
+    text-align: center;
+    color: #999;
+    padding: 40px;
+    font-size: 14px;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    align-self: flex-end;
+}
+
+.rejectBtn {
+    background: #eee !important;
+    color: #000 !important;
+}
+
+@media (max-width: 768px) {
+    .page {
+        padding-top: 60px;
+    }
+
+    .container {
+        margin: 10px;
+        border-radius: 20px;
+        height: calc(100vh - 80px);
+    }
+
+    .layout {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        flex-direction: row;
+        padding: 0;
+        overflow-x: auto;
+    }
+
+    .sidebarTitle {
+        display: none;
+    }
+
+    .sidebarItem {
+        padding: 12px 16px;
+        white-space: nowrap;
+        font-size: 14px;
+    }
+
+    .content {
+        padding: 20px;
+    }
+
+    .title {
+        font-size: 20px;
+    }
+
+    .statsGrid {
+        grid-template-columns: 1fr;
+    }
+}
