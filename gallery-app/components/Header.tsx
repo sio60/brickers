@@ -50,29 +50,27 @@ function HeaderContent() {
 
                 {/* Actions - Positioned absolute right */}
                 <div className="header__actions">
-                    {/* 갤러리 링크 */}
-                    <Link href="/gallery" className="header__btn">
-                        {t.header.gallery}
-                    </Link>
-
-                    {!isLoading && isAuthenticated && (
-                        <>
-                            {!isPro && (
-                                <button className="header__btn" onClick={() => {/* Upgrade modal logic */ }}>
-                                    {t.header.upgrade}
+                    {!isLoading ? (
+                        isAuthenticated ? (
+                            <>
+                                <Link href="/gallery" className="header__btn">
+                                    {t.header.gallery}
+                                </Link>
+                                {!isPro && (
+                                    <button className="header__btn" onClick={() => {/* Upgrade modal logic */ }}>
+                                        {t.header.upgrade}
+                                    </button>
+                                )}
+                                <button onClick={handleLogout} className="header__btn">
+                                    {t.header.logout}
                                 </button>
-                            )}
-                            <button onClick={handleLogout} className="header__btn">
-                                {t.header.logout}
+                            </>
+                        ) : (
+                            <button onClick={() => setIsLoginModalOpen(true)} className="header__btn">
+                                {t.header.login}
                             </button>
-                        </>
-                    )}
-
-                    {!isLoading && !isAuthenticated && (
-                        <button onClick={() => setIsLoginModalOpen(true)} className="header__btn">
-                            {t.header.login}
-                        </button>
-                    )}
+                        )
+                    ) : null}
                 </div>
             </header>
 
