@@ -1,5 +1,21 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { Metadata } from 'next';
+
+// Metadata for the gallery home page
+export const metadata: Metadata = {
+    title: 'AI 레고 작품 갤러리',
+    description: 'AI로 만든 멋진 레고 작품들을 구경하세요. 다양한 창작물을 감상하고 직접 만들어보세요.',
+    alternates: {
+        canonical: '/gallery',
+    },
+    openGraph: {
+        title: 'Brickers Gallery - AI 레고 작품 갤러리',
+        description: 'AI로 만든 멋진 레고 작품들을 구경하세요.',
+        url: 'https://brickers.shop/gallery',
+        type: 'website',
+    },
+};
 
 // Types (You might want to move these to a types file)
 type GalleryItem = {
@@ -38,8 +54,36 @@ async function getGalleryItems(): Promise<PageResponse<GalleryItem>> {
 export default async function GalleryHome() {
     const data = await getGalleryItems();
 
+    // JSON-LD structured data for SEO
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: 'Brickers Gallery',
+        description: 'AI로 만든 멋진 레고 작품들을 구경하세요.',
+        url: 'https://brickers.shop/gallery',
+        mainEntity: {
+            '@type': 'ItemList',
+            numberOfItems: data.content.length,
+            itemListElement: data.content.slice(0, 10).map((item, index) => {
+                const safeTitle = item.title.replace(/\s+/g, '-').replace(/[^\w\-\uAC00-\uD7A3]/g, '');
+                const slug = `${safeTitle}-${item.id}`;
+                return {
+                    '@type': 'ListItem',
+                    position: index + 1,
+                    url: `https://brickers.shop/gallery/${slug}`,
+                    name: item.title,
+                };
+            }),
+        },
+    };
+
     return (
-        <div className="max-w-[1280px] mx-auto p-5">
+        <>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
+            <div className="max-w-[1280px] mx-auto p-5">
             <header className="mb-8 text-center">
                 <h1 className="text-4xl font-bold mb-2">Gallery</h1>
                 <p className="text-gray-600">AI로 만든 멋진 레고 작품들을 구경하세요.</p>
@@ -88,5 +132,6 @@ export default async function GalleryHome() {
                 })}
             </div>
         </div>
+        </>
     );
 }

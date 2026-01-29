@@ -30,6 +30,7 @@ public class GalleryService {
     private final GalleryBookmarkRepository galleryBookmarkRepository;
     private final GalleryReactionRepository galleryReactionRepository;
     private final CurrentUserService currentUserService;
+    private final GalleryRevalidateService revalidateService;
 
     /** 게시글 생성: 로그인 유저를 author로 설정하고 게시글을 저장한다. */
     public GalleryResponse create(Authentication auth, GalleryCreateRequest req) {
@@ -53,6 +54,10 @@ public class GalleryService {
                 .build();
 
         galleryPostRepository.save(post);
+
+        // Next.js ISR 캐시 갱신
+        revalidateService.onPostCreated(post.getId(), post.getTitle());
+
         return toResponse(post);
     }
 
@@ -159,6 +164,9 @@ public class GalleryService {
         post.setUpdatedAt(LocalDateTime.now());
         galleryPostRepository.save(post);
 
+        // Next.js ISR 캐시 갱신
+        revalidateService.onPostUpdated(post.getId(), post.getTitle());
+
         return toResponse(post);
     }
 
@@ -177,6 +185,9 @@ public class GalleryService {
         post.setDeleted(true);
         post.setUpdatedAt(LocalDateTime.now());
         galleryPostRepository.save(post);
+
+        // Next.js ISR 캐시 갱신
+        revalidateService.onPostDeleted(post.getId(), post.getTitle());
     }
 
     /** 내 게시글 목록: 내 글(PUBLIC/PRIVATE 모두) 중 deleted=false를 최신순으로 페이징 조회한다. */

@@ -49,14 +49,38 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         }
     }
 
+    const safeTitle = item.title.replace(/\s+/g, '-').replace(/[^\w\-\uAC00-\uD7A3]/g, '');
+    const slug = `${safeTitle}-${item.id}`;
+    const canonicalUrl = `https://brickers.shop/gallery/${slug}`;
+    const description = item.content || `${item.title} - ${item.authorNickname || '익명'}님이 만든 AI 레고 작품`;
+
     return {
-        title: `${item.title} | Brickers Gallery`,
-        description: item.content || `${item.title} - Created by ${item.authorNickname || 'Anonymous'}`,
+        title: item.title,
+        description,
+        alternates: {
+            canonical: canonicalUrl,
+        },
         openGraph: {
-            title: `${item.title} - Brickers`,
-            description: item.content || 'Check out this amazing Lego creation!',
-            images: [item.thumbnailUrl || '/logo.png'],
+            title: `${item.title} - Brickers Gallery`,
+            description,
+            url: canonicalUrl,
+            images: [
+                {
+                    url: item.thumbnailUrl || '/gallery/og-image.png',
+                    width: 1200,
+                    height: 630,
+                    alt: item.title,
+                },
+            ],
             type: 'article',
+            publishedTime: item.createdAt,
+            authors: [item.authorNickname || '익명'],
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: `${item.title} - Brickers`,
+            description,
+            images: [item.thumbnailUrl || '/gallery/og-image.png'],
         },
     }
 }
@@ -69,8 +93,51 @@ export default async function GalleryDetailPage({ params }: Props) {
         notFound();
     }
 
+    // Generate canonical URL
+    const safeTitle = item.title.replace(/\s+/g, '-').replace(/[^\w\-\uAC00-\uD7A3]/g, '');
+    const slug = `${safeTitle}-${item.id}`;
+    const canonicalUrl = `https://brickers.shop/gallery/${slug}`;
+
+    // JSON-LD structured data for rich snippets
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'CreativeWork',
+        name: item.title,
+        description: item.content || `${item.title} - AI로 만든 레고 작품`,
+        url: canonicalUrl,
+        image: item.thumbnailUrl,
+        datePublished: item.createdAt,
+        author: {
+            '@type': 'Person',
+            name: item.authorNickname || '익명',
+        },
+        publisher: {
+            '@type': 'Organization',
+            name: 'Brickers',
+            url: 'https://brickers.shop',
+        },
+        interactionStatistic: [
+            {
+                '@type': 'InteractionCounter',
+                interactionType: 'https://schema.org/LikeAction',
+                userInteractionCount: item.likeCount,
+            },
+            {
+                '@type': 'InteractionCounter',
+                interactionType: 'https://schema.org/ViewAction',
+                userInteractionCount: item.viewCount,
+            },
+        ],
+        keywords: item.tags?.join(', ') || '레고, AI, 브릭',
+    };
+
     return (
-        <div className="max-w-4xl mx-auto p-5">
+        <>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
+            <div className="max-w-4xl mx-auto p-5">
             <div className="mb-4">
                 <Link href="/" className="text-gray-500 hover:text-black">
                     ← 갤러리로 돌아가기
@@ -145,5 +212,6 @@ export default async function GalleryDetailPage({ params }: Props) {
                 </div>
             </div>
         </div>
+        </>
     );
 }
