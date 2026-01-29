@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Metadata } from 'next';
+import GalleryGrid from '../components/GalleryGrid';
 
 // Metadata for the gallery home page
 export const metadata: Metadata = {
@@ -26,6 +27,7 @@ type GalleryItem = {
     createdAt: string;
     likeCount: number;
     viewCount: number;
+    ldrUrl?: string;
 }
 
 type PageResponse<T> = {
@@ -92,54 +94,15 @@ export default async function GalleryHome() {
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
             <div className="max-w-[1280px] mx-auto p-5">
-            <header className="mb-8 text-center">
-                <h1 className="text-4xl font-bold mb-2">Gallery</h1>
-                <p className="text-gray-600">AI로 만든 멋진 레고 작품들을 구경하세요.</p>
-            </header>
+                <header className="mb-8 text-center">
+                    <h1 className="text-4xl font-bold mb-2">Gallery</h1>
+                    <p className="text-gray-600">AI로 만든 멋진 레고 작품들을 구경하세요.</p>
+                </header>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {data.content.map((item) => {
-                    // Create a SEO friendly slug: title-id
-                    // Simple slugify: replace spaces with - and encoded URI
-                    const safeTitle = item.title.replace(/\s+/g, '-').replace(/[^\w\-\uAC00-\uD7A3]/g, '');
-                    const slug = `${safeTitle}-${item.id}`;
-
-                    return (
-                        <Link
-                            key={item.id}
-                            href={`/${slug}`}
-                            className="group block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100"
-                        >
-                            <div className="aspect-square relative overflow-hidden bg-gray-100">
-                                {item.thumbnailUrl ? (
-                                    <Image
-                                        src={item.thumbnailUrl}
-                                        alt={item.title}
-                                        fill
-                                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                        No Image
-                                    </div>
-                                )}
-                            </div>
-                            <div className="p-4">
-                                <h3 className="font-bold text-lg truncate mb-1">{item.title}</h3>
-                                <div className="flex justify-between items-center text-sm text-gray-500">
-                                    <span>{item.authorNickname || '익명'}</span>
-                                    <div className="flex gap-2">
-                                        <span>👀 {item.viewCount}</span>
-                                        <span>👍 {item.likeCount}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </Link>
-                    );
-                })}
+                <div className="mt-8">
+                    <GalleryGrid items={data.content} />
+                </div>
             </div>
-        </div>
         </>
     );
 }

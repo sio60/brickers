@@ -60,15 +60,18 @@ export default function RootLayout({
     return (
         <html lang="ko">
             <body className={inter.className}>
-                <nav className="w-full h-[72px] flex items-center justify-between px-5 border-b border-[#e0e0e0] bg-white fixed top-0 left-0 z-50">
-                    <Link href="/" className="h-12 w-auto cursor-pointer flex items-center">
-                        {/* If we can't load the logo easily, use text or external URL */}
-                        <span className="text-xl font-bold tracking-tighter">BRICKERS</span>
+                <nav className="w-full h-[72px] flex items-center justify-center border-b border-[#e0e0e0] bg-white fixed top-0 left-0 z-50">
+                    <Link href="/" className="h-12 w-auto cursor-pointer flex items-center relative">
+                        <span className="text-2xl font-black tracking-tighter hover:opacity-80 transition-opacity">BRICKERS</span>
                     </Link>
-                    <div className="flex gap-3">
-                        <Link href="https://brickers.shop" className="border-2 border-black rounded-lg px-3 py-1.5 hover:bg-black hover:text-white transition-colors">
+
+                    <div className="absolute right-6 flex gap-3">
+                        <a
+                            href="https://brickers.shop"
+                            className="bg-black text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-800 transition-colors"
+                        >
                             App으로 이동
-                        </Link>
+                        </a>
                     </div>
                 </nav>
                 <main className="pt-[80px] min-h-screen bg-neutral-50">
