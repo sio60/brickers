@@ -220,7 +220,8 @@ export const ko = {
         logout: "로그아웃",
         gallery: "갤러리",
         logoAlt: "브릭커스 로고",
-        myGallery: "내 갤러리"
+        myGallery: "내 갤러리",
+        myPage: "마이페이지"
     },
     auth: {
         title: "로그인",

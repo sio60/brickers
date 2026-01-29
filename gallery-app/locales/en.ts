@@ -219,7 +219,8 @@ export const en = {
         logout: "LOGOUT",
         gallery: "GALLERY",
         logoAlt: "BRICKERS Logo",
-        myGallery: "My Gallery"
+        myGallery: "My Gallery",
+        myPage: "My Page"
     },
     auth: {
         title: "LOGIN",
