@@ -23,9 +23,16 @@ type Props = {
     onLoginRequired?: () => void;
 };
 
+// Check if URL is valid (starts with http/https or is a valid S3 URL)
+function isValidImageUrl(url?: string): boolean {
+    if (!url) return false;
+    return url.startsWith('http://') || url.startsWith('https://');
+}
+
 export default function GalleryCard({ item, isLoggedIn, onBookmarkToggle, onLoginRequired }: Props) {
     const safeTitle = item.title.replace(/\s+/g, '-').replace(/[^\w\-\uAC00-\uD7A3]/g, '');
     const slug = `${safeTitle}-${item.id}`;
+    const hasValidImage = isValidImageUrl(item.thumbnailUrl);
 
     const handleBookmarkClick = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -49,8 +56,8 @@ export default function GalleryCard({ item, isLoggedIn, onBookmarkToggle, onLogi
         <Link href={`/${slug}`} className="block">
             <div className="gallery-card bg-white rounded-2xl overflow-hidden border border-gray-100">
                 {/* Thumbnail */}
-                <div className="relative aspect-square bg-gray-50 overflow-hidden">
-                    {item.thumbnailUrl ? (
+                <div className="relative aspect-square bg-gray-100 overflow-hidden">
+                    {hasValidImage ? (
                         <Image
                             src={item.thumbnailUrl}
                             alt={item.title}
