@@ -31,7 +31,16 @@ async function getGalleryItems(): Promise<PageResponse<GalleryItem>> {
             return { content: [], last: true, totalPages: 0, totalElements: 0, number: 0 };
         }
 
-        return res.json();
+        const json = await res.json();
+        const content = json.content.map((item: any) => ({
+            ...item,
+            isBookmarked: item.bookmarked
+        }));
+
+        return {
+            ...json,
+            content
+        };
     } catch (error) {
         console.error('Gallery fetch error (likely build time):', error);
         return { content: [], last: true, totalPages: 0, totalElements: 0, number: 0 };

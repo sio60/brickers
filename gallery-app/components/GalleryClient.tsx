@@ -7,6 +7,7 @@ import LoadMoreButton from './LoadMoreButton';
 import NextButton from './NextButton';
 import LoginModal from './LoginModal';
 import { GalleryItem } from '../types/gallery';
+import { useLanguage } from '../contexts/LanguageContext';
 
 type Props = {
     initialItems: GalleryItem[];
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export default function GalleryClient({ initialItems, initialHasMore }: Props) {
+    const { t } = useLanguage();
     const [items, setItems] = useState<GalleryItem[]>(initialItems);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [page, setPage] = useState(0);
@@ -83,11 +85,11 @@ export default function GalleryClient({ initialItems, initialHasMore }: Props) {
     return (
         <>
             <GalleryPanel
-                title="Gallery"
+                title={t.main.title}
                 rightAction={
                     <select className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-black">
-                        <option value="latest">최신순</option>
-                        <option value="popular">인기순</option>
+                        <option value="latest">{t.main.sortLatest}</option>
+                        <option value="popular">{t.main.sortPopular}</option>
                     </select>
                 }
                 footer={
@@ -97,10 +99,12 @@ export default function GalleryClient({ initialItems, initialHasMore }: Props) {
                             loading={loading}
                             hasMore={hasMore}
                         />
-                        <NextButton
-                            href="/kids/main"
-                            label="작품 만들기"
-                        />
+                        {hasMore && (
+                            <NextButton
+                                onClick={loadMore}
+                                label={t.main.next}
+                            />
+                        )}
                     </div>
                 }
             >
