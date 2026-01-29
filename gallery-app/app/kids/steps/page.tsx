@@ -14,7 +14,6 @@ import { registerToGallery } from "@/lib/api/myApi";
 import './KidsStepPage.css';
 
 // SSR 제외
-const FloatingMenuButton = dynamic(() => import("@/components/kids/FloatingMenuButton"), { ssr: false });
 
 const CDN_BASE = "https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/";
 
@@ -333,7 +332,6 @@ function KidsStepPageContent() {
                     </div>
                 </div>
             )}
-            <FloatingMenuButton />
         </div>
     );
 }

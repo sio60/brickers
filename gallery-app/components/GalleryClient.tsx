@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import GalleryPanel from './GalleryPanel';
 import GalleryGrid from './GalleryGrid';
 import LoadMoreButton from './LoadMoreButton';
 import NextButton from './NextButton';
-import LoginModal from './LoginModal';
 import { GalleryItem } from '../types/gallery';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 
 type Props = {
     initialItems: GalleryItem[];
@@ -16,23 +17,12 @@ type Props = {
 
 export default function GalleryClient({ initialItems, initialHasMore }: Props) {
     const { t } = useLanguage();
+    const { isAuthenticated, authFetch } = useAuth();
+    const router = useRouter();
     const [items, setItems] = useState<GalleryItem[]>(initialItems);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(initialHasMore);
     const [loading, setLoading] = useState(false);
-    const [showLoginModal, setShowLoginModal] = useState(false);
-
-    useEffect(() => {
-        const checkAuth = () => {
-            const token = localStorage.getItem('accessToken');
-            setIsLoggedIn(!!token);
-        };
-
-        checkAuth();
-        window.addEventListener('storage', checkAuth);
-        return () => window.removeEventListener('storage', checkAuth);
-    }, []);
 
     const loadMore = async () => {
         if (loading || !hasMore) return;
@@ -55,18 +45,14 @@ export default function GalleryClient({ initialItems, initialHasMore }: Props) {
     };
 
     const handleBookmarkToggle = async (id: string, currentState: boolean) => {
-        const token = localStorage.getItem('accessToken');
-        if (!token) {
-            setShowLoginModal(true);
+        if (!isAuthenticated) {
+            router.push('?login=true');
             return;
         }
 
         try {
-            const res = await fetch(`/api/gallery/${id}/bookmark`, {
+            const res = await authFetch(`/api/gallery/${id}/bookmark`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
             });
 
             if (res.ok) {
@@ -85,7 +71,7 @@ export default function GalleryClient({ initialItems, initialHasMore }: Props) {
     };
 
     const handleLoginRequired = () => {
-        setShowLoginModal(true);
+        router.push('?login=true');
     };
 
     return (
@@ -116,16 +102,11 @@ export default function GalleryClient({ initialItems, initialHasMore }: Props) {
             >
                 <GalleryGrid
                     items={items}
-                    isLoggedIn={isLoggedIn}
+                    isLoggedIn={isAuthenticated}
                     onBookmarkToggle={handleBookmarkToggle}
                     onLoginRequired={handleLoginRequired}
                 />
             </GalleryPanel>
-
-            <LoginModal
-                isOpen={showLoginModal}
-                onClose={() => setShowLoginModal(false)}
-            />
         </>
     );
 }

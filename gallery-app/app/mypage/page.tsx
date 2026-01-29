@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getMyOverview, MyOverview } from "@/lib/api/myApi";
-import FloatingMenuButton from "@/components/kids/FloatingMenuButton";
 import styles from "./MyPage.module.css";
 
 export default function MyPage() {
@@ -106,8 +105,6 @@ export default function MyPage() {
                     </div>
                 </div>
             </div>
-
-            <FloatingMenuButton />
         </div>
     );
 }
