@@ -45,7 +45,7 @@ export default function Header() {
             {/* Logo - Centered */}
             <a href="/" className="h-12 cursor-pointer flex items-center justify-center">
                 <Image
-                    src="/gallery/logo.png"
+                    src="/logo.png"
                     alt="BRICKERS"
                     width={160}
                     height={48}
