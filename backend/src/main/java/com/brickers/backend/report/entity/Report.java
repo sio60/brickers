@@ -25,7 +25,7 @@ public class Report {
     private String reporterId;
 
     // 신고 대상 (타입: USER, JOB, GALLERY, COMMENT, etc.)
-    private String targetType;
+    private ReportTargetType targetType;
     private String targetId;
 
     // 신고 사유

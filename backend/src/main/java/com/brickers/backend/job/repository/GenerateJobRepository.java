@@ -7,16 +7,25 @@ import java.time.LocalDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import com.brickers.backend.job.entity.JobStatus;
 
 public interface GenerateJobRepository extends MongoRepository<GenerateJobEntity, String> {
 
+    // ✅ 삭제되지 않은 작업만 조회 (사용자 마이페이지용)
+    Page<GenerateJobEntity> findByUserIdAndDeletedFalseOrderByCreatedAtDesc(String userId, Pageable pageable);
+
+    // 기존 메소드 (관리자용 - 삭제된 것도 포함)
     Page<GenerateJobEntity> findByUserIdOrderByCreatedAtDesc(String userId, Pageable pageable);
+
+    // ✅ 삭제되지 않은 작업 수
+    long countByUserIdAndDeletedFalse(String userId);
 
     long countByUserId(String userId);
 
     // 완료된 작업 수
     long countByUserIdAndStatus(String userId, JobStatus status);
+
+    // ✅ 삭제되지 않은 작업 중 완료된 작업 수
+    long countByUserIdAndStatusAndDeletedFalse(String userId, JobStatus status);
 
     // [New] 전체 통계용
     long countByStatus(JobStatus status);

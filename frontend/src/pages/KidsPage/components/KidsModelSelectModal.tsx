@@ -17,7 +17,7 @@ type Props = {
 export default function KidsModelSelectModal({ open, onClose, onSelect, items }: Props) {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -29,20 +29,9 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
   const [step, setStep] = useState<'select' | 'preview'>('select');
 
   // 업그레이드 및 로그인 관련 상태
-  const [isPro, setIsPro] = useState(false);
+  const isPro = user?.membershipPlan === "PRO";
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
-
-  // Pro 상태 체크 (마운트 시 + 스토리지 변경 시)
-  useEffect(() => {
-    const checkPro = () => {
-      setIsPro(localStorage.getItem("isPro") === "true");
-    };
-    checkPro();
-
-    window.addEventListener("storage", checkPro);
-    return () => window.removeEventListener("storage", checkPro);
-  }, []);
 
   // 모달 닫힐 때 초기화
   useEffect(() => {

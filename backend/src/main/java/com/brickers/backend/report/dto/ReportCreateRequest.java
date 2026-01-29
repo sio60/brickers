@@ -1,14 +1,18 @@
 package com.brickers.backend.report.dto;
 
 import com.brickers.backend.report.entity.ReportReason;
-import jakarta.validation.constraints.NotBlank;
+import com.brickers.backend.report.entity.ReportTargetType;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
 public class ReportCreateRequest {
-    @NotBlank
-    private String targetType; // USER, POST, etc
+
+    // ✅ String → Enum
+    @NotNull
+    private ReportTargetType targetType;
+
     @NotBlank
     private String targetId;
 

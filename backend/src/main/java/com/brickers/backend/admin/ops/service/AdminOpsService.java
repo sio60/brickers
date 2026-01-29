@@ -23,18 +23,19 @@ public class AdminOpsService {
 
     public Map<String, Object> getQueueStatus() {
         Map<String, Object> status = new HashMap<>();
-        // Mock logic preserved as per original verification plan, utilizing real counts
-        status.put("activeWorkers", "Unknown (Worker metrics not connected)");
-        status.put("pendingJobs", jobRepository.countByStatus(JobStatus.QUEUED));
-        status.put("runningJobs", jobRepository.countByStatus(JobStatus.RUNNING));
 
-        // Example logic for failed in 24h:
-        // status.put("failedJobs24h",
-        // jobRepository.countByStatusAndUpdatedAtAfter(JobStatus.FAILED,
-        // LocalDateTime.now().minusHours(24)));
-        // Assuming we added the repo method
+        // ✅ 실제 데이터 조회
+        long pendingJobs = jobRepository.countByStatus(JobStatus.QUEUED);
+        long runningJobs = jobRepository.countByStatus(JobStatus.RUNNING);
+        long failedJobs24h = jobRepository.countByStatusAndUpdatedAtAfter(
+                JobStatus.FAILED, LocalDateTime.now().minusHours(24));
 
+        status.put("activeWorkers", runningJobs > 0 ? runningJobs + " 작업 실행 중" : "대기 중");
+        status.put("pendingJobs", pendingJobs);
+        status.put("runningJobs", runningJobs);
+        status.put("failedJobs24h", failedJobs24h);
         status.put("lastUpdated", LocalDateTime.now());
+
         return status;
     }
 
