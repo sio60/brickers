@@ -27,7 +27,7 @@ public class GooglePlayValidator {
 
     /**
      * 구매 토큰 검증
-     * 
+     *
      * @param purchaseToken 프론트엔드에서 전달받은 토큰
      * @param productId     상품 ID
      * @return 검증 결과 및 기간 정보
