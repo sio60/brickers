@@ -10,13 +10,12 @@
 }
 
 .center {
-    z-index: 10;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    text-align: center;
-    max-width: 600px;
+    z-index: 10;
+    width: 100%;
+    max-width: 800px;
     padding: 20px;
 }
 
@@ -25,58 +24,43 @@
     color: #666;
     margin-bottom: 8px;
     font-family: monospace;
-}
-
-.loadingBar {
-    width: 300px;
-    height: 8px;
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 16px;
-}
-
-.loadingProgress {
-    height: 100%;
-    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-    transition: width 0.3s ease;
-}
-
-.loadingText {
-    font-size: 18px;
-    color: #333;
-    font-weight: 600;
+    text-align: center;
 }
 
 .resultTitle {
     font-family: 'KblJumpCondensed', sans-serif;
     font-size: 48px;
     color: #000;
-    margin-bottom: 24px;
+    margin-bottom: 30px;
+    text-align: center;
 }
 
 .resultCard {
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 20px;
-    padding: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    margin-bottom: 24px;
+    width: 100%;
+    max-width: 600px;
+    aspect-ratio: 1;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    border: 3px solid #000;
+    border-radius: 24px;
+    overflow: hidden;
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
 }
 
 .viewer3d {
-    width: 400px;
-    height: 400px;
-    background: #f8f9fa;
-    border-radius: 12px;
-    overflow: hidden;
+    flex: 1;
+    width: 100%;
+    height: 100%;
 }
 
 .nextBtn {
     background: #000;
     color: #fff;
     font-family: 'KblJumpCondensed', sans-serif;
-    font-size: 24px;
-    padding: 14px 40px;
+    font-size: 28px;
+    padding: 12px 60px;
     border-radius: 50px;
     border: none;
     cursor: pointer;
@@ -89,12 +73,13 @@
 }
 
 .error {
-    padding: 24px;
     background: rgba(255, 255, 255, 0.9);
+    padding: 24px;
     border-radius: 16px;
-    color: #333;
+    border: 2px solid #ff4d4f;
     text-align: center;
-    white-space: pre-line;
+    color: #000;
+    max-width: 400px;
 }
 
 .toast {
@@ -110,15 +95,4 @@
     font-size: 16px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
-}
-
-@media (max-width: 768px) {
-    .viewer3d {
-        width: 300px;
-        height: 300px;
-    }
-
-    .resultTitle {
-        font-size: 32px;
-    }
 }
