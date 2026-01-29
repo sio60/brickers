@@ -55,33 +55,35 @@ body {
 
 /* Button styles */
 .btn-primary {
-    background: #000000;
-    color: #ffffff;
-    border: 2px solid #000000;
+    background: #ffffff;
+    color: #000000;
+    border: 3px solid #000000;
     border-radius: 12px;
     padding: 12px 24px;
-    font-weight: 600;
+    font-weight: 700;
     transition: all 0.2s ease;
 }
 
 .btn-primary:hover {
-    background: #333333;
-    transform: translateY(-1px);
+    background: #000000;
+    color: #ffffff;
+    transform: translateY(-2px);
 }
 
 .btn-outline {
     background: #ffffff;
     color: #000000;
-    border: 2px solid #000000;
+    border: 3px solid #000000;
     border-radius: 12px;
     padding: 12px 24px;
-    font-weight: 600;
+    font-weight: 700;
     transition: all 0.2s ease;
 }
 
 .btn-outline:hover {
     background: #000000;
     color: #ffffff;
+    transform: translateY(-2px);
 }
 
 /* Tab styles */
