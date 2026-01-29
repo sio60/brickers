@@ -21,9 +21,21 @@ export default function LoginModal({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   const saveLastPage = () => {
-    // ✅ 로그인 버튼 누른 “현재 페이지” 저장 (로그인 성공 후 복귀 용도)
-    const lastPage =
-      window.location.pathname + window.location.search + window.location.hash;
+    // ✅ returnUrl 파라미터가 있으면 그걸 사용 (갤러리에서 로그인 시)
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnUrl = urlParams.get('returnUrl');
+
+    // returnUrl이 있으면 사용, 없으면 현재 페이지 (login 파라미터는 제외)
+    let lastPage: string;
+    if (returnUrl) {
+      lastPage = returnUrl;
+    } else {
+      // login 파라미터 제거한 현재 URL
+      urlParams.delete('login');
+      const cleanSearch = urlParams.toString();
+      lastPage = window.location.pathname + (cleanSearch ? '?' + cleanSearch : '') + window.location.hash;
+    }
+
     sessionStorage.setItem("lastPage", lastPage);
   };
 
