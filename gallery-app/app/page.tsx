@@ -3,12 +3,16 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginModal from "@/components/common/LoginModal";
 import KidsModelSelectModal from "@/components/kids/KidsModelSelectModal";
-import styles from "./KidsAgeSelection.module.css";
+import './KidsAgeSelection.css';
 
+// SSR 제외 컴포넌트
+const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
+const FloatingMenuButton = dynamic(() => import("@/components/kids/FloatingMenuButton"), { ssr: false });
 
 type AgeGroup = "4-5" | "6-7" | "8-10" | null;
 
@@ -74,7 +78,6 @@ function KidsAgeSelectionContent() {
         const age = modalAge || "4-5";
 
         if (file) {
-            // 파일을 Data URL로 변환하여 sessionStorage에 저장 (KidsPage에서 복원 가능하도록)
             const reader = new FileReader();
             reader.onload = () => {
                 const dataUrl = reader.result as string;
@@ -105,40 +108,41 @@ function KidsAgeSelectionContent() {
     };
 
     return (
-        <div className={styles.container}>
-            <h1 className={styles.title}>{t.kids.title}</h1>
+        <div className="kidsAgeSelection">
+            <Background3D entryDirection="top" />
+            <h1 className="kidsAgeSelection__title">{t.kids.title}</h1>
 
-            <div className={styles.buttons}>
+            <div className="kidsAgeSelection__buttons">
                 <button
-                    className={`${styles.ageBtn} ${selectedAge === "4-5" ? styles.active : ""}`}
+                    className={`kidsAgeBtn ${selectedAge === "4-5" ? "active" : ""}`}
                     onClick={() => handleSelect("4-5")}
                     type="button"
                 >
-                    <Image src="/35.png" alt="4-5 years" width={80} height={80} className={styles.img} />
-                    <div className={styles.label}>{t.kids.level.replace("{lv}", "1")}</div>
+                    <Image src="/35.png" alt="4-5 years" width={80} height={80} className="kidsAgeBtn__img" />
+                    <div className="kidsAgeBtn__label font-en">{t.kids.level.replace("{lv}", "1")}</div>
                 </button>
 
                 <button
-                    className={`${styles.ageBtn} ${selectedAge === "6-7" ? styles.active : ""}`}
+                    className={`kidsAgeBtn ${selectedAge === "6-7" ? "active" : ""}`}
                     onClick={() => handleSelect("6-7")}
                     type="button"
                 >
-                    <Image src="/67.png" alt="6-7 years" width={80} height={80} className={styles.img} />
-                    <div className={styles.label}>{t.kids.level.replace("{lv}", "2")}</div>
+                    <Image src="/67.png" alt="6-7 years" width={80} height={80} className="kidsAgeBtn__img" />
+                    <div className="kidsAgeBtn__label font-en">{t.kids.level.replace("{lv}", "2")}</div>
                 </button>
 
                 <button
-                    className={`${styles.ageBtn} ${selectedAge === "8-10" ? styles.active : ""}`}
+                    className={`kidsAgeBtn ${selectedAge === "8-10" ? "active" : ""}`}
                     onClick={() => handleSelect("8-10")}
                     type="button"
                 >
-                    <Image src="/810.png" alt="8-10 years" width={80} height={80} className={styles.img} />
-                    <div className={styles.label}>{t.kids.level.replace("{lv}", "3")}</div>
+                    <Image src="/810.png" alt="8-10 years" width={80} height={80} className="kidsAgeBtn__img" />
+                    <div className="kidsAgeBtn__label font-en">{t.kids.level.replace("{lv}", "3")}</div>
                 </button>
             </div>
 
             <button
-                className={`${styles.continueBtn} ${selectedAge ? styles.visible : ""}`}
+                className={`kidsAgeSelection__continue ${selectedAge ? "visible" : ""}`}
                 onClick={handleContinue}
                 disabled={!selectedAge}
                 type="button"
@@ -159,6 +163,8 @@ function KidsAgeSelectionContent() {
                 isOpen={openLoginModal}
                 onClose={() => setOpenLoginModal(false)}
             />
+
+            <FloatingMenuButton />
         </div>
     );
 }
@@ -170,3 +176,4 @@ export default function KidsAgeSelection() {
         </Suspense>
     );
 }
+

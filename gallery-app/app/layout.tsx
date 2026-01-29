@@ -1,58 +1,38 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Bebas_Neue, Jua, M_PLUS_Rounded_1c } from 'next/font/google'
 import './globals.css'
-import Header from '../components/Header'
-import BackgroundBricks from '../components/BackgroundBricks'
 import { LanguageProvider } from '../contexts/LanguageContext'
 import { AuthProvider } from '../contexts/AuthContext'
+import LayoutContent from '../components/LayoutContent'
 
-const inter = Inter({ subsets: ['latin'] })
+const bebasNeue = Bebas_Neue({
+    weight: '400',
+    subsets: ['latin'],
+    variable: '--font-bebas'
+})
+
+const jua = Jua({
+    weight: '400',
+    subsets: ['latin'],
+    variable: '--font-jua'
+})
+
+const mPlusRounded = M_PLUS_Rounded_1c({
+    weight: ['400', '500', '700'],
+    subsets: ['latin'],
+    variable: '--font-m-plus'
+})
 
 export const metadata: Metadata = {
     title: {
-        default: 'Brickers - AI 레고 작품 생성',
-        template: '%s | Brickers',
+        default: 'BRICKERS | AI LEGO Generator',
+        template: '%s | BRICKERS'
     },
-    description: 'AI로 나만의 레고 작품을 쉽게 만들어보세요. Create your own LEGO creations with AI.',
-    metadataBase: new URL('https://brickers.shop'),
-    alternates: {
-        canonical: '/',
-    },
-    openGraph: {
-        siteName: 'Brickers',
-        type: 'website',
-        locale: 'ko_KR',
-        url: 'https://brickers.shop',
-        images: [
-            {
-                url: '/og-image.png',
-                width: 1200,
-                height: 630,
-                alt: 'Brickers - AI 레고 작품 생성',
-            },
-        ],
-    },
-    twitter: {
-        card: 'summary_large_image',
-        title: 'Brickers - AI 레고 작품 생성',
-        description: 'AI로 나만의 레고 작품을 쉽게 만들어보세요.',
-        images: ['/og-image.png'],
-    },
-    keywords: ['레고', 'LEGO', 'AI', '브릭', '갤러리', '3D', '조립', 'Brickers', '키즈'],
-    authors: [{ name: 'Brickers' }],
-    creator: 'Brickers',
-    publisher: 'Brickers',
-    robots: {
-        index: true,
-        follow: true,
-        googleBot: {
-            index: true,
-            follow: true,
-            'max-video-preview': -1,
-            'max-image-preview': 'large',
-            'max-snippet': -1,
-        },
-    },
+    description: 'Transform your ideas into LEGO models with AI',
+    other: {
+        'preconnect': 'https://fonts.googleapis.com',
+        'preconnect-link': 'https://fonts.gstatic.com',
+    }
 }
 
 export default function RootLayout({
@@ -61,15 +41,19 @@ export default function RootLayout({
     children: React.ReactNode
 }) {
     return (
-        <html lang="ko">
-            <body className={inter.className}>
+        <html lang="en" className={`${bebasNeue.variable} ${jua.variable} ${mPlusRounded.variable}`}>
+            <head>
+                <link
+                    href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@400;500;700&display=swap"
+                    rel="stylesheet"
+                />
+            </head>
+            <body>
                 <LanguageProvider>
                     <AuthProvider>
-                        <BackgroundBricks />
-                        <Header />
-                        <main className="pt-[72px] min-h-screen relative">
+                        <LayoutContent>
                             {children}
-                        </main>
+                        </LayoutContent>
                     </AuthProvider>
                 </LanguageProvider>
             </body>
