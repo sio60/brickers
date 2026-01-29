@@ -43,6 +43,16 @@ export default function Header() {
         />
 
         <div className="header__actions">
+          {/* 갤러리 버튼 (로그인 시에만 표시) */}
+          {!isLoading && isAuthenticated && (
+            <button
+              className="header__login-btn"
+              onClick={() => navigate("/gallery")}
+            >
+              {t.header.gallery}
+            </button>
+          )}
+
           {/* ✅ 로그인하고 && 아직 업그레이드 안했을 때만 UPGRADE 표시 */}
           {!isLoading && isAuthenticated && !isPro && (
             <button

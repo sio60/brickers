@@ -210,6 +210,7 @@ export const ja = {
         upgrade: "アップグレード",
         login: "ログイン",
         logout: "ログアウト",
+        gallery: "ギャラリー",
         logoAlt: "ブリッカーズロゴ"
     },
     auth: {
