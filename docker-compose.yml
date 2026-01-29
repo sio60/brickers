@@ -68,9 +68,7 @@ services:
       - brickers-network
 
   gallery-frontend:
-    build:
-      context: ./gallery-app
-      dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME}/brickers-gallery:latest
     container_name: brickers-gallery
     ports:
       - "3000:3000"
