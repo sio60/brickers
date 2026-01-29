@@ -62,6 +62,18 @@ services:
     networks:
       - brickers-network
 
+  gallery-frontend:
+    build:
+      context: ./gallery-app
+      dockerfile: Dockerfile
+    container_name: brickers-gallery
+    ports:
+      - "3000:3000"
+    environment:
+      - TZ=Asia/Seoul
+    networks:
+      - brickers-network
+
   frontend:
     image: ${DOCKER_USERNAME}/brickers-frontend:latest
     container_name: brickers-frontend

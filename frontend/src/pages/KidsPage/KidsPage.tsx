@@ -1,4 +1,5 @@
 import "./KidsPage.css";
+import SEO from "../../components/SEO";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Background3D from "../MainPage/components/Background3D";
@@ -244,6 +245,11 @@ export default function KidsPage() {
 
   return (
     <div className="kidsPage">
+      <SEO
+        title="Create LEGO"
+        description="Upload your image and create your own LEGO model with AI."
+        keywords="create, upload, image to lego, ai generation"
+      />
       <Background3D entryDirection="float" />
 
       <div className="kidsPage__center">

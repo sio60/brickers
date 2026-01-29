@@ -10,6 +10,7 @@ import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawCondit
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 import { registerToGallery } from "../../api/myApi";
 import "./KidsStepPage.css";
+import SEO from "../../components/SEO";
 
 const CDN_BASE =
   "https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/";
@@ -118,7 +119,7 @@ function LdrModel({
 
           // Primitive 패턴: n-n*.dat (예: 4-4edge, 1-4cyli, stug-*, rect*, box* 등)
           const isPrimitive = /^\d+-\d+/.test(filename) ||
-                              /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud)/.test(filename);
+            /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud)/.test(filename);
 
           // Subpart 패턴: 파트번호 + s + 숫자.dat (예: 3003s02.dat)
           const isSubpart = /^\d+s\d+\.dat$/.test(filename);
@@ -417,6 +418,11 @@ export default function KidsStepPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column" }}>
+      <SEO
+        title="Building Instructions"
+        description="Follow step-by-step instructions to build your LEGO model."
+        keywords="lego, building, instructions, step by step, 3d view"
+      />
       {/* 상단바 */}
       <div style={{ height: 72, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", borderBottom: "1px solid rgba(0,0,0,0.06)", background: "rgba(255,255,255,0.9)", backdropFilter: "blur(6px)" }}>
         <button onClick={() => nav(-1)} style={{ padding: "10px 14px", borderRadius: 999, border: "1px solid rgba(0,0,0,0.12)", background: "#fff", fontWeight: 800, cursor: "pointer" }}>

@@ -43,15 +43,14 @@ export default function Header() {
         />
 
         <div className="header__actions">
-          {/* 갤러리 버튼 (로그인 시에만 표시) */}
-          {!isLoading && isAuthenticated && (
-            <button
-              className="header__login-btn"
-              onClick={() => navigate("/gallery")}
-            >
-              {t.header.gallery}
-            </button>
-          )}
+          {/* 갤러리 버튼 (항상 표시: Next.js 갤러리/SPA 갤러리 접근) */}
+          <a
+            href="/gallery"
+            className="header__login-btn"
+            style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            {t.header.gallery}
+          </a>
 
           {/* ✅ 로그인하고 && 아직 업그레이드 안했을 때만 UPGRADE 표시 */}
           {!isLoading && isAuthenticated && !isPro && (
