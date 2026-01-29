@@ -44,12 +44,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (refreshInFlight.current) return refreshInFlight.current;
 
         refreshInFlight.current = (async () => {
+            console.debug("[AuthContext] Refreshing token...");
             setIsLoading(true);
             try {
                 const r = await fetch(`${API_BASE}/api/auth/refresh`, {
                     method: "POST",
                     credentials: "include",
                 });
+                console.debug("[AuthContext] Refresh response:", r.status);
 
                 if (!r.ok) {
                     setAccessToken(null);
@@ -61,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const newAccess = json?.accessToken as string | undefined;
 
                 if (!newAccess) {
+                    console.warn("[AuthContext] No access token in refresh response");
                     setAccessToken(null);
                     setUser(null);
                     return null;
@@ -73,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     headers: { Authorization: `Bearer ${newAccess}` },
                     credentials: "include",
                 });
+                console.debug("[AuthContext] /me response:", meRes.status);
 
                 if (!meRes.ok) {
                     setAccessToken(null);
@@ -81,12 +85,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 }
 
                 const me = await meRes.json().catch(() => null);
-                // 백엔드 응답이 { user: ... } 일 수도, 그냥 user 객체일 수도 있어서 둘 다 처리
-                setUser((me as any)?.user ?? me);
+                const userData = (me as any)?.user ?? me;
+                console.debug("[AuthContext] User loaded:", userData?.nickname || userData?.email);
+                setUser(userData);
 
                 return newAccess;
             } catch (e) {
-                console.error("refresh 실패:", e);
+                console.error("[AuthContext] refresh 실패:", e);
                 setAccessToken(null);
                 setUser(null);
                 return null;
@@ -101,6 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // OAuth2 로그인 시작
     const login = (provider: Provider) => {
+        console.debug("[AuthContext] Starting login with provider:", provider);
         const lastPage = window.location.pathname + window.location.search;
         sessionStorage.setItem("lastPage", lastPage);
         window.location.href = `${API_BASE}/auth/${provider}`;
@@ -108,6 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // 로그아웃 (refresh 무효화 + 쿠키 삭제는 서버가)
     const logout = async () => {
+        console.debug("[AuthContext] Logging out...");
         try {
             await fetch(`${API_BASE}/api/auth/logout`, {
                 method: "POST",
@@ -115,8 +122,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
             });
         } catch (e) {
-            console.error("logout 실패:", e);
+            console.error("[AuthContext] logout API 실패:", e);
         } finally {
+            console.debug("[AuthContext] Clearing local state");
             setAccessToken(null);
             setUser(null);
             sessionStorage.clear();

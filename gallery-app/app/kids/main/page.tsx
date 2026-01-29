@@ -11,7 +11,7 @@ import './KidsPage.css';
 // SSR 제외
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
 const KidsLdrPreview = dynamic(() => import("@/components/kids/KidsLdrPreview"), { ssr: false });
-const FloatingMenuButton = dynamic(() => import("@/components/kids/FloatingMenuButton"), { ssr: false });
+const KidsModelSelectModal = dynamic(() => import("@/components/kids/KidsModelSelectModal"), { ssr: false });
 
 function KidsPageContent() {
     const router = useRouter();
@@ -87,9 +87,11 @@ function KidsPageContent() {
 
             try {
                 setDebugLog(t.kids.generate.uploadPrepare);
+                console.log("[KidsPage] Requesting presign URL for:", rawFile.name);
                 const presign = await getPresignUrl(rawFile.type, rawFile.name);
 
                 setDebugLog(t.kids.generate.uploading);
+                console.log("[KidsPage] Uploading to S3:", presign.uploadUrl);
                 const uploadRes = await fetch(presign.uploadUrl, {
                     method: "PUT",
                     body: rawFile,
@@ -105,6 +107,7 @@ function KidsPageContent() {
                 const fileTitle = rawFile.name.replace(/\.[^/.]+$/, "");
 
                 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+                console.log("[KidsPage] Starting generation job...");
                 const startRes = await fetch(`${API_BASE}/api/kids/generate`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -129,6 +132,7 @@ function KidsPageContent() {
 
                 if (!alive) return;
                 setJobId(jid);
+                console.log("[KidsPage] Job created:", jid);
                 setDebugLog(`${t.kids.generate.jobCreated} [${jid}]`);
 
                 let finalData: any = null;
@@ -136,12 +140,14 @@ function KidsPageContent() {
                     if (!alive) return;
                     await sleep(POLL_INTERVAL);
 
+                    console.log(`[KidsPage] Polling job ${jid} (attempt ${i}/${maxAttempts})...`);
                     const statusRes = await fetch(`${API_BASE}/api/kids/jobs/${jid}`, {
                         credentials: "include",
                         signal: abort.signal,
                     });
 
                     if (!statusRes.ok) {
+                        console.warn("[KidsPage] Polling failed status:", statusRes.status);
                         setDebugLog(`${t.kids.generate.serverDelay} (${statusRes.status})`);
                         continue;
                     }
@@ -149,6 +155,7 @@ function KidsPageContent() {
                     const statusData = await statusRes.json();
                     const stage = statusData.stage || statusData.status || "QUEUED";
                     setCurrentStage(stage);
+                    console.log("[KidsPage] Job status:", statusData.status, "Stage:", stage);
 
                     let warningMsg = "";
                     if (statusData.status === "RUNNING" && statusData.stageUpdatedAt) {
@@ -164,10 +171,12 @@ function KidsPageContent() {
                     setDebugLog(`${t.kids.generate.inProgress} [${stage}] (${i}/${maxAttempts})${warningMsg}`);
 
                     if (statusData.status === "FAILED") {
+                        console.error("[KidsPage] Job failed:", statusData.errorMessage);
                         throw new Error(statusData.errorMessage || "Generation failed");
                     }
 
                     if (statusData.status === "DONE") {
+                        console.log("[KidsPage] Job completed!");
                         finalData = statusData;
                         setShowToast(true);
                         setTimeout(() => setShowToast(false), 5000);
@@ -273,8 +282,6 @@ function KidsPageContent() {
                     </div>
                 )}
             </div>
-
-            <FloatingMenuButton />
         </div>
     );
 }
