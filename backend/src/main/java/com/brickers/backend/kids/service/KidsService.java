@@ -5,6 +5,11 @@ import com.brickers.backend.job.entity.JobStage;
 import com.brickers.backend.job.entity.JobStatus;
 import com.brickers.backend.job.entity.KidsLevel;
 import com.brickers.backend.job.repository.GenerateJobRepository;
+import com.brickers.backend.upload_s3.service.StorageService;
+import com.brickers.backend.user.entity.MembershipPlan;
+import com.brickers.backend.user.entity.User;
+import com.brickers.backend.user.repository.UserRepository;
+
 import com.brickers.backend.sqs.service.SqsProducerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +25,9 @@ import java.util.Map;
 public class KidsService {
 
     private final GenerateJobRepository generateJobRepository;
+    private final StorageService storageService;
+    private final KidsAsyncWorker kidsAsyncWorker;
+    private final UserRepository userRepository;
     private final SqsProducerService sqsProducerService;
 
     @Value("${aws.sqs.enabled:false}")
@@ -39,7 +47,7 @@ public class KidsService {
                 .level(ageToKidsLevel(age))
                 .status(JobStatus.QUEUED)
                 .stage(JobStage.THREE_D_PREVIEW)
-                .sourceImageUrl(sourceImageUrl)  // Frontend가 업로드한 S3 URL
+                .sourceImageUrl(sourceImageUrl) // Frontend가 업로드한 S3 URL
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .stageUpdatedAt(LocalDateTime.now())
@@ -58,8 +66,7 @@ public class KidsService {
                     userId,
                     sourceImageUrl,
                     age,
-                    budget
-            );
+                    budget);
         } else {
             // ⚠️ 기존 방식 (직접 호출) - 개발/테스트용
             log.info("[Brickers] 직접 호출 모드 (SQS 비활성화) | jobId={}", job.getId());
@@ -107,7 +114,8 @@ public class KidsService {
     }
 
     private KidsLevel ageToKidsLevel(String age) {
-        if (age == null) return KidsLevel.LEVEL_1;
+        if (age == null)
+            return KidsLevel.LEVEL_1;
         return switch (age.toLowerCase()) {
             case "3-5", "35" -> KidsLevel.LEVEL_1;
             case "6-7", "67" -> KidsLevel.LEVEL_2;

@@ -23,7 +23,7 @@ public class SqsProducerService {
             .registerModule(new JavaTimeModule());
 
     @Value("${aws.sqs.queue.request-url}")
-    private String requestQueueUrl;  // Backend → AI (REQUEST 전송용)
+    private String queueUrl;
 
     /**
      * 작업 요청 메시지 전송 (Backend → AI Server)
@@ -34,7 +34,7 @@ public class SqsProducerService {
         log.info("   - userId: {}", userId);
         log.info("   - sourceImageUrl: {}", sourceImageUrl);
         log.info("   - age: {}, budget: {}", age, budget);
-        log.info("   - queueUrl: {}", requestQueueUrl);
+        log.info("   - queueUrl: {}", queueUrl);
 
         SqsMessage message = SqsMessage.builder()
                 .type(SqsMessage.MessageType.REQUEST)
@@ -57,7 +57,7 @@ public class SqsProducerService {
             String messageBody = objectMapper.writeValueAsString(message);
 
             SendMessageRequest request = SendMessageRequest.builder()
-                    .queueUrl(requestQueueUrl)
+                    .queueUrl(queueUrl)
                     .messageBody(messageBody)
                     .build();
 

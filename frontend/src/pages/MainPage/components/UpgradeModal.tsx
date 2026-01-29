@@ -72,8 +72,6 @@ export default function UpgradeModal({ isOpen, onClose }: Props) {
                     });
 
                     if (res.ok) {
-                        localStorage.setItem("isPro", "true");
-                        window.dispatchEvent(new Event("storage"));
                         alert(t.upgradeModal.alertSuccess);
                         onClose();
                         window.location.reload(); // 새로고침하여 상태 반영

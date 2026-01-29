@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../../../assets/logo.png";
 import "./Header.css";
@@ -11,25 +11,15 @@ import AuthLogout from "../../../pages/Auth/AuthLogout";
 
 export default function Header() {
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading, logout } = useAuth();
+  const { isAuthenticated, isLoading, logout, user } = useAuth();
   const { t } = useLanguage();
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  // 업그레이드 여부 확인
-  const [isPro, setIsPro] = useState(false);
-
-  useEffect(() => {
-    const checkPro = () => {
-      setIsPro(localStorage.getItem("isPro") === "true");
-    };
-    checkPro();
-
-    window.addEventListener("storage", checkPro);
-    return () => window.removeEventListener("storage", checkPro);
-  }, []);
+  // 업그레이드 여부 확인 (AuthContext의 user 정보를 기반으로 판단)
+  const isPro = user?.membershipPlan === "PRO";
 
   const handleLogoutClick = () => {
     setIsLoggingOut(true);
