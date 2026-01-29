@@ -224,12 +224,11 @@ export default function KidsStepPage() {
     });
   };
 
-  // ✅ 1) url 없으면 jobId로 백엔드에서 ldrUrl 가져오기
+  // ✅ 1) jobId로 백엔드에서 Job 정보 가져오기 (ldrUrl, thumbnailUrl)
   useEffect(() => {
     let alive = true;
 
     (async () => {
-      if (ldrUrl) return; // 이미 있으면 패스
       if (!jobId) return;
 
       try {
@@ -237,21 +236,24 @@ export default function KidsStepPage() {
         if (!res.ok) throw new Error(`job fetch failed: ${res.status}`);
         const data = await res.json();
 
-        const u = data.ldrUrl || data.ldr_url || "";
         if (alive) {
-          setLdrUrl(u);
-          // 썸네일 URL 저장 (완전 원본 이미지 사용)
+          // ldrUrl이 없으면 Job에서 가져오기
+          if (!ldrUrl) {
+            const u = data.ldrUrl || data.ldr_url || "";
+            setLdrUrl(u);
+          }
+          // 썸네일 URL 저장 (완전 원본 이미지 사용) - 항상 설정
           setJobThumbnailUrl(data.sourceImageUrl || null);
         }
       } catch (e) {
-        console.error("[KidsStepPage] failed to resolve ldrUrl by jobId:", e);
+        console.error("[KidsStepPage] failed to resolve job info by jobId:", e);
       }
     })();
 
     return () => {
       alive = false;
     };
-  }, [jobId, ldrUrl]);
+  }, [jobId]); // ldrUrl 의존성 제거 - jobId 있으면 항상 fetch해서 thumbnailUrl 가져옴
 
   // ✅ 2) ldrUrl로 step blob 생성
   useEffect(() => {
