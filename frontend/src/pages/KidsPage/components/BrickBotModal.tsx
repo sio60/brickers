@@ -63,7 +63,12 @@ const CHAT_TRANSLATIONS = {
             gallery: "🖼️ 갤러리 구경하기",
             mypage: "👤 내 정보 보기"
         },
-        error: "죄송해요, 잠시 문제가 생겼어요. 다시 시도해주세요!"
+        error: "죄송해요, 잠시 문제가 생겼어요. 다시 시도해주세요!",
+        loginRequired: "로그인이 필요한 서비스입니다.",
+        loadFailed: "데이터를 불러오는데 실패했습니다.",
+        inputRequired: "입력 내용을 확인해주세요.",
+        submitFailed: "접수에 실패했습니다.",
+        selectRequired: "항목을 선택해주세요."
     },
     en: {
         welcome: "Hello! How can I help you today? 🤖",
@@ -112,7 +117,12 @@ const CHAT_TRANSLATIONS = {
             gallery: "🖼️ Visit Gallery",
             mypage: "👤 My Page"
         },
-        error: "Sorry, something went wrong. Please try again!"
+        error: "Sorry, something went wrong. Please try again!",
+        loginRequired: "Login required.",
+        loadFailed: "Failed to load data.",
+        inputRequired: "Please check your input.",
+        submitFailed: "Submission failed.",
+        selectRequired: "Please select an item."
     },
     ja: {
         welcome: "こんにちは！何かお手伝いしましょうか？ 🤖",
@@ -161,7 +171,12 @@ const CHAT_TRANSLATIONS = {
             gallery: "🖼️ ギャラリーを見る",
             mypage: "👤 マイページ"
         },
-        error: "申し訳ありません。問題が発生しました。もう一度お試しください！"
+        error: "申し訳ありません。問題が発生しました。もう一度お試しください！",
+        loginRequired: "ログインが必要です。",
+        loadFailed: "データの読み込みに失敗しました。",
+        inputRequired: "入力内容を確認してください。",
+        submitFailed: "送信に失敗しました。",
+        selectRequired: "項目を選択してください。"
     }
 };
 
@@ -280,7 +295,7 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
         try {
             setIsLoading(true);
             if (!isAuthenticated) {
-                alert("로그인이 필요한 서비스입니다.");
+                alert(tChat.loginRequired);
                 setMode("CHAT");
                 return;
             }
@@ -289,7 +304,7 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                 const data = await res.json();
                 setRefundList(data.content || []);
             } else {
-                alert("결제 내역을 불러오는데 실패했습니다.");
+                alert(tChat.loadFailed);
                 setMode("CHAT");
             }
         } catch (e) {
@@ -342,10 +357,10 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
 
     // --- 폼 제출 핸들러 ---
     const submitInquiry = async () => {
-        if (!formTitle.trim() || !formContent.trim()) return alert("제목과 내용을 입력해주세요.");
+        if (!formTitle.trim() || !formContent.trim()) return alert(tChat.inputRequired);
         setIsSubmitting(true);
         if (!isAuthenticated) {
-            alert("로그인이 필요한 서비스입니다. 로그인 후 다시 시도해주세요.");
+            alert(tChat.loginRequired);
             setIsSubmitting(false);
             return;
         }
@@ -359,21 +374,20 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                 setMode("CHAT");
                 setMessages(prev => [...prev, { role: "bot", content: tChat.inquiry.confirm }]);
             } else {
-                const errorData = await res.json().catch(() => ({}));
-                alert(errorData.message || "문의 접수 실패 (로그인 상태를 확인해주세요)");
+                alert(tChat.submitFailed);
             }
         } catch (e) {
-            alert("오류가 발생했습니다.");
+            alert(tChat.error);
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const submitReport = async () => {
-        if (!formContent.trim()) return alert("신고 내용을 입력해주세요.");
+        if (!formContent.trim()) return alert(tChat.inputRequired);
         setIsSubmitting(true);
         if (!isAuthenticated) {
-            alert("로그인이 필요합니다.");
+            alert(tChat.loginRequired);
             setIsSubmitting(false);
             return;
         }
@@ -392,20 +406,20 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                 setMode("CHAT");
                 setMessages(prev => [...prev, { role: "bot", content: tChat.report.confirm }]);
             } else {
-                alert("신고 접수 실패");
+                alert(tChat.submitFailed);
             }
         } catch (e) {
-            alert("오류가 발생했습니다.");
+            alert(tChat.error);
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const submitRefund = async () => {
-        if (!selectedOrderId) return alert("환불할 내역을 선택해주세요.");
+        if (!selectedOrderId) return alert(tChat.selectRequired);
         setIsSubmitting(true);
         if (!isAuthenticated) {
-            alert("로그인이 필요합니다.");
+            alert(tChat.loginRequired);
             setIsSubmitting(false);
             return;
         }
@@ -418,10 +432,10 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                 setMode("CHAT");
                 setMessages(prev => [...prev, { role: "bot", content: tChat.refund.confirm }]);
             } else {
-                alert("환불 요청 실패");
+                alert(tChat.submitFailed);
             }
         } catch (e) {
-            alert("오류가 발생했습니다.");
+            alert(tChat.error);
         } finally {
             setIsSubmitting(false);
         }

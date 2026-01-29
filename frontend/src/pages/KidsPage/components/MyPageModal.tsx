@@ -69,7 +69,7 @@ export default function MyPageModal({ open, onClose }: Props) {
             const updated = await getMyOverview();
             setData(updated);
         } catch (err) {
-            alert("작업 재시도에 실패했습니다.");
+            alert(t.jobs.retryFail);
         }
     };
 
@@ -78,9 +78,9 @@ export default function MyPageModal({ open, onClose }: Props) {
             onClose();
             navigate(`/kids/steps?url=${encodeURIComponent(job.modelKey)}`);
         } else if (job.status === "RUNNING" || job.status === "QUEUED") {
-            alert("아직 생성 중입니다. 잠시만 기다려 주세요.");
+            alert(t.jobs.stillGenerating);
         } else if (job.status === "FAILED" || job.status === "CANCELED") {
-            if (confirm("생성에 실패했거나 중단된 작업입니다. 다시 시도하시겠습니까?")) {
+            if (confirm(t.jobs.retryConfirm)) {
                 handleRetry(job.id);
             }
         }
@@ -91,7 +91,7 @@ export default function MyPageModal({ open, onClose }: Props) {
             <div className="mypageModal" onClick={(e) => e.stopPropagation()}>
                 {/* 헤더 */}
                 <div className="mypageModal__header">
-                    <h2 className="mypageModal__title">내 작업 목록</h2>
+                    <h2 className="mypageModal__title">{t.jobs.title}</h2>
                     <button className="mypageModal__close" onClick={onClose}>✕</button>
                 </div>
 
@@ -157,7 +157,7 @@ export default function MyPageModal({ open, onClose }: Props) {
                                     />
                                 )}
                                 {activeMenu === "settings" && (
-                                    <div>Settings View (TBD)</div>
+                                    <div>{t.jobs.settingsTbd}</div>
                                 )}
                             </>
                         ) : null}

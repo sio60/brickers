@@ -61,7 +61,9 @@ export const ko = {
         saveBtn: "저장",
         saving: "저장 중...",
         alertSaved: "프로필이 수정되었습니다.",
-        alertFailed: "프로필 수정에 실패했습니다."
+        alertFailed: "프로필 수정에 실패했습니다.",
+        imageAlt: "프로필",
+        defaultNickname: "사용자"
     },
     membership: {
         title: "멤버십 정보",
@@ -82,13 +84,19 @@ export const ko = {
         retryFail: "작업 재시도에 실패했습니다.",
         modalError: "실패한 작업입니다: ",
         modalPending: "아직 생성 중이거나 3D 모델이 준비되지 않았습니다.",
-        modalNoData: "모델 데이터를 불러올 수 없습니다."
+        modalNoData: "모델 데이터를 불러올 수 없습니다.",
+        stillGenerating: "아직 생성 중입니다. 잠시만 기다려 주세요.",
+        retryConfirm: "생성에 실패했거나 중단된 작업입니다. 다시 시도하시겠습니까?",
+        settingsTbd: "설정 기능 준비 중"
     },
     settings: {
         title: "설정",
         notification: "알림 설정",
         language: "언어 설정",
-        changeBtn: "변경"
+        changeBtn: "변경",
+        langKo: "한국어",
+        langEn: "English",
+        langJa: "日本語"
     },
     delete: {
         title: "회원탈퇴",
@@ -139,12 +147,25 @@ export const ko = {
             complete: "생성이 완료되었습니다! 마이페이지에서 확인해주세요.",
             ready: "레고가 완성되었어요!",
             next: "다음으로 →",
-            error: "앗! 문제가 발생했어요.\n나중에 다시 시도해 주세요."
+            error: "앗! 문제가 발생했어요.\n나중에 다시 시도해 주세요.",
+            failed: "작업 실패",
+            starting: "작업 시작...",
+            uploadPrepare: "S3 업로드 준비 중...",
+            uploading: "이미지 업로드 중...",
+            creating2: "작업 생성 요청 중...",
+            jobCreated: "작업 생성 완료",
+            inProgress: "진행 중...",
+            loadingResult: "결과물 로딩 중...",
+            serverDelay: "서버 응답 지연 중...",
+            aiNoResponse: "AI 서버 응답 없음",
+            errorOccurred: "오류 발생"
         },
         modelSelect: {
             title: "브릭 생성하기",
             sub: "모델 선택 또는 이미지 업로드",
+            autoGenSub: "원하는 모델을 선택하면 자동으로 생성됩니다.",
             pick: "선택",
+            picked: "선택됨",
             uploadTitle: "이미지 업로드",
             uploadSub: "클릭하거나 파일을 여기로 드래그하세요",
             uploadHint: "JPG / PNG / WEBP",
@@ -157,6 +178,7 @@ export const ko = {
         },
         steps: {
             back: "뒤로",
+            noUrl: "스텝을 볼 URL이 없습니다.",
             title: "STEP {cur} / {total}",
             preview: "브릭 정보",
             loading: "스텝 로딩 중...",
@@ -171,8 +193,11 @@ export const ko = {
                 confirm: "등록하기",
                 cancel: "취소",
                 success: "갤러리에 등록되었습니다!",
-                fail: "갤러리 등록에 실패했습니다."
+                fail: "갤러리 등록에 실패했습니다.",
+                content: "키즈 모드에서 생성됨"
             },
+            glbNotFound: "서버에서 GLB 파일을 찾을 수 없습니다.",
+            glbDownloadFail: "GLB 파일 다운로드에 실패했습니다.",
             emptyGallery: "등록된 작품이 없습니다.",
             galleryTable: {
                 title: "제목",
@@ -214,6 +239,7 @@ export const ko = {
         error: "데이터를 불러오지 못했습니다.",
         unknownError: "알 수 없는 오류",
         noPreview: "미리보기 없음",
+        noImage: "이미지 없음",
         anonymous: "익명"
     },
     admin: {
@@ -228,8 +254,53 @@ export const ko = {
             dashboard: "대시보드",
             users: "사용자 관리",
             gallery: "갤러리 관리",
-            settings: "시스템 설정"
+            settings: "시스템 설정",
+            inquiries: "문의 관리",
+            reports: "신고 관리",
+            refunds: "환불 관리"
         },
-        accessDenied: "관리자 권한이 없습니다. (현재 권한: {role})"
+        accessDenied: "관리자 권한이 없습니다. (현재 권한: {role})",
+        inquiry: {
+            adminAnswer: "관리자 답변",
+            placeholder: "답변을 입력하세요...",
+            submit: "답변 등록",
+            success: "답변이 등록되었습니다.",
+            empty: "문의 내역이 없습니다.",
+            inputRequired: "답변 내용을 입력하세요."
+        },
+        report: {
+            resolve: "조치 승인",
+            reject: "반려",
+            placeholder: "조치 내용이나 반려 사유를 입력하세요...",
+            resolved: "조치가 완료되었습니다.",
+            rejected: "신고가 반려되었습니다.",
+            empty: "신고 내역이 없습니다.",
+            inputRequired: "조치 내용을 입력하세요.",
+            actionComplete: "조치 완료",
+            actionRejected: "신고 반려"
+        },
+        refund: {
+            approve: "승인",
+            empty: "환불 요청이 없습니다.",
+            amount: "금액",
+            inProgress: "기능 구현 중"
+        },
+        error: "오류가 발생했습니다.",
+        failed: "처리에 실패했습니다."
+    },
+    mypage: {
+        stats: {
+            jobs: "내 작업",
+            gallery: "내 갤러리",
+            joinedAt: "가입일"
+        },
+        bioPlaceholder: "자기소개를 입력해주세요!",
+        nicknamePlaceholder: "닉네임을 입력하세요",
+        bioInputPlaceholder: "자기소개를 입력하세요",
+        noTitle: "제목 없음",
+        payment: {
+            date: "결제일",
+            nextDate: "다음 결제일"
+        }
     }
 };

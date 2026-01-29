@@ -60,7 +60,9 @@ export const en = {
         saveBtn: "Save",
         saving: "Saving...",
         alertSaved: "Profile updated.",
-        alertFailed: "Failed to update profile."
+        alertFailed: "Failed to update profile.",
+        imageAlt: "Profile",
+        defaultNickname: "User"
     },
     membership: {
         title: "Membership Info",
@@ -81,13 +83,19 @@ export const en = {
         retryFail: "Failed to retry job.",
         modalError: "Job failed: ",
         modalPending: "Job is running or model not ready.",
-        modalNoData: "Model data not found."
+        modalNoData: "Model data not found.",
+        stillGenerating: "Still generating. Please wait.",
+        retryConfirm: "Job failed or was canceled. Would you like to retry?",
+        settingsTbd: "Settings coming soon"
     },
     settings: {
         title: "Settings",
         notification: "Notifications",
         language: "Language",
-        changeBtn: "Change"
+        changeBtn: "Change",
+        langKo: "한국어",
+        langEn: "English",
+        langJa: "日本語"
     },
     delete: {
         title: "Delete Account",
@@ -138,12 +146,25 @@ export const en = {
             complete: "Generation complete! Please check My Page.",
             ready: "Your Brick is Ready!",
             next: "NEXT →",
-            error: "Oops! Something went wrong.\nPlease try again later."
+            error: "Oops! Something went wrong.\nPlease try again later.",
+            failed: "Job Failed",
+            starting: "Starting job...",
+            uploadPrepare: "Preparing S3 upload...",
+            uploading: "Uploading image...",
+            creating2: "Creating job...",
+            jobCreated: "Job created",
+            inProgress: "In progress...",
+            loadingResult: "Loading result...",
+            serverDelay: "Server response delayed...",
+            aiNoResponse: "AI server not responding",
+            errorOccurred: "Error occurred"
         },
         modelSelect: {
             title: "Creating Brick",
             sub: "Select model or upload image",
+            autoGenSub: "Select a model to automatically generate.",
             pick: "Pick",
+            picked: "Picked",
             uploadTitle: "Upload Image",
             uploadSub: "Click or drag files here",
             uploadHint: "JPG / PNG / WEBP",
@@ -156,6 +177,7 @@ export const en = {
         },
         steps: {
             back: "Back",
+            noUrl: "No URL available for steps.",
             title: "STEP {cur} / {total}",
             preview: "Brick Preview",
             loading: "Loading steps...",
@@ -170,8 +192,11 @@ export const en = {
                 confirm: "Post",
                 cancel: "Cancel",
                 success: "Posted to gallery successfully!",
-                fail: "Failed to post to gallery."
+                fail: "Failed to post to gallery.",
+                content: "Created in Kids Mode"
             },
+            glbNotFound: "Server GLB not found.",
+            glbDownloadFail: "Failed to download GLB file.",
             emptyGallery: "No works registered yet.",
             galleryTable: {
                 title: "Title",
@@ -213,6 +238,7 @@ export const en = {
         error: "Failed to load data.",
         unknownError: "Unknown error",
         noPreview: "No Preview",
+        noImage: "No Image",
         anonymous: "Anonymous"
     },
     admin: {
@@ -227,8 +253,53 @@ export const en = {
             dashboard: "Dashboard",
             users: "User Management",
             gallery: "Gallery Management",
-            settings: "System Settings"
+            settings: "System Settings",
+            inquiries: "Inquiries",
+            reports: "Reports",
+            refunds: "Refunds"
         },
-        accessDenied: "Access denied. (Role: {role})"
+        accessDenied: "Access denied. (Role: {role})",
+        inquiry: {
+            adminAnswer: "Admin Answer",
+            placeholder: "Enter your answer...",
+            submit: "Submit Answer",
+            success: "Answer submitted successfully.",
+            empty: "No inquiries yet.",
+            inputRequired: "Please enter an answer."
+        },
+        report: {
+            resolve: "Approve Action",
+            reject: "Reject",
+            placeholder: "Enter action details or rejection reason...",
+            resolved: "Action completed.",
+            rejected: "Report rejected.",
+            empty: "No reports yet.",
+            inputRequired: "Please enter action details.",
+            actionComplete: "Action Complete",
+            actionRejected: "Report Rejected"
+        },
+        refund: {
+            approve: "Approve",
+            empty: "No refund requests.",
+            amount: "Amount",
+            inProgress: "Feature in progress"
+        },
+        error: "An error occurred.",
+        failed: "Processing failed."
+    },
+    mypage: {
+        stats: {
+            jobs: "My Jobs",
+            gallery: "My Gallery",
+            joinedAt: "Joined"
+        },
+        bioPlaceholder: "Enter your bio!",
+        nicknamePlaceholder: "Enter nickname",
+        bioInputPlaceholder: "Enter your bio",
+        noTitle: "No Title",
+        payment: {
+            date: "Payment Date",
+            nextDate: "Next Payment"
+        }
     }
 };

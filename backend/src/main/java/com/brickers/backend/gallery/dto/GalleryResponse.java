@@ -21,6 +21,7 @@ public class GalleryResponse {
     private String content;
     private List<String> tags;
     private String thumbnailUrl;
+    private String ldrUrl;
 
     private Visibility visibility;
 

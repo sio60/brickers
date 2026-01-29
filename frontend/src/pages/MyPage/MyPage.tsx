@@ -257,7 +257,7 @@ export default function MyPage() {
                                     <div className="mypage__avatarWrapper">
                                         <img
                                             src={profile.profileImage || "/default-avatar.png"}
-                                            alt="프로필"
+                                            alt={t.profile.imageAlt}
                                             className="mypage__avatar"
                                         />
                                     </div>
@@ -267,7 +267,7 @@ export default function MyPage() {
                                             <span className="mypage__roleBadge">{profile.membershipPlan}</span>
                                         </div>
                                         <p className="mypage__email">{profile.email}</p>
-                                        <p className="mypage__bio">{profile.bio || "자기소개를 입력해주세요!"}</p>
+                                        <p className="mypage__bio">{profile.bio || t.mypage.bioPlaceholder}</p>
                                         <button className="mypage__editBtnSimple" onClick={startEditing}>
                                             {t.profile.editBtn}
                                         </button>
@@ -276,15 +276,15 @@ export default function MyPage() {
 
                                 <div className="mypage__statsGrid">
                                     <div className="mypage__statCard">
-                                        <span className="stat__label">내 작업</span>
+                                        <span className="stat__label">{t.mypage.stats.jobs}</span>
                                         <span className="stat__value">{data?.jobs.totalCount || 0}</span>
                                     </div>
                                     <div className="mypage__statCard">
-                                        <span className="stat__label">내 갤러리</span>
+                                        <span className="stat__label">{t.mypage.stats.gallery}</span>
                                         <span className="stat__value">{data?.gallery.totalCount || 0}</span>
                                     </div>
                                     <div className="mypage__statCard">
-                                        <span className="stat__label">가입일</span>
+                                        <span className="stat__label">{t.mypage.stats.joinedAt}</span>
                                         <span className="stat__value">
                                             {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "-"}
                                         </span>
@@ -299,7 +299,7 @@ export default function MyPage() {
                                 <div className="mypage__avatarWrapper edit-mode">
                                     <img
                                         src={profile.profileImage || "/default-avatar.png"}
-                                        alt="프로필"
+                                        alt={t.profile.imageAlt}
                                         className="mypage__avatar"
                                     />
                                 </div>
@@ -313,7 +313,7 @@ export default function MyPage() {
                                                 className="mypage__formInput"
                                                 value={editNickname}
                                                 onChange={(e) => setEditNickname(e.target.value)}
-                                                placeholder="닉네임을 입력하세요"
+                                                placeholder={t.mypage.nicknamePlaceholder}
                                             />
                                         </div>
                                         <div className="mypage__formRow">
@@ -322,7 +322,7 @@ export default function MyPage() {
                                                 className="mypage__formTextarea"
                                                 value={editBio}
                                                 onChange={(e) => setEditBio(e.target.value)}
-                                                placeholder="자기소개를 입력하세요"
+                                                placeholder={t.mypage.bioInputPlaceholder}
                                                 rows={4}
                                             />
                                         </div>
@@ -371,16 +371,14 @@ export default function MyPage() {
                                 {profile.membershipPlan !== "FREE" && (
                                     <div className="mypage__subInfo">
                                         <div className="mypage__infoRow">
-                                            <span className="mypage__label">결제일</span>
+                                            <span className="mypage__label">{t.mypage.payment.date}</span>
                                             <span className="mypage__value">
-                                                {/* 임시 로직: 가입일을 결제일로 가정하거나 오늘 날짜 */}
                                                 {new Date().toLocaleDateString()}
                                             </span>
                                         </div>
                                         <div className="mypage__infoRow">
-                                            <span className="mypage__label">다음 결제일</span>
+                                            <span className="mypage__label">{t.mypage.payment.nextDate}</span>
                                             <span className="mypage__value">
-                                                {/* 임시 로직: 1달 후 */}
                                                 {new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString()}
                                             </span>
                                         </div>
@@ -436,7 +434,7 @@ export default function MyPage() {
                                             )}
                                         </div>
                                         <div className="mypage__jobInfo">
-                                            <div className="mypage__jobTitle">{job.title || "제목 없음"}</div>
+                                            <div className="mypage__jobTitle">{job.title || t.mypage.noTitle}</div>
                                             <div className="mypage__jobMeta">
                                                 <span className={`mypage__jobStatus ${getStatusClass(job.status)}`}>
                                                     {getStatusLabel(job.status)}
@@ -461,7 +459,7 @@ export default function MyPage() {
                         <h2 className="mypage__sectionTitle">{t.menu.inquiries}</h2>
                         <div className="mypage__inquiriesList">
                             {listLoading ? (
-                                <p className="mypage__loading">불러오는 중...</p>
+                                <p className="mypage__loading">{t.common.loading}</p>
                             ) : inquiries.length > 0 ? (
                                 inquiries.map((iq) => (
                                     <div key={iq.id} className="mypage__inquiryCard">
@@ -549,19 +547,19 @@ export default function MyPage() {
                                         className={`mypage__langBtn ${language === "ko" ? "active" : ""}`}
                                         onClick={() => setLanguage("ko")}
                                     >
-                                        한국어
+                                        {t.settings.langKo}
                                     </button>
                                     <button
                                         className={`mypage__langBtn ${language === "en" ? "active" : ""}`}
                                         onClick={() => setLanguage("en")}
                                     >
-                                        English
+                                        {t.settings.langEn}
                                     </button>
                                     <button
                                         className={`mypage__langBtn ${language === "ja" ? "active" : ""}`}
                                         onClick={() => setLanguage("ja")}
                                     >
-                                        日本語
+                                        {t.settings.langJa}
                                     </button>
                                 </div>
                             </div>

@@ -6,6 +6,8 @@ services:
     ports:
       - "${BACKEND_PORT}:8080"
     environment:
+      # ✅ 시간대 설정 (한국)
+      - TZ=Asia/Seoul
       # ✅ MongoDB 설정
       - PRIMARY_MONGODB_URI=${PRIMARY_MONGODB_URI}
 
@@ -52,9 +54,10 @@ services:
       - PROCESS_TIMEOUT=900
       - DOWNLOAD_TIMEOUT=120
 
-      # ✅ SQS 설정
+      # ✅ SQS 설정 (2개 Queue 분리)
       - AWS_SQS_ENABLED=${AWS_SQS_ENABLED:-true}
-      - AWS_SQS_QUEUE_URL=${AWS_SQS_QUEUE_URL}
+      - AWS_SQS_REQUEST_QUEUE_URL=${AWS_SQS_REQUEST_QUEUE_URL}
+      - AWS_SQS_RESULT_QUEUE_URL=${AWS_SQS_RESULT_QUEUE_URL}
 
     networks:
       - brickers-network
@@ -65,6 +68,9 @@ services:
     ports:
       - "${FRONTEND_PORT}:80"
       - "443:443"
+    environment:
+      # ✅ 시간대 설정 (한국)
+      - TZ=Asia/Seoul
     depends_on:
       - backend
     volumes:
