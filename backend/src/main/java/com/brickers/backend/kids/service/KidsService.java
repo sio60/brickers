@@ -25,9 +25,9 @@ public class KidsService {
     @Value("${aws.sqs.enabled:false}")
     private boolean sqsEnabled;
 
-    public Map<String, Object> startGeneration(String userId, String sourceImageUrl, String age, int budget) {
-        log.info("AI 생성 요청 접수: userId={}, sourceImageUrl={}, age={}, budget={}",
-                safe(userId), sourceImageUrl, safe(age), budget);
+    public Map<String, Object> startGeneration(String userId, String sourceImageUrl, String age, int budget, String title) {
+        log.info("AI 생성 요청 접수: userId={}, sourceImageUrl={}, age={}, budget={}, title={}",
+                safe(userId), sourceImageUrl, safe(age), budget, safe(title));
 
         if (sourceImageUrl == null || sourceImageUrl.isBlank()) {
             throw new IllegalArgumentException("sourceImageUrl is required");
@@ -40,6 +40,7 @@ public class KidsService {
                 .status(JobStatus.QUEUED)
                 .stage(JobStage.THREE_D_PREVIEW)
                 .sourceImageUrl(sourceImageUrl)  // Frontend가 업로드한 S3 URL
+                .title(title)  // 작업 제목 (파일명)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .stageUpdatedAt(LocalDateTime.now())
