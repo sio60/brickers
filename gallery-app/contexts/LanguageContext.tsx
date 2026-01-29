@@ -31,7 +31,9 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     useEffect(() => {
         if (isInitialized) {
-            document.body.className = `lang-${language}`;
+            // Remove all possible lang classes first
+            document.body.classList.remove("lang-ko", "lang-en", "lang-ja");
+            document.body.classList.add(`lang-${language}`);
         }
     }, [language, isInitialized]);
 

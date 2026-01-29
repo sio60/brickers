@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
@@ -8,14 +6,8 @@ import dynamic from "next/dynamic";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginModal from "@/components/common/LoginModal";
-import FloatingMenuButton from "@/components/kids/FloatingMenuButton";
+import KidsModelSelectModal from "@/components/kids/KidsModelSelectModal";
 import styles from "./KidsAgeSelection.module.css";
-
-// Three.js 컴포넌트는 SSR에서 제외
-const Background3D = dynamic(
-    () => import("@/components/three/Background3D"),
-    { ssr: false }
-);
 
 type AgeGroup = "4-5" | "6-7" | "8-10" | null;
 
@@ -27,6 +19,32 @@ function KidsAgeSelectionContent() {
 
     const [selectedAge, setSelectedAge] = useState<AgeGroup>(null);
     const [openLoginModal, setOpenLoginModal] = useState(false);
+    const [openModelModal, setOpenModelModal] = useState(false);
+    const [modalAge, setModalAge] = useState<AgeGroup>(null);
+
+    // 4-5 모델들
+    const models45 = [
+        { title: t.kids.model1, url: "/ldraw/models/3-5_1.ldr", thumbnail: "/3-5.png" },
+        { title: t.kids.model2, url: "/ldraw/models/3-5_2.ldr", thumbnail: "/3-5_2.png" },
+    ];
+
+    // 6-7 모델들
+    const models67 = [
+        { title: t.kids.model1, url: "/ldraw/models/6-7_1.ldr", thumbnail: "/6-7.png" },
+        { title: t.kids.model2, url: "/ldraw/models/6-7_2.ldr", thumbnail: "/6-7_2.png" },
+    ];
+
+    // 8-10 모델들
+    const models810 = [
+        { title: t.kids.model1, url: "/ldraw/models/8-10_1.ldr", thumbnail: "/8-10.png" },
+        { title: t.kids.model2, url: "/ldraw/models/8-10_2.ldr", thumbnail: "/8-10_2.png" },
+    ];
+
+    const getCurrentModels = () => {
+        if (modalAge === "6-7") return models67;
+        if (modalAge === "8-10") return models810;
+        return models45;
+    };
 
     // URL에 ?login=true가 있으면 자동으로 로그인 모달 열기
     useEffect(() => {
@@ -36,7 +54,6 @@ function KidsAgeSelectionContent() {
     }, [searchParams, isAuthenticated]);
 
     const handleSelect = (ageGroup: AgeGroup) => {
-        // 로그인 체크
         if (!isAuthenticated) {
             alert(t.common?.loginRequired || "Login required.");
             setOpenLoginModal(true);
@@ -45,9 +62,32 @@ function KidsAgeSelectionContent() {
 
         setSelectedAge(ageGroup);
 
-        // 선택 시 바로 kids/main 페이지로 이동
         if (ageGroup) {
-            router.push(`/kids/main?age=${ageGroup}`);
+            setModalAge(ageGroup);
+            setOpenModelModal(true);
+        }
+    };
+
+    const handlePickModel = async (url: string | null, file: File | null) => {
+        setOpenModelModal(false);
+        const age = modalAge || "4-5";
+
+        if (file) {
+            // 파일을 Data URL로 변환하여 sessionStorage에 저장 (KidsPage에서 복원 가능하도록)
+            const reader = new FileReader();
+            reader.onload = () => {
+                const dataUrl = reader.result as string;
+                sessionStorage.setItem('pendingUpload', JSON.stringify({
+                    name: file.name,
+                    type: file.type,
+                    dataUrl
+                }));
+                router.push(`/kids/main?age=${age}`);
+            };
+            reader.readAsDataURL(file);
+        } else if (url) {
+            const modelParam = `&model=${encodeURIComponent(url)}`;
+            router.push(`/kids/main?age=${age}${modelParam}`);
         }
     };
 
@@ -59,7 +99,8 @@ function KidsAgeSelectionContent() {
         }
 
         if (!selectedAge) return;
-        router.push(`/kids/main?age=${selectedAge}`);
+        setModalAge(selectedAge);
+        setOpenModelModal(true);
     };
 
     return (
@@ -142,14 +183,19 @@ function KidsAgeSelectionContent() {
                 {t.kids.continueBtn}
             </button>
 
+            {/* 모델 선택 모달 */}
+            <KidsModelSelectModal
+                open={openModelModal}
+                onClose={() => setOpenModelModal(false)}
+                onSelect={handlePickModel}
+                items={getCurrentModels()}
+            />
+
             {/* 로그인 모달 */}
             <LoginModal
                 isOpen={openLoginModal}
                 onClose={() => setOpenLoginModal(false)}
             />
-
-            {/* 플로팅 메뉴 */}
-            <FloatingMenuButton />
         </div>
     );
 }

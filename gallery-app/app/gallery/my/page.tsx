@@ -50,7 +50,7 @@ export default function MyGalleryPage() {
             if (pageNum === 0) setLoading(true);
             else setLoadingMore(true);
 
-            const apiBase = process.env.NEXT_PUBLIC_API_BASE || '';
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
             const res = await fetch(`${apiBase}/api/gallery/my?page=${pageNum}&size=12`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -84,7 +84,7 @@ export default function MyGalleryPage() {
             if (pageNum === 0) setLoading(true);
             else setLoadingMore(true);
 
-            const apiBase = process.env.NEXT_PUBLIC_API_BASE || '';
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
             const res = await fetch(`${apiBase}/api/gallery/bookmarks/my?page=${pageNum}&size=12`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
