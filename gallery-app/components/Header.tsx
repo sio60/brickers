@@ -3,25 +3,27 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function Header() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const pathname = usePathname();
 
     useEffect(() => {
         // Check for auth token in localStorage (managed by Vite app)
-        // Since they are on the same domain, localStorage *might* not be shared if port differs in dev, 
-        // but in prod (brickers.shop) they are same domain. 
-        // However, Next.js runs on /gallery path. LocalStorage is per origin. 
-        // IF Nginx proxies /gallery to Next.js, the origin is https://brickers.shop for BOTH.
-        // So localStorage SHOULD be accessible.
+        // Same origin on brickers.shop, so localStorage is shared
         const token = localStorage.getItem('accessToken');
         setIsLoggedIn(!!token);
     }, []);
 
+    // Determine which page we're on
+    const isMyGalleryPage = pathname === '/my';
+    const isBookmarksPage = pathname === '/my/bookmarks';
+
     return (
-        <nav className="w-full h-[72px] flex items-center justify-between px-5 border-b border-[#e0e0e0] bg-white fixed top-0 left-0 z-50">
-            {/* Logo - Links to Main App Home */}
-            <a href="/" className="h-12 w-auto cursor-pointer flex items-center relative">
+        <header className="fixed top-0 left-0 w-full h-[72px] flex items-center justify-center px-5 bg-white border-b border-[#e0e0e0] z-50">
+            {/* Logo - Centered */}
+            <a href="/" className="h-12 cursor-pointer">
                 <Image
                     src="/gallery/logo.png"
                     alt="BRICKERS"
@@ -32,23 +34,42 @@ export default function Header() {
                 />
             </a>
 
-            <div className="flex gap-3">
+            {/* Actions - Positioned absolute right */}
+            <div className="absolute right-6 top-1/2 -translate-y-1/2 flex gap-3">
                 {isLoggedIn ? (
-                    <Link
-                        href="/my"
-                        className="bg-white text-black border-2 border-black px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-black hover:text-white transition-colors"
-                    >
-                        내 갤러리
-                    </Link>
+                    <>
+                        {isMyGalleryPage && !isBookmarksPage ? (
+                            <Link
+                                href="/my/bookmarks"
+                                className="bg-white text-black border-2 border-black px-3 py-1.5 rounded-lg text-base tracking-wide cursor-pointer transition-all duration-200 hover:bg-black hover:text-white"
+                            >
+                                북마크
+                            </Link>
+                        ) : isBookmarksPage ? (
+                            <Link
+                                href="/my"
+                                className="bg-white text-black border-2 border-black px-3 py-1.5 rounded-lg text-base tracking-wide cursor-pointer transition-all duration-200 hover:bg-black hover:text-white"
+                            >
+                                내 갤러리
+                            </Link>
+                        ) : (
+                            <Link
+                                href="/my"
+                                className="bg-white text-black border-2 border-black px-3 py-1.5 rounded-lg text-base tracking-wide cursor-pointer transition-all duration-200 hover:bg-black hover:text-white"
+                            >
+                                내 갤러리
+                            </Link>
+                        )}
+                    </>
                 ) : (
                     <a
                         href="/?login=true"
-                        className="bg-black text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-800 transition-colors"
+                        className="bg-white text-black border-2 border-black px-3 py-1.5 rounded-lg text-base tracking-wide cursor-pointer transition-all duration-200 hover:bg-black hover:text-white"
                     >
-                        로그인 / 앱으로 이동
+                        로그인
                     </a>
                 )}
             </div>
-        </nav>
+        </header>
     );
 }
