@@ -27,14 +27,14 @@ export default function Header() {
     const isMyPage = pathname === '/my';
 
     return (
-        <header className="fixed top-0 left-0 w-full h-[72px] flex items-center justify-center px-5 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50">
+        <header className="fixed top-0 left-0 w-full h-[72px] flex items-center justify-center px-5 bg-white border-b border-[#e0e0e0] z-50">
             {/* Logo - Centered */}
-            <a href="/" className="h-10 cursor-pointer">
+            <a href="/" className="h-12 cursor-pointer flex items-center justify-center">
                 <Image
                     src="/gallery/logo.png"
                     alt="BRICKERS"
-                    width={140}
-                    height={40}
+                    width={160}
+                    height={48}
                     className="h-full w-auto object-contain"
                     priority
                 />
@@ -47,14 +47,14 @@ export default function Header() {
                         {isMyPage ? (
                             <a
                                 href="/gallery"
-                                className="px-4 py-2 text-sm font-semibold text-black hover:text-gray-600 transition-colors"
+                                className="px-3 py-1.5 text-[15px] font-semibold text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all tracking-wider"
                             >
                                 {t.header.gallery}
                             </a>
                         ) : (
                             <a
                                 href="/gallery/my"
-                                className="px-4 py-2 text-sm font-semibold text-black hover:text-gray-600 transition-colors"
+                                className="px-3 py-1.5 text-[15px] font-semibold text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all tracking-wider"
                             >
                                 {t.header.myGallery}
                             </a>
