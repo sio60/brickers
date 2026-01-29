@@ -82,7 +82,7 @@ export default function Header() {
                     </>
                 ) : (
                     <a
-                        href="/?login=true"
+                        href="/?login=true&returnUrl=/gallery"
                         className="px-6 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
                     >
                         {t.header.login}

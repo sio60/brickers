@@ -61,35 +61,27 @@ services:
 
       # ✅ Gallery SEO Revalidate 설정
       - GALLERY_REVALIDATE_ENABLED=${GALLERY_REVALIDATE_ENABLED:-true}
-      - GALLERY_REVALIDATE_URL=${GALLERY_REVALIDATE_URL:-http://gallery-frontend:3000/gallery/api/revalidate}
+      - GALLERY_REVALIDATE_URL=${GALLERY_REVALIDATE_URL:-http://frontend:3000/api/revalidate}
       - GALLERY_REVALIDATE_SECRET=${GALLERY_REVALIDATE_SECRET}
 
     networks:
       - brickers-network
 
-  gallery-frontend:
-    image: ${DOCKER_USERNAME}/brickers-gallery:latest
-    container_name: brickers-gallery
-    ports:
-      - "3000:3000"
-    environment:
-      - TZ=Asia/Seoul
-      - API_BASE=http://backend:8080
-      - REVALIDATE_SECRET=${GALLERY_REVALIDATE_SECRET}
-    depends_on:
-      - backend
-    networks:
-      - brickers-network
-
+  # ✅ 통합된 Next.js 앱 (Kids + Gallery 모두 포함)
   frontend:
     image: ${DOCKER_USERNAME}/brickers-frontend:latest
     container_name: brickers-frontend
     ports:
       - "${FRONTEND_PORT}:80"
       - "443:443"
+      - "3000:3000"
     environment:
       # ✅ 시간대 설정 (한국)
       - TZ=Asia/Seoul
+      # ✅ Next.js 환경변수
+      - NEXT_PUBLIC_API_BASE_URL=http://backend:8080
+      - API_BASE=http://backend:8080
+      - REVALIDATE_SECRET=${GALLERY_REVALIDATE_SECRET}
     depends_on:
       - backend
     volumes:

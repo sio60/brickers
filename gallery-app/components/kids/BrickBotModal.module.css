@@ -1,0 +1,487 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+}
+
+.container {
+    width: 380px;
+    height: 600px;
+    background-color: #ffffff;
+    border: 2px solid #000000;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: popIn 0.3s ease-out;
+}
+
+@keyframes popIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* 헤더 */
+.header {
+    height: 60px;
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.name {
+    font-weight: 700;
+    font-size: 18px;
+    color: #000;
+}
+
+.close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #000;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.close:hover {
+    transform: rotate(90deg);
+}
+
+/* 채팅 영역 */
+.messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background-color: #ffffff;
+}
+
+.msgRow {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    max-width: 85%;
+}
+
+.userRow {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.botRow {
+    align-self: flex-start;
+}
+
+.msgAvatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 4px;
+    object-fit: contain;
+    background: transparent;
+    border: none;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.bubble {
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;
+    position: relative;
+}
+
+.botBubble {
+    background-color: #ffffff;
+    color: #000;
+    border: 2px solid #000;
+    border-top-left-radius: 2px;
+}
+
+.userBubble {
+    background-color: #000000;
+    color: #ffffff;
+    border-top-right-radius: 2px;
+}
+
+/* 타이핑 애니메이션 */
+.typing {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 14px;
+}
+
+.typing span {
+    width: 4px;
+    height: 4px;
+    background-color: #888;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.typing span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.typing span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+    0%, 80%, 100% {
+        transform: scale(0);
+    }
+    40% {
+        transform: scale(1);
+    }
+}
+
+/* 입력 영역 */
+.inputArea {
+    background-color: #fff;
+    padding: 10px;
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid #eee;
+}
+
+.input {
+    flex: 1;
+    border: none;
+    background-color: #f2f2f2;
+    border-radius: 18px;
+    padding: 10px 14px;
+    font-size: 14px;
+    resize: none;
+    outline: none;
+}
+
+.sendBtn {
+    background-color: #000000;
+    border: none;
+    border-radius: 18px;
+    padding: 0 16px;
+    font-weight: 600;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.sendBtn:disabled {
+    background-color: #eee;
+    color: #aaa;
+    cursor: not-allowed;
+}
+
+/* 액션 버튼 스타일 */
+.msgGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.msgGroup.user {
+    align-items: flex-end;
+}
+
+.msgGroup.bot {
+    align-items: flex-start;
+}
+
+.actionContainer {
+    margin-left: 50px;
+    margin-top: -4px;
+}
+
+.actionBtn {
+    background-color: #f0f4f8;
+    border: 1px solid #d1d9e6;
+    border-radius: 12px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.actionBtn:hover {
+    background-color: #e2e8f0;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* 예시 질문 토글 영역 */
+.suggestionsWrapper {
+    border-top: 1px solid #eee;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+}
+
+.suggestionsToggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.suggestionsToggle:hover {
+    background-color: #f9f9f9;
+}
+
+.toggleArrow {
+    display: inline-block;
+    transition: transform 0.3s ease;
+    font-size: 10px;
+}
+
+.toggleArrow.open {
+    transform: rotate(180deg);
+}
+
+.suggestions {
+    padding: 0 16px 16px 16px;
+    background-color: #fff;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.suggestionsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.suggestionBtn {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 16px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: #444;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.suggestionBtn:hover {
+    background-color: #f0f0f0;
+    border-color: #ccc;
+    transform: translateY(-1px);
+    color: #000;
+}
+
+/* 폼 컨테이너 */
+.formContainer {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.formTitle {
+    font-size: 18px;
+    margin-bottom: 16px;
+    font-weight: 700;
+}
+
+.formInput {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.formTextarea {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    min-height: 150px;
+    margin-bottom: 20px;
+    resize: none;
+    font-size: 14px;
+}
+
+.formField {
+    margin-bottom: 10px;
+}
+
+.formLabel {
+    font-size: 13px;
+    color: #666;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.formSelect {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.formDesc {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 12px;
+}
+
+.formActions {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.cancelBtn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.submitBtn {
+    flex: 2;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background: #000;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.submitBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.reportBtn {
+    flex: 2;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background: #f00;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.reportBtn:disabled {
+    opacity: 0.7;
+}
+
+/* 환불 목록 */
+.refundList {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.refundEmpty {
+    padding: 20px;
+    text-align: center;
+    color: #999;
+}
+
+.refundItem {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.refundItem.selected {
+    background: #f0f8ff;
+}
+
+.refundItemName {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.refundItemMeta {
+    font-size: 12px;
+    color: #888;
+}
+
+.refundCheck {
+    color: #007bff;
+    font-weight: bold;
+}
+
+@media (max-width: 480px) {
+    .container {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+    }
+}

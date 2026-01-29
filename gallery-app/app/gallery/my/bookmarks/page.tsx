@@ -7,8 +7,8 @@ export default function BookmarksRedirect() {
     const router = useRouter();
 
     useEffect(() => {
-        // Redirect to /my with bookmarks tab
-        router.replace('/my');
+        // Redirect to /gallery/my with bookmarks tab
+        router.replace('/gallery/my');
     }, [router]);
 
     return (

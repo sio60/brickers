@@ -47,10 +47,12 @@ jobs:
           build-args: |
             AWS_S3_BUCKET=dummy
 
+      # ✅ 통합된 프론트엔드 빌드 (Next.js + Nginx)
       - name: Build and Push Frontend
         uses: docker/build-push-action@v6
         with:
-          context: ./frontend
+          context: .
+          file: ./frontend/Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/brickers-frontend:latest
@@ -58,23 +60,8 @@ jobs:
           provenance: false
           no-cache: true
           build-args: |
-            VITE_KAKAO_CLIENT_ID=${{ secrets.VITE_KAKAO_CLIENT_ID }}
-            VITE_KAKAO_REDIRECT_URI=${{ secrets.VITE_KAKAO_REDIRECT_URI }}
-            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
-            VITE_FASTAPI_ORIGIN=${{ secrets.VITE_FASTAPI_ORIGIN }}
-            VITE_API_ORIGIN=${{ secrets.VITE_API_ORIGIN }}
-            VITE_AI_API_URL=${{ secrets.VITE_AI_API_URL }}
-
-      - name: Build and Push Gallery App
-        uses: docker/build-push-action@v6
-        with:
-          context: ./gallery-app
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/brickers-gallery:latest
-            ${{ secrets.DOCKER_USERNAME }}/brickers-gallery:${{ github.sha }}
-          provenance: false
-          no-cache: true
+            NEXT_PUBLIC_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+            REVALIDATE_SECRET=${{ secrets.GALLERY_REVALIDATE_SECRET }}
 
   deploy:
     needs: build-and-push
@@ -171,6 +158,9 @@ jobs:
             # Gallery Revalidate
             GALLERY_REVALIDATE_ENABLED=true
             GALLERY_REVALIDATE_SECRET=${{ secrets.GALLERY_REVALIDATE_SECRET }}
+
+            # Next.js
+            NEXT_PUBLIC_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
             EOF
 
             echo "🔐 Docker Hub login..."
