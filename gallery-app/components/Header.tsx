@@ -2,13 +2,16 @@
 
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function Header() {
+    const { t } = useLanguage();
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const pathname = usePathname();
 
     useEffect(() => {
         // Check for auth token in localStorage (managed by Vite app)
-        // Same origin on brickers.shop, so localStorage is shared
         const token = localStorage.getItem('accessToken');
         setIsLoggedIn(!!token);
     }, []);
@@ -20,6 +23,8 @@ export default function Header() {
         // Navigate to home (browser navigation)
         window.location.href = '/';
     };
+
+    const isMyPage = pathname === '/my';
 
     return (
         <header className="fixed top-0 left-0 w-full h-[72px] flex items-center justify-center px-5 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50">
@@ -39,17 +44,26 @@ export default function Header() {
             <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3">
                 {isLoggedIn ? (
                     <>
-                        <a
-                            href="/gallery/my"
-                            className="px-4 py-2 text-sm font-semibold text-black hover:text-gray-600 transition-colors"
-                        >
-                            내 갤러리
-                        </a>
+                        {isMyPage ? (
+                            <a
+                                href="/gallery"
+                                className="px-4 py-2 text-sm font-semibold text-black hover:text-gray-600 transition-colors"
+                            >
+                                {t.header.gallery}
+                            </a>
+                        ) : (
+                            <a
+                                href="/gallery/my"
+                                className="px-4 py-2 text-sm font-semibold text-black hover:text-gray-600 transition-colors"
+                            >
+                                {t.header.myGallery}
+                            </a>
+                        )}
                         <button
                             onClick={handleLogout}
                             className="px-4 py-2 text-sm font-semibold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
                         >
-                            로그아웃
+                            {t.header.logout}
                         </button>
                     </>
                 ) : (
@@ -57,7 +71,7 @@ export default function Header() {
                         href="/?login=true"
                         className="px-4 py-2 text-sm font-semibold bg-black text-white border-2 border-black rounded-lg hover:bg-gray-800 transition-all"
                     >
-                        로그인
+                        {t.header.login}
                     </a>
                 )}
             </div>
