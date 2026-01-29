@@ -1,6 +1,5 @@
-'use client';
-
 import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -16,14 +15,8 @@ export default function Header() {
             setIsLoggedIn(!!token);
         };
 
-        // Initial check
         checkAuth();
-
-        // Listen for storage changes (sync across tabs)
         window.addEventListener('storage', checkAuth);
-
-        // Custom event for same-tab changes if needed, but localStorage.setItem doesn't trigger 'storage' on same window
-        // So we can also use a simple interval or just rely on the fact that most changes happen via our own functions
         return () => window.removeEventListener('storage', checkAuth);
     }, []);
 
@@ -31,19 +24,16 @@ export default function Header() {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         setIsLoggedIn(false);
-        // Dispatch a storage event manually for other tabs if they aren't listening already
         window.dispatchEvent(new Event('storage'));
-
-        // Navigate to home
-        window.location.href = '/gallery';
+        window.location.href = '/';
     };
 
-    const isMyPage = pathname === '/my';
+    const isLandingPage = pathname === '/';
 
     return (
         <header className="fixed top-0 left-0 w-full h-[72px] flex items-center justify-center px-5 bg-white border-b border-[#e0e0e0] z-50">
             {/* Logo - Centered */}
-            <a href="/" className="h-12 cursor-pointer flex items-center justify-center">
+            <Link href="/" className="h-12 cursor-pointer flex items-center justify-center">
                 <Image
                     src="/logo.png"
                     alt="BRICKERS"
@@ -52,27 +42,26 @@ export default function Header() {
                     className="h-full w-auto object-contain"
                     priority
                 />
-            </a>
+            </Link>
 
             {/* Actions - Positioned absolute right */}
             <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3">
+                {/* 갤러리 링크는 항상 노출 (현재 갤러리 페이지가 아닐 때만 혹은 항상) */}
+                <Link
+                    href="/gallery"
+                    className="px-4 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
+                >
+                    {t.header.gallery}
+                </Link>
+
                 {isLoggedIn ? (
                     <>
-                        {isMyPage ? (
-                            <a
-                                href="/gallery"
-                                className="px-4 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
-                            >
-                                {t.header.gallery}
-                            </a>
-                        ) : (
-                            <a
-                                href="/gallery/my"
-                                className="px-4 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
-                            >
-                                {t.header.myGallery}
-                            </a>
-                        )}
+                        <Link
+                            href="/mypage"
+                            className="px-4 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
+                        >
+                            {t.header.myPage}
+                        </Link>
                         <button
                             onClick={handleLogout}
                             className="px-4 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
@@ -81,12 +70,12 @@ export default function Header() {
                         </button>
                     </>
                 ) : (
-                    <a
-                        href="/?login=true&returnUrl=/gallery"
-                        className="px-6 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
+                    <Link
+                        href="/?login=true"
+                        className="px-4 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
                     >
                         {t.header.login}
-                    </a>
+                    </Link>
                 )}
             </div>
         </header>
