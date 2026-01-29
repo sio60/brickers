@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import GalleryPanel from '../../components/GalleryPanel';
-import GalleryGrid from '../../components/GalleryGrid';
-import Tabs from '../../components/Tabs';
-import LoadMoreButton from '../../components/LoadMoreButton';
-import NextButton from '../../components/NextButton';
-import { GalleryItem, PageResponse } from '../../types/gallery';
-import { useLanguage } from '../../contexts/LanguageContext';
+import GalleryPanel from '@/components/GalleryPanel';
+import GalleryGrid from '@/components/GalleryGrid';
+import Tabs from '@/components/Tabs';
+import LoadMoreButton from '@/components/LoadMoreButton';
+import NextButton from '@/components/NextButton';
+import { GalleryItem, PageResponse } from '@/types/gallery';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function MyGalleryPage() {
     const { t } = useLanguage();

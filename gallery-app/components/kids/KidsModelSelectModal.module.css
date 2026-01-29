@@ -1,0 +1,280 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.modal {
+    width: min(900px, 96vw);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+
+.head {
+    position: relative;
+    padding: 16px 20px 10px;
+}
+
+.title {
+    font-size: 24px;
+    font-weight: 900;
+    color: #111;
+}
+
+.sub {
+    margin-top: 4px;
+    font-size: 13px;
+    font-weight: 800;
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.close {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    border: 0;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.08);
+    font-weight: 900;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 0 20px 16px;
+}
+
+.card {
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    border: 3px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.card:hover {
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+.card.isSelected {
+    border-color: #3b82f6;
+}
+
+.cardViewer {
+    height: 200px;
+    padding: 8px;
+    position: relative;
+}
+
+.noPreview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #999;
+}
+
+.cardFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 12px 12px;
+}
+
+.cardLabel {
+    font-size: 16px;
+    font-weight: 900;
+    color: #111;
+}
+
+.cardPick {
+    font-size: 13px;
+    font-weight: 700;
+    color: #666;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.card.isSelected .cardPick {
+    background: #3b82f6;
+    color: #fff;
+}
+
+/* 이미지 업로드 영역 */
+.upload {
+    margin: 0 20px 16px;
+    padding: 24px;
+    border: 2px dashed rgba(0, 0, 0, 0.15);
+    border-radius: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.upload:hover,
+.upload.isDragOver {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.hiddenInput {
+    position: absolute;
+    width: 0;
+    height: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+}
+
+.uploadTitle {
+    font-size: 16px;
+    font-weight: 800;
+    color: #333;
+}
+
+.uploadSub {
+    margin-top: 4px;
+    font-size: 13px;
+    color: #888;
+}
+
+.uploadHint {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #aaa;
+}
+
+.uploadPreviewWrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.uploadPreview {
+    max-height: 120px;
+    max-width: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.uploadFilename {
+    font-size: 12px;
+    color: #666;
+}
+
+/* 하단 버튼 */
+.actions {
+    padding: 0 20px 20px;
+}
+
+.confirmBtn {
+    width: 100%;
+    padding: 14px;
+    border: 0;
+    border-radius: 12px;
+    background: #111;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.confirmBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.nextBtn {
+    width: 100%;
+    background: #000;
+    color: #fff;
+    padding: 14px 32px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+}
+
+/* 3D 프리뷰 영역 */
+.previewViewer {
+    width: 100%;
+    height: 400px;
+    margin: 0 20px;
+    max-width: calc(100% - 40px);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f8f9fa;
+    position: relative;
+}
+
+/* 업그레이드 모달 */
+.upgradeOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upgradeModal {
+    background: #fff;
+    padding: 32px;
+    border-radius: 16px;
+    text-align: center;
+    max-width: 400px;
+}
+
+.upgradeModal h3 {
+    margin: 0 0 16px;
+    font-size: 20px;
+}
+
+.upgradeModal p {
+    margin: 0 0 24px;
+    color: #666;
+}
+
+.upgradeBtn {
+    padding: 12px 32px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+@media (max-width: 600px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cardViewer {
+        height: 150px;
+    }
+
+    .previewViewer {
+        height: 300px;
+    }
+}

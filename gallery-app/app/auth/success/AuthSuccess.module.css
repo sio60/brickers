@@ -1,0 +1,86 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    width: 100%;
+    background-color: transparent;
+}
+
+.text {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 48px;
+    color: #333;
+    margin-bottom: 40px;
+    letter-spacing: 2px;
+    text-transform: lowercase;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.ballWrapper {
+    position: relative;
+    width: 60px;
+    height: 120px;
+}
+
+.ball {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #ff7eb3, #ff758c);
+    box-shadow: inset -5px -5px 15px rgba(0, 0, 0, 0.2), 0 0 10px rgba(255, 117, 140, 0.5);
+    position: absolute;
+    top: 0;
+    animation: bounce 0.6s infinite alternate cubic-bezier(0.5, 0.05, 1, 0.5);
+    z-index: 2;
+}
+
+.shadow {
+    width: 60px;
+    height: 15px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 50%;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    animation: shadowScale 0.6s infinite alternate cubic-bezier(0.5, 0.05, 1, 0.5);
+    filter: blur(2px);
+    z-index: 1;
+}
+
+@keyframes bounce {
+    0% {
+        top: 0;
+        transform: scaleX(1) scaleY(1);
+    }
+
+    100% {
+        top: 60px;
+        transform: scaleX(1.1) scaleY(0.9);
+    }
+}
+
+@keyframes shadowScale {
+    0% {
+        transform: scale(0.6);
+        opacity: 0.3;
+    }
+
+    100% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

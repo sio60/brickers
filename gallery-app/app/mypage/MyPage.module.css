@@ -1,0 +1,198 @@
+.page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #fafafa 0%, #fff 100%);
+    padding: 40px 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.title {
+    font-family: 'KblJumpCondensed', sans-serif;
+    font-size: 48px;
+    color: #000;
+    margin-bottom: 32px;
+}
+
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-size: 18px;
+    color: #666;
+}
+
+.profileCard {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    background: #fff;
+    border: 2px solid #000;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+}
+
+.avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #000;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatarPlaceholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f0;
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.profileInfo h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+}
+
+.profileInfo p {
+    color: #666;
+    margin: 0;
+}
+
+.plan {
+    display: inline-block;
+    background: #000;
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 8px !important;
+}
+
+.stats {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.statItem {
+    flex: 1;
+    background: #fff;
+    border: 2px solid #000;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+}
+
+.statValue {
+    display: block;
+    font-size: 32px;
+    font-weight: 700;
+    color: #000;
+}
+
+.statLabel {
+    display: block;
+    font-size: 14px;
+    color: #666;
+    margin-top: 4px;
+}
+
+.sections {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.section {
+    background: #fff;
+    border: 2px solid #000;
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.section h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 16px 0;
+}
+
+.jobList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.jobItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #f8f8f8;
+    border-radius: 8px;
+}
+
+.jobStatus {
+    font-size: 12px;
+    padding: 4px 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+}
+
+.galleryGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.galleryItem {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #eee;
+}
+
+.galleryItem img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.empty {
+    color: #999;
+    text-align: center;
+    padding: 24px;
+}
+
+@media (max-width: 768px) {
+    .title {
+        font-size: 32px;
+    }
+
+    .profileCard {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .stats {
+        flex-direction: column;
+    }
+
+    .galleryGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
