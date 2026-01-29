@@ -15,18 +15,20 @@ const nextConfig = {
         ],
     },
     async rewrites() {
+        // Docker 환경: backend:8080, 로컬 개발: localhost:8080
+        const backendUrl = process.env.API_BASE || 'http://localhost:8080';
         return [
             {
                 source: '/api/:path*',
-                destination: 'http://localhost:8080/api/:path*',
+                destination: `${backendUrl}/api/:path*`,
             },
             {
                 source: '/auth/:path*',
-                destination: 'http://localhost:8080/auth/:path*',
+                destination: `${backendUrl}/auth/:path*`,
             },
             {
                 source: '/uploads/:path*',
-                destination: 'http://localhost:8080/uploads/:path*',
+                destination: `${backendUrl}/uploads/:path*`,
             },
         ]
     },
