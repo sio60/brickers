@@ -8,6 +8,6 @@ export default function robots(): MetadataRoute.Robots {
                 allow: '/',
             },
         ],
-        sitemap: 'https://brickers.shop/gallery/sitemap.xml',
+        sitemap: 'https://brickers.shop/sitemap.xml',
     };
 }
