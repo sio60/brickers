@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { getMyProfile, getAdminStats } from "../../api/myApi";
 import type { AdminStats } from "../../api/myApi";
 import { useAuth } from "../Auth/AuthContext";
 import "./AdminPage.css";
@@ -38,7 +37,7 @@ type RefundRequest = { orderId: string; amount: number; status: string; requeste
 export default function AdminPage() {
     const { t } = useLanguage();
     const navigate = useNavigate();
-    const { authFetch } = useAuth();
+    const { authFetch, myApi } = useAuth(); // ✅ myApi 추가
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "gallery" | "inquiries" | "reports" | "refunds">("dashboard");
@@ -52,10 +51,10 @@ export default function AdminPage() {
     const [answerTexts, setAnswerTexts] = useState<Record<string, string>>({});
 
     useEffect(() => {
-        getMyProfile()
+        myApi.getMyProfile() // ✅ myApi 사용
             .then(profile => {
                 if (profile.role === "ADMIN") {
-                    return getAdminStats();
+                    return myApi.getAdminStats(); // ✅ myApi 사용
                 } else {
                     alert(t.admin.accessDenied.replace("{role}", profile.role));
                     navigate("/", { replace: true });
@@ -70,7 +69,7 @@ export default function AdminPage() {
             .catch(() => {
                 navigate("/", { replace: true });
             });
-    }, []);
+    }, [myApi]);
 
     // 탭 변경 시 데이터 로드
     useEffect(() => {

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createMyApi, type MyApiInstance } from "../../api/myApi";
 
 type Provider = "kakao" | "google";
 type OAuthUser = Record<string, any>;
@@ -12,6 +13,7 @@ type AuthContextValue = {
   login: (provider: Provider) => void;
   logout: () => Promise<void>;
   authFetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+  myApi: MyApiInstance; // ✅ myApi 인스턴스 추가
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -39,6 +41,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ✅ refresh 중복 호출 방지 (동시에 여러 refresh 호출되면 토큰 꼬임 방지)
   const refreshInFlight = useRef<Promise<string | null> | null>(null);
+
+  // ✅ accessToken을 ref로도 저장 (closure 문제 해결)
+  const accessTokenRef = useRef<string | null>(null);
+  accessTokenRef.current = accessToken;
 
   // ✅ refresh: refresh-cookie로 access 재발급 + me 호출로 user 세팅
   const refresh = async (): Promise<string | null> => {
@@ -113,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await fetch(`${API_BASE}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+        headers: accessTokenRef.current ? { Authorization: `Bearer ${accessTokenRef.current}` } : undefined,
       });
     } catch (e) {
       // console.error("logout 실패:", e);
@@ -134,7 +140,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (init.body && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
     }
-    if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
+    // ✅ accessTokenRef.current 사용 - 항상 최신 토큰 참조
+    if (accessTokenRef.current) headers.set("Authorization", `Bearer ${accessTokenRef.current}`);
 
     const res = await fetch(url, { ...init, headers, credentials: "include" });
     if (res.status !== 401) return res;
@@ -153,10 +160,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    // ✅ 이전 버전에서 localStorage에 저장된 토큰 정리
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+
     // 첫 진입/새로고침 시 access 복구
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ✅ myApi 인스턴스 생성 (authFetch가 accessTokenRef를 참조하므로 한 번만 생성해도 됨)
+  const myApi = useMemo(() => createMyApi(authFetch), []);
 
   const value = useMemo(
     () => ({
@@ -168,8 +182,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       logout,
       authFetch,
+      myApi, // ✅ myApi 인스턴스 추가
     }),
-    [user, accessToken, isLoading]
+    [user, accessToken, isLoading, myApi]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
