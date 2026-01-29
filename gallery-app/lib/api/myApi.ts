@@ -309,3 +309,13 @@ export interface AdminStats {
 export async function getAdminStats(): Promise<AdminStats> {
     return request<AdminStats>(`${API_BASE}/api/admin/dashboard`);
 }
+
+// 내 문의 내역 조회
+export async function getMyInquiries(page = 0, size = 20): Promise<{ content: any[]; totalPages: number }> {
+    return request<{ content: any[]; totalPages: number }>(`${API_BASE}/api/inquiries/my?page=${page}&size=${size}`);
+}
+
+// 내 신고 내역 조회
+export async function getMyReports(page = 0, size = 20): Promise<{ content: any[]; totalPages: number }> {
+    return request<{ content: any[]; totalPages: number }>(`${API_BASE}/api/reports/my?page=${page}&size=${size}`);
+}
