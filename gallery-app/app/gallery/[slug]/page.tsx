@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 type Props = {
-    params: { slug: string }
+    params: Promise<{ slug: string }>
 }
 
 type GalleryDetail = {
@@ -45,7 +45,8 @@ async function getGalleryDetail(id: string): Promise<GalleryDetail | null> {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    const id = extractId(params.slug);
+    const { slug } = await params;
+    const id = extractId(slug);
     const item = await getGalleryDetail(id);
 
     if (!item) {
@@ -55,8 +56,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
 
     const safeTitle = item.title.replace(/\s+/g, '-').replace(/[^\w\-\uAC00-\uD7A3]/g, '');
-    const slug = `${safeTitle}-${item.id}`;
-    const canonicalUrl = `https://brickers.shop/gallery/${slug}`;
+    const canonicalSlug = `${safeTitle}-${item.id}`;
+    const canonicalUrl = `https://brickers.shop/gallery/${canonicalSlug}`;
     const description = item.content || `${item.title} - ${item.authorNickname || '익명'}님이 만든 AI 레고 작품`;
 
     return {
@@ -91,7 +92,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function GalleryDetailPage({ params }: Props) {
-    const id = extractId(params.slug);
+    const { slug } = await params;
+    const id = extractId(slug);
     const item = await getGalleryDetail(id);
 
     if (!item) {
@@ -100,8 +102,8 @@ export default async function GalleryDetailPage({ params }: Props) {
 
     // Generate canonical URL
     const safeTitle = item.title.replace(/\s+/g, '-').replace(/[^\w\-\uAC00-\uD7A3]/g, '');
-    const slug = `${safeTitle}-${item.id}`;
-    const canonicalUrl = `https://brickers.shop/gallery/${slug}`;
+    const canonicalSlug = `${safeTitle}-${item.id}`;
+    const canonicalUrl = `https://brickers.shop/gallery/${canonicalSlug}`;
 
     // JSON-LD structured data for rich snippets
     const jsonLd = {
