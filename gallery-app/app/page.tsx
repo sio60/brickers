@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import GalleryClient from '../components/GalleryClient';
-import { GalleryItem } from '../components/GalleryCard';
+import { GalleryItem, PageResponse } from '../types/gallery';
 
 // Metadata for the gallery home page
 export const metadata: Metadata = {
@@ -16,14 +16,6 @@ export const metadata: Metadata = {
         type: 'website',
     },
 };
-
-type PageResponse<T> = {
-    content: T[];
-    last: boolean;
-    totalPages: number;
-    totalElements: number;
-    number: number;
-}
 
 // Function to fetch gallery items (Server-side)
 async function getGalleryItems(): Promise<PageResponse<GalleryItem>> {

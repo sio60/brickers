@@ -2,19 +2,9 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { GalleryItem } from '../types/gallery';
 
-export type GalleryItem = {
-    id: string;
-    title: string;
-    thumbnailUrl: string;
-    authorNickname?: string;
-    createdAt?: string;
-    brickCount?: number;
-    likeCount?: number;
-    viewCount?: number;
-    isBookmarked?: boolean;
-    ldrUrl?: string;
-};
+export type { GalleryItem };
 
 type Props = {
     item: GalleryItem;

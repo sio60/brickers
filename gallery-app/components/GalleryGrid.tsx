@@ -1,6 +1,7 @@
 'use client';
 
-import GalleryCard, { GalleryItem } from './GalleryCard';
+import GalleryCard from './GalleryCard';
+import { GalleryItem } from '../types/gallery';
 
 type Props = {
     items: GalleryItem[];

@@ -7,15 +7,7 @@ import GalleryGrid from '../../components/GalleryGrid';
 import Tabs from '../../components/Tabs';
 import LoadMoreButton from '../../components/LoadMoreButton';
 import NextButton from '../../components/NextButton';
-import { GalleryItem } from '../../components/GalleryCard';
-
-type PageResponse<T> = {
-    content: T[];
-    last: boolean;
-    totalPages: number;
-    totalElements: number;
-    number: number;
-}
+import { GalleryItem, PageResponse } from '../../types/gallery';
 
 const TABS = [
     { id: 'my', label: '내 갤러리' },
