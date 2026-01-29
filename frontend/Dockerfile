@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # npm install 보다 더 빠르고 정확한 npm ci 사용 (lock 파일 기준 설치)
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # 소스 코드 복사
 COPY . .
