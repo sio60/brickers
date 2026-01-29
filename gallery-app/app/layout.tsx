@@ -20,7 +20,9 @@ const jua = Jua({
 const mPlusRounded = M_PLUS_Rounded_1c({
     weight: ['400', '500', '700'],
     subsets: ['latin'],
-    variable: '--font-m-plus'
+    variable: '--font-m-plus',
+    preload: false,
+    display: 'swap'
 })
 
 export const metadata: Metadata = {
