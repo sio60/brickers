@@ -39,7 +39,10 @@ export default function GalleryCard({ item, isLoggedIn, onBookmarkToggle, onLogi
     const formatDate = (dateStr?: string) => {
         if (!dateStr) return '';
         const date = new Date(dateStr);
-        return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+        // 서버/클라이언트 hydration 일치를 위해 고정 포맷 사용
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        return `${month}월 ${day}일`;
     };
 
     return (
