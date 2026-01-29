@@ -11,7 +11,7 @@ type Props = {
 
 export default function GalleryPanel({ title, rightAction, children, footer }: Props) {
     return (
-        <div className="gallery-panel w-full max-w-6xl mx-auto my-3 overflow-hidden flex flex-col h-[calc(100vh-100px)]">
+        <div className="gallery-panel w-full max-w-6xl mx-auto my-3 overflow-hidden flex flex-col h-[calc(100vh-140px)]">
             {/* Panel Header */}
             {(title || rightAction) && (
                 <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-100">

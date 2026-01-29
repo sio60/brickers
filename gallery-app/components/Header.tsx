@@ -11,17 +11,31 @@ export default function Header() {
     const pathname = usePathname();
 
     useEffect(() => {
-        // Check for auth token in localStorage (managed by Vite app)
-        const token = localStorage.getItem('accessToken');
-        setIsLoggedIn(!!token);
+        const checkAuth = () => {
+            const token = localStorage.getItem('accessToken');
+            setIsLoggedIn(!!token);
+        };
+
+        // Initial check
+        checkAuth();
+
+        // Listen for storage changes (sync across tabs)
+        window.addEventListener('storage', checkAuth);
+
+        // Custom event for same-tab changes if needed, but localStorage.setItem doesn't trigger 'storage' on same window
+        // So we can also use a simple interval or just rely on the fact that most changes happen via our own functions
+        return () => window.removeEventListener('storage', checkAuth);
     }, []);
 
     const handleLogout = () => {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         setIsLoggedIn(false);
-        // Navigate to home (browser navigation)
-        window.location.href = '/';
+        // Dispatch a storage event manually for other tabs if they aren't listening already
+        window.dispatchEvent(new Event('storage'));
+
+        // Navigate to home
+        window.location.href = '/gallery';
     };
 
     const isMyPage = pathname === '/my';
@@ -47,21 +61,21 @@ export default function Header() {
                         {isMyPage ? (
                             <a
                                 href="/gallery"
-                                className="px-3 py-1.5 text-[15px] font-semibold text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all tracking-wider"
+                                className="px-4 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
                             >
                                 {t.header.gallery}
                             </a>
                         ) : (
                             <a
                                 href="/gallery/my"
-                                className="px-3 py-1.5 text-[15px] font-semibold text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all tracking-wider"
+                                className="px-4 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
                             >
                                 {t.header.myGallery}
                             </a>
                         )}
                         <button
                             onClick={handleLogout}
-                            className="px-4 py-2 text-sm font-semibold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
+                            className="px-4 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
                         >
                             {t.header.logout}
                         </button>
@@ -69,7 +83,7 @@ export default function Header() {
                 ) : (
                     <a
                         href="/?login=true"
-                        className="px-4 py-2 text-sm font-semibold bg-black text-white border-2 border-black rounded-lg hover:bg-gray-800 transition-all"
+                        className="px-6 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
                     >
                         {t.header.login}
                     </a>

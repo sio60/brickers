@@ -24,8 +24,14 @@ export default function GalleryClient({ initialItems, initialHasMore }: Props) {
     const [showLoginModal, setShowLoginModal] = useState(false);
 
     useEffect(() => {
-        const token = localStorage.getItem('accessToken');
-        setIsLoggedIn(!!token);
+        const checkAuth = () => {
+            const token = localStorage.getItem('accessToken');
+            setIsLoggedIn(!!token);
+        };
+
+        checkAuth();
+        window.addEventListener('storage', checkAuth);
+        return () => window.removeEventListener('storage', checkAuth);
     }, []);
 
     const loadMore = async () => {
