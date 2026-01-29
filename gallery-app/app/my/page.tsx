@@ -8,13 +8,16 @@ import Tabs from '../../components/Tabs';
 import LoadMoreButton from '../../components/LoadMoreButton';
 import NextButton from '../../components/NextButton';
 import { GalleryItem, PageResponse } from '../../types/gallery';
-
-const TABS = [
-    { id: 'my', label: '내 갤러리' },
-    { id: 'bookmarks', label: '북마크' },
-];
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function MyGalleryPage() {
+    const { t } = useLanguage();
+
+    const TABS = [
+        { id: 'my', label: t.my.tabMy },
+        { id: 'bookmarks', label: t.my.tabBookmarks },
+    ];
+
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('my');
     const [myItems, setMyItems] = useState<GalleryItem[]>([]);
@@ -164,7 +167,7 @@ export default function MyGalleryPage() {
     return (
         <div className="relative z-10 px-4 py-6">
             <GalleryPanel
-                title="내 갤러리"
+                title={t.my.title}
                 rightAction={
                     <Tabs
                         tabs={TABS}
@@ -179,10 +182,12 @@ export default function MyGalleryPage() {
                             loading={loadingMore}
                             hasMore={hasMore}
                         />
-                        <NextButton
-                            href="/kids/main"
-                            label="새 작품 만들기"
-                        />
+                        {hasMore && (
+                            <NextButton
+                                onClick={handleLoadMore}
+                                label={t.my.next}
+                            />
+                        )}
                     </div>
                 }
             >
