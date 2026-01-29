@@ -43,23 +43,41 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
         return [
             {
-                url: baseUrl,
+                url: 'https://brickers.shop/',
                 lastModified: new Date(),
                 changeFrequency: 'daily',
                 priority: 1.0,
+            },
+            {
+                url: 'https://brickers.shop/mypage',
+                lastModified: new Date(),
+                changeFrequency: 'weekly',
+                priority: 0.5,
+            },
+            {
+                url: baseUrl,
+                lastModified: new Date(),
+                changeFrequency: 'daily',
+                priority: 0.9,
             },
             ...items,
         ];
 
     } catch (e) {
-        console.error('Sitemap generation error (likely build time):', e);
-        // 빌드 시에도 최소한의 sitemap 반환
+        console.error('Sitemap generation error:', e);
+        // Return a minimal sitemap even if an error occurs during build time
         return [
+            {
+                url: 'https://brickers.shop/',
+                lastModified: new Date(),
+                changeFrequency: 'daily',
+                priority: 1.0,
+            },
             {
                 url: baseUrl,
                 lastModified: new Date(),
                 changeFrequency: 'daily',
-                priority: 1.0,
+                priority: 0.9,
             },
         ];
     }
