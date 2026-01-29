@@ -6,7 +6,7 @@ import GalleryGrid from './GalleryGrid';
 import LoadMoreButton from './LoadMoreButton';
 import NextButton from './NextButton';
 import LoginModal from './LoginModal';
-import { GalleryItem } from './GalleryCard';
+import { GalleryItem } from '../types/gallery';
 
 type Props = {
     initialItems: GalleryItem[];
