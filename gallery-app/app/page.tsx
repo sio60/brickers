@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
@@ -8,6 +10,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import LoginModal from "@/components/common/LoginModal";
 import KidsModelSelectModal from "@/components/kids/KidsModelSelectModal";
 import styles from "./KidsAgeSelection.module.css";
+
+// Three.js 컴포넌트는 SSR에서 제외
+const Background3D = dynamic(
+    () => import("@/components/three/Background3D"),
+    { ssr: false }
+);
 
 type AgeGroup = "4-5" | "6-7" | "8-10" | null;
 
