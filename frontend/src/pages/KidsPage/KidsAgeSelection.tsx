@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./KidsAgeSelection.css";
+import SEO from "../../components/SEO";
 import Background3D from "../MainPage/components/Background3D";
 
 import img35 from "../../assets/35.png";
@@ -108,6 +109,11 @@ export default function KidsAgeSelection() {
 
   return (
     <div className="kidsAgeSelection">
+      <SEO
+        title={t.kids.title || "Choose Your Level"}
+        description="Select your age level to start building wonderful AI LEGO creations."
+        keywords="lego, ai, bricks, kids, creation, level selection"
+      />
       <Background3D entryDirection="top" />
       <h1 className="kidsAgeSelection__title">{t.kids.title}</h1>
 

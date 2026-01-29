@@ -5,6 +5,7 @@ import { useAuth } from "../Auth/AuthContext";
 import "./MyPage.css";
 import { getMyOverview, getMyProfile, retryJob, updateMyProfile, ApiError } from "../../api/myApi";
 import type { MyOverview, MyProfile, MyJob } from "../../api/myApi";
+import SEO from "../../components/SEO";
 import Background3D from "../MainPage/components/Background3D";
 import FloatingMenuButton from "../KidsPage/components/FloatingMenuButton";
 import UpgradeModal from "../MainPage/components/UpgradeModal";
@@ -585,6 +586,11 @@ export default function MyPage() {
 
     return (
         <div className={`mypage lang-${language}`}>
+            <SEO
+                title="My Page"
+                description="Manage your profile, membership, and view your LEGO creations."
+            // noindex for MyPage as it is private
+            />
             <Background3D entryDirection="float" />
 
             <div className="mypage__container">

@@ -59,6 +59,27 @@ services:
       - AWS_SQS_REQUEST_QUEUE_URL=${AWS_SQS_REQUEST_QUEUE_URL}
       - AWS_SQS_RESULT_QUEUE_URL=${AWS_SQS_RESULT_QUEUE_URL}
 
+      # ✅ Gallery SEO Revalidate 설정
+      - GALLERY_REVALIDATE_ENABLED=${GALLERY_REVALIDATE_ENABLED:-true}
+      - GALLERY_REVALIDATE_URL=${GALLERY_REVALIDATE_URL:-http://gallery-frontend:3000/gallery/api/revalidate}
+      - GALLERY_REVALIDATE_SECRET=${GALLERY_REVALIDATE_SECRET}
+
+    networks:
+      - brickers-network
+
+  gallery-frontend:
+    build:
+      context: ./gallery-app
+      dockerfile: Dockerfile
+    container_name: brickers-gallery
+    ports:
+      - "3000:3000"
+    environment:
+      - TZ=Asia/Seoul
+      - API_BASE=http://backend:8080
+      - REVALIDATE_SECRET=${GALLERY_REVALIDATE_SECRET}
+    depends_on:
+      - backend
     networks:
       - brickers-network
 

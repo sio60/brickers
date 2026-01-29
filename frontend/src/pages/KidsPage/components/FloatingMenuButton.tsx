@@ -53,7 +53,8 @@ export default function FloatingMenuButton() {
                 setIsChatOpen(true);
                 break;
             case "gallery":
-                navigate("/gallery");
+                // 갤러리는 Next.js 앱으로 이동 (Nginx가 /gallery를 gallery-app으로 프록시)
+                window.location.href = "/gallery";
                 break;
             case "admin":
                 navigate("/admin");

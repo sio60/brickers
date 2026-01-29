@@ -74,6 +74,13 @@ app:
       max-bytes: ${UPLOAD_MAX_BYTES:52428800}
       allowed-content-types: image/png,image/jpeg,image/webp,application/octet-stream,text/plain
 
+# ✅ Gallery SEO Revalidate 설정
+gallery:
+  revalidate:
+    enabled: ${GALLERY_REVALIDATE_ENABLED:false}
+    url: ${GALLERY_REVALIDATE_URL:https://brickers.shop/gallery/api/revalidate}
+    secret: ${GALLERY_REVALIDATE_SECRET:your-secret-token}
+
 # ✅ AI 서버 설정 (들여쓰기 주의: ai가 최상위)
 ai:
   server:
