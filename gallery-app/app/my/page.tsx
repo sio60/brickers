@@ -30,13 +30,19 @@ export default function MyGalleryPage() {
     const [bookmarkHasMore, setBookmarkHasMore] = useState(true);
 
     useEffect(() => {
-        const token = localStorage.getItem('accessToken');
-        if (!token) {
-            window.location.href = '/?login=true';
-            return;
-        }
-        fetchMyGallery(token, 0);
-        fetchBookmarks(token, 0);
+        const checkAuth = () => {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                window.location.href = '/?login=true';
+                return;
+            }
+            fetchMyGallery(token, 0);
+            fetchBookmarks(token, 0);
+        };
+
+        checkAuth();
+        window.addEventListener('storage', checkAuth);
+        return () => window.removeEventListener('storage', checkAuth);
     }, []);
 
     const fetchMyGallery = async (token: string, pageNum: number) => {
