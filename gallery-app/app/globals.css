@@ -1,14 +1,123 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 :root {
     --foreground-rgb: 0, 0, 0;
-    --background-start-rgb: 214, 219, 220;
+    --background-start-rgb: 250, 250, 252;
     --background-end-rgb: 255, 255, 255;
 }
 
 body {
     color: rgb(var(--foreground-rgb));
-    background: white;
+    background: linear-gradient(135deg,
+            rgb(var(--background-start-rgb)) 0%,
+            rgb(var(--background-end-rgb)) 100%);
+    min-height: 100vh;
+}
+
+/* Background Bricks Animation */
+@keyframes floatBrick {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(var(--rotation, 0deg));
+    }
+
+    25% {
+        transform: translateY(-20px) rotate(calc(var(--rotation, 0deg) + 5deg));
+    }
+
+    50% {
+        transform: translateY(-10px) rotate(calc(var(--rotation, 0deg) - 3deg));
+    }
+
+    75% {
+        transform: translateY(-25px) rotate(calc(var(--rotation, 0deg) + 2deg));
+    }
+}
+
+/* Gallery Panel */
+.gallery-panel {
+    background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+    border: 3px solid #000000;
+    border-radius: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+/* Card hover effects */
+.gallery-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gallery-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* Button styles */
+.btn-primary {
+    background: #000000;
+    color: #ffffff;
+    border: 2px solid #000000;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background: #333333;
+    transform: translateY(-1px);
+}
+
+.btn-outline {
+    background: #ffffff;
+    color: #000000;
+    border: 2px solid #000000;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-outline:hover {
+    background: #000000;
+    color: #ffffff;
+}
+
+/* Tab styles */
+.tab-active {
+    border-bottom: 3px solid #000000;
+    font-weight: 700;
+}
+
+.tab-inactive {
+    border-bottom: 3px solid transparent;
+    color: #888888;
+}
+
+.tab-inactive:hover {
+    color: #000000;
+}
+
+/* Custom Scrollbar for Gallery Panel */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e0e0e0;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #cccccc;
+}
+
+/* Ensure body doesn't scroll if panel is active */
+body {
+    overflow: hidden;
 }

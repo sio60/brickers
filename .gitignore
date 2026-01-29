@@ -81,6 +81,7 @@ node_modules/
 dist/
 build/
 .cache/
+.next/
 
 ####################################
 # MongoDB / Data
