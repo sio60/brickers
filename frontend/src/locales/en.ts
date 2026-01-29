@@ -210,6 +210,7 @@ export const en = {
         upgrade: "UPGRADE",
         login: "LOGIN",
         logout: "LOGOUT",
+        gallery: "GALLERY",
         logoAlt: "BRICKERS Logo"
     },
     auth: {

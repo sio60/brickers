@@ -211,6 +211,7 @@ export const ko = {
         upgrade: "업그레이드",
         login: "로그인",
         logout: "로그아웃",
+        gallery: "갤러리",
         logoAlt: "브릭커스 로고"
     },
     auth: {

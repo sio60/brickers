@@ -97,8 +97,10 @@ export default function KidsPage() {
 
         // 3. Backend에 S3 URL 전달 (JSON)
         setDebugLog(t.kids.generate.creating2);
+        // 파일명에서 확장자 제거하여 제목으로 사용
+        const fileTitle = rawFile.name.replace(/\.[^/.]+$/, "");
         console.log("[KidsPage] 📤 Step 3: /api/kids/generate 호출 시작...");
-        console.log("[KidsPage]    payload:", { sourceImageUrl: presign.publicUrl, age, budget });
+        console.log("[KidsPage]    payload:", { sourceImageUrl: presign.publicUrl, age, budget, title: fileTitle });
         const startRes = await fetch("/api/kids/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -106,6 +108,7 @@ export default function KidsPage() {
             sourceImageUrl: presign.publicUrl,
             age,
             budget,
+            title: fileTitle,
           }),
           signal: abort.signal,
         });

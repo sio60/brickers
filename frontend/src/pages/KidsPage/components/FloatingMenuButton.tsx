@@ -35,7 +35,6 @@ export default function FloatingMenuButton() {
     const menuItems = [
         { id: "mypage", label: t.floatingMenu?.mypage || "My Page" },
         { id: "chatbot", label: t.floatingMenu?.chatbot || "BrickBot" }, // Label Change
-        { id: "gallery", label: t.floatingMenu?.gallery || "Gallery" },
     ];
 
     if (isAdmin) {
