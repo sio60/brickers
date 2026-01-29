@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import Header from '../components/Header'
+import BackgroundBricks from '../components/BackgroundBricks'
 import { LanguageProvider } from '../contexts/LanguageContext'
 import { AuthProvider } from '../contexts/AuthContext'
 
@@ -63,7 +65,11 @@ export default function RootLayout({
             <body className={inter.className}>
                 <LanguageProvider>
                     <AuthProvider>
-                        {children}
+                        <BackgroundBricks />
+                        <Header />
+                        <main className="pt-[72px] min-h-screen relative">
+                            {children}
+                        </main>
                     </AuthProvider>
                 </LanguageProvider>
             </body>

@@ -236,7 +236,7 @@ function KidsPageContent() {
 
     return (
         <div className={styles.page}>
-            <Background3D entryDirection="float" />
+            {/* BackgroundBricks is in layout */}
 
             <div className={styles.center}>
                 {status === "loading" && (
