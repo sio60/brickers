@@ -43,7 +43,7 @@ export default function GalleryCard({ item, isLoggedIn, onBookmarkToggle, onLogi
     };
 
     return (
-        <Link href={`/${slug}`} className="block">
+        <Link href={`/gallery/${slug}`} className="block">
             <div className="gallery-card bg-white rounded-2xl overflow-hidden border border-gray-100">
                 {/* Thumbnail */}
                 <div className="relative aspect-square bg-gray-100 overflow-hidden">
