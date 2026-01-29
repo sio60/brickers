@@ -150,7 +150,7 @@ export default function MyPage() {
         { id: "profile" as MenuItem, label: t.menu.profile },
         { id: "membership" as MenuItem, label: t.menu.membership },
         { id: "jobs" as MenuItem, label: t.menu.jobs },
-        { id: "gallery" as MenuItem, label: t.menu.gallery },
+        // Gallery removed as requested
         { id: "inquiries" as MenuItem, label: t.menu.inquiries },
         { id: "reports" as MenuItem, label: t.menu.reports },
         { id: "settings" as MenuItem, label: t.menu.settings },
