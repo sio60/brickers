@@ -32,9 +32,14 @@ async function getGalleryDetail(id: string): Promise<GalleryDetail | null> {
         const res = await fetch(`${apiBase}/api/gallery/${id}`, {
             next: { revalidate: 60 }
         });
-        if (!res.ok) return null;
+        if (!res.ok) {
+            console.error('Failed to fetch gallery detail:', res.status);
+            return null;
+        }
         return res.json();
-    } catch (e) {
+    } catch (error) {
+        // Build time에는 backend가 없으므로 null 반환
+        console.error('Gallery detail fetch error (likely build time):', error);
         return null;
     }
 }

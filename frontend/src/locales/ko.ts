@@ -218,7 +218,7 @@ export const ko = {
         title: "로그인",
         kakao: "Kakao로 시작하기",
         google: "Google로 시작하기",
-        processing: "로그인 처리 중... 잠시만 기다려주세요",
+        processing: "Login...",
         failed: "로그인에 실패했습니다.",
         redirecting: "홈으로 이동합니다..."
     },

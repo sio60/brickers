@@ -16,6 +16,14 @@ import java.time.Duration;
 @Slf4j
 public class WebClientConfig {
 
+    /**
+     * WebClient.Builder 빈 - 다른 서비스에서 WebClient 생성 시 사용
+     */
+    @Bean
+    public WebClient.Builder webClientBuilder() {
+        return WebClient.builder();
+    }
+
     @Bean
     public WebClient aiWebClient(
             @Value("${AI_SERVER_URL}") String aiServerUrl,

@@ -52,7 +52,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         ];
 
     } catch (e) {
-        console.error('Sitemap generation error:', e);
-        return [];
+        console.error('Sitemap generation error (likely build time):', e);
+        // 빌드 시에도 최소한의 sitemap 반환
+        return [
+            {
+                url: baseUrl,
+                lastModified: new Date(),
+                changeFrequency: 'daily',
+                priority: 1.0,
+            },
+        ];
     }
 }
