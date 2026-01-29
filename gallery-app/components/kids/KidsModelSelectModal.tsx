@@ -66,8 +66,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
 
     const handleModelClick = (url: string) => {
         if (!isAuthenticated) {
-            alert(t.common?.loginRequired || "Login required.");
-            setShowLogin(true);
+            router.push('?login=true');
             return;
         }
         setSelectedUrl(url);
@@ -93,13 +92,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
         setDragOver(false);
 
         if (!isAuthenticated) {
-            alert(t.common?.loginRequired || "Login required.");
-            setShowLogin(true);
-            return;
-        }
-
-        if (!isPro) {
-            setShowUpgrade(true);
+            router.push('?login=true');
             return;
         }
 
@@ -109,22 +102,16 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
 
     const handleUploadClick = () => {
         if (!isAuthenticated) {
-            alert(t.common?.loginRequired || "Login required.");
-            setShowLogin(true);
+            router.push('?login=true');
             return;
         }
 
-        if (isPro) {
-            inputRef.current?.click();
-        } else {
-            setShowUpgrade(true);
-        }
+        inputRef.current?.click();
     };
 
     const handleConfirm = () => {
         if (!isAuthenticated) {
-            alert(t.common?.loginRequired || "Login required.");
-            setShowLogin(true);
+            router.push('?login=true');
             return;
         }
 
@@ -197,24 +184,17 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                         const f = e.target.files?.[0];
                                         if (f) handleFile(f);
                                     }}
-                                    disabled={!isPro}
                                 />
                                 {previewUrl ? (
                                     <div className={styles.uploadPreviewWrap}>
                                         <Image src={previewUrl} alt="preview" width={120} height={120} className={styles.uploadPreview} />
                                         <div className={styles.uploadFilename}>{file?.name}</div>
                                     </div>
-                                ) : isPro ? (
+                                ) : (
                                     <>
                                         <div className={styles.uploadTitle}>{t.kids.modelSelect.uploadTitle}</div>
                                         <div className={styles.uploadSub}>{t.kids.modelSelect.uploadSub}</div>
                                         <div className={styles.uploadHint}>{t.kids.modelSelect.uploadHint}</div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className={styles.uploadTitle}>{t.kids.modelSelect.uploadProTitle}</div>
-                                        <div className={styles.uploadSub}>{t.kids.modelSelect.uploadProSub}</div>
-                                        <div className={styles.uploadHint}>{t.kids.modelSelect.uploadProHint}</div>
                                     </>
                                 )}
                             </div>

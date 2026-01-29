@@ -63,8 +63,7 @@ export default function FloatingMenuButton() {
 
     const handleMainBtnClick = () => {
         if (!isAuthenticated) {
-            alert(t.common?.loginRequired || "Login required.");
-            setIsLoginModalOpen(true);
+            router.push('?login=true');
             return;
         }
         setIsOpen(!isOpen);
@@ -110,10 +109,6 @@ export default function FloatingMenuButton() {
                 </button>
             </div>
 
-            <LoginModal
-                isOpen={isLoginModalOpen}
-                onClose={() => setIsLoginModalOpen(false)}
-            />
 
             <BrickBotModal
                 isOpen={isChatOpen}

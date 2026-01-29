@@ -12,7 +12,6 @@ import './KidsAgeSelection.css';
 
 // SSR 제외 컴포넌트
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
-const FloatingMenuButton = dynamic(() => import("@/components/kids/FloatingMenuButton"), { ssr: false });
 
 type AgeGroup = "4-5" | "6-7" | "8-10" | null;
 
@@ -23,7 +22,6 @@ function KidsAgeSelectionContent() {
     const { isAuthenticated } = useAuth();
 
     const [selectedAge, setSelectedAge] = useState<AgeGroup>(null);
-    const [openLoginModal, setOpenLoginModal] = useState(false);
     const [openModelModal, setOpenModelModal] = useState(false);
     const [modalAge, setModalAge] = useState<AgeGroup>(null);
 
@@ -51,17 +49,10 @@ function KidsAgeSelectionContent() {
         return models45;
     };
 
-    // URL에 ?login=true가 있으면 자동으로 로그인 모달 열기
-    useEffect(() => {
-        if (searchParams.get("login") === "true" && !isAuthenticated) {
-            setOpenLoginModal(true);
-        }
-    }, [searchParams, isAuthenticated]);
 
     const handleSelect = (ageGroup: AgeGroup) => {
         if (!isAuthenticated) {
-            alert(t.common?.loginRequired || "Login required.");
-            setOpenLoginModal(true);
+            router.push('?login=true');
             return;
         }
 
@@ -97,8 +88,7 @@ function KidsAgeSelectionContent() {
 
     const handleContinue = () => {
         if (!isAuthenticated) {
-            alert(t.common?.loginRequired || "Login required.");
-            setOpenLoginModal(true);
+            router.push('?login=true');
             return;
         }
 
@@ -157,14 +147,6 @@ function KidsAgeSelectionContent() {
                 onSelect={handlePickModel}
                 items={getCurrentModels()}
             />
-
-            {/* 로그인 모달 */}
-            <LoginModal
-                isOpen={openLoginModal}
-                onClose={() => setOpenLoginModal(false)}
-            />
-
-            <FloatingMenuButton />
         </div>
     );
 }
