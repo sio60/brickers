@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import Header from '../components/Header'
+import BackgroundBricks from '../components/BackgroundBricks'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -51,8 +53,6 @@ export const metadata: Metadata = {
     },
 }
 
-import Header from '../components/Header';
-
 export default function RootLayout({
     children,
 }: {
@@ -61,8 +61,9 @@ export default function RootLayout({
     return (
         <html lang="ko">
             <body className={inter.className}>
+                <BackgroundBricks />
                 <Header />
-                <main className="pt-[72px] min-h-screen bg-neutral-50">
+                <main className="pt-[72px] min-h-screen relative">
                     {children}
                 </main>
             </body>
