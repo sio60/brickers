@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getPresignUrl } from "@/lib/api/myApi";
-import styles from "./KidsPage.module.css";
+import KidsLoadingScreen from "@/components/kids/KidsLoadingScreen";
+import './KidsPage.css';
 
 // SSR 제외
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
@@ -24,7 +25,6 @@ function KidsPageContent() {
         return 150;
     }, [age]);
 
-    // sessionStorage에서 파일 데이터 복원
     const [rawFile, setRawFile] = useState<File | null>(null);
     const [isFileLoaded, setIsFileLoaded] = useState(false);
 
@@ -33,7 +33,6 @@ function KidsPageContent() {
         if (storedData) {
             try {
                 const { name, type, dataUrl } = JSON.parse(storedData);
-                // dataUrl을 File로 변환
                 fetch(dataUrl)
                     .then(res => res.blob())
                     .then(blob => {
@@ -51,7 +50,6 @@ function KidsPageContent() {
         }
     }, []);
 
-    // 파일이 없으면 홈으로 리다이렉트
     useEffect(() => {
         if (isFileLoaded && !rawFile) {
             router.replace("/");
@@ -88,11 +86,9 @@ function KidsPageContent() {
             setDebugLog(t.kids.generate.starting);
 
             try {
-                // 1. Presigned URL 요청
                 setDebugLog(t.kids.generate.uploadPrepare);
                 const presign = await getPresignUrl(rawFile.type, rawFile.name);
 
-                // 2. S3에 직접 업로드
                 setDebugLog(t.kids.generate.uploading);
                 const uploadRes = await fetch(presign.uploadUrl, {
                     method: "PUT",
@@ -105,7 +101,6 @@ function KidsPageContent() {
                     throw new Error(`S3 Upload Error: ${uploadRes.status}`);
                 }
 
-                // 3. Backend에 S3 URL 전달
                 setDebugLog(t.kids.generate.creating2);
                 const fileTitle = rawFile.name.replace(/\.[^/.]+$/, "");
 
@@ -136,7 +131,6 @@ function KidsPageContent() {
                 setJobId(jid);
                 setDebugLog(`${t.kids.generate.jobCreated} [${jid}]`);
 
-                // 4. 폴링
                 let finalData: any = null;
                 for (let i = 0; i < maxAttempts; i++) {
                     if (!alive) return;
@@ -185,7 +179,6 @@ function KidsPageContent() {
                     throw new Error(`Timeout: exceeded ${FRONT_TIMEOUT_SEC}s`);
                 }
 
-                // 5. 결과 처리
                 const modelUrl = finalData.ldrUrl || finalData.modelKey;
                 setDebugLog(t.kids.generate.loadingResult);
 
@@ -213,7 +206,6 @@ function KidsPageContent() {
         };
     }, [rawFile, age, budget, status, t]);
 
-    // stage 기반 진행률 계산
     const percent = useMemo(() => {
         if (status === "done") return 100;
         if (status !== "loading") return 0;
@@ -231,35 +223,32 @@ function KidsPageContent() {
     }, [status, currentStage]);
 
     if (!isFileLoaded) {
-        return <div className={styles.page}>Loading...</div>;
+        return <div className="page">Loading...</div>;
     }
 
     return (
-        <div className={styles.page}>
-            {/* BackgroundBricks is in layout */}
+        <div className="page">
+            <Background3D entryDirection="float" />
 
-            <div className={styles.center}>
+            <div className="center">
                 {status === "loading" && (
                     <>
-                        <div className={styles.debugLog}>{debugLog}</div>
-                        <div className={styles.loadingBar}>
-                            <div className={styles.loadingProgress} style={{ width: `${percent}%` }} />
-                        </div>
-                        <div className={styles.loadingText}>{t.kids.generate.loading}</div>
+                        <div className="debugLog">{debugLog}</div>
+                        <KidsLoadingScreen percent={percent} />
                     </>
                 )}
 
                 {status === "done" && ldrUrl && (
                     <>
-                        <div className={styles.resultTitle}>{t.kids.generate.ready}</div>
-                        <div className={styles.resultCard}>
-                            <div className={styles.viewer3d}>
+                        <div className="resultTitle">{t.kids.generate.ready}</div>
+                        <div className="resultCard">
+                            <div className="viewer3d">
                                 <KidsLdrPreview url={ldrUrl} />
                             </div>
                         </div>
 
                         <button
-                            className={styles.nextBtn}
+                            className="nextBtn"
                             onClick={() => {
                                 router.push(`/kids/steps?url=${encodeURIComponent(ldrUrl)}&jobId=${jobId ?? ""}&age=${age}`);
                             }}
@@ -270,7 +259,7 @@ function KidsPageContent() {
                 )}
 
                 {status === "error" && (
-                    <div className={styles.error}>
+                    <div className="error">
                         <div style={{ fontWeight: "bold", marginBottom: "8px" }}>{t.kids.generate.failed}</div>
                         {t.kids.generate.error}
                         <br />
@@ -279,7 +268,7 @@ function KidsPageContent() {
                 )}
 
                 {showToast && (
-                    <div className={styles.toast}>
+                    <div className="toast">
                         {t.kids.generate.complete}
                     </div>
                 )}
@@ -297,3 +286,4 @@ export default function KidsPage() {
         </Suspense>
     );
 }
+
