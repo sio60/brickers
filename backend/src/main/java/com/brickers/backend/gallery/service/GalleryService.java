@@ -219,10 +219,10 @@ public class GalleryService {
         if (u.isEmpty())
             return null;
 
+        // http/https URL만 허용 (S3 URL 등)
+        // /uploads/ 같은 상대경로는 Next.js Image에서 사용 불가하므로 제외
         if (u.startsWith("http://") || u.startsWith("https://"))
             return u;
-        if (u.startsWith("/uploads/"))
-            return u; // ✅ 상대경로 허용
         return null;
     }
 
