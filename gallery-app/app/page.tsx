@@ -40,15 +40,23 @@ type PageResponse<T> = {
 async function getGalleryItems(): Promise<PageResponse<GalleryItem>> {
     // Use environment variable or default to Docker service name
     const apiBase = process.env.API_BASE || 'http://backend:8080';
-    const res = await fetch(`${apiBase}/api/gallery?size=24&sort=latest`, {
-        next: { revalidate: 60 }, // ISR: Revalidate every 60 seconds
-    });
 
-    if (!res.ok) {
-        throw new Error('Failed to fetch gallery');
+    try {
+        const res = await fetch(`${apiBase}/api/gallery?size=24&sort=latest`, {
+            next: { revalidate: 60 }, // ISR: Revalidate every 60 seconds
+        });
+
+        if (!res.ok) {
+            console.error('Failed to fetch gallery:', res.status);
+            return { content: [], last: true, totalPages: 0, totalElements: 0, number: 0 };
+        }
+
+        return res.json();
+    } catch (error) {
+        // Build time에는 backend가 없으므로 빈 데이터 반환
+        console.error('Gallery fetch error (likely build time):', error);
+        return { content: [], last: true, totalPages: 0, totalElements: 0, number: 0 };
     }
-
-    return res.json();
 }
 
 export default async function GalleryHome() {
