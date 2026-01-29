@@ -15,7 +15,6 @@ export default function KidsPage() {
   const location = useLocation();
   const age = (params.get("age") ?? "4-5") as "4-5" | "6-7" | "8-10";
 
-  // ... (existing constants)
   const budget = useMemo(() => {
     if (age === "4-5") return 50;
     if (age === "6-7") return 100;
@@ -24,6 +23,13 @@ export default function KidsPage() {
 
   const rawFile =
     (location.state as { uploadedFile?: File } | null)?.uploadedFile ?? null;
+
+  // ✅ rawFile이 없으면 홈으로 리다이렉트 (파일 업로드 없이 직접 접근한 경우)
+  useEffect(() => {
+    if (!rawFile) {
+      navigate("/", { replace: true });
+    }
+  }, [rawFile, navigate]);
 
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">(
     "idle"

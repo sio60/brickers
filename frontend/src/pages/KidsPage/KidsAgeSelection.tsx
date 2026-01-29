@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import "./KidsAgeSelection.css";
 import SEO from "../../components/SEO";
 import Background3D from "../MainPage/components/Background3D";
@@ -34,10 +34,21 @@ export default function KidsAgeSelection() {
   const { isAuthenticated } = useAuth(); // ✅ 로그인 상태 가져오기
 
   const [selectedAge, setSelectedAge] = useState<AgeGroup>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // 모달 오픈 상태
   const [openModelModal, setOpenModelModal] = useState(false);
   const [openLoginModal, setOpenLoginModal] = useState(false); // ✅ 로그인 모달 상태
+
+  // ✅ URL에 ?login=true가 있으면 자동으로 로그인 모달 열기 (갤러리에서 로그인 클릭 시)
+  useEffect(() => {
+    if (searchParams.get("login") === "true" && !isAuthenticated) {
+      setOpenLoginModal(true);
+      // URL에서 login 파라미터 제거 (뒤로가기 시 모달 다시 안뜨도록)
+      searchParams.delete("login");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, isAuthenticated]);
 
   // 현재 모달에 표시할 연령대
   const [modalAge, setModalAge] = useState<"4-5" | "6-7" | "8-10" | null>(null);
