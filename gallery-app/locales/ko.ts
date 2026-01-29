@@ -228,6 +228,7 @@ export const ko = {
         kakao: "Kakao로 시작하기",
         google: "Google로 시작하기",
         processing: "Login...",
+        loggingOut: "Logout...",
         failed: "로그인에 실패했습니다.",
         redirecting: "홈으로 이동합니다..."
     },

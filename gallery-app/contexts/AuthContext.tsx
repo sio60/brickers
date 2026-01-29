@@ -128,7 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setAccessToken(null);
             setUser(null);
             sessionStorage.clear();
-            window.location.href = "/";
+            window.location.href = "/auth/logout";
         }
     };
 

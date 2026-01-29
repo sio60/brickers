@@ -227,6 +227,7 @@ export const en = {
         kakao: "Continue with Kakao",
         google: "Continue with Google",
         processing: "Signing in... Please wait.",
+        loggingOut: "Logging out... Please wait.",
         failed: "Authentication failed.",
         redirecting: "Redirecting to home..."
     },
