@@ -5,6 +5,7 @@ import com.brickers.backend.job.entity.GenerateJobEntity;
 import com.brickers.backend.job.entity.JobStage;
 import com.brickers.backend.job.entity.JobStatus;
 import com.brickers.backend.job.repository.GenerateJobRepository;
+import com.brickers.backend.payment.dto.GooglePayVerifyRequest;
 import com.brickers.backend.payment.service.PaymentService;
 import com.brickers.backend.user.MySettingsResponse;
 import com.brickers.backend.user.dto.*;
@@ -96,19 +97,18 @@ public class MyService {
 
     /** 멤버십 업그레이드 (PRO로 변경) */
     public MyMembershipResponse upgradeMembership(Authentication authentication,
-            com.brickers.backend.payment.dto.GooglePayVerifyRequest req) {
+            GooglePayVerifyRequest req) {
         User user = currentUserService.get(authentication);
 
-        // 구글 페이 데이터가 있으면 검증 및 결제 내역 생성 포함
+        // 구글 페이 데이터가 있는 경우에만 검증 및 업그레이드 진행
         if (req != null && req.getPaymentData() != null) {
             paymentService.verifyGooglePay(authentication, req);
             // verifyGooglePay 내부에서 이미 user.setMembershipPlan(PRO) 및 저장을 하므로 다시 가져옴
             user = userRepository.findById(user.getId()).orElse(user);
         } else {
-            // 구글 페이 데이터가 없으면 단순 업그레이드 (기존 로직 유지)
-            user.setMembershipPlan(MembershipPlan.PRO);
-            user.setUpdatedAt(LocalDateTime.now());
-            userRepository.save(user);
+            // ✅ 보안 강화: 결제 데이터 없이는 업그레이드 불가
+            log.warn("[Security] Upgrade attempt without payment data. userId={}", user.getId());
+            throw new IllegalArgumentException("결제 검증 데이터가 필요합니다.");
         }
 
         return MyMembershipResponse.builder()

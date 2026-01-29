@@ -35,6 +35,7 @@ public class BillingService {
     private final SubscriptionRepository subscriptionRepository;
     private final PaymentPlanRepository planRepository;
     private final UserRepository userRepository;
+    private final GooglePlayValidator googlePlayValidator;
 
     /**
      * 요금제 목록 조회
@@ -58,7 +59,8 @@ public class BillingService {
         // 세션 ID 생성 (프론트에서 결제 완료 후 verify 시 사용)
         String sessionId = "BIL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 
-        log.info("Billing checkout started: userId={}, planCode={}, sessionId={}", userId, req.getPlanCode(), sessionId);
+        log.info("Billing checkout started: userId={}, planCode={}, sessionId={}", userId, req.getPlanCode(),
+                sessionId);
 
         return BillingCheckoutResponse.builder()
                 .sessionId(sessionId)
@@ -68,45 +70,46 @@ public class BillingService {
                 .build();
     }
 
-    /**
-     * Google Play 결제 검증 및 구독 생성
-     */
     @Transactional
     public SubscriptionResponse verify(Authentication auth, BillingVerifyRequest req) {
         String userId = (String) auth.getPrincipal();
 
-        // 중복 검증 방지
+        // 1. 중복 검증 방지
         if (subscriptionRepository.findByPurchaseToken(req.getPurchaseToken()).isPresent()) {
             throw new IllegalStateException("이미 처리된 구매입니다.");
         }
 
-        // TODO: Google Play Developer API로 실제 검증
-        // AndroidPublisher.Purchases.Subscriptions.get() 호출
-        // 지금은 프론트에서 넘어온 값 신뢰 (개발/테스트용)
-        log.warn("Google Play 검증 스킵 (개발 모드): purchaseToken={}", req.getPurchaseToken());
+        // 2. Google Play 검증 호출 (Mock)
+        GooglePlayValidator.GooglePurchaseInfo purchaseInfo = googlePlayValidator.validateSubscription(
+                req.getPurchaseToken(), req.getProductId());
 
-        // 플랜 정보 조회
+        if (!purchaseInfo.isValid()) {
+            log.error("Google Play 검증 실패: userId={}, token={}", userId, req.getPurchaseToken());
+            throw new IllegalArgumentException("유효하지 않은 결제 정보입니다.");
+        }
+
+        // 3. 플랜 정보 조회
         String planCode = mapFromGoogleProductId(req.getProductId());
-        PaymentPlan plan = planRepository.findByCode(planCode)
+        planRepository.findByCode(planCode)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 플랜입니다: " + planCode));
 
-        // 기존 활성 구독 만료 처리
+        // 4. 기존 활성 구독 만료 처리 (중복 구독 방지)
         subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
                 .ifPresent(existing -> {
                     existing.expire();
                     subscriptionRepository.save(existing);
                 });
 
-        // 새 구독 생성
+        // 5. 새 구독 생성
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiresAt = now.plusDays(plan.getDurationDays());
+        LocalDateTime expiresAt = purchaseInfo.getExpiresAt();
 
         Subscription subscription = Subscription.builder()
                 .userId(userId)
                 .planCode(planCode)
                 .status(SubscriptionStatus.ACTIVE)
                 .purchaseToken(req.getPurchaseToken())
-                .orderId(req.getOrderId())
+                .orderId(purchaseInfo.getOrderId())
                 .productId(req.getProductId())
                 .startedAt(now)
                 .expiresAt(expiresAt)
@@ -117,7 +120,7 @@ public class BillingService {
 
         subscriptionRepository.save(subscription);
 
-        // 사용자 멤버십 업그레이드
+        // 6. 사용자 멤버십 업그레이드
         activateMembership(userId);
 
         log.info("Subscription created: userId={}, planCode={}, expiresAt={}", userId, planCode, expiresAt);
@@ -150,9 +153,6 @@ public class BillingService {
                 .map(BillingHistoryResponse::from);
     }
 
-    /**
-     * 구독 취소
-     */
     @Transactional
     public void cancel(Authentication auth) {
         String userId = (String) auth.getPrincipal();
@@ -160,14 +160,13 @@ public class BillingService {
         Subscription subscription = subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
                 .orElseThrow(() -> new IllegalStateException("활성 구독이 없습니다."));
 
-        // TODO: Google Play Developer API로 구독 취소 요청
-        // 실제로는 Google Play에서 자동 갱신 취소 처리
-
+        // 상태를 CANCELED로 변경 (자동 갱신 해지)
+        // 주의: 멤버십 권한은 expiresAt까지 유지되어야 함
         subscription.cancel();
         subscriptionRepository.save(subscription);
 
-        log.info("Subscription canceled: userId={}, subscriptionId={}", userId, subscription.getId());
-        // 주의: 취소해도 expiresAt까지는 PRO 유지
+        log.info("Subscription auto-renew canceled: userId={}, subscriptionId={}, expiresAt={}",
+                userId, subscription.getId(), subscription.getExpiresAt());
     }
 
     /**
@@ -229,13 +228,13 @@ public class BillingService {
                     .orElse(null);
 
             switch (notificationType) {
-                case 1 -> handleRecovered(subscription, purchaseToken);      // RECOVERED
-                case 2 -> handleRenewed(subscription, subscriptionId);       // RENEWED
-                case 3 -> handleCanceled(subscription);                      // CANCELED
-                case 4 -> handlePurchased(purchaseToken, subscriptionId);    // PURCHASED
-                case 7 -> handleRestarted(subscription);                     // RESTARTED
-                case 12 -> handleRevoked(subscription);                      // REVOKED
-                case 13 -> handleExpired(subscription);                      // EXPIRED
+                case 1 -> handleRecovered(subscription, purchaseToken); // RECOVERED
+                case 2 -> handleRenewed(subscription, subscriptionId); // RENEWED
+                case 3 -> handleCanceled(subscription); // CANCELED
+                case 4 -> handlePurchased(purchaseToken, subscriptionId); // PURCHASED
+                case 7 -> handleRestarted(subscription); // RESTARTED
+                case 12 -> handleRevoked(subscription); // REVOKED
+                case 13 -> handleExpired(subscription); // EXPIRED
                 default -> log.info("Unhandled notification type: {}", notificationType);
             }
 

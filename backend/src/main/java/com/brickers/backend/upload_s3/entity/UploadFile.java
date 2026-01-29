@@ -27,4 +27,8 @@ public class UploadFile {
     private String etag;
 
     private LocalDateTime createdAt;
+
+    // 소프트 삭제 여부 (신고 조치 등)
+    @Builder.Default
+    private boolean deleted = false;
 }
