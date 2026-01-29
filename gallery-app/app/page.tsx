@@ -3,19 +3,12 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
-import dynamic from "next/dynamic";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginModal from "@/components/common/LoginModal";
 import KidsModelSelectModal from "@/components/kids/KidsModelSelectModal";
 import styles from "./KidsAgeSelection.module.css";
 
-// Three.js 컴포넌트는 SSR에서 제외
-const Background3D = dynamic(
-    () => import("@/components/three/Background3D"),
-    { ssr: false }
-);
 
 type AgeGroup = "4-5" | "6-7" | "8-10" | null;
 
@@ -113,44 +106,6 @@ function KidsAgeSelectionContent() {
 
     return (
         <div className={styles.container}>
-            {/* 헤더 */}
-            <header className="fixed top-0 left-0 w-full h-[72px] flex items-center justify-center px-5 bg-white border-b border-[#e0e0e0] z-50">
-                <Link href="/" className="h-12 cursor-pointer flex items-center justify-center">
-                    <Image
-                        src="/logo.png"
-                        alt="BRICKERS"
-                        width={160}
-                        height={48}
-                        className="h-full w-auto object-contain"
-                        priority
-                    />
-                </Link>
-                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3">
-                    <Link
-                        href="/gallery"
-                        className="px-4 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
-                    >
-                        {t.header?.gallery || 'Gallery'}
-                    </Link>
-                    {isAuthenticated ? (
-                        <Link
-                            href="/mypage"
-                            className="px-4 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
-                        >
-                            {t.header?.myPage || 'My Page'}
-                        </Link>
-                    ) : (
-                        <button
-                            onClick={() => setOpenLoginModal(true)}
-                            className="px-4 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
-                        >
-                            {t.header?.login || 'Login'}
-                        </button>
-                    )}
-                </div>
-            </header>
-
-            <Background3D entryDirection="top" />
             <h1 className={styles.title}>{t.kids.title}</h1>
 
             <div className={styles.buttons}>
