@@ -133,7 +133,7 @@ springdoc:
 management:
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
     web:
       exposure:
         include: health,info

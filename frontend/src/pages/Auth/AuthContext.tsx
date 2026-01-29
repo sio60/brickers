@@ -21,7 +21,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 const rawBase = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
 const API_BASE = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase;
 
-console.debug("[AuthContext] API_BASE is set to:", API_BASE || "(relative path)");
+// console.debug("[AuthContext] API_BASE is set to:", API_BASE || "(relative path)");
 
 // ✅ input이 상대경로("/api/...")로 오면 API_BASE 붙여서 백엔드로 보냄
 function toAbsoluteUrl(input: RequestInfo | URL) {
@@ -116,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
       });
     } catch (e) {
-      console.error("logout 실패:", e);
+      // console.error("logout 실패:", e);
     } finally {
       setAccessToken(null);
       setUser(null);
@@ -151,14 +151,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return fetch(url, { ...init, headers: retryHeaders, credentials: "include" });
   };
-
-  useEffect(() => {
-    if (accessToken) {
-      localStorage.setItem('accessToken', accessToken);
-    } else {
-      localStorage.removeItem('accessToken');
-    }
-  }, [accessToken]);
 
   useEffect(() => {
     // 첫 진입/새로고침 시 access 복구

@@ -58,17 +58,11 @@ export interface MyOverview {
     };
 }
 
-// 인증 토큰 가져오기
-function getAuthToken(): string | null {
-    return localStorage.getItem('accessToken');
-}
-
-// API 헤더 생성
+// ✅ 기존 localStorage 기반 토큰 가져오기 제거
+// 인증 헤더 생성 (AuthContext의 fetch를 사용하도록 유도하거나, 여기서는 헤더만 정의)
 function getHeaders(): HeadersInit {
-    const token = getAuthToken();
     return {
         'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 }
 
