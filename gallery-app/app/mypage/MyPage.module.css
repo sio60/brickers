@@ -1,198 +1,463 @@
 .page {
     min-height: 100vh;
-    background: linear-gradient(135deg, #fafafa 0%, #fff 100%);
-    padding: 40px 20px;
+    width: 100vw;
+    position: relative;
+    overflow: hidden;
+    background: #fff;
 }
 
 .container {
-    max-width: 800px;
+    max-width: 1100px;
     margin: 0 auto;
+    padding-top: 80px;
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
 }
 
-.title {
-    font-family: 'KblJumpCondensed', sans-serif;
-    font-size: 48px;
-    color: #000;
-    margin-bottom: 32px;
+.layout {
+    display: flex;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    border: 3px solid #000;
+    border-radius: 40px;
+    overflow: hidden;
+    height: 80vh;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.1);
+    position: relative;
 }
 
-.loading {
+/* Sidebar */
+.sidebar {
+    width: 220px;
+    background: #fff;
+    border-right: 3px solid #000;
+    padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.menuItem {
     display: flex;
     align-items: center;
+    padding: 18px 24px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+    text-align: left;
+    transition: all 0.15s;
+}
+
+.menuItem:hover {
+    background: #f0f0f0;
+}
+
+.menuItem.active {
+    background: #ffe135;
+    color: #000;
+}
+
+/* Content */
+.content {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto;
+}
+
+.sectionTitle {
+    font-size: 32px;
+    font-weight: 900;
+    margin-bottom: 32px;
+    color: #000;
+}
+
+.loading,
+.error {
+    display: flex;
     justify-content: center;
-    height: 100vh;
+    align-items: center;
+    height: 100%;
     font-size: 18px;
     color: #666;
 }
 
-.profileCard {
+/* Profile Section */
+.profileDashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    animation: fadeIn 0.4s ease;
+}
+
+.profileHeader {
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 32px;
+    padding: 32px;
     background: #fff;
-    border: 2px solid #000;
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 32px;
+    border-radius: 32px;
+    border: 1px solid #eee;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+.avatarWrapper {
+    width: 140px;
+    height: 140px;
+    flex-shrink: 0;
 }
 
 .avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 2px solid #000;
-}
-
-.avatar img {
     width: 100%;
     height: 100%;
+    border-radius: 48px;
     object-fit: cover;
+    border: 3px solid #000;
+    box-shadow: 10px 10px 0 #ffe135;
 }
 
-.avatarPlaceholder {
-    width: 100%;
-    height: 100%;
+.headerInfo {
+    flex: 1;
+}
+
+.nameGroup {
     display: flex;
     align-items: center;
-    justify-content: center;
-    background: #f0f0f0;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.nickname {
     font-size: 32px;
-    font-weight: bold;
-}
-
-.profileInfo h2 {
-    font-size: 24px;
-    font-weight: 700;
-    margin: 0 0 4px 0;
-}
-
-.profileInfo p {
-    color: #666;
+    font-weight: 900;
     margin: 0;
 }
 
-.plan {
-    display: inline-block;
+.roleBadge {
+    padding: 4px 12px;
+    background: #ffe135;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.email {
+    color: #888;
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.bio {
+    color: #555;
+    font-size: 16px;
+    margin-bottom: 24px;
+    line-height: 1.6;
+}
+
+.editBtnSimple {
+    padding: 10px 24px;
     background: #000;
     color: #fff;
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 600;
-    margin-top: 8px !important;
-}
-
-.stats {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 32px;
-}
-
-.statItem {
-    flex: 1;
-    background: #fff;
-    border: 2px solid #000;
+    border: none;
     border-radius: 12px;
-    padding: 20px;
-    text-align: center;
+    font-weight: 700;
+    cursor: pointer;
 }
 
-.statValue {
-    display: block;
-    font-size: 32px;
-    font-weight: 700;
-    color: #000;
+/* Stats */
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.statCard {
+    padding: 32px;
+    background: #fff;
+    border-radius: 28px;
+    border: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .statLabel {
-    display: block;
     font-size: 14px;
-    color: #666;
-    margin-top: 4px;
-}
-
-.sections {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-
-.section {
-    background: #fff;
-    border: 2px solid #000;
-    border-radius: 16px;
-    padding: 24px;
-}
-
-.section h3 {
-    font-size: 20px;
+    color: #999;
     font-weight: 700;
-    margin: 0 0 16px 0;
 }
 
-.jobList {
+.statValue {
+    font-size: 28px;
+    font-weight: 900;
+}
+
+/* Forms */
+.formRow {
+    margin-bottom: 24px;
+}
+
+.formLabel {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.formInput,
+.formTextarea {
+    width: 100%;
+    padding: 16px;
+    border-radius: 16px;
+    background: #f8f9fa;
+    border: 2px solid transparent;
+    font-size: 16px;
+}
+
+.formInput:focus,
+.formTextarea:focus {
+    outline: none;
+    border-color: #ffe135;
+    background: #fff;
+}
+
+.editActions {
     display: flex;
-    flex-direction: column;
     gap: 12px;
 }
 
-.jobItem {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px;
-    background: #f8f8f8;
-    border-radius: 8px;
+.saveBtn,
+.cancelBtn {
+    padding: 16px 32px;
+    border-radius: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
 }
 
-.jobStatus {
-    font-size: 12px;
-    padding: 4px 8px;
-    background: #e0e0e0;
-    border-radius: 4px;
+.saveBtn {
+    background: #000;
+    color: #fff;
+    flex: 2;
 }
 
-.galleryGrid {
+.cancelBtn {
+    background: #eee;
+    flex: 1;
+}
+
+/* Jobs */
+.jobsGrid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
 }
 
-.galleryItem {
-    aspect-ratio: 1;
-    border-radius: 8px;
+.jobCard {
+    background: #fff;
+    border-radius: 20px;
+    border: 1px solid #eee;
     overflow: hidden;
-    border: 2px solid #eee;
+    cursor: pointer;
+    transition: transform 0.2s;
 }
 
-.galleryItem img {
+.jobCard:hover {
+    transform: translateY(-5px);
+    border-color: #ffe135;
+}
+
+.jobThumbWrapper {
+    width: 100%;
+    aspect-ratio: 1;
+    position: relative;
+    background: #f4f4f4;
+}
+
+.jobThumb {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.empty {
-    color: #999;
-    text-align: center;
+.jobOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.retryBtn {
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+    background: #fff;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.jobInfo {
+    padding: 16px;
+}
+
+.jobName {
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.jobMeta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+}
+
+.jobStatus.completed {
+    color: #22c55e;
+}
+
+.jobStatus.failed {
+    color: #ef4444;
+}
+
+.jobStatus.running {
+    color: #3b82f6;
+}
+
+.jobStatus.pending {
+    color: #f59e0b;
+}
+
+/* Lists */
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.listItem {
     padding: 24px;
+    background: #f8f9fa;
+    border-radius: 20px;
+    border: 1px solid #eee;
+}
+
+.listHeader {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.statusBadge {
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.listTitle {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.listContent {
+    color: #666;
+    line-height: 1.5;
+}
+
+/* Exit Button */
+.exitBtn {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    border: none;
+    background: #eee;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 100;
+    transition: transform 0.2s;
+}
+
+.exitBtn:hover {
+    transform: rotate(90deg);
+}
+
+/* Modal */
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modalContent {
+    width: 90%;
+    max-width: 1000px;
+    height: 80vh;
+    background: #fff;
+    border-radius: 32px;
+    position: relative;
+    overflow: hidden;
+}
+
+.closeBtn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1100;
+}
+
+.viewerContainer {
+    width: 100%;
+    height: 100%;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @media (max-width: 768px) {
-    .title {
-        font-size: 32px;
-    }
-
-    .profileCard {
+    .layout {
         flex-direction: column;
-        text-align: center;
+        height: auto;
     }
 
-    .stats {
-        flex-direction: column;
+    .sidebar {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        border-right: none;
+        border-bottom: 3px solid #000;
     }
 
-    .galleryGrid {
-        grid-template-columns: repeat(2, 1fr);
+    .menuItem {
+        padding: 12px 20px;
+        white-space: nowrap;
     }
 }
