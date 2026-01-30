@@ -32,6 +32,7 @@
     font-size: 48px;
     color: #000;
     margin-bottom: 30px;
+    margin-top: 60px;
     text-align: center;
 }
 
@@ -59,8 +60,8 @@
     background: #000;
     color: #fff;
     font-family: 'KblJumpCondensed', sans-serif;
-    font-size: 28px;
-    padding: 12px 60px;
+    font-size: 20px;
+    padding: 10px 40px;
     border-radius: 50px;
     border: none;
     cursor: pointer;
