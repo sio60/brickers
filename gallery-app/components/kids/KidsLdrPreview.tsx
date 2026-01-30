@@ -45,6 +45,7 @@ function LdrModel({
         const manager = new THREE.LoadingManager();
 
         manager.setURLModifier((u) => {
+            console.log("[LDraw URL 원본]", u);  // 디버그
             let fixed = u.replace(/\\/g, "/");
 
             // LDraw 라이브러리 URL인 경우만 처리
@@ -91,6 +92,7 @@ function LdrModel({
                 }
             }
 
+            if (fixed !== u) console.log("[LDraw URL 변환]", u, "→", fixed);  // 디버그
             return fixed;
         });
 
