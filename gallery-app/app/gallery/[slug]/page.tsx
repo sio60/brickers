@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import BackgroundBricks from '@/components/BackgroundBricks';
 
 type Props = {
     params: Promise<{ slug: string }>
@@ -140,6 +141,7 @@ export default async function GalleryDetailPage({ params }: Props) {
 
     return (
         <>
+            <BackgroundBricks />
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -169,51 +171,27 @@ export default async function GalleryDetailPage({ params }: Props) {
                         )}
                     </div>
 
-                    {/* Content */}
                     <div className="p-8">
-                        <div className="flex justify-between items-start mb-6">
-                            <div>
-                                <h1 className="text-3xl font-bold mb-2">{item.title}</h1>
-                                <div className="flex items-center gap-3 text-gray-600">
-                                    <span className="font-medium">{item.authorNickname || '익명'}</span>
-                                    <span>•</span>
-                                    <span>{new Date(item.createdAt).toLocaleDateString()}</span>
-                                </div>
-                            </div>
+                        <div className="flex justify-between items-center mb-6">
+                            <h1 className="text-4xl font-extrabold">{item.title}</h1>
 
                             <Link
                                 href={`/kids/steps?url=${encodeURIComponent(item.ldrUrl || '')}&isPreset=true`}
-                                className="bg-[#ffd700] hover:bg-[#ffcf00] text-black font-bold py-3 px-6 rounded-xl transition-colors shadow-sm"
+                                className="bg-black text-white font-medium text-lg py-3 px-6 rounded-lg hover:opacity-80 transition-opacity"
                             >
                                 3D로 보기 & 만들기
                             </Link>
                         </div>
 
-                        <div className="prose max-w-none mb-8">
-                            <h3 className="text-lg font-bold mb-2">작품 설명</h3>
-                            <p className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                                {item.content || '설명이 없습니다.'}
-                            </p>
-                        </div>
-
-                        {item.tags && item.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mb-8">
-                                {item.tags.map(tag => (
-                                    <span key={tag} className="bg-gray-100 px-3 py-1 rounded-full text-sm text-gray-600">
-                                        #{tag}
-                                    </span>
-                                ))}
-                            </div>
-                        )}
-
-                        <div className="border-t pt-6 flex gap-6 text-gray-500">
+                        {/* Stats Row */}
+                        <div className="flex gap-6 text-gray-500 font-medium text-lg">
                             <div className="flex items-center gap-2">
-                                <span className="text-xl">👀</span>
-                                <span>{item.viewCount} 조회</span>
+                                <span>👀</span>
+                                <span>{item.viewCount}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="text-xl">👍</span>
-                                <span>{item.likeCount} 좋아요</span>
+                                <span>❤️</span>
+                                <span>{item.likeCount}</span>
                             </div>
                         </div>
                     </div>
