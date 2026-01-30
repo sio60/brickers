@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginModal from "@/components/common/LoginModal";
+import UpgradeModal from "@/components/UpgradeModal";
 import styles from "./KidsModelSelectModal.module.css";
 
 // SSR 제외
@@ -18,25 +19,6 @@ type Props = {
     onSelect: (url: string | null, file: File | null) => void;
     items: { title: string; url: string; thumbnail?: string }[];
 };
-
-// 간단한 업그레이드 모달
-function UpgradeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-    const { t } = useLanguage();
-
-    if (!isOpen) return null;
-
-    return (
-        <div className={styles.upgradeOverlay} onClick={onClose}>
-            <div className={styles.upgradeModal} onClick={(e) => e.stopPropagation()}>
-                <h3>{t.upgrade?.title || "Upgrade to Pro"}</h3>
-                <p>{t.upgrade?.description || "Unlock custom image upload and more features!"}</p>
-                <button className={styles.upgradeBtn} onClick={onClose}>
-                    {t.upgrade?.close || "Close"}
-                </button>
-            </div>
-        </div>
-    );
-}
 
 export default function KidsModelSelectModal({ open, onClose, onSelect, items }: Props) {
     const router = useRouter();
@@ -112,6 +94,12 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
     const handleConfirm = () => {
         if (!isAuthenticated) {
             router.push('?login=true');
+            return;
+        }
+
+        // FREE 유저 차단 - UpgradeModal 표시
+        if (!isPro) {
+            setShowUpgrade(true);
             return;
         }
 
