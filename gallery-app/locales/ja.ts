@@ -15,7 +15,9 @@ export const ja = {
             goMake: "作りに行く",
             cardTitle: "生成されたレゴ 3D",
             titleLabel: "タイトル:",
-            authorLabel: "作成者:"
+            authorLabel: "作成者:",
+            moreWorks: "もっと作品を見たいですか？",
+            goToGallery: "ギャラリーへ"
         }
     },
     floatingMenu: {

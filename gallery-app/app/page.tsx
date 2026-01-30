@@ -1,112 +1,101 @@
-'use client';
+import { Metadata } from 'next';
+import LandingPageClient from '@/components/LandingPageClient';
+import { GalleryItem } from '@/types/gallery';
 
-import { useState, useEffect, Suspense } from "react";
-import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContext";
-import CarouselGallery from "@/components/CarouselGallery";
-import AgeSelectionModal from "@/components/kids/AgeSelectionModal";
-import Preview3DModal from "@/components/Preview3DModal";
-import { GalleryItem } from "@/types/gallery";
-import styles from './LandingPage.module.css';
+// Metadata for SEO
+export const metadata: Metadata = {
+    title: 'Brickers - AI 레고 브릭 생성기',
+    description: '이미지를 업로드하면 AI가 레고 브릭 조립 설명서를 만들어줍니다. 누구나 쉽게 나만의 레고 작품을 만들어보세요.',
+    keywords: ['레고', 'LEGO', 'AI', '브릭', '조립', '설명서', '3D', '생성기'],
+    alternates: {
+        canonical: '/',
+    },
+    openGraph: {
+        title: 'Brickers - AI 레고 브릭 생성기',
+        description: '이미지를 업로드하면 AI가 레고 브릭 조립 설명서를 만들어줍니다.',
+        url: 'https://brickers.shop',
+        siteName: 'Brickers',
+        type: 'website',
+        locale: 'ko_KR',
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Brickers - AI 레고 브릭 생성기',
+        description: '이미지를 업로드하면 AI가 레고 브릭 조립 설명서를 만들어줍니다.',
+    },
+};
 
-// SSR 제외 컴포넌트
-const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
+// Server-side fetch for gallery items
+async function getGalleryItems(): Promise<GalleryItem[]> {
+    const apiBase = process.env.API_BASE || 'http://backend:8080';
 
-function LandingPageContent() {
-    const router = useRouter();
-    const { t } = useLanguage();
-    const { isAuthenticated } = useAuth();
+    try {
+        const res = await fetch(`${apiBase}/api/gallery?page=0&size=7&sort=latest`, {
+            next: { revalidate: 60 }, // Cache for 60 seconds
+        });
 
-    const [isAgeModalOpen, setIsAgeModalOpen] = useState(false);
-    const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
-    const [selectedLdrUrl, setSelectedLdrUrl] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchGallery = async () => {
-            try {
-                // Fetch first 7 items for the carousel
-                const res = await fetch('/api/gallery?page=0&size=7&sort=latest');
-                if (res.ok) {
-                    const data = await res.json();
-                    setGalleryItems(data.content);
-                }
-            } catch (error) {
-                console.error('Failed to fetch gallery items:', error);
-            }
-        };
-        fetchGallery();
-    }, []);
-
-    const handleGoMake = () => {
-        if (!isAuthenticated) {
-            router.push('?login=true');
-            return;
+        if (!res.ok) {
+            console.warn('Gallery API returned non-OK status:', res.status);
+            return [];
         }
-        setIsAgeModalOpen(true);
-    };
 
-    const handleLevelSelect = (url: string | null, file: File | null, age: string) => {
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                const dataUrl = reader.result as string;
-                sessionStorage.setItem('pendingUpload', JSON.stringify({
-                    name: file.name,
-                    type: file.type,
-                    dataUrl
-                }));
-                router.push(`/kids/main?age=${age}`);
-            };
-            reader.readAsDataURL(file);
-        } else if (url) {
-            const modelParam = `&model=${encodeURIComponent(url)}`;
-            router.push(`/kids/main?age=${age}${modelParam}`);
-        }
+        const data = await res.json();
+        return data.content || [];
+    } catch (error) {
+        console.warn('Gallery fetch failed (expected during local dev if backend is down):', error instanceof Error ? error.message : error);
+        return [];
+    }
+}
+
+export default async function LandingPage() {
+    const galleryItems = await getGalleryItems();
+
+    // JSON-LD structured data for SEO
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: 'Brickers',
+        description: '이미지를 업로드하면 AI가 레고 브릭 조립 설명서를 만들어줍니다.',
+        url: 'https://brickers.shop',
+        applicationCategory: 'DesignApplication',
+        operatingSystem: 'Web',
+        offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: 'KRW',
+        },
+        creator: {
+            '@type': 'Organization',
+            name: 'Brickers',
+        },
+        // Featured gallery items
+        hasPart: galleryItems.length > 0 ? {
+            '@type': 'ItemList',
+            name: 'Featured Creations',
+            numberOfItems: galleryItems.length,
+            itemListElement: galleryItems.map((item, index) => ({
+                '@type': 'ListItem',
+                position: index + 1,
+                item: {
+                    '@type': 'ImageObject',
+                    name: item.title,
+                    contentUrl: item.thumbnailUrl,
+                    creator: {
+                        '@type': 'Person',
+                        name: item.authorNickname || 'Anonymous',
+                    },
+                },
+            })),
+        } : undefined,
     };
 
     return (
-        <div className={styles.container}>
-            <Background3D entryDirection="top" />
-
-            <div className={styles.gallerySection}>
-                <CarouselGallery items={galleryItems} onPreview={setSelectedLdrUrl} />
-            </div>
-
-            {!selectedLdrUrl && (
-                <div className={styles.hero}>
-                    <button
-                        className={styles.goMakeBtn}
-                        onClick={handleGoMake}
-                        type="button"
-                    >
-                        {t.main.landing.goMake} <span className={styles.arrow}>→</span>
-                    </button>
-                </div>
-            )}
-
-            <AgeSelectionModal
-                isOpen={isAgeModalOpen}
-                onClose={() => setIsAgeModalOpen(false)}
-                onSelect={handleLevelSelect}
+        <>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
-
-            {selectedLdrUrl && (
-                <Preview3DModal
-                    url={selectedLdrUrl}
-                    onClose={() => setSelectedLdrUrl(null)}
-                />
-            )}
-        </div>
+            <LandingPageClient initialItems={galleryItems} />
+        </>
     );
 }
-
-export default function LandingPage() {
-    return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <LandingPageContent />
-        </Suspense>
-    );
-}
-

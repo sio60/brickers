@@ -13,6 +13,8 @@ function LdrModel({ url }: { url: string }) {
     const [group, setGroup] = useState<THREE.Group | null>(null);
 
     useEffect(() => {
+        let cancelled = false;
+
         const manager = new THREE.LoadingManager();
 
         // URL modifier for LDraw path corrections
@@ -51,13 +53,23 @@ function LdrModel({ url }: { url: string }) {
         const loader = new LDrawLoader(manager);
         (loader as any).setPartsLibraryPath(CDN_BASE);
 
-        loader.load(url, (g) => {
-            g.rotation.x = Math.PI;
-            setGroup(g);
-        }, undefined, (err) => {
-            console.error("LDraw load failed", err);
-        });
+        // Load materials first, then load model
+        (async () => {
+            try {
+                await (loader as any).preloadMaterials(`${CDN_BASE}LDConfig.ldr`);
+                if (cancelled) return;
 
+                const g = await loader.loadAsync(url);
+                if (cancelled) return;
+
+                g.rotation.x = Math.PI;
+                setGroup(g);
+            } catch (err) {
+                console.error("LDraw load failed", err);
+            }
+        })();
+
+        return () => { cancelled = true; };
     }, [url]);
 
     if (!group) return null;

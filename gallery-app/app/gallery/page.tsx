@@ -89,6 +89,8 @@ export default async function GalleryHome() {
                 <GalleryClient
                     initialItems={data.content}
                     initialHasMore={!data.last}
+                    initialTotalPages={data.totalPages}
+                    initialTotalElements={data.totalElements}
                 />
             </div>
         </>
