@@ -98,6 +98,8 @@ export default function RootLayout({
                         })(window,document,'script','dataLayer','${GTM_ID}');
                     `}
                 </Script>
+                {/* Google Pay */}
+                <Script src="https://pay.google.com/gp/p/js/pay.js" strategy="afterInteractive" />
             </body>
         </html>
     )

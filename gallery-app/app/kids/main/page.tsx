@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { getPresignUrl } from "@/lib/api/myApi";
 import KidsLoadingScreen from "@/components/kids/KidsLoadingScreen";
 import './KidsPage.css';
@@ -16,6 +17,7 @@ const KidsModelSelectModal = dynamic(() => import("@/components/kids/KidsModelSe
 function KidsPageContent() {
     const router = useRouter();
     const { t } = useLanguage();
+    const { authFetch } = useAuth();
     const searchParams = useSearchParams();
     const age = (searchParams.get("age") ?? "4-5") as "4-5" | "6-7" | "8-10";
 
@@ -128,15 +130,12 @@ function KidsPageContent() {
                 setDebugLog(t.kids.generate.creating2);
                 const fileTitle = rawFile.name.replace(/\.[^/.]+$/, "");
 
-                const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '';
                 console.log("[KidsPage] 📤 Step 3: /api/kids/generate 호출 시작...");
-                console.log("[KidsPage]    API_BASE:", API_BASE || "(empty - using relative path)");
                 console.log("[KidsPage]    payload:", { sourceImageUrl: presign.publicUrl, age, budget, title: fileTitle });
 
-                const startRes = await fetch(`${API_BASE}/api/kids/generate`, {
+                const startRes = await authFetch('/api/kids/generate', {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    credentials: "include",
                     body: JSON.stringify({
                         sourceImageUrl: presign.publicUrl,
                         age,
@@ -174,8 +173,7 @@ function KidsPageContent() {
                     }
                     await sleep(POLL_INTERVAL);
 
-                    const statusRes = await fetch(`${API_BASE}/api/kids/jobs/${jid}`, {
-                        credentials: "include",
+                    const statusRes = await authFetch(`/api/kids/jobs/${jid}`, {
                         signal: abort.signal,
                     });
 

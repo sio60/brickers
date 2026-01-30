@@ -11,6 +11,7 @@ import type { MyOverview, MyProfile, MyJob } from "@/lib/api/myApi";
 import Background3D from "@/components/three/Background3D";
 // Dynamic imports for components if needed, or normal imports
 import KidsLdrPreview from "@/components/kids/KidsLdrPreview";
+import UpgradeModal from "@/components/UpgradeModal";
 
 // types
 type MenuItem = "profile" | "membership" | "jobs" | "inquiries" | "reports" | "settings" | "delete";
@@ -41,6 +42,8 @@ export default function MyPage() {
 
     // 3D 뷰어 모달 상태
     const [selectedJob, setSelectedJob] = useState<MyJob | null>(null);
+    // 작업 메뉴 모달 상태
+    const [menuJob, setMenuJob] = useState<MyJob | null>(null);
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
@@ -153,6 +156,76 @@ export default function MyPage() {
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    };
+
+    // 파일 다운로드 헬퍼
+    const downloadFile = async (url: string, filename: string) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        } catch (error) {
+            console.error('Download failed:', error);
+            alert(t.common.error);
+        }
+    };
+
+    // 작업 메뉴 핸들러
+    const handleJobClick = (job: MyJob) => {
+        if (job.status === "FAILED") {
+            alert(t.jobs.modalError + job.errorMessage);
+        } else if (job.status === "DONE") {
+            setMenuJob(job);
+        } else {
+            alert(t.jobs.modalPending);
+        }
+    };
+
+    const handleMenuAction = (action: string) => {
+        if (!menuJob) return;
+
+        switch (action) {
+            case 'source':
+                if (menuJob.sourceImageUrl) {
+                    downloadFile(menuJob.sourceImageUrl, `${menuJob.title || 'source'}_original.png`);
+                }
+                break;
+            case 'corrected':
+                if (menuJob.correctedImageUrl) {
+                    downloadFile(menuJob.correctedImageUrl, `${menuJob.title || 'corrected'}_enhanced.png`);
+                } else {
+                    alert(t.jobs.noEnhancedImage || '개선 이미지가 없습니다.');
+                }
+                break;
+            case 'glb':
+                if (menuJob.glbUrl) {
+                    downloadFile(menuJob.glbUrl, `${menuJob.title || 'model'}.glb`);
+                } else {
+                    alert(t.jobs.noGlbFile || 'GLB 파일이 없습니다.');
+                }
+                break;
+            case 'ldr':
+                if (menuJob.ldrUrl) {
+                    downloadFile(menuJob.ldrUrl, `${menuJob.title || 'model'}.ldr`);
+                } else {
+                    alert(t.jobs.noLdrFile || 'LDR 파일이 없습니다.');
+                }
+                break;
+            case 'view':
+                if (menuJob.ldrUrl) {
+                    setSelectedJob(menuJob);
+                    setMenuJob(null);
+                } else {
+                    alert(t.jobs.modalNoData);
+                }
+                break;
+        }
     };
 
     const menuItems = [
@@ -406,15 +479,7 @@ export default function MyPage() {
                                     <div
                                         key={job.id}
                                         className={styles.mypage__job}
-                                        onClick={() => {
-                                            if (job.status === "DONE" && job.ldrUrl) {
-                                                setSelectedJob(job);
-                                            } else if (job.status === "FAILED") {
-                                                alert(t.jobs.modalError + job.errorMessage);
-                                            } else {
-                                                alert(t.jobs.modalPending);
-                                            }
-                                        }}
+                                        onClick={() => handleJobClick(job)}
                                     >
                                         <div className={styles.mypage__jobThumbData}>
                                             <img
@@ -621,9 +686,74 @@ export default function MyPage() {
                 </div>
             </div>
 
-            {/* UpgradeModal - assuming it is implemented similar to frontend, 
-                if we can't find it we'll omit it for now or check earlier tool output */}
-            {/* <UpgradeModal isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} /> */}
+            <UpgradeModal isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} />
+
+            {/* 작업 메뉴 모달 */}
+            {menuJob && (
+                <div className={styles.mypage__modalOverlay} onClick={() => setMenuJob(null)}>
+                    <div className={styles.mypage__menuModal} onClick={e => e.stopPropagation()}>
+                        <button
+                            className={styles.mypage__closeBtn}
+                            onClick={() => setMenuJob(null)}
+                        >
+                            ✕
+                        </button>
+                        <div className={styles.mypage__menuHeader}>
+                            <img
+                                src={menuJob.sourceImageUrl || "/placeholder.png"}
+                                alt={menuJob.title}
+                                className={styles.mypage__menuThumb}
+                            />
+                            <div className={styles.mypage__menuInfo}>
+                                <h3 className={styles.mypage__menuTitle}>{menuJob.title || t.mypage.noTitle}</h3>
+                                <span className={styles.mypage__menuDate}>{formatDate(menuJob.createdAt)}</span>
+                            </div>
+                        </div>
+                        <div className={styles.mypage__menuList}>
+                            <button
+                                className={styles.mypage__menuItem2}
+                                onClick={() => handleMenuAction('source')}
+                                disabled={!menuJob.sourceImageUrl}
+                            >
+                                <span className={styles.mypage__menuIcon2}>🖼️</span>
+                                <span>{t.jobs.menu?.sourceImage || '원본 이미지 다운'}</span>
+                            </button>
+                            <button
+                                className={styles.mypage__menuItem2}
+                                onClick={() => handleMenuAction('corrected')}
+                                disabled={!menuJob.correctedImageUrl}
+                            >
+                                <span className={styles.mypage__menuIcon2}>✨</span>
+                                <span>{t.jobs.menu?.enhancedImage || '개선 이미지 다운'}</span>
+                            </button>
+                            <button
+                                className={styles.mypage__menuItem2}
+                                onClick={() => handleMenuAction('glb')}
+                                disabled={!menuJob.glbUrl}
+                            >
+                                <span className={styles.mypage__menuIcon2}>📦</span>
+                                <span>{t.jobs.menu?.glbFile || '모델링 파일 다운'}</span>
+                            </button>
+                            <button
+                                className={styles.mypage__menuItem2}
+                                onClick={() => handleMenuAction('ldr')}
+                                disabled={!menuJob.ldrUrl}
+                            >
+                                <span className={styles.mypage__menuIcon2}>📄</span>
+                                <span>{t.jobs.menu?.ldrFile || 'LDR 다운'}</span>
+                            </button>
+                            <button
+                                className={`${styles.mypage__menuItem2} ${styles.primary}`}
+                                onClick={() => handleMenuAction('view')}
+                                disabled={!menuJob.ldrUrl}
+                            >
+                                <span className={styles.mypage__menuIcon2}>👁️</span>
+                                <span>{t.jobs.menu?.viewBlueprint || '도면보기'}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* 3D 뷰어 모달 */}
             {selectedJob && (
