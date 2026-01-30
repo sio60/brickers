@@ -210,11 +210,12 @@ public class SecurityConfig {
                 // config.setExposedHeaders(List.of("Location"));
 
                 // ✅ 보안 권장: 허용된 헤더를 명시적으로 제한
-                config.setAllowedHeaders(List.of(
-                                "Authorization",
-                                "Cache-Control",
-                                "Content-Type",
-                                "X-Requested-With"));
+                config.setAllowedHeaders(List.of("*"
+                // "Authorization",
+                // "Cache-Control",
+                // "Content-Type",
+                // "X-Requested-With"
+                ));
 
                 config.setAllowCredentials(true);
 
