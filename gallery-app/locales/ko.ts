@@ -96,6 +96,14 @@ export const ko = {
             DONE: "완료",
             FAILED: "실패"
         },
+        menu: {
+            previewImage: "이미지 원본 보기",
+            viewBlueprint: "조립 설명서 보기",
+            glbFile: "모델링 파일 다운(glb)",
+            ldrFile: "도면 파일 다운(ldr)"
+        },
+        noGlbFile: "GLB 파일이 없습니다.",
+        noLdrFile: "LDR 파일이 없습니다.",
         retryFail: "작업 재시도에 실패했습니다.",
         modalError: "실패한 작업입니다: ",
         modalPending: "아직 생성 중이거나 3D 모델이 준비되지 않았습니다.",

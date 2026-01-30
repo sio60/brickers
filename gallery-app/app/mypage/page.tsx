@@ -712,11 +712,11 @@ export default function MyPage() {
                             <div className={styles.mypage__menuDivider} />
                             <button
                                 className={styles.mypage__menuItem2}
-                                onClick={() => handleMenuAction('source')}
-                                disabled={!menuJob.sourceImageUrl}
+                                onClick={() => handleMenuAction('glb')}
+                                disabled={!menuJob.glbUrl}
                             >
-                                <span className={styles.mypage__menuIcon2}>🖼️</span>
-                                <span>{t.jobs.menu?.sourceImage || '원본 이미지 다운'}</span>
+                                <span className={styles.mypage__menuIcon2}>📦</span>
+                                <span>{t.jobs.menu?.glbFile || '모델링 파일 다운(glb)'}</span>
                             </button>
                             <button
                                 className={styles.mypage__menuItem2}
@@ -724,7 +724,7 @@ export default function MyPage() {
                                 disabled={!menuJob.ldrUrl}
                             >
                                 <span className={styles.mypage__menuIcon2}>📄</span>
-                                <span>{t.jobs.menu?.ldrFile || 'LDR 파일 다운'}</span>
+                                <span>{t.jobs.menu?.ldrFile || '도면 파일 다운(ldr)'}</span>
                             </button>
                         </div>
                     </div>
