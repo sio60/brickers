@@ -541,26 +541,35 @@ export default function MyPage() {
                                 <span>{t.settings.notification}</span>
                                 <button className="mypage__settingBtn">{t.settings.changeBtn}</button>
                             </div>
-                            <div className="mypage__settingRow">
+                            <div className="mypage__settingRow lang-row">
                                 <span>{t.settings.language}</span>
-                                <div className="mypage__langGroup">
+                                <div className="mypage__langSwitch">
+                                    <div
+                                        className="mypage__langSwitch-indicator"
+                                        style={{
+                                            transform: `translateX(${language === "ko" ? 0 : language === "en" ? 100 : 200}%)`
+                                        }}
+                                    />
                                     <button
-                                        className={`mypage__langBtn ${language === "ko" ? "active" : ""}`}
+                                        className={`mypage__langSwitch-btn ${language === "ko" ? "active" : ""}`}
                                         onClick={() => setLanguage("ko")}
                                     >
-                                        {t.settings.langKo}
+                                        <span className="lang-flag">🇰🇷</span>
+                                        <span className="lang-text">한국어</span>
                                     </button>
                                     <button
-                                        className={`mypage__langBtn ${language === "en" ? "active" : ""}`}
+                                        className={`mypage__langSwitch-btn ${language === "en" ? "active" : ""}`}
                                         onClick={() => setLanguage("en")}
                                     >
-                                        {t.settings.langEn}
+                                        <span className="lang-flag">🇺🇸</span>
+                                        <span className="lang-text">EN</span>
                                     </button>
                                     <button
-                                        className={`mypage__langBtn ${language === "ja" ? "active" : ""}`}
+                                        className={`mypage__langSwitch-btn ${language === "ja" ? "active" : ""}`}
                                         onClick={() => setLanguage("ja")}
                                     >
-                                        {t.settings.langJa}
+                                        <span className="lang-flag">🇯🇵</span>
+                                        <span className="lang-text">日本語</span>
                                     </button>
                                 </div>
                             </div>

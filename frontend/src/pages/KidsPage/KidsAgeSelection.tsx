@@ -134,7 +134,7 @@ export default function KidsAgeSelection() {
           onClick={() => handleSelect("4-5")}
           type="button"
         >
-          <img src={img35} alt="4-5 years" className="kidsAgeBtn__img" />
+          <img src={img35} alt={t.kids.ageAlt?.level1 || "Level 1"} className="kidsAgeBtn__img" />
           <div className="kidsAgeBtn__label font-en">{t.kids.level.replace("{lv}", "1")}</div>
         </button>
 
@@ -143,7 +143,7 @@ export default function KidsAgeSelection() {
           onClick={() => handleSelect("6-7")}
           type="button"
         >
-          <img src={img67} alt="6-7 years" className="kidsAgeBtn__img" />
+          <img src={img67} alt={t.kids.ageAlt?.level2 || "Level 2"} className="kidsAgeBtn__img" />
           <div className="kidsAgeBtn__label font-en">{t.kids.level.replace("{lv}", "2")}</div>
         </button>
 
@@ -152,7 +152,7 @@ export default function KidsAgeSelection() {
           onClick={() => handleSelect("8-10")}
           type="button"
         >
-          <img src={img810} alt="8-10 years" className="kidsAgeBtn__img" />
+          <img src={img810} alt={t.kids.ageAlt?.level3 || "Level 3"} className="kidsAgeBtn__img" />
           <div className="kidsAgeBtn__label font-en">{t.kids.level.replace("{lv}", "3")}</div>
         </button>
       </div>

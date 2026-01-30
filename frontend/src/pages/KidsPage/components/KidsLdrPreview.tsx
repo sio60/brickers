@@ -3,6 +3,7 @@ import { Canvas } from "@react-three/fiber";
 import { Bounds, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useEffect, useMemo, useState } from "react";
+import { useLanguage } from "../../../contexts/LanguageContext";
 
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
@@ -149,6 +150,7 @@ function LdrModel({
 }
 
 export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, stepMode = false }: Props) {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [errorMSG, setErrorMSG] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
@@ -180,8 +182,8 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, ste
           zIndex: 10,
         }}>
           <div style={{ textAlign: "center", color: "#666", fontWeight: "bold" }}>
-            3D 모델 불러오는 중...<br />
-            <span style={{ fontSize: "0.8em", fontWeight: "normal" }}>잠시만 기다려주세요</span>
+            {t.ldrPreview?.loading || "Loading 3D model..."}<br />
+            <span style={{ fontSize: "0.8em", fontWeight: "normal" }}>{t.ldrPreview?.pleaseWait || "Please wait"}</span>
           </div>
         </div>
       )}
@@ -197,7 +199,7 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, ste
           zIndex: 20,
         }}>
           <div style={{ textAlign: "center", color: "#d32f2f" }}>
-            <div style={{ fontWeight: "bold", marginBottom: "8px" }}>모델 로딩 실패</div>
+            <div style={{ fontWeight: "bold", marginBottom: "8px" }}>{t.ldrPreview?.loadFailed || "Failed to load model"}</div>
             <div style={{ fontSize: "0.8em" }}>{errorMSG}</div>
           </div>
         </div>
@@ -227,11 +229,11 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, ste
               opacity: currentStep === 1 ? 0.3 : 1
             }}
           >
-            &lt; PREV
+            &lt; {t.ldrPreview?.prev || "PREV"}
           </button>
 
           <div style={{ fontSize: "16px", fontWeight: "800", minWidth: "80px", textAlign: "center" }}>
-            Step {currentStep} <span style={{ color: "#888", fontWeight: "normal" }}>/ {totalSteps}</span>
+            {t.ldrPreview?.step || "Step"} {currentStep} <span style={{ color: "#888", fontWeight: "normal" }}>/ {totalSteps}</span>
           </div>
 
           <button
@@ -243,7 +245,7 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, ste
               opacity: currentStep >= totalSteps ? 0.5 : 1
             }}
           >
-            NEXT -&gt;
+            {t.ldrPreview?.next || "NEXT"} -&gt;
           </button>
         </div>
       )}
