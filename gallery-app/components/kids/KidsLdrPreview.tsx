@@ -51,24 +51,37 @@ function LdrModel({
             if (fixed.includes("ldraw-parts-library") && fixed.endsWith(".dat") && !fixed.includes("LDConfig.ldr")) {
                 const filename = fixed.split("/").pop() || "";
 
-                // 잘못된 경로 조합 수정 (예: /p/parts/s/, /p/s/ 등)
-                // LDrawLoader가 primitive 폴더에서 먼저 찾으려고 시도하면서 생기는 문제
+                // Primitive 패턴: n-n*.dat (예: 4-4edge, 1-4cyli, 3-4edge), stud*.dat, rect*.dat 등
+                const isPrimitive = /^\d+-\d+/.test(filename) ||
+                    /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud|empty)/.test(filename);
+
+                // Subpart 패턴: 파트번호 + s + 숫자.dat (예: 3003s02.dat, 3005s01.dat)
+                const isSubpart = /^\d+s\d+\.dat$/i.test(filename);
+
+                // 잘못된 경로 조합 수정
+                // LDrawLoader가 여러 경로를 시도하면서 생기는 문제들
+                fixed = fixed.replace("/ldraw/models/p/", "/ldraw/p/");  // /models/p/ → /p/
+                fixed = fixed.replace("/ldraw/models/parts/", "/ldraw/parts/");  // /models/parts/ → /parts/
                 fixed = fixed.replace("/ldraw/p/parts/s/", "/ldraw/parts/s/");
                 fixed = fixed.replace("/ldraw/p/parts/", "/ldraw/parts/");
                 fixed = fixed.replace("/ldraw/p/s/", "/ldraw/parts/s/");
+
+                // primitive가 /parts/에 잘못 들어간 경우 수정
+                if (isPrimitive && fixed.includes("/ldraw/parts/") && !fixed.includes("/parts/s/")) {
+                    fixed = fixed.replace("/ldraw/parts/", "/ldraw/p/");
+                }
+
+                // subpart가 /p/에 잘못 들어간 경우 수정
+                if (isSubpart && fixed.includes("/ldraw/p/") && !fixed.includes("/p/48/") && !fixed.includes("/p/8/")) {
+                    fixed = fixed.replace("/ldraw/p/", "/ldraw/parts/s/");
+                }
 
                 // 이미 올바른 경로가 있으면 그대로 사용
                 if (fixed.includes("/parts/") || fixed.includes("/p/")) {
                     return fixed;
                 }
 
-                // Primitive 패턴: n-n*.dat (예: 4-4edge, 1-4cyli), stud*.dat, rect*.dat 등
-                const isPrimitive = /^\d+-\d+/.test(filename) ||
-                    /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud)/.test(filename);
-
-                // Subpart 패턴: 파트번호 + s + 숫자.dat (예: 3003s02.dat, 3005s01.dat)
-                const isSubpart = /^\d+s\d+\.dat$/i.test(filename);
-
+                // 경로가 없는 경우 적절한 경로 추가
                 if (isSubpart) {
                     fixed = fixed.replace("/ldraw/", "/ldraw/parts/s/");
                 } else if (isPrimitive) {
