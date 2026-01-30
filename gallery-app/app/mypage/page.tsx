@@ -166,22 +166,16 @@ export default function MyPage() {
         return `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}.`;
     };
 
-    // 파일 다운로드 헬퍼
-    const downloadFile = async (url: string, filename: string) => {
-        try {
-            const response = await fetch(url);
-            const blob = await response.blob();
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(link.href);
-        } catch (error) {
-            console.error('Download failed:', error);
-            alert(t.common.error);
-        }
+    // 파일 다운로드 헬퍼 (CORS 우회를 위해 a 태그 직접 사용)
+    const downloadFile = (url: string, filename: string) => {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     // 작업 메뉴 핸들러
