@@ -170,22 +170,16 @@ export default function MyPage() {
         return `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}.`;
     };
 
-    // 파일 다운로드 헬퍼
-    const downloadFile = async (url: string, filename: string) => {
-        try {
-            const response = await fetch(url);
-            const blob = await response.blob();
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(link.href);
-        } catch (error) {
-            console.error('Download failed:', error);
-            alert(t.common.error);
-        }
+    // 파일 다운로드 헬퍼 (CORS 우회를 위해 a 태그 직접 사용)
+    const downloadFile = (url: string, filename: string) => {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     // 작업 메뉴 핸들러
@@ -722,19 +716,22 @@ export default function MyPage() {
                             <div className={styles.mypage__menuDivider} />
                             <button
                                 className={styles.mypage__menuItem2}
-                                onClick={() => handleMenuAction('source')}
-                                disabled={!menuJob.sourceImageUrl}
+                                onClick={() => handleMenuAction('glb')}
+                                disabled={!menuJob.glbUrl}
                             >
-                                <Icons.DownloadImage className={styles.mypage__menuIcon2} />
+        <Icons.DownloadImage className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.sourceImage || '원본 이미지 다운'}</span>
+
                             </button>
                             <button
                                 className={styles.mypage__menuItem2}
                                 onClick={() => handleMenuAction('ldr')}
                                 disabled={!menuJob.ldrUrl}
                             >
+
                                 <Icons.DownloadFile className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.ldrFile || 'LDR 파일 다운'}</span>
+
                             </button>
                         </div>
                     </div>

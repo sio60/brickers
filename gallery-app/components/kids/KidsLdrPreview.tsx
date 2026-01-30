@@ -262,14 +262,22 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, ste
                         onClick={handlePrev}
                         disabled={currentStep === 1}
                         style={{
-                            background: "none", border: "none", fontSize: "18px", fontWeight: "bold", cursor: "pointer",
-                            opacity: currentStep === 1 ? 0.3 : 1
+                            background: currentStep === 1 ? "#e0e0e0" : "#fff",
+                            color: currentStep === 1 ? "#999" : "#000",
+                            border: "2px solid #000",
+                            padding: "10px 20px",
+                            borderRadius: "25px",
+                            fontSize: "14px",
+                            fontWeight: "bold",
+                            cursor: currentStep === 1 ? "not-allowed" : "pointer",
+                            opacity: currentStep === 1 ? 0.6 : 1,
+                            minWidth: "100px"
                         }}
                     >
-                        &lt; PREV
+                        ← PREV
                     </button>
 
-                    <div style={{ fontSize: "16px", fontWeight: "800", minWidth: "80px", textAlign: "center" }}>
+                    <div style={{ fontSize: "16px", fontWeight: "800", minWidth: "100px", textAlign: "center" }}>
                         Step {currentStep} <span style={{ color: "#888", fontWeight: "normal" }}>/ {totalSteps}</span>
                     </div>
 
@@ -277,12 +285,19 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, ste
                         onClick={handleNext}
                         disabled={currentStep >= totalSteps}
                         style={{
-                            background: "#000", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "20px",
-                            fontSize: "14px", fontWeight: "bold", cursor: "pointer",
-                            opacity: currentStep >= totalSteps ? 0.5 : 1
+                            background: currentStep >= totalSteps ? "#e0e0e0" : "#000",
+                            color: currentStep >= totalSteps ? "#999" : "#fff",
+                            border: "2px solid #000",
+                            padding: "10px 20px",
+                            borderRadius: "25px",
+                            fontSize: "14px",
+                            fontWeight: "bold",
+                            cursor: currentStep >= totalSteps ? "not-allowed" : "pointer",
+                            opacity: currentStep >= totalSteps ? 0.6 : 1,
+                            minWidth: "100px"
                         }}
                     >
-                        NEXT -&gt;
+                        NEXT →
                     </button>
                 </div>
             )}
