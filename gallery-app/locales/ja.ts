@@ -56,6 +56,7 @@ export const ja = {
         profile: "プロフィール",
         membership: "メンバーシップ情報",
         jobs: "作業履歴",
+        inquiries: "問い合わせ履歴",
         gallery: "マイギャラリー",
         bookmarks: "ブックマーク",
         reports: "報告・通報履歴",
