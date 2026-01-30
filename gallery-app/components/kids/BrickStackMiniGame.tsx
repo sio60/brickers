@@ -1,5 +1,5 @@
-'use client';
-
+// components/kids/BrickStackMiniGame.tsx
+import "./BrickStackMiniGame.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
@@ -191,7 +191,11 @@ function Scene({
     );
 }
 
-export default function BrickStackMiniGame() {
+interface BrickStackProps {
+    percent?: number;
+}
+
+export default function BrickStackMiniGame({ percent }: BrickStackProps) {
     const { t } = useLanguage();
     const [bricks, setBricks] = useState<Brick[]>([]);
     const [fallingPieces, setFallingPieces] = useState<FallingPiece[]>([]);
@@ -378,20 +382,30 @@ export default function BrickStackMiniGame() {
     }, [bricks.length]);
 
     return (
-        <div className="w-full p-4 rounded-[20px] bg-white shadow-lg">
-            <div className="flex items-center justify-between mb-3 px-1">
-                <div className="text-[22px] font-extrabold text-gray-800">{score}</div>
+        <div className="brickGame">
+            {/* Progress Overlay */}
+            {percent !== undefined && (
+                <div className="brickGame__progress">
+                    <div className="brickGame__progressText">
+                        <span>{t.kids.generate.loading}</span>
+                        <span>{percent}%</span>
+                    </div>
+                    <div className="brickGame__progressBar">
+                        <div className="brickGame__progressFill" style={{ width: `${percent}%` }}></div>
+                    </div>
+                </div>
+            )}
+
+            <div className="brickGame__header">
+                <div className="brickGame__score">{score}</div>
                 {gameOver && (
-                    <button
-                        className="px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-br from-blue-500 to-blue-600 border-none rounded-full cursor-pointer transition-transform hover:scale-105 hover:shadow-lg active:scale-[0.98]"
-                        onClick={resetGame}
-                    >
+                    <button className="brickGame__restart" onClick={resetGame}>
                         {t.miniGame?.playAgain || "Play Again"}
                     </button>
                 )}
             </div>
 
-            <div className="relative w-full h-[550px] max-sm:h-[480px] rounded-2xl overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100">
+            <div className="brickGame__stage">
                 <Canvas shadows camera={camera}>
                     <Scene
                         bricks={bricks}
@@ -405,9 +419,9 @@ export default function BrickStackMiniGame() {
                 </Canvas>
 
                 {gameOver && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/85 backdrop-blur-sm z-10">
-                        <div className="text-[32px] font-black text-red-500 mb-2">{t.miniGame?.gameOver || "Game Over!"}</div>
-                        <div className="text-xl font-semibold text-gray-700">{t.miniGame?.score || "Score"}: {score}</div>
+                    <div className="brickGame__overlay">
+                        <div className="brickGame__overlayText">{t.miniGame?.gameOver || "Game Over!"}</div>
+                        <div className="brickGame__overlayScore">{t.miniGame?.score || "Score"}: {score}</div>
                     </div>
                 )}
             </div>
