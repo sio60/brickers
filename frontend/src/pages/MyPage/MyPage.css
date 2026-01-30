@@ -762,7 +762,72 @@
     background: transparent;
 }
 
-/* 언어 설정 버튼 그룹 */
+/* 언어 설정 - 세그먼트 컨트롤 스타일 */
+.mypage__settingRow.lang-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.mypage__langSwitch {
+    position: relative;
+    display: flex;
+    background: #f0f0f0;
+    border-radius: 16px;
+    padding: 4px;
+    gap: 0;
+    border: 2px solid #e0e0e0;
+}
+
+.mypage__langSwitch-indicator {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: calc(33.333% - 2.67px);
+    height: calc(100% - 8px);
+    background: #000;
+    border-radius: 12px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+}
+
+.mypage__langSwitch-btn {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 20px;
+    min-width: 100px;
+    background: transparent;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #666;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.mypage__langSwitch-btn:hover {
+    color: #333;
+}
+
+.mypage__langSwitch-btn.active {
+    color: #fff;
+}
+
+.mypage__langSwitch-btn .lang-flag {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.mypage__langSwitch-btn .lang-text {
+    font-size: 13px;
+}
+
+/* 기존 langGroup/langBtn은 호환성을 위해 유지 */
 .mypage__langGroup {
     display: flex;
     gap: 8px;

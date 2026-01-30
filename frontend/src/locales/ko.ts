@@ -139,6 +139,11 @@ export const ko = {
         title: "난이도를 선택해 보세요",
         level: "L{lv}",
         continueBtn: "계속하기",
+        ageAlt: {
+            level1: "레벨 1 - 쉬움",
+            level2: "레벨 2 - 보통",
+            level3: "레벨 3 - 어려움"
+        },
         model1: "모델 1",
         model2: "모델 2",
         generate: {
@@ -231,6 +236,19 @@ export const ko = {
             title: "선택 정보",
             hint: "브릭을 클릭하면 상세가 표시됩니다."
         }
+    },
+    ldrPreview: {
+        loading: "3D 모델 불러오는 중...",
+        pleaseWait: "잠시만 기다려주세요",
+        loadFailed: "모델 로딩 실패",
+        prev: "이전",
+        next: "다음",
+        step: "스텝"
+    },
+    miniGame: {
+        playAgain: "다시 하기",
+        gameOver: "게임 오버!",
+        score: "점수"
     },
     common: {
         loading: "로딩 중...",
