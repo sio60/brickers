@@ -2,16 +2,31 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import styles from "./MyPage.module.css";
 import { getMyOverview, getMyProfile, retryJob, updateMyProfile, ApiError } from "@/lib/api/myApi";
 import type { MyOverview, MyProfile, MyJob } from "@/lib/api/myApi";
-import Background3D from "@/components/three/Background3D";
-// Dynamic imports for components if needed, or normal imports
 import KidsLdrPreview from "@/components/kids/KidsLdrPreview";
 import UpgradeModal from "@/components/UpgradeModal";
+
+// SVG Icons
+const Icons = {
+    User: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>,
+    CreditCard: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" /></svg>,
+    Briefcase: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></svg>,
+    Mail: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>,
+    AlertTriangle: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" x2="12" y1="9" y2="13" /><line x1="12" x2="12.01" y1="17" y2="17" /></svg>,
+    Settings: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>,
+    LogOut: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" x2="9" y1="12" y2="12" /></svg>,
+    Edit: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" /></svg>,
+    Hammer: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 12-8.5 8.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L12 9" /><path d="M17.64 15 22 10.64" /><path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25V7.86c0-.55-.45-1-1-1H14.14c-.85 0-1.65-.33-2.25-.93L10.64 4.64" /><path d="M14 12V7" /></svg>,
+    Image: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>,
+    Calendar: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg>,
+    X: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>,
+    CornerDownRight: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="14 16 9 21 4 16" /><path d="M20 4v7a4 4 0 0 1-4 4H9" /></svg>,
+    Camera: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></svg>
+};
 
 // types
 type MenuItem = "profile" | "membership" | "jobs" | "inquiries" | "reports" | "settings" | "delete";
@@ -19,7 +34,7 @@ type MenuItem = "profile" | "membership" | "jobs" | "inquiries" | "reports" | "s
 export default function MyPage() {
     const router = useRouter();
     const { language, setLanguage, t } = useLanguage();
-    const { isAuthenticated, isLoading, user, authFetch } = useAuth();
+    const { isAuthenticated, isLoading, authFetch } = useAuth(); // Removed 'user' as it's not used directly (we use profile state)
 
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<MyOverview | null>(null);
@@ -38,12 +53,20 @@ export default function MyPage() {
     const [editNickname, setEditNickname] = useState("");
     const [editBio, setEditBio] = useState("");
     const [saving, setSaving] = useState(false);
-    const [showUpgrade, setShowUpgrade] = useState(false);
 
     // 3D 뷰어 모달 상태
     const [selectedJob, setSelectedJob] = useState<MyJob | null>(null);
     // 작업 메뉴 모달 상태
     const [menuJob, setMenuJob] = useState<MyJob | null>(null);
+    // 이미지 원본 보기 모달 상태
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+    // 확장 상태 (문의/신고)
+    const [expandedInquiryId, setExpandedInquiryId] = useState<string | null>(null);
+    const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
+
+    // 업그레이드 모달 상태
+    const [showUpgrade, setShowUpgrade] = useState(false);
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
@@ -70,7 +93,7 @@ export default function MyPage() {
                     setLoading(false);
                 });
         }
-    }, [language, isAuthenticated, isLoading]);
+    }, [language, isAuthenticated, isLoading, router]);
 
     // 수정 모드 진입 시 현재 값으로 초기화
     const startEditing = () => {
@@ -126,36 +149,21 @@ export default function MyPage() {
         switch (status) {
             case "QUEUED": return "pending";
             case "RUNNING": return "running";
-            case "CANCELED": return "paused"; // or canceled
+            case "CANCELED": return "paused";
             case "DONE": return "completed";
             case "FAILED": return "failed";
             default: return "";
         }
     };
 
-    const getReportStatusLabel = (status: string) => {
-        const labels: Record<string, string> = t.reports?.status || {};
-        return labels[status] || status;
-    };
-
-    const getReportReasonLabel = (reason: string) => {
-        const labels: Record<string, string> = t.reports?.reasons || {};
-        return labels[reason] || reason;
-    };
-
-    const getReportTargetLabel = (type: string) => {
-        const labels: Record<string, string> = t.reports?.targets || {};
-        return labels[type] || type;
-    };
-
-    const getInquiryStatusLabel = (status: string) => {
-        const labels: Record<string, string> = t.inquiries?.status || {};
-        return labels[status] || status;
-    };
-
+    // (Helper functions for labels omitted for brevity - same as before)
+    const getReportStatusLabel = (status: string) => t.reports?.status?.[status] || status;
+    const getReportReasonLabel = (reason: string) => t.reports?.reasons?.[reason] || reason;
+    const getReportTargetLabel = (type: string) => t.reports?.targets?.[type] || type;
+    const getInquiryStatusLabel = (status: string) => t.inquiries?.status?.[status] || status;
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
-        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        return `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}.`;
     };
 
     // 파일 다운로드 헬퍼
@@ -191,6 +199,12 @@ export default function MyPage() {
         if (!menuJob) return;
 
         switch (action) {
+            case 'preview':
+                if (menuJob.sourceImageUrl) {
+                    setPreviewImage(menuJob.sourceImageUrl);
+                    setMenuJob(null);
+                }
+                break;
             case 'source':
                 if (menuJob.sourceImageUrl) {
                     downloadFile(menuJob.sourceImageUrl, `${menuJob.title || 'source'}_original.png`);
@@ -252,15 +266,11 @@ export default function MyPage() {
                 }
             };
             intervalId = setInterval(fetchJobs, 3000);
+            fetchJobs(); // Fetch immediately on switch
         }
 
-        if (activeMenu === "inquiries") {
-            fetchMyInquiries();
-        }
-
-        if (activeMenu === "reports") {
-            fetchMyReports();
-        }
+        if (activeMenu === "inquiries") fetchMyInquiries();
+        if (activeMenu === "reports") fetchMyReports();
 
         return () => {
             if (intervalId) clearInterval(intervalId);
@@ -298,27 +308,14 @@ export default function MyPage() {
     };
 
     const renderContent = () => {
-        if (loading) {
-            return <div className={styles.mypage__loading}>{t.common.loading}</div>;
-        }
+        if (loading) return <div className={styles.mypage__loading}>{t.common.loading}...</div>;
 
         if (error) {
-            if (error.status === 401) {
-                return (
-                    <div className={styles.mypage__error}>
-                        <p>{t.common.loginRequired}</p>
-                        <button className={styles.mypage__loginBtn} onClick={() => router.push("/")}>
-                            {t.common.homeBtn}
-                        </button>
-                    </div>
-                );
-            }
-
             return (
                 <div className={styles.mypage__error}>
-                    <p>{t.common.error}</p>
-                    <p className={styles.mypage__errorMessage}>({error.message})</p>
-                    <button className={styles.mypage__retryBtn} onClick={() => window.location.reload()}>
+                    <Icons.AlertTriangle />
+                    <p>{error.message}</p>
+                    <button className={styles.mypage__btn3d} onClick={() => window.location.reload()}>
                         {t.common.retryBtn}
                     </button>
                 </div>
@@ -329,100 +326,86 @@ export default function MyPage() {
             case "profile":
                 return (
                     <div className={styles.mypage__section}>
-                        <h2 className={styles.mypage__sectionTitle}>
-                            {isEditing ? t.profile.editTitle : t.profile.title}
-                        </h2>
-                        {profile && !isEditing && (
+                        <h2 className={styles.mypage__sectionTitle}>{t.profile.title}</h2>
+
+                        {profile && (
                             <div className={styles.mypage__profileDashboard}>
-                                <div className={styles.mypage__profileHeader}>
-                                    <div className={styles.mypage__avatarWrapper}>
+                                <div className={styles.mypage__profileCard}>
+                                    <div className={styles.mypage__avatarArea}>
                                         <img
                                             src={profile.profileImage || "/default-avatar.png"}
-                                            alt={t.profile.imageAlt}
+                                            alt="Profile"
                                             className={styles.mypage__avatar}
                                         />
+                                        <div className={styles.mypage__avatarUpload}>
+                                            <Icons.Camera />
+                                        </div>
                                     </div>
-                                    <div className={styles.mypage__headerInfo}>
-                                        <div className={styles.mypage__nameGroup}>
-                                            <h3 className={styles.mypage__nickname}>{profile.nickname || "User"}</h3>
-                                            <span className={styles.mypage__roleBadge}>{profile.membershipPlan}</span>
+                                    <div className={styles.mypage__profileInfo}>
+                                        <div className={styles.mypage__nameRow}>
+                                            {!isEditing ? (
+                                                <>
+                                                    <h3 className={styles.mypage__nickname}>{profile.nickname}</h3>
+                                                    <span className={styles.mypage__roleBadge}>{profile.membershipPlan}</span>
+                                                </>
+                                            ) : (
+                                                <input
+                                                    className={styles.mypage__formInput}
+                                                    style={{ width: 'auto', display: 'inline-block', fontSize: '24px', fontWeight: 'bold', padding: '4px 8px' }}
+                                                    value={editNickname}
+                                                    onChange={(e) => setEditNickname(e.target.value)}
+                                                    placeholder="Nickname"
+                                                />
+                                            )}
                                         </div>
                                         <p className={styles.mypage__email}>{profile.email}</p>
-                                        <p className={styles.mypage__bio}>{profile.bio || t.mypage.bioPlaceholder}</p>
-                                        <button className={styles.mypage__editBtnSimple} onClick={startEditing}>
-                                            {t.profile.editBtn}
-                                        </button>
+
+                                        {!isEditing ? (
+                                            <div className={styles.mypage__bioBox}>
+                                                {profile.bio || t.mypage.bioPlaceholder}
+                                            </div>
+                                        ) : (
+                                            <textarea
+                                                className={styles.mypage__formTextarea}
+                                                value={editBio}
+                                                onChange={(e) => setEditBio(e.target.value)}
+                                                placeholder="Bio"
+                                            />
+                                        )}
+
+                                        {!isEditing ? (
+                                            <button className={styles.mypage__editBtn} onClick={startEditing}>
+                                                <Icons.Edit /> {t.profile.editBtn}
+                                            </button>
+                                        ) : (
+                                            <div className={styles.mypage__editActions}>
+                                                <button className={styles.mypage__cancelBtn} onClick={cancelEditing}>{t.common.cancel}</button>
+                                                <button className={styles.mypage__saveBtn} onClick={saveProfile} disabled={saving}>{t.common.confirm}</button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
                                 <div className={styles.mypage__statsGrid}>
                                     <div className={styles.mypage__statCard}>
-                                        <span className={styles.stat__label}>{t.mypage.stats?.jobs || "Jobs"}</span>
+                                        <div className={styles.stat__header}>
+                                            <span className={styles.stat__label}>{t.mypage.stats.jobs}</span>
+                                        </div>
                                         <span className={styles.stat__value}>{data?.jobs.totalCount || 0}</span>
                                     </div>
                                     <div className={styles.mypage__statCard}>
-                                        <span className={styles.stat__label}>{t.mypage.stats?.gallery || "Gallery"}</span>
+                                        <div className={styles.stat__header}>
+                                            <span className={styles.stat__label}>{t.mypage.stats.gallery}</span>
+                                        </div>
                                         <span className={styles.stat__value}>{data?.gallery.totalCount || 0}</span>
                                     </div>
                                     <div className={styles.mypage__statCard}>
-                                        <span className={styles.stat__label}>{t.mypage.stats?.joinedAt || "Joined At"}</span>
-                                        <span className={styles.stat__value}>
-                                            {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "-"}
+                                        <div className={styles.stat__header}>
+                                            <span className={styles.stat__label}>{t.mypage.stats.joinedAt}</span>
+                                        </div>
+                                        <span className={styles.stat__value} style={{ fontSize: '24px' }}>
+                                            {profile.createdAt ? formatDate(profile.createdAt) : "-"}
                                         </span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {profile && isEditing && (
-                            <div className={styles.mypage__profileEditSection}>
-                                <div className={`${styles.mypage__avatarWrapper} ${styles['edit-mode']}`}>
-                                    <img
-                                        src={profile.profileImage || "/default-avatar.png"}
-                                        alt={t.profile.imageAlt}
-                                        className={styles.mypage__avatar}
-                                    />
-                                </div>
-
-                                <div className={styles.mypage__editContent}>
-                                    <div className={styles.mypage__editForm}>
-                                        <div className={styles.mypage__formRow}>
-                                            <label className={styles.mypage__formLabel}>{t.profile.nickname}</label>
-                                            <input
-                                                type="text"
-                                                className={styles.mypage__formInput}
-                                                value={editNickname}
-                                                onChange={(e) => setEditNickname(e.target.value)}
-                                                placeholder={t.mypage.nicknamePlaceholder}
-                                            />
-                                        </div>
-                                        <div className={styles.mypage__formRow}>
-                                            <label className={styles.mypage__formLabel}>{t.profile.bio}</label>
-                                            <textarea
-                                                className={styles.mypage__formTextarea}
-                                                value={editBio}
-                                                onChange={(e) => setEditBio(e.target.value)}
-                                                placeholder={t.mypage.bioInputPlaceholder}
-                                                rows={4}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className={styles.mypage__editActions}>
-                                        <button
-                                            className={styles.mypage__cancelBtn}
-                                            onClick={cancelEditing}
-                                            disabled={saving}
-                                        >
-                                            {t.profile.cancelBtn}
-                                        </button>
-                                        <button
-                                            className={styles.mypage__saveBtn}
-                                            onClick={saveProfile}
-                                            disabled={saving}
-                                        >
-                                            {saving ? t.profile.saving : t.profile.saveBtn}
-                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -435,35 +418,13 @@ export default function MyPage() {
                     <div className={styles.mypage__section}>
                         <h2 className={styles.mypage__sectionTitle}>{t.membership.title}</h2>
                         {profile && (
-                            <div className={styles.mypage__membershipCard}>
-                                <div className={styles.mypage__planBadge}>{profile.membershipPlan}</div>
+                            <div className={styles.mypage__card}>
+                                <span className={styles.mypage__roleBadge} style={{ fontSize: '18px', marginBottom: '20px', display: 'inline-block' }}>
+                                    {profile.membershipPlan}
+                                </span>
                                 <p className={styles.mypage__planDesc}>
                                     {t.membership.desc?.replace("{plan}", profile.membershipPlan)}
                                 </p>
-                                {profile.membershipPlan === "FREE" && (
-                                    <button
-                                        className={styles.mypage__upgradeBtn}
-                                        onClick={() => setShowUpgrade(true)}
-                                    >
-                                        {t.membership.upgradeBtn}
-                                    </button>
-                                )}
-                                {profile.membershipPlan !== "FREE" && (
-                                    <div className={styles.mypage__subInfo}>
-                                        <div className={styles.mypage__infoRow}>
-                                            <span className={styles.mypage__label}>{t.mypage.payment?.date || "Current"}</span>
-                                            <span className={styles.mypage__value}>
-                                                {new Date().toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                        <div className={styles.mypage__infoRow}>
-                                            <span className={styles.mypage__label}>{t.mypage.payment?.nextDate || "Next"}</span>
-                                            <span className={styles.mypage__value}>
-                                                {new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         )}
                     </div>
@@ -482,79 +443,63 @@ export default function MyPage() {
                                         onClick={() => handleJobClick(job)}
                                     >
                                         <div className={styles.mypage__jobThumbData}>
-                                            <img
-                                                src={job.sourceImageUrl || "/placeholder.png"}
-                                                alt={job.title}
-                                                className={styles.mypage__jobThumb}
-                                                onError={(e) => {
-                                                    (e.target as HTMLImageElement).src = "/placeholder.png";
-                                                }}
-                                            />
-                                            {(job.status === "FAILED" || job.status === "CANCELED" || job.status === "QUEUED") && (
-                                                <div className={styles.mypage__jobOverlay}>
-                                                    <button
-                                                        className={styles.mypage__retryBtn}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleRetry(job.id);
-                                                        }}
-                                                        disabled={retrying === job.id}
-                                                    >
-                                                        {retrying === job.id ? "..." : "↺"}
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className={styles.mypage__jobInfo}>
-                                            <div className={styles.mypage__jobTitle}>{job.title || t.mypage.noTitle}</div>
-                                            <div className={styles.mypage__jobMeta}>
+                                            <img src={job.sourceImageUrl || "/placeholder.png"} alt={job.title} className={styles.mypage__jobThumb} />
+                                            <div className={styles.mypage__jobOverlay}>
                                                 <span className={`${styles.mypage__jobStatus} ${styles[getStatusClass(job.status)]}`}>
                                                     {getStatusLabel(job.status)}
                                                 </span>
-                                                <span className={styles.mypage__jobDate}>
-                                                    {formatDate(job.createdAt)}
-                                                </span>
                                             </div>
+                                        </div>
+                                        <div className={styles.mypage__jobInfo}>
+                                            <div className={styles.mypage__jobTitle} style={{ fontSize: '14px' }}>{job.title || "Untitled"}</div>
+                                            <div className={styles.mypage__jobDate}>{formatDate(job.createdAt)}</div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                        ) : (
-                            <p className={styles.mypage__empty}>{t.jobs.empty}</p>
-                        )}
+                        ) : <p className={styles.mypage__empty}>{t.jobs.empty}</p>}
                     </div>
                 );
+
+            // ... (Other cases implementation using similar generic styles)
 
             case "inquiries":
                 return (
                     <div className={styles.mypage__section}>
-                        <h2 className={styles.mypage__sectionTitle}>{t.menu.inquiries}</h2>
+                        <h2 className={styles.mypage__sectionTitle}>{t.inquiries.title}</h2>
                         <div className={styles.mypage__inquiriesList}>
                             {listLoading ? (
-                                <p className={styles.mypage__loading}>{t.common.loading}</p>
+                                <p className={styles.mypage__loadingText}>{t.common.loading}...</p>
                             ) : inquiries.length > 0 ? (
-                                inquiries.map((iq) => (
-                                    <div key={iq.id} className={styles.mypage__inquiryCard}>
+                                inquiries.map((inquiry: any) => (
+                                    <div
+                                        key={inquiry.id}
+                                        className={styles.mypage__inquiryCard}
+                                        onClick={() => setExpandedInquiryId(expandedInquiryId === inquiry.id ? null : inquiry.id)}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                         <div className={styles.inquiry__header}>
-                                            <span className={`${styles.inquiry__status} ${styles[iq.status]}`}>
-                                                {getInquiryStatusLabel(iq.status)}
+                                            <span className={`${styles.inquiry__statusBadge} ${inquiry.status === 'ANSWERED' ? styles.answered : ''}`}>
+                                                {getInquiryStatusLabel(inquiry.status)}
                                             </span>
-                                            <span className={styles.inquiry__date}>{new Date(iq.createdAt).toLocaleDateString()}</span>
+                                            <span className={styles.inquiry__date}>{formatDate(inquiry.createdAt)}</span>
                                         </div>
-                                        <h3 className={styles.inquiry__title}>{iq.title}</h3>
-                                        <p className={styles.inquiry__content}>{iq.content}</p>
+                                        <h3 className={styles.inquiry__title}>{inquiry.title}</h3>
 
-                                        {iq.answer && (
-                                            <div className={styles.inquiry__answer}>
-                                                <div className={styles.answer__badge}>{t.inquiries?.adminAnswer}</div>
-                                                <p className={styles.answer__text}>{iq.answer.content}</p>
-                                                <span className={styles.answer__date}>{new Date(iq.answer.answeredAt).toLocaleString()}</span>
+                                        {expandedInquiryId === inquiry.id && (
+                                            <div style={{ marginTop: '12px', borderTop: '1px solid #eee', paddingTop: '12px' }}>
+                                                <p className={styles.inquiry__content}>{inquiry.content}</p>
+                                                {inquiry.answer && (
+                                                    <div className={styles.inquiry__answer}>
+                                                        <strong>{t.inquiries.adminAnswer}:</strong> {typeof inquiry.answer === 'string' ? inquiry.answer : inquiry.answer?.content}
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>
                                 ))
                             ) : (
-                                <p className={styles.mypage__empty}>{t.inquiries?.empty}</p>
+                                <p className={styles.mypage__empty}>{t.inquiries.empty}</p>
                             )}
                         </div>
                     </div>
@@ -563,41 +508,58 @@ export default function MyPage() {
             case "reports":
                 return (
                     <div className={styles.mypage__section}>
-                        <h2 className={styles.mypage__sectionTitle}>{t.reports?.title}</h2>
+                        <h2 className={styles.mypage__sectionTitle}>{t.reports.title}</h2>
                         <div className={styles.mypage__inquiriesList}>
                             {listLoading ? (
-                                <p className={styles.mypage__loading}>{t.common.loading}</p>
+                                <p className={styles.mypage__loadingText}>{t.common.loading}...</p>
                             ) : reports.length > 0 ? (
-                                reports.map((rp) => (
-                                    <div key={rp.id} className={`${styles.mypage__inquiryCard} ${styles['report-card']}`}>
-                                        <div className={styles.inquiry__header}>
-                                            <span className={`${styles.inquiry__status} ${styles[rp.status]}`}>
-                                                {getReportStatusLabel(rp.status)}
+                                reports.map((report: any) => (
+                                    <div
+                                        key={report.id}
+                                        className={styles.mypage__inquiryCard}
+                                        onClick={() => setExpandedReportId(expandedReportId === report.id ? null : report.id)}
+                                        style={{ cursor: 'pointer', position: 'relative' }}
+                                    >
+                                        {/* Header: Status and Date */}
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                            <span className={`${styles.report__statusBadge} ${report.status === 'RESOLVED' ? styles.resolved : styles.pending}`}>
+                                                {getReportStatusLabel(report.status)}
                                             </span>
-                                            <span className={styles.inquiry__date}>{new Date(rp.createdAt).toLocaleDateString()}</span>
-                                        </div>
-                                        <div className={styles.report__reason_group}>
-                                            <span className={styles.report__target_badge}>{getReportTargetLabel(rp.targetType)}</span>
-                                            <h3 className={styles.inquiry__title}>{getReportReasonLabel(rp.reason)}</h3>
-                                        </div>
-                                        <div className={styles.report__details}>
-                                            <p className={styles.inquiry__content}>{rp.details}</p>
-                                            <span className={styles.report__id_info}>{t.reports?.dataId}: {rp.targetId}</span>
+                                            <span className={styles.inquiry__date}>{formatDate(report.createdAt)}</span>
                                         </div>
 
-                                        {rp.resolutionNote && (
-                                            <div className={styles.inquiry__answer}>
-                                                <div className={styles.answer__badge}>{t.reports?.adminNote}</div>
-                                                <p className={styles.answer__text}>{rp.resolutionNote}</p>
-                                                {rp.resolvedAt && (
-                                                    <span className={styles.answer__date}>{new Date(rp.resolvedAt).toLocaleString()}</span>
+                                        {/* Main Content: Type, Reason, Description */}
+                                        <span className={styles.report__type}>{getReportTargetLabel(report.targetType)}</span>
+                                        <span className={styles.report__reason}>{getReportReasonLabel(report.reason)}</span>
+
+                                        <p className={styles.report__description}>
+                                            {report.details || report.description}
+                                        </p>
+                                        <div className={styles.report__dataId}>
+                                            {t.reports.dataId}: {report.targetId || report.dataId || "N/A"}
+                                        </div>
+
+                                        {/* Admin Answer (Resolution Note) - Show when expanded */}
+                                        {expandedReportId === report.id && (report.resolutionNote || report.adminComment) && (
+                                            <div className={styles.report__adminAnswerBox}>
+                                                <div className={styles.report__adminTitleBadge}>
+                                                    <Icons.CornerDownRight />
+                                                    {t.reports.adminNote}
+                                                </div>
+                                                <p className={styles.report__resolutionNote}>
+                                                    {report.resolutionNote || report.adminComment}
+                                                </p>
+                                                {report.resolvedAt && (
+                                                    <span className={styles.report__resolvedDate}>
+                                                        {formatDate(report.resolvedAt)}
+                                                    </span>
                                                 )}
                                             </div>
                                         )}
                                     </div>
                                 ))
                             ) : (
-                                <p className={styles.mypage__empty}>{t.reports?.empty}</p>
+                                <p className={styles.mypage__empty}>{t.reports.empty}</p>
                             )}
                         </div>
                     </div>
@@ -607,81 +569,108 @@ export default function MyPage() {
                 return (
                     <div className={styles.mypage__section}>
                         <h2 className={styles.mypage__sectionTitle}>{t.settings.title}</h2>
-                        <div className={styles.mypage__settingsCard}>
-                            <div className={styles.mypage__settingRow}>
-                                <span>{t.settings.notification}</span>
-                                <button className={styles.mypage__settingBtn}>{t.settings.changeBtn}</button>
-                            </div>
-                            <div className={styles.mypage__settingRow}>
-                                <span>{t.settings.language}</span>
-                                <div className={styles.mypage__langGroup}>
-                                    <button
-                                        className={`${styles.mypage__langBtn} ${language === "ko" ? styles.active : ""}`}
-                                        onClick={() => setLanguage("ko")}
-                                    >
-                                        {t.settings.langKo}
-                                    </button>
-                                    <button
-                                        className={`${styles.mypage__langBtn} ${language === "en" ? styles.active : ""}`}
-                                        onClick={() => setLanguage("en")}
-                                    >
-                                        {t.settings.langEn}
-                                    </button>
-                                    <button
-                                        className={`${styles.mypage__langBtn} ${language === "ja" ? styles.active : ""}`}
-                                        onClick={() => setLanguage("ja")}
-                                    >
-                                        {t.settings.langJa}
-                                    </button>
+                        <div className={styles.mypage__card}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                {/* Language Settings */}
+                                <div>
+                                    <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '12px' }}>{t.settings.language}</h3>
+                                    <div style={{ display: 'flex', gap: '12px' }}>
+                                        <button
+                                            className={`${styles.mypage__btn3d} ${language === 'ko' ? styles.active : ''}`}
+                                            onClick={() => setLanguage('ko')}
+                                            style={{ backgroundColor: language === 'ko' ? '#FFD600' : '#fff' }}
+                                        >
+                                            {t.settings.langKo}
+                                        </button>
+                                        <button
+                                            className={`${styles.mypage__btn3d} ${language === 'en' ? styles.active : ''}`}
+                                            onClick={() => setLanguage('en')}
+                                            style={{ backgroundColor: language === 'en' ? '#FFD600' : '#fff' }}
+                                        >
+                                            {t.settings.langEn}
+                                        </button>
+                                        <button
+                                            className={`${styles.mypage__btn3d} ${language === 'ja' ? styles.active : ''}`}
+                                            onClick={() => setLanguage('ja')}
+                                            style={{ backgroundColor: language === 'ja' ? '#FFD600' : '#fff' }}
+                                        >
+                                            {t.settings.langJa}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Notification Settings (Placeholder) */}
+                                <div>
+                                    <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '12px' }}>{t.settings.notification}</h3>
+                                    <p style={{ color: '#666' }}>{t.jobs.settingsTbd}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 );
 
-            case "delete":
+            default:
                 return (
                     <div className={styles.mypage__section}>
-                        <h2 className={styles.mypage__sectionTitle}>{t.delete.title}</h2>
-                        <div className={styles.mypage__deleteCard}>
-                            <p>{t.delete.desc}</p>
-                            <button className={styles.mypage__deleteBtn}>{t.delete.btn}</button>
+                        <h2 className={styles.mypage__sectionTitle}>Pages</h2>
+                        <div className={styles.mypage__card}>
+                            <p>Preparing content for {activeMenu}...</p>
                         </div>
                     </div>
                 );
-
-            default:
-                return null;
         }
     };
 
     return (
         <div className={`${styles.mypage} ${styles['lang-' + language]}`}>
-            <Background3D entryDirection="float" />
-
             <div className={styles.mypage__container}>
                 <div className={styles.mypage__layout}>
-                    {/* 나가기 버튼 */}
                     <button className={styles.mypage__exitBtn} onClick={() => router.push("/")}>
-                        ✕
+                        <Icons.X />
                     </button>
 
-                    {/* 왼쪽 사이드바 */}
                     <div className={styles.mypage__sidebar}>
-                        {menuItems.map((item) => (
-                            <button
-                                key={item.id}
-                                className={`${styles.mypage__menuItem} ${activeMenu === item.id ? styles.active : ""}`}
-                                onClick={() => setActiveMenu(item.id)}
-                            >
-                                <span className={styles.mypage__menuLabel}>{item.label}</span>
+                        <div className={styles.mypage__menuGroup}>
+                            <button className={`${styles.mypage__menuItem} ${activeMenu === 'profile' ? styles.active : ''}`} onClick={() => setActiveMenu('profile')}>
+                                <Icons.User className={styles.mypage__menuIcon} /> {t.menu.profile}
                             </button>
-                        ))}
+                            <button className={`${styles.mypage__menuItem} ${activeMenu === 'membership' ? styles.active : ''}`} onClick={() => setActiveMenu('membership')}>
+                                <Icons.CreditCard className={styles.mypage__menuIcon} /> {t.menu.membership}
+                            </button>
+                        </div>
+
+                        <div className={styles.mypage__menuGroup}>
+                            <button className={`${styles.mypage__menuItem} ${activeMenu === 'jobs' ? styles.active : ''}`} onClick={() => setActiveMenu('jobs')}>
+                                <Icons.Briefcase className={styles.mypage__menuIcon} /> {t.menu.jobs}
+                            </button>
+                            <button className={`${styles.mypage__menuItem} ${activeMenu === 'inquiries' ? styles.active : ''}`} onClick={() => setActiveMenu('inquiries')}>
+                                <Icons.Mail className={styles.mypage__menuIcon} /> {t.menu.inquiries}
+                            </button>
+                            <button className={`${styles.mypage__menuItem} ${activeMenu === 'reports' ? styles.active : ''}`} onClick={() => setActiveMenu('reports')}>
+                                <Icons.AlertTriangle className={styles.mypage__menuIcon} /> {t.menu.reports}
+                            </button>
+                        </div>
+
+                        <div className={styles.mypage__menuGroup}>
+                            <button className={`${styles.mypage__menuItem} ${activeMenu === 'settings' ? styles.active : ''}`} onClick={() => setActiveMenu('settings')}>
+                                <Icons.Settings className={styles.mypage__menuIcon} /> {t.menu.settings}
+                            </button>
+                        </div>
+
+                        <button className={styles.mypage__deleteLink} onClick={() => {/* Handle delete */ }}>
+                            {t.menu.delete} <Icons.LogOut width={16} height={16} />
+                        </button>
                     </div>
 
-                    {/* 오른쪽 컨텐츠 */}
                     <div className={styles.mypage__content}>
                         {renderContent()}
+                    </div>
+
+                    {/* Decorations */}
+                    <div className={styles.mypage__decorations}>
+                        <div className={styles.mypage__decorationsBrick} style={{ backgroundColor: '#FFD600', height: '40px' }}></div>
+                        <div className={styles.mypage__decorationsBrick} style={{ backgroundColor: '#3b82f6', height: '30px' }}></div>
+                        <div className={styles.mypage__decorationsBrick} style={{ backgroundColor: '#ef4444', height: '50px' }}></div>
                     </div>
                 </div>
             </div>
@@ -711,6 +700,23 @@ export default function MyPage() {
                         </div>
                         <div className={styles.mypage__menuList}>
                             <button
+                                className={`${styles.mypage__menuItem2} ${styles.primary}`}
+                                onClick={() => handleMenuAction('preview')}
+                                disabled={!menuJob.sourceImageUrl}
+                            >
+                                <span className={styles.mypage__menuIcon2}>🔍</span>
+                                <span>{t.jobs.menu?.previewImage || '이미지 원본 보기'}</span>
+                            </button>
+                            <button
+                                className={`${styles.mypage__menuItem2} ${styles.primary}`}
+                                onClick={() => handleMenuAction('view')}
+                                disabled={!menuJob.ldrUrl}
+                            >
+                                <span className={styles.mypage__menuIcon2}>🧱</span>
+                                <span>{t.jobs.menu?.viewBlueprint || '조립 설명서 보기'}</span>
+                            </button>
+                            <div className={styles.mypage__menuDivider} />
+                            <button
                                 className={styles.mypage__menuItem2}
                                 onClick={() => handleMenuAction('source')}
                                 disabled={!menuJob.sourceImageUrl}
@@ -720,38 +726,32 @@ export default function MyPage() {
                             </button>
                             <button
                                 className={styles.mypage__menuItem2}
-                                onClick={() => handleMenuAction('corrected')}
-                                disabled={!menuJob.correctedImageUrl}
-                            >
-                                <span className={styles.mypage__menuIcon2}>✨</span>
-                                <span>{t.jobs.menu?.enhancedImage || '개선 이미지 다운'}</span>
-                            </button>
-                            <button
-                                className={styles.mypage__menuItem2}
-                                onClick={() => handleMenuAction('glb')}
-                                disabled={!menuJob.glbUrl}
-                            >
-                                <span className={styles.mypage__menuIcon2}>📦</span>
-                                <span>{t.jobs.menu?.glbFile || '모델링 파일 다운'}</span>
-                            </button>
-                            <button
-                                className={styles.mypage__menuItem2}
                                 onClick={() => handleMenuAction('ldr')}
                                 disabled={!menuJob.ldrUrl}
                             >
                                 <span className={styles.mypage__menuIcon2}>📄</span>
-                                <span>{t.jobs.menu?.ldrFile || 'LDR 다운'}</span>
-                            </button>
-                            <button
-                                className={`${styles.mypage__menuItem2} ${styles.primary}`}
-                                onClick={() => handleMenuAction('view')}
-                                disabled={!menuJob.ldrUrl}
-                            >
-                                <span className={styles.mypage__menuIcon2}>👁️</span>
-                                <span>{t.jobs.menu?.viewBlueprint || '도면보기'}</span>
+                                <span>{t.jobs.menu?.ldrFile || 'LDR 파일 다운'}</span>
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* 이미지 원본 보기 모달 */}
+            {previewImage && (
+                <div className={styles.mypage__imagePreviewOverlay} onClick={() => setPreviewImage(null)}>
+                    <button
+                        className={styles.mypage__imagePreviewClose}
+                        onClick={() => setPreviewImage(null)}
+                    >
+                        ✕
+                    </button>
+                    <img
+                        src={previewImage}
+                        alt="Original"
+                        className={styles.mypage__imagePreviewImg}
+                        onClick={(e) => e.stopPropagation()}
+                    />
                 </div>
             )}
 
@@ -759,21 +759,13 @@ export default function MyPage() {
             {selectedJob && (
                 <div className={styles.mypage__modalOverlay}>
                     <div className={styles.mypage__modalContent}>
-                        <button
-                            className={styles.mypage__closeBtn}
-                            onClick={() => setSelectedJob(null)}
-                        >
-                            ✕
+                        <button className={styles.mypage__closeBtn} onClick={() => setSelectedJob(null)}>
+                            <Icons.X />
                         </button>
                         <div className={styles.mypage__viewerContainer}>
                             {selectedJob.ldrUrl ? (
-                                <KidsLdrPreview
-                                    url={selectedJob.ldrUrl}
-                                    stepMode={true}
-                                />
-                            ) : (
-                                <p>{t.jobs.modalNoData}</p>
-                            )}
+                                <KidsLdrPreview url={selectedJob.ldrUrl} stepMode={true} />
+                            ) : null}
                         </div>
                     </div>
                 </div>

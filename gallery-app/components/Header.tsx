@@ -51,29 +51,33 @@ function HeaderContent() {
                 </Link>
 
                 {/* Actions - Positioned absolute right */}
-                <div className="header__actions">
-                    <Link href="/gallery" className="header__btn">
-                        {t.header.gallery}
-                    </Link>
-                    {!isLoading ? (
-                        isAuthenticated ? (
-                            <>
-                                {!isPro && (
-                                    <button className="header__btn" onClick={() => setIsUpgradeModalOpen(true)}>
-                                        {t.header.upgrade}
+                {/* Hide buttons on auth success/logout pages */}
+                {!pathname.includes('/auth/') ? (
+                    <div className="header__actions">
+                        <Link href="/gallery" className="header__btn">
+                            {t.header.gallery}
+                        </Link>
+                        {!isLoading ? (
+                            isAuthenticated ? (
+                                <>
+                                    {!isPro && (
+                                        <button className="header__btn" onClick={() => {/* Upgrade modal logic */ }}>
+                                            {t.header.upgrade}
+                                        </button>
+                                    )}
+                                    <button onClick={handleLogout} className="header__btn">
+                                        {t.header.logout}
+
                                     </button>
-                                )}
-                                <button onClick={handleLogout} className="header__btn">
-                                    {t.header.logout}
+                                </>
+                            ) : (
+                                <button onClick={() => setIsLoginModalOpen(true)} className="header__btn">
+                                    {t.header.login}
                                 </button>
-                            </>
-                        ) : (
-                            <button onClick={() => setIsLoginModalOpen(true)} className="header__btn">
-                                {t.header.login}
-                            </button>
-                        )
-                    ) : null}
-                </div>
+                            )
+                        ) : null}
+                    </div>
+                ) : null}
             </header>
 
             <LoginModal

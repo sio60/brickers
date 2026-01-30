@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -25,6 +25,28 @@ function LandingPageContent({ initialItems }: Props) {
 
     const [isAgeModalOpen, setIsAgeModalOpen] = useState(false);
     const [selectedLdrUrl, setSelectedLdrUrl] = useState<string | null>(null);
+    const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(initialItems);
+    const [isLoading, setIsLoading] = useState(initialItems.length === 0);
+
+    // 클라이언트 사이드 fallback: initialItems가 비어있으면 직접 fetch
+    useEffect(() => {
+        if (initialItems.length === 0) {
+            const fetchGallery = async () => {
+                try {
+                    const res = await fetch('/api/gallery?page=0&size=7&sort=latest');
+                    if (res.ok) {
+                        const data = await res.json();
+                        setGalleryItems(data.content || []);
+                    }
+                } catch (error) {
+                    console.warn('Client-side gallery fetch failed:', error);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+            fetchGallery();
+        }
+    }, [initialItems]);
 
     const handleGoMake = () => {
         if (!isAuthenticated) {
@@ -59,8 +81,8 @@ function LandingPageContent({ initialItems }: Props) {
 
             <div className={styles.gallerySection}>
                 <CarouselGallery
-                    items={initialItems}
-                    loading={false}
+                    items={galleryItems}
+                    loading={isLoading}
                     onPreview={setSelectedLdrUrl}
                 />
             </div>
