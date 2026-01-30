@@ -48,7 +48,7 @@ spring:
 
 # ✅ 커스텀 앱 설정 (들여쓰기 주의: app이 최상위)
 app:
-  front-base-url: ${FRONT_BASE_URL:http://localhost:5173}
+  front-base-url: ${FRONT_BASE_URL:http://localhost:3000}
   generated-path: ${GENERATED_FILES_PATH:../brickers-ai/public/generated}
   cookie:
     secure: ${COOKIE_SECURE:false}    # 로컬은 false, 배포는 true
