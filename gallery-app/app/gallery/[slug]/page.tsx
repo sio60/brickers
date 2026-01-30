@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import BackgroundBricks from '@/components/BackgroundBricks';
 
+import GalleryDetailClient from '@/components/GalleryDetailClient';
+
 type Props = {
     params: Promise<{ slug: string }>
 }
@@ -171,30 +173,7 @@ export default async function GalleryDetailPage({ params }: Props) {
                         )}
                     </div>
 
-                    <div className="p-8">
-                        <div className="flex justify-between items-center mb-6">
-                            <h1 className="text-4xl font-extrabold">{item.title}</h1>
-
-                            <Link
-                                href={`/kids/steps?url=${encodeURIComponent(item.ldrUrl || '')}&isPreset=true`}
-                                className="bg-black text-white font-medium text-lg py-3 px-6 rounded-lg hover:opacity-80 transition-opacity"
-                            >
-                                3D로 보기 & 만들기
-                            </Link>
-                        </div>
-
-                        {/* Stats Row */}
-                        <div className="flex gap-6 text-gray-500 font-medium text-lg">
-                            <div className="flex items-center gap-2">
-                                <span>👀</span>
-                                <span>{item.viewCount}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span>❤️</span>
-                                <span>{item.likeCount}</span>
-                            </div>
-                        </div>
-                    </div>
+                    <GalleryDetailClient item={item} />
                 </div>
             </div>
         </>

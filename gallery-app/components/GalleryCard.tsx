@@ -61,7 +61,7 @@ export default function GalleryCard({ item, isLoggedIn, onBookmarkToggle, onLogi
                     ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-300">
                             <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
                             </svg>
                         </div>
                     )}
@@ -101,11 +101,10 @@ export default function GalleryCard({ item, isLoggedIn, onBookmarkToggle, onLogi
                             aria-label={item.isBookmarked ? '북마크 해제' : '북마크 추가'}
                         >
                             <svg
-                                className={`w-5 h-5 transition-colors ${
-                                    item.isBookmarked
-                                        ? 'fill-red-500 text-red-500'
-                                        : 'fill-none text-gray-400 hover:text-red-400'
-                                }`}
+                                className={`w-5 h-5 transition-colors ${item.isBookmarked
+                                        ? 'fill-black text-black'
+                                        : 'fill-none text-gray-400 hover:text-black'
+                                    }`}
                                 stroke="currentColor"
                                 strokeWidth="2"
                                 viewBox="0 0 24 24"
@@ -116,7 +115,7 @@ export default function GalleryCard({ item, isLoggedIn, onBookmarkToggle, onLogi
                                     d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                                 />
                             </svg>
-                            <span className={item.isBookmarked ? 'text-red-500' : 'text-gray-400'}>
+                            <span className={item.isBookmarked ? 'text-black' : 'text-gray-400'}>
                                 {item.likeCount || 0}
                             </span>
                         </button>
