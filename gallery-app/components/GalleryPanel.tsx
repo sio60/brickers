@@ -10,8 +10,8 @@ type MenuItem = {
 
 type Props = {
     title?: string;
-    activeCategory: string;
-    onCategoryChange: (id: string) => void;
+    activeCategory?: string;
+    onCategoryChange?: (id: string) => void;
     rightAction?: ReactNode;
     children: ReactNode;
     footer?: ReactNode;
@@ -36,10 +36,10 @@ export default function GalleryPanel({ title, activeCategory, onCategoryChange, 
                     {menuItems.map((item) => (
                         <button
                             key={item.id}
-                            onClick={() => onCategoryChange(item.id)}
+                            onClick={() => onCategoryChange?.(item.id)}
                             className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all duration-300 ${activeCategory === item.id
-                                    ? 'bg-yellow-400 text-black shadow-[0_0_20px_rgba(250,204,21,0.3)] scale-[1.02]'
-                                    : 'text-gray-400 hover:text-white hover:bg-white/10'
+                                ? 'bg-yellow-400 text-black shadow-[0_0_20px_rgba(250,204,21,0.3)] scale-[1.02]'
+                                : 'text-gray-400 hover:text-white hover:bg-white/10'
                                 }`}
                         >
                             <span className="text-lg">{item.label}</span>
