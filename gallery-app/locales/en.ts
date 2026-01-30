@@ -96,6 +96,14 @@ export const en = {
             DONE: "Done",
             FAILED: "Failed"
         },
+        menu: {
+            previewImage: "View Original Image",
+            viewBlueprint: "View Assembly Guide",
+            glbFile: "Download Model (glb)",
+            ldrFile: "Download Blueprint (ldr)"
+        },
+        noGlbFile: "GLB file not available.",
+        noLdrFile: "LDR file not available.",
         retryFail: "Failed to retry job.",
         modalError: "Job failed: ",
         modalPending: "Job is running or model not ready.",

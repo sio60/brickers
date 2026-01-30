@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Bebas_Neue, Jua, M_PLUS_Rounded_1c } from 'next/font/google'
+import { Bebas_Neue, Nanum_Gothic, M_PLUS_Rounded_1c } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
 import { LanguageProvider } from '../contexts/LanguageContext'
@@ -16,10 +16,10 @@ const bebasNeue = Bebas_Neue({
     variable: '--font-bebas'
 })
 
-const jua = Jua({
-    weight: '400',
+const nanumGothic = Nanum_Gothic({
+    weight: ['400', '700', '800'],
     subsets: ['latin'],
-    variable: '--font-jua',
+    variable: '--font-nanum',
     preload: true,
     display: 'swap'
 })
@@ -50,11 +50,11 @@ export default function RootLayout({
     children: React.ReactNode
 }) {
     return (
-        <html lang="en" className={`${bebasNeue.variable} ${jua.variable} ${mPlusRounded.variable}`} suppressHydrationWarning>
+        <html lang="en" className={`${bebasNeue.variable} ${nanumGothic.variable} ${mPlusRounded.variable}`} suppressHydrationWarning>
             <head>
-                {/* Jua 한글 폰트 전체 로드 */}
+                {/* 나눔고딕 한글 폰트 전체 로드 */}
                 <link
-                    href="https://fonts.googleapis.com/css2?family=Jua&display=swap"
+                    href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap"
                     rel="stylesheet"
                 />
             </head>
