@@ -46,44 +46,47 @@ export default function Header() {
           style={{ cursor: "pointer" }}
         />
 
-        {!isAuthProcessing && (
-          <div className="header__actions">
-            {/* 갤러리 버튼 (항상 표시: Next.js 갤러리/SPA 갤러리 접근) */}
-            <a
-              href="/gallery"
-              className="header__login-btn"
-              style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              {t.header.gallery}
-            </a>
+        <div className="header__actions">
+          {/* 갤러리 버튼 - 항상 표시 (SEO를 위해 비로그인 사용자도 접근 가능해야 함) */}
+          <a
+            href="/gallery"
+            className="header__login-btn"
+            style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            {t.header.gallery}
+          </a>
 
-            {/* ✅ 로그인하고 && 아직 업그레이드 안했을 때만 UPGRADE 표시 */}
-            {isAuthenticated && !isPro && (
-              <button
-                className="header__upgrade-btn"
-                onClick={() => setIsUpgradeModalOpen(true)}
-              >
-                {t.header.upgrade}
-              </button>
-            )}
+          {/* 나머지 버튼들은 인증 처리 완료 후에만 표시 */}
+          {!isAuthProcessing && (
+            <>
+              {/* ✅ 로그인하고 && 아직 업그레이드 안했을 때만 UPGRADE 표시 */}
+              {isAuthenticated && !isPro && (
+                <button
+                  className="header__upgrade-btn"
+                  onClick={() => setIsUpgradeModalOpen(true)}
+                >
+                  {t.header.upgrade}
+                </button>
+              )}
 
-            {/* ✅ 로그인 상태에 따라 LOGIN/LOGOUT */}
-            {!isAuthenticated && (
-              <button
-                className="header__login-btn"
-                onClick={() => setIsLoginModalOpen(true)}
-              >
-                {t.header.login}
-              </button>
-            )}
+              {/* ✅ 로그인 상태에 따라 LOGIN/LOGOUT */}
+              {!isAuthenticated && (
+                <button
+                  className="header__login-btn"
+                  onClick={() => setIsLoginModalOpen(true)}
+                >
+                  {t.header.login}
+                </button>
+              )}
 
-            {isAuthenticated && (
-              <button className="header__login-btn" onClick={handleLogoutClick}>
-                {t.header.logout}
-              </button>
-            )}
-          </div>
-        )}
+              {isAuthenticated && (
+                <button className="header__login-btn" onClick={handleLogoutClick}>
+                  {t.header.logout}
+                </button>
+              )}
+            </>
+          )}
+        </div>
       </header>
 
       <LoginModal
