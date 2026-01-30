@@ -31,7 +31,9 @@ export interface MyJob {
     title: string;
     sourceImageUrl: string;
     previewImageUrl: string;
-    modelKey?: string;
+    correctedImageUrl?: string;
+    glbUrl?: string;
+    ldrUrl?: string; // LDR 파일 URL (백엔드 MyJobResponse와 일치)
     hasResult: boolean;
     errorMessage: string | null;
     createdAt: string;
