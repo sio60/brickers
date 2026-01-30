@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import "./MyPageModal.css";
-import { getMyOverview, retryJob } from "../../../api/myApi";
 import type { MyOverview, MyJob } from "../../../api/myApi";
 import { useNavigate } from "react-router-dom";
 import MyPageProfile from "./MyPageProfile";
 import MyPageGrid from "./MyPageGrid";
 import { useLanguage } from "../../../contexts/LanguageContext";
+import { useAuth } from "../../Auth/AuthContext"; // ✅ 추가
 
 type MenuItem = "profile" | "jobs" | "settings";
 
@@ -16,6 +16,7 @@ type Props = {
 
 export default function MyPageModal({ open, onClose }: Props) {
     const navigate = useNavigate();
+    const { myApi } = useAuth(); // ✅ myApi 사용
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<MyOverview | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -28,7 +29,7 @@ export default function MyPageModal({ open, onClose }: Props) {
         setLoading(true);
         setError(null);
 
-        getMyOverview()
+        myApi.getMyOverview() // ✅ myApi 사용
             .then((res) => {
                 setData(res);
                 setLoading(false);
@@ -37,7 +38,7 @@ export default function MyPageModal({ open, onClose }: Props) {
                 setError(err.message);
                 setLoading(false);
             });
-    }, [open]);
+    }, [open, myApi]);
 
 
     if (!open) return null;
@@ -54,8 +55,8 @@ export default function MyPageModal({ open, onClose }: Props) {
 
     const handleRetry = async (jobId: string) => {
         try {
-            await retryJob(jobId);
-            const updated = await getMyOverview();
+            await myApi.retryJob(jobId); // ✅ myApi 사용
+            const updated = await myApi.getMyOverview(); // ✅ myApi 사용
             setData(updated);
         } catch (err) {
             alert(t.jobs.retryFail);

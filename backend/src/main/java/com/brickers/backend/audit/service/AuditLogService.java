@@ -4,7 +4,6 @@ import com.brickers.backend.audit.entity.AuditEventType;
 import com.brickers.backend.audit.entity.AuditLog;
 import com.brickers.backend.audit.repository.AuditLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -32,28 +31,15 @@ public class AuditLogService {
             Map<String, Object> meta) {
         String ip = null;
         String ua = null;
-        String tokenId = null;
-
         if (request != null) {
             ip = extractClientIp(request);
             ua = request.getHeader("User-Agent");
-
-            // 1) JWT jti 먼저 시도 (Authorization: Bearer ...)
-            tokenId = extractJwtJti(request);
-
-            // 2) JWT 없으면 세션ID라도 기록 (세션 기반일 때)
-            if (tokenId == null) {
-                HttpSession session = request.getSession(false);
-                if (session != null)
-                    tokenId = session.getId();
-            }
         }
 
         AuditLog doc = AuditLog.builder()
                 .eventType(type)
                 .targetUserId(targetUserId)
                 .actorUserId(actorUserId)
-                .tokenId(tokenId) // ✅ AuditLog 엔티티에 tokenId 필드가 있어야 함
                 .ip(ip)
                 .userAgent(ua)
                 .createdAt(LocalDateTime.now())

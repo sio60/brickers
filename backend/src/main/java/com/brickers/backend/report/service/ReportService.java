@@ -106,6 +106,7 @@ public class ReportService {
             case INQUIRY -> inquiryRepository.existsById(targetId);
             case UPLOAD_FILE -> uploadFileRepository.existsById(targetId);
             case PAYMENT_ORDER -> paymentOrderRepository.existsById(targetId);
+            case GENERAL -> true;
         };
 
         if (!exists) {
@@ -265,6 +266,7 @@ public class ReportService {
                 PaymentOrder order = paymentOrderRepository.findById(targetId).orElse(null);
                 yield order != null && order.isDeleted();
             }
+            case GENERAL -> false;
         };
     }
 
@@ -319,6 +321,7 @@ public class ReportService {
                 paymentOrderRepository.save(order);
                 yield "결제 주문 삭제 처리됨 (orderNo=" + order.getOrderNo() + ")";
             }
+            case GENERAL -> "대상 없음 (일반 신고)";
         };
     }
 }
