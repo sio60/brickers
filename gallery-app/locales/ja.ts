@@ -96,6 +96,14 @@ export const ja = {
             DONE: "完了",
             FAILED: "失敗"
         },
+        menu: {
+            previewImage: "元画像を見る",
+            viewBlueprint: "組立説明書を見る",
+            glbFile: "モデルファイル(glb)をダウンロード",
+            ldrFile: "図面ファイル(ldr)をダウンロード"
+        },
+        noGlbFile: "GLBファイルがありません。",
+        noLdrFile: "LDRファイルがありません。",
         retryFail: "再試行に失敗しました。",
         modalError: "失敗した作業です：",
         modalPending: "現在生成中か、3Dモデルの準備ができていません。",
