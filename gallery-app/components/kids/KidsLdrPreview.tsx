@@ -120,8 +120,31 @@ function LdrModel({
 
                 g.rotation.x = Math.PI;
 
+                // 층(Layer) 정보 계산: Y 좌표(높이) 기준
+                const yCoords = new Set<number>();
+                g.traverse((obj) => {
+                    if (obj.type === 'Group' && obj.userData.isPart) {
+                        yCoords.add(Math.round(obj.position.y * 10) / 10);
+                    } else if (obj.type === 'Mesh' && !obj.userData.isLine) {
+                        // 파트가 아닌 개별 메쉬인 경우 (직접적인 자식 등)
+                        let p = obj.parent;
+                        while (p && p !== g && !p.userData.isPart) p = p.parent;
+                        if (p === g || !p) {
+                            yCoords.add(Math.round(obj.position.y * 10) / 10);
+                        }
+                    }
+                });
+
+                // 자식들을 직접 순회하여 레이어 계산 (LDrawLoader 구조 고려)
+                const layerSet = new Set<number>();
+                g.children.forEach(child => {
+                    layerSet.add(Math.round(child.position.y * 10) / 10);
+                });
+
+                const sortedLayers = Array.from(layerSet).sort((a, b) => a - b);
+
                 if (onStepCountChange) {
-                    onStepCountChange(g.children.length);
+                    onStepCountChange(sortedLayers.length);
                 }
 
                 prev = g;
@@ -141,8 +164,17 @@ function LdrModel({
 
     useEffect(() => {
         if (!group || !stepMode) return;
-        group.children.forEach((child, index) => {
-            child.visible = index < currentStep;
+
+        const layerSet = new Set<number>();
+        group.children.forEach(child => {
+            layerSet.add(Math.round(child.position.y * 10) / 10);
+        });
+        const sortedLayers = Array.from(layerSet).sort((a, b) => a - b);
+        const currentLayerY = sortedLayers[currentStep - 1];
+
+        group.children.forEach((child) => {
+            const childY = Math.round(child.position.y * 10) / 10;
+            child.visible = childY <= currentLayerY;
         });
     }, [group, currentStep, stepMode]);
 
