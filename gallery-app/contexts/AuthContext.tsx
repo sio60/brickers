@@ -38,10 +38,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // refresh 중복 호출 방지
     const refreshInFlight = useRef<Promise<string | null> | null>(null);
+    // refresh 실패 후 재시도 방지 (로그아웃 상태에서 무한 루프 방지)
+    const refreshFailed = useRef(false);
 
     // refresh: refresh-cookie로 access 재발급 + me 호출로 user 세팅
     const refresh = async (): Promise<string | null> => {
         if (refreshInFlight.current) return refreshInFlight.current;
+        if (refreshFailed.current) return null; // 이미 실패했으면 재시도 안함
 
         refreshInFlight.current = (async () => {
             console.debug("[AuthContext] Refreshing token...");
@@ -54,6 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 console.debug("[AuthContext] Refresh response:", r.status);
 
                 if (!r.ok) {
+                    refreshFailed.current = true; // 401 등 실패 시 재시도 방지
                     setAccessToken(null);
                     setUser(null);
                     return null;
@@ -70,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 }
 
                 setAccessToken(newAccess);
+                refreshFailed.current = false; // 성공 시 플래그 리셋
 
                 // access로 내 정보 조회
                 const meRes = await fetch(`${API_BASE}/api/auth/me`, {
