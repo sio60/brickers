@@ -766,6 +766,22 @@
     font-weight: 500;
     align-self: flex-start;
 }
+
+/* 작업 메뉴 모달 오버레이 */
+.mypage__modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1500;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.2s ease;
+}
+
 /* 작업 메뉴 모달 */
 .mypage__menuModal {
     position: relative;

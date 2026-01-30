@@ -6,7 +6,8 @@ import dynamic from "next/dynamic";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { getPresignUrl } from "@/lib/api/myApi";
-import KidsLoadingScreen from "@/components/kids/KidsLoadingScreen";
+// import KidsLoadingScreen from "@/components/kids/KidsLoadingScreen";
+import BrickStackMiniGame from "@/components/kids/BrickStackMiniGame";
 import './KidsPage.css';
 
 // SSR 제외
@@ -282,7 +283,7 @@ function KidsPageContent() {
                 {status === "loading" && (
                     <>
                         <div className="debugLog">{debugLog}</div>
-                        <KidsLoadingScreen percent={percent} />
+                        <BrickStackMiniGame percent={percent} />
                     </>
                 )}
 
