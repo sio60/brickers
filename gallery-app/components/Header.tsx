@@ -61,7 +61,7 @@ function HeaderContent() {
                             isAuthenticated ? (
                                 <>
                                     {!isPro && (
-                                        <button className="header__btn" onClick={() => {/* Upgrade modal logic */ }}>
+                                        <button className="header__btn" onClick={() => setIsUpgradeModalOpen(true)}>
                                             {t.header.upgrade}
                                         </button>
                                     )}
