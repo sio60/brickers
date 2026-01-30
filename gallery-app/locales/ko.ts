@@ -15,7 +15,9 @@ export const ko = {
             goMake: "만들러 가기",
             cardTitle: "생성된 레고 3D",
             titleLabel: "제목:",
-            authorLabel: "생성한 사람:"
+            authorLabel: "생성한 사람:",
+            moreWorks: "더 많은 작품이 궁금하신가요?",
+            goToGallery: "갤러리 보러가기"
         }
     },
     floatingMenu: {

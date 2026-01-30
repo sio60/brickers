@@ -15,7 +15,9 @@ export const en = {
             goMake: "Go Make",
             cardTitle: "Generated LEGO 3D",
             titleLabel: "Title:",
-            authorLabel: "Creator:"
+            authorLabel: "Creator:",
+            moreWorks: "Want to see more creations?",
+            goToGallery: "Go to Gallery"
         }
     },
     floatingMenu: {

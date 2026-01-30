@@ -8,6 +8,7 @@ import styles from "./MyPage.module.css";
 import { getMyOverview, getMyProfile, retryJob, updateMyProfile, ApiError } from "@/lib/api/myApi";
 import type { MyOverview, MyProfile, MyJob } from "@/lib/api/myApi";
 import KidsLdrPreview from "@/components/kids/KidsLdrPreview";
+import UpgradeModal from "@/components/UpgradeModal";
 
 // SVG Icons
 const Icons = {
@@ -55,10 +56,15 @@ export default function MyPage() {
 
     // 3D 뷰어 모달 상태
     const [selectedJob, setSelectedJob] = useState<MyJob | null>(null);
+    // 작업 메뉴 모달 상태
+    const [menuJob, setMenuJob] = useState<MyJob | null>(null);
 
     // 확장 상태 (문의/신고)
     const [expandedInquiryId, setExpandedInquiryId] = useState<string | null>(null);
     const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
+
+    // 업그레이드 모달 상태
+    const [showUpgrade, setShowUpgrade] = useState(false);
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
@@ -157,6 +163,86 @@ export default function MyPage() {
         const date = new Date(dateString);
         return `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}.`;
     };
+
+    // 파일 다운로드 헬퍼
+    const downloadFile = async (url: string, filename: string) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        } catch (error) {
+            console.error('Download failed:', error);
+            alert(t.common.error);
+        }
+    };
+
+    // 작업 메뉴 핸들러
+    const handleJobClick = (job: MyJob) => {
+        if (job.status === "FAILED") {
+            alert(t.jobs.modalError + job.errorMessage);
+        } else if (job.status === "DONE") {
+            setMenuJob(job);
+        } else {
+            alert(t.jobs.modalPending);
+        }
+    };
+
+    const handleMenuAction = (action: string) => {
+        if (!menuJob) return;
+
+        switch (action) {
+            case 'source':
+                if (menuJob.sourceImageUrl) {
+                    downloadFile(menuJob.sourceImageUrl, `${menuJob.title || 'source'}_original.png`);
+                }
+                break;
+            case 'corrected':
+                if (menuJob.correctedImageUrl) {
+                    downloadFile(menuJob.correctedImageUrl, `${menuJob.title || 'corrected'}_enhanced.png`);
+                } else {
+                    alert(t.jobs.noEnhancedImage || '개선 이미지가 없습니다.');
+                }
+                break;
+            case 'glb':
+                if (menuJob.glbUrl) {
+                    downloadFile(menuJob.glbUrl, `${menuJob.title || 'model'}.glb`);
+                } else {
+                    alert(t.jobs.noGlbFile || 'GLB 파일이 없습니다.');
+                }
+                break;
+            case 'ldr':
+                if (menuJob.ldrUrl) {
+                    downloadFile(menuJob.ldrUrl, `${menuJob.title || 'model'}.ldr`);
+                } else {
+                    alert(t.jobs.noLdrFile || 'LDR 파일이 없습니다.');
+                }
+                break;
+            case 'view':
+                if (menuJob.ldrUrl) {
+                    setSelectedJob(menuJob);
+                    setMenuJob(null);
+                } else {
+                    alert(t.jobs.modalNoData);
+                }
+                break;
+        }
+    };
+
+    const menuItems = [
+        { id: "profile" as MenuItem, label: t.menu.profile },
+        { id: "membership" as MenuItem, label: t.menu.membership },
+        { id: "jobs" as MenuItem, label: t.menu.jobs },
+        { id: "inquiries" as MenuItem, label: t.menu.inquiries },
+        { id: "reports" as MenuItem, label: t.menu.reports },
+        { id: "settings" as MenuItem, label: t.menu.settings },
+        { id: "delete" as MenuItem, label: t.menu.delete },
+    ];
 
     // 실시간 업데이트 (Polling) 및 문의 내역 로드
     useEffect(() => {
@@ -343,7 +429,11 @@ export default function MyPage() {
                         {data?.jobs.recent && data.jobs.recent.length > 0 ? (
                             <div className={styles.mypage__jobs}>
                                 {data.jobs.recent.map((job) => (
-                                    <div key={job.id} onClick={() => job.status === 'DONE' && job.ldrUrl && setSelectedJob(job)} className={styles.mypage__job}>
+                                    <div
+                                        key={job.id}
+                                        className={styles.mypage__job}
+                                        onClick={() => handleJobClick(job)}
+                                    >
                                         <div className={styles.mypage__jobThumbData}>
                                             <img src={job.sourceImageUrl || "/placeholder.png"} alt={job.title} className={styles.mypage__jobThumb} />
                                             <div className={styles.mypage__jobOverlay}>
@@ -577,7 +667,76 @@ export default function MyPage() {
                 </div>
             </div>
 
-            {/* Modal for 3D Viewer */}
+            <UpgradeModal isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} />
+
+            {/* 작업 메뉴 모달 */}
+            {menuJob && (
+                <div className={styles.mypage__modalOverlay} onClick={() => setMenuJob(null)}>
+                    <div className={styles.mypage__menuModal} onClick={e => e.stopPropagation()}>
+                        <button
+                            className={styles.mypage__closeBtn}
+                            onClick={() => setMenuJob(null)}
+                        >
+                            ✕
+                        </button>
+                        <div className={styles.mypage__menuHeader}>
+                            <img
+                                src={menuJob.sourceImageUrl || "/placeholder.png"}
+                                alt={menuJob.title}
+                                className={styles.mypage__menuThumb}
+                            />
+                            <div className={styles.mypage__menuInfo}>
+                                <h3 className={styles.mypage__menuTitle}>{menuJob.title || t.mypage.noTitle}</h3>
+                                <span className={styles.mypage__menuDate}>{formatDate(menuJob.createdAt)}</span>
+                            </div>
+                        </div>
+                        <div className={styles.mypage__menuList}>
+                            <button
+                                className={styles.mypage__menuItem2}
+                                onClick={() => handleMenuAction('source')}
+                                disabled={!menuJob.sourceImageUrl}
+                            >
+                                <span className={styles.mypage__menuIcon2}>🖼️</span>
+                                <span>{t.jobs.menu?.sourceImage || '원본 이미지 다운'}</span>
+                            </button>
+                            <button
+                                className={styles.mypage__menuItem2}
+                                onClick={() => handleMenuAction('corrected')}
+                                disabled={!menuJob.correctedImageUrl}
+                            >
+                                <span className={styles.mypage__menuIcon2}>✨</span>
+                                <span>{t.jobs.menu?.enhancedImage || '개선 이미지 다운'}</span>
+                            </button>
+                            <button
+                                className={styles.mypage__menuItem2}
+                                onClick={() => handleMenuAction('glb')}
+                                disabled={!menuJob.glbUrl}
+                            >
+                                <span className={styles.mypage__menuIcon2}>📦</span>
+                                <span>{t.jobs.menu?.glbFile || '모델링 파일 다운'}</span>
+                            </button>
+                            <button
+                                className={styles.mypage__menuItem2}
+                                onClick={() => handleMenuAction('ldr')}
+                                disabled={!menuJob.ldrUrl}
+                            >
+                                <span className={styles.mypage__menuIcon2}>📄</span>
+                                <span>{t.jobs.menu?.ldrFile || 'LDR 다운'}</span>
+                            </button>
+                            <button
+                                className={`${styles.mypage__menuItem2} ${styles.primary}`}
+                                onClick={() => handleMenuAction('view')}
+                                disabled={!menuJob.ldrUrl}
+                            >
+                                <span className={styles.mypage__menuIcon2}>👁️</span>
+                                <span>{t.jobs.menu?.viewBlueprint || '도면보기'}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 3D 뷰어 모달 */}
             {selectedJob && (
                 <div className={styles.mypage__modalOverlay}>
                     <div className={styles.mypage__modalContent}>
