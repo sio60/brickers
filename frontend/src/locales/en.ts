@@ -138,6 +138,11 @@ export const en = {
         title: "Select Your Level",
         level: "L{lv}",
         continueBtn: "Continue",
+        ageAlt: {
+            level1: "Level 1 - Easy",
+            level2: "Level 2 - Medium",
+            level3: "Level 3 - Hard"
+        },
         model1: "Model 1",
         model2: "Model 2",
         generate: {
@@ -230,6 +235,19 @@ export const en = {
             title: "Selection Info",
             hint: "Click a brick to see details."
         }
+    },
+    ldrPreview: {
+        loading: "Loading 3D model...",
+        pleaseWait: "Please wait",
+        loadFailed: "Failed to load model",
+        prev: "PREV",
+        next: "NEXT",
+        step: "Step"
+    },
+    miniGame: {
+        playAgain: "Play Again",
+        gameOver: "Game Over!",
+        score: "Score"
     },
     common: {
         loading: "Loading...",

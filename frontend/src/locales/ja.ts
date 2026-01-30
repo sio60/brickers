@@ -138,6 +138,11 @@ export const ja = {
         title: "難易度を選択してください",
         level: "L{lv}",
         continueBtn: "進む",
+        ageAlt: {
+            level1: "レベル1 - 簡単",
+            level2: "レベル2 - 普通",
+            level3: "レベル3 - 難しい"
+        },
         model1: "モデル 1",
         model2: "モデル 2",
         generate: {
@@ -291,6 +296,19 @@ export const ja = {
             date: "決済日",
             nextDate: "次回決済日"
         }
+    },
+    ldrPreview: {
+        loading: "3Dモデル読み込み中...",
+        pleaseWait: "少々お待ちください",
+        loadFailed: "モデルの読み込みに失敗しました",
+        prev: "前へ",
+        next: "次へ",
+        step: "ステップ"
+    },
+    miniGame: {
+        playAgain: "もう一度",
+        gameOver: "ゲームオーバー！",
+        score: "スコア"
     },
     common: {
         loading: "読み込み中...",
