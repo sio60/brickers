@@ -328,12 +328,17 @@ export const en = {
     },
     my: {
         title: "My Gallery",
-        subtitle: "View your creations and bookmarked items.",
+        subtitle: "Collect your creations and bookmarked works.",
         tabMy: "My Gallery",
         tabBookmarks: "Bookmarks",
         empty: "No works yet.",
-        goToCreate: "Go make something! →",
+        goToCreate: "Create New Work →",
         next: "NEXT",
-        newWork: "Create New"
+        newWork: "Create New Work"
+    },
+    miniGame: {
+        playAgain: "Play Again",
+        gameOver: "Game Over!",
+        score: "Score"
     }
 };
