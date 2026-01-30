@@ -33,6 +33,7 @@ export default function FloatingMenuButton() {
     }, [isAuthenticated]);
 
     const menuItems = [
+        { id: "gallery", label: t.floatingMenu?.gallery || "Gallery" },
         { id: "mypage", label: t.floatingMenu?.mypage || "My Page" },
         { id: "chatbot", label: t.floatingMenu?.chatbot || "BrickBot" },
     ];
@@ -62,8 +63,7 @@ export default function FloatingMenuButton() {
 
     const handleMainBtnClick = () => {
         if (!isAuthenticated) {
-            alert(t.common?.loginRequired || "Login required.");
-            setIsLoginModalOpen(true);
+            router.push('?login=true');
             return;
         }
         setIsOpen(!isOpen);
@@ -109,10 +109,6 @@ export default function FloatingMenuButton() {
                 </button>
             </div>
 
-            <LoginModal
-                isOpen={isLoginModalOpen}
-                onClose={() => setIsLoginModalOpen(false)}
-            />
 
             <BrickBotModal
                 isOpen={isChatOpen}

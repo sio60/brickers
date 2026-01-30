@@ -39,11 +39,14 @@ export default function GalleryCard({ item, isLoggedIn, onBookmarkToggle, onLogi
     const formatDate = (dateStr?: string) => {
         if (!dateStr) return '';
         const date = new Date(dateStr);
-        return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+        // 서버/클라이언트 hydration 일치를 위해 고정 포맷 사용
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        return `${month}월 ${day}일`;
     };
 
     return (
-        <Link href={`/${slug}`} className="block">
+        <Link href={`/gallery/${slug}`} className="block">
             <div className="gallery-card bg-white rounded-2xl overflow-hidden border border-gray-100">
                 {/* Thumbnail */}
                 <div className="relative aspect-square bg-gray-100 overflow-hidden">

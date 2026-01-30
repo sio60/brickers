@@ -5,12 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getPresignUrl } from "@/lib/api/myApi";
-import styles from "./KidsPage.module.css";
+import KidsLoadingScreen from "@/components/kids/KidsLoadingScreen";
+import './KidsPage.css';
 
 // SSR 제외
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
 const KidsLdrPreview = dynamic(() => import("@/components/kids/KidsLdrPreview"), { ssr: false });
-const FloatingMenuButton = dynamic(() => import("@/components/kids/FloatingMenuButton"), { ssr: false });
+const KidsModelSelectModal = dynamic(() => import("@/components/kids/KidsModelSelectModal"), { ssr: false });
 
 function KidsPageContent() {
     const router = useRouter();
@@ -24,7 +25,6 @@ function KidsPageContent() {
         return 150;
     }, [age]);
 
-    // sessionStorage에서 파일 데이터 복원
     const [rawFile, setRawFile] = useState<File | null>(null);
     const [isFileLoaded, setIsFileLoaded] = useState(false);
 
@@ -33,7 +33,6 @@ function KidsPageContent() {
         if (storedData) {
             try {
                 const { name, type, dataUrl } = JSON.parse(storedData);
-                // dataUrl을 File로 변환
                 fetch(dataUrl)
                     .then(res => res.blob())
                     .then(blob => {
@@ -51,7 +50,6 @@ function KidsPageContent() {
         }
     }, []);
 
-    // 파일이 없으면 홈으로 리다이렉트
     useEffect(() => {
         if (isFileLoaded && !rawFile) {
             router.replace("/");
@@ -83,33 +81,58 @@ function KidsPageContent() {
         const runProcess = async () => {
             processingRef.current = true;
             setStatus("loading");
+
+            // React가 Background3D를 언마운트할 시간 확보 (WebGL Context Lost 방지)
             await sleep(200);
 
             setDebugLog(t.kids.generate.starting);
+            console.log("[KidsPage] 🚀 runProcess 시작 | file:", rawFile.name, rawFile.type, rawFile.size);
 
             try {
                 // 1. Presigned URL 요청
                 setDebugLog(t.kids.generate.uploadPrepare);
+                console.log("[KidsPage] 📤 Step 1: Presigned URL 요청 중...");
                 const presign = await getPresignUrl(rawFile.type, rawFile.name);
+                console.log("[KidsPage] ✅ Step 1 완료 | uploadUrl:", presign.uploadUrl?.substring(0, 80) + "...");
+                console.log("[KidsPage]    publicUrl:", presign.publicUrl);
 
                 // 2. S3에 직접 업로드
                 setDebugLog(t.kids.generate.uploading);
-                const uploadRes = await fetch(presign.uploadUrl, {
-                    method: "PUT",
-                    body: rawFile,
-                    headers: { "Content-Type": rawFile.type },
-                    signal: abort.signal,
-                });
+                console.log("[KidsPage] 📤 Step 2: S3 업로드 시작...");
+                console.log("[KidsPage] 📤 fetch 호출 직전 | url:", presign.uploadUrl?.substring(0, 100));
+
+                let uploadRes: Response;
+                try {
+                    uploadRes = await fetch(presign.uploadUrl, {
+                        method: "PUT",
+                        body: rawFile,
+                        headers: { "Content-Type": rawFile.type },
+                        signal: abort.signal,
+                    });
+                    console.log("[KidsPage] ✅ fetch 완료 | status:", uploadRes.status);
+                } catch (fetchError: any) {
+                    console.error("[KidsPage] ❌ fetch 자체 에러:", fetchError);
+                    console.error("[KidsPage] ❌ 에러 타입:", fetchError?.name);
+                    console.error("[KidsPage] ❌ 에러 메시지:", fetchError?.message);
+                    throw fetchError;
+                }
+
+                console.log("[KidsPage] ✅ Step 2 완료 | S3 Upload status:", uploadRes.status);
 
                 if (!uploadRes.ok) {
+                    console.error("[KidsPage] ❌ S3 Upload 실패 | status:", uploadRes.status);
                     throw new Error(`S3 Upload Error: ${uploadRes.status}`);
                 }
 
-                // 3. Backend에 S3 URL 전달
+                // 3. Backend에 S3 URL 전달 (JSON)
                 setDebugLog(t.kids.generate.creating2);
                 const fileTitle = rawFile.name.replace(/\.[^/.]+$/, "");
 
                 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+                console.log("[KidsPage] 📤 Step 3: /api/kids/generate 호출 시작...");
+                console.log("[KidsPage]    API_BASE:", API_BASE || "(empty - using relative path)");
+                console.log("[KidsPage]    payload:", { sourceImageUrl: presign.publicUrl, age, budget, title: fileTitle });
+
                 const startRes = await fetch(`${API_BASE}/api/kids/generate`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -122,24 +145,33 @@ function KidsPageContent() {
                     }),
                     signal: abort.signal,
                 });
+                console.log("[KidsPage] ✅ Step 3 응답 받음 | status:", startRes.status);
 
                 if (!startRes.ok) {
                     const errText = await startRes.text();
+                    console.error("[KidsPage] ❌ /api/kids/generate 실패 | status:", startRes.status, "| error:", errText);
                     throw new Error(`Start Error: ${errText}`);
                 }
 
                 const startData = await startRes.json();
+                console.log("[KidsPage] ✅ Step 3 완료 | response:", startData);
                 const jid = startData.jobId;
                 if (!jid) throw new Error("No jobId received");
 
                 if (!alive) return;
                 setJobId(jid);
+                console.log("[KidsPage] 🎯 Job 생성 완료 | jobId:", jid);
                 setDebugLog(`${t.kids.generate.jobCreated} [${jid}]`);
 
                 // 4. 폴링
                 let finalData: any = null;
+                console.log("[KidsPage] 🔄 Step 4: 폴링 시작 | maxAttempts:", maxAttempts, "| interval:", POLL_INTERVAL);
+
                 for (let i = 0; i < maxAttempts; i++) {
-                    if (!alive) return;
+                    if (!alive) {
+                        console.log("[KidsPage] ⚠️ 폴링 중단 (alive=false)");
+                        return;
+                    }
                     await sleep(POLL_INTERVAL);
 
                     const statusRes = await fetch(`${API_BASE}/api/kids/jobs/${jid}`, {
@@ -148,14 +180,17 @@ function KidsPageContent() {
                     });
 
                     if (!statusRes.ok) {
+                        console.warn(`[KidsPage] ⚠️ Polling failed: ${statusRes.status}`);
                         setDebugLog(`${t.kids.generate.serverDelay} (${statusRes.status})`);
                         continue;
                     }
 
                     const statusData = await statusRes.json();
                     const stage = statusData.stage || statusData.status || "QUEUED";
+                    console.log(`[KidsPage] 📊 Poll #${i + 1} | status: ${statusData.status} | stage: ${stage}`);
                     setCurrentStage(stage);
 
+                    // Stale Job 감지 (10분 동안 진행 없음)
                     let warningMsg = "";
                     if (statusData.status === "RUNNING" && statusData.stageUpdatedAt) {
                         const stageUpdatedTime = new Date(statusData.stageUpdatedAt).getTime();
@@ -163,17 +198,20 @@ function KidsPageContent() {
                         const minutesSinceUpdate = Math.floor((now - stageUpdatedTime) / 60000);
 
                         if (minutesSinceUpdate > 10) {
-                            warningMsg = ` (${minutesSinceUpdate}m)`;
+                            warningMsg = ` ⚠️ AI 응답 없음 (${minutesSinceUpdate}m)`;
+                            console.warn(`[KidsPage] Stale job detected | jobId=${jid} | minutes=${minutesSinceUpdate}`);
                         }
                     }
 
                     setDebugLog(`${t.kids.generate.inProgress} [${stage}] (${i}/${maxAttempts})${warningMsg}`);
 
                     if (statusData.status === "FAILED") {
+                        console.error("[KidsPage] ❌ Job FAILED | error:", statusData.errorMessage);
                         throw new Error(statusData.errorMessage || "Generation failed");
                     }
 
                     if (statusData.status === "DONE") {
+                        console.log("[KidsPage] ✅ Job DONE! | ldrUrl:", statusData.ldrUrl);
                         finalData = statusData;
                         setShowToast(true);
                         setTimeout(() => setShowToast(false), 5000);
@@ -182,14 +220,17 @@ function KidsPageContent() {
                 }
 
                 if (!finalData) {
+                    console.error("[KidsPage] ❌ Timeout | exceeded", FRONT_TIMEOUT_SEC, "seconds");
                     throw new Error(`Timeout: exceeded ${FRONT_TIMEOUT_SEC}s`);
                 }
 
                 // 5. 결과 처리
                 const modelUrl = finalData.ldrUrl || finalData.modelKey;
+                console.log("[KidsPage] 🎉 Final Job Data:", finalData);
                 setDebugLog(t.kids.generate.loadingResult);
 
                 if (!modelUrl) {
+                    console.error("[KidsPage] ❌ No model URL in result");
                     throw new Error("No model URL in job result");
                 }
 
@@ -197,9 +238,10 @@ function KidsPageContent() {
 
                 setLdrUrl(modelUrl);
                 setStatus("done");
+                console.log("[KidsPage] ✅ 전체 프로세스 완료! | ldrUrl:", modelUrl);
             } catch (e: any) {
                 if (!alive) return;
-                console.error("Brick generation failed:", e);
+                console.error("[KidsPage] ❌ Brick generation failed:", e);
                 setDebugLog(`${t.kids.generate.errorOccurred}: ${e.message}`);
                 setStatus("error");
             }
@@ -211,9 +253,9 @@ function KidsPageContent() {
             alive = false;
             try { abort.abort(); } catch { }
         };
-    }, [rawFile, age, budget, status, t]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [rawFile, age, budget]); // status 제거 - status 변경 시 cleanup이 abort를 호출해서 fetch 취소됨
 
-    // stage 기반 진행률 계산
     const percent = useMemo(() => {
         if (status === "done") return 100;
         if (status !== "loading") return 0;
@@ -231,35 +273,32 @@ function KidsPageContent() {
     }, [status, currentStage]);
 
     if (!isFileLoaded) {
-        return <div className={styles.page}>Loading...</div>;
+        return <div className="page">Loading...</div>;
     }
 
     return (
-        <div className={styles.page}>
+        <div className="page">
             <Background3D entryDirection="float" />
 
-            <div className={styles.center}>
+            <div className="center">
                 {status === "loading" && (
                     <>
-                        <div className={styles.debugLog}>{debugLog}</div>
-                        <div className={styles.loadingBar}>
-                            <div className={styles.loadingProgress} style={{ width: `${percent}%` }} />
-                        </div>
-                        <div className={styles.loadingText}>{t.kids.generate.loading}</div>
+                        <div className="debugLog">{debugLog}</div>
+                        <KidsLoadingScreen percent={percent} />
                     </>
                 )}
 
                 {status === "done" && ldrUrl && (
                     <>
-                        <div className={styles.resultTitle}>{t.kids.generate.ready}</div>
-                        <div className={styles.resultCard}>
-                            <div className={styles.viewer3d}>
+                        <div className="resultTitle">{t.kids.generate.ready}</div>
+                        <div className="resultCard">
+                            <div className="viewer3d">
                                 <KidsLdrPreview url={ldrUrl} />
                             </div>
                         </div>
 
                         <button
-                            className={styles.nextBtn}
+                            className="nextBtn"
                             onClick={() => {
                                 router.push(`/kids/steps?url=${encodeURIComponent(ldrUrl)}&jobId=${jobId ?? ""}&age=${age}`);
                             }}
@@ -270,7 +309,7 @@ function KidsPageContent() {
                 )}
 
                 {status === "error" && (
-                    <div className={styles.error}>
+                    <div className="error">
                         <div style={{ fontWeight: "bold", marginBottom: "8px" }}>{t.kids.generate.failed}</div>
                         {t.kids.generate.error}
                         <br />
@@ -279,13 +318,11 @@ function KidsPageContent() {
                 )}
 
                 {showToast && (
-                    <div className={styles.toast}>
+                    <div className="toast">
                         {t.kids.generate.complete}
                     </div>
                 )}
             </div>
-
-            <FloatingMenuButton />
         </div>
     );
 }
@@ -297,3 +334,4 @@ export default function KidsPage() {
         </Suspense>
     );
 }
+

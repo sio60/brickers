@@ -219,13 +219,15 @@ export const en = {
         logout: "LOGOUT",
         gallery: "GALLERY",
         logoAlt: "BRICKERS Logo",
-        myGallery: "My Gallery"
+        myGallery: "My Gallery",
+        myPage: "My Page"
     },
     auth: {
         title: "LOGIN",
         kakao: "Continue with Kakao",
         google: "Continue with Google",
         processing: "Signing in... Please wait.",
+        loggingOut: "Logging out... Please wait.",
         failed: "Authentication failed.",
         redirecting: "Redirecting to home..."
     },

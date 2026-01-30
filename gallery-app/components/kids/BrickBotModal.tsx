@@ -198,10 +198,15 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (messages.length === 1 && messages[0].role === "bot") {
-            setMessages([{ role: "bot", content: tChat.welcome }]);
-        }
-    }, [language, tChat.welcome, messages]);
+        setMessages(prev => {
+            if (prev.length === 1 && prev[0].role === "bot" && prev[0].content !== tChat.welcome) {
+                return [{ role: "bot", content: tChat.welcome }];
+            }
+            return prev;
+        });
+        // We include all dependencies that were present before to avoid "size changed" error during HMR,
+        // but we've used functional update to avoid the infinite loop with 'messages'.
+    }, [language, tChat.welcome]);
 
     const suggestedQuestions = [
         tChat.suggestions.howTo,

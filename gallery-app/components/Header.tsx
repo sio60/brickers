@@ -1,94 +1,92 @@
-'use client';
+"use client";
 
+import { Suspense, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
+import LoginModal from './common/LoginModal';
+import './Header.css';
 
-export default function Header() {
+function HeaderContent() {
     const { t } = useLanguage();
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const { isAuthenticated, logout, isLoading, user } = useAuth();
     const pathname = usePathname();
+    const router = useRouter();
+    const searchParams = useSearchParams();
 
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+    // URL에 ?login=true가 있으면 자동으로 로그인 모달 열기
     useEffect(() => {
-        const checkAuth = () => {
-            const token = localStorage.getItem('accessToken');
-            setIsLoggedIn(!!token);
-        };
+        if (searchParams.get("login") === "true" && !isAuthenticated) {
+            setIsLoginModalOpen(true);
+        }
+    }, [searchParams, isAuthenticated]);
 
-        // Initial check
-        checkAuth();
-
-        // Listen for storage changes (sync across tabs)
-        window.addEventListener('storage', checkAuth);
-
-        // Custom event for same-tab changes if needed, but localStorage.setItem doesn't trigger 'storage' on same window
-        // So we can also use a simple interval or just rely on the fact that most changes happen via our own functions
-        return () => window.removeEventListener('storage', checkAuth);
-    }, []);
-
-    const handleLogout = () => {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        setIsLoggedIn(false);
-        // Dispatch a storage event manually for other tabs if they aren't listening already
-        window.dispatchEvent(new Event('storage'));
-
-        // Navigate to home
-        window.location.href = '/gallery';
+    const handleLogout = async () => {
+        await logout();
     };
 
-    const isMyPage = pathname === '/my';
+    // 업그레이드 여부 확인
+    const isPro = user?.membershipPlan === "PRO";
+    const isAdmin = user?.role === "ADMIN";
 
     return (
-        <header className="fixed top-0 left-0 w-full h-[72px] flex items-center justify-center px-5 bg-white border-b border-[#e0e0e0] z-50">
-            {/* Logo - Centered */}
-            <a href="/" className="h-12 cursor-pointer flex items-center justify-center">
-                <Image
-                    src="/gallery/logo.png"
-                    alt="BRICKERS"
-                    width={160}
-                    height={48}
-                    className="h-full w-auto object-contain"
-                    priority
-                />
-            </a>
+        <>
+            <header className="header">
+                {/* Logo - Centered */}
+                <Link href="/" className="cursor-pointer">
+                    <Image
+                        src="/logo.png"
+                        alt="BRICKERS"
+                        width={160}
+                        height={48}
+                        className="header__logo"
+                        priority
+                    />
+                </Link>
 
-            {/* Actions - Positioned absolute right */}
-            <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3">
-                {isLoggedIn ? (
-                    <>
-                        {isMyPage ? (
-                            <a
-                                href="/gallery"
-                                className="px-4 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
-                            >
-                                {t.header.gallery}
-                            </a>
+                {/* Actions - Positioned absolute right */}
+                <div className="header__actions">
+                    {!isLoading ? (
+                        isAuthenticated ? (
+                            <>
+                                <Link href="/gallery" className="header__btn">
+                                    {t.header.gallery}
+                                </Link>
+                                {!isPro && (
+                                    <button className="header__btn" onClick={() => {/* Upgrade modal logic */ }}>
+                                        {t.header.upgrade}
+                                    </button>
+                                )}
+                                <button onClick={handleLogout} className="header__btn">
+                                    {t.header.logout}
+                                </button>
+                            </>
                         ) : (
-                            <a
-                                href="/gallery/my"
-                                className="px-4 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
-                            >
-                                {t.header.myGallery}
-                            </a>
-                        )}
-                        <button
-                            onClick={handleLogout}
-                            className="px-4 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
-                        >
-                            {t.header.logout}
-                        </button>
-                    </>
-                ) : (
-                    <a
-                        href="/?login=true&returnUrl=/gallery"
-                        className="px-6 py-2 text-sm font-bold bg-white text-black border-2 border-black rounded-lg hover:bg-black hover:text-white transition-all"
-                    >
-                        {t.header.login}
-                    </a>
-                )}
-            </div>
-        </header>
+                            <button onClick={() => setIsLoginModalOpen(true)} className="header__btn">
+                                {t.header.login}
+                            </button>
+                        )
+                    ) : null}
+                </div>
+            </header>
+
+            <LoginModal
+                isOpen={isLoginModalOpen}
+                onClose={() => setIsLoginModalOpen(false)}
+            />
+        </>
     );
 }
+
+export default function Header() {
+    return (
+        <Suspense fallback={<header className="header"><div className="header__actions" /></header>}>
+            <HeaderContent />
+        </Suspense>
+    );
+}
+

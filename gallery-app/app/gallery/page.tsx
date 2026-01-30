@@ -20,19 +20,24 @@ export const metadata: Metadata = {
 // Function to fetch gallery items (Server-side)
 async function getGalleryItems(): Promise<PageResponse<GalleryItem>> {
     const apiBase = process.env.API_BASE || 'http://backend:8080';
+    const emptyResponse = { content: [], last: true, totalPages: 0, totalElements: 0, number: 0 };
 
     try {
-        const res = await fetch(`${apiBase}/api/gallery?size=24&sort=latest`, {
+        // Ensure apiBase is a valid URL or handle relative cases if necessary
+        const targetUrl = `${apiBase}/api/gallery?size=24&sort=latest`;
+
+        const res = await fetch(targetUrl, {
             next: { revalidate: 60 },
+            // Add a timeout if possible, though native fetch doesn't support it directly without AbortController
         });
 
         if (!res.ok) {
-            console.error('Failed to fetch gallery:', res.status);
-            return { content: [], last: true, totalPages: 0, totalElements: 0, number: 0 };
+            console.warn('Gallery API returned non-OK status:', res.status);
+            return emptyResponse;
         }
 
         const json = await res.json();
-        const content = json.content.map((item: any) => ({
+        const content = (json.content || []).map((item: any) => ({
             ...item,
             isBookmarked: item.bookmarked
         }));
@@ -42,8 +47,9 @@ async function getGalleryItems(): Promise<PageResponse<GalleryItem>> {
             content
         };
     } catch (error) {
-        console.error('Gallery fetch error (likely build time):', error);
-        return { content: [], last: true, totalPages: 0, totalElements: 0, number: 0 };
+        // This catch block handles "fetch failed" errors (e.g., DNS, Connection Refused)
+        console.warn('Gallery fetch failed (expected during local dev if backend is down):', error instanceof Error ? error.message : error);
+        return emptyResponse;
     }
 }
 
