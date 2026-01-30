@@ -943,3 +943,165 @@
     font-weight: 500;
     align-self: flex-start;
 }
+/* 작업 메뉴 모달 */
+.mypage__menuModal {
+    position: relative;
+    width: 90%;
+    max-width: 400px;
+    background: #fff;
+    border-radius: 24px;
+    border: 3px solid #000;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mypage__menuHeader {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 24px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.mypage__menuThumb {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 2px solid #000;
+}
+
+.mypage__menuInfo {
+    flex: 1;
+}
+
+.mypage__menuTitle {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: #000;
+}
+
+.mypage__menuDate {
+    font-size: 13px;
+    color: #888;
+}
+
+.mypage__menuList {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 8px;
+}
+
+.mypage__menuItem2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: #f8f9fa;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.mypage__menuItem2:hover:not(:disabled) {
+    background: #000;
+    color: #fff;
+    transform: translateX(4px);
+}
+
+.mypage__menuItem2:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.mypage__menuItem2.primary {
+    background: #ffe135;
+    border-color: #000;
+    font-weight: 700;
+}
+
+.mypage__menuItem2.primary:hover:not(:disabled) {
+    background: #000;
+    color: #ffe135;
+}
+
+.mypage__menuIcon2 {
+    font-size: 20px;
+    width: 28px;
+    text-align: center;
+}
+
+.mypage__menuDivider {
+    height: 1px;
+    background: #eee;
+    margin: 8px 0;
+}
+
+/* 이미지 원본 보기 모달 */
+.mypage__imagePreviewOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: zoom-out;
+    animation: fadeIn 0.2s ease;
+}
+
+.mypage__imagePreviewClose {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.mypage__imagePreviewClose:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+.mypage__imagePreviewImg {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    cursor: default;
+}
