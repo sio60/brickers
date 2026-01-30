@@ -719,19 +719,16 @@ export default function MyPage() {
                                 onClick={() => handleMenuAction('glb')}
                                 disabled={!menuJob.glbUrl}
                             >
-        <Icons.DownloadImage className={styles.mypage__menuIcon2} />
+                                <Icons.DownloadImage className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.sourceImage || '원본 이미지 다운'}</span>
-
                             </button>
                             <button
                                 className={styles.mypage__menuItem2}
                                 onClick={() => handleMenuAction('ldr')}
                                 disabled={!menuJob.ldrUrl}
                             >
-
                                 <Icons.DownloadFile className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.ldrFile || 'LDR 파일 다운'}</span>
-
                             </button>
                         </div>
                     </div>
