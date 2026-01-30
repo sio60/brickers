@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
+import { useLanguage } from "../../../contexts/LanguageContext";
 
 // ── 게임 설정 ──
 const BOARD_WIDTH = 6;       // 월드 유닛 기준 보드 너비
@@ -191,6 +192,7 @@ function Scene({
 }
 
 export default function BrickStackMiniGame() {
+  const { t } = useLanguage();
   const [bricks, setBricks] = useState<Brick[]>([]);
   const [fallingPieces, setFallingPieces] = useState<FallingPiece[]>([]);
   const [score, setScore] = useState(0);
@@ -381,7 +383,7 @@ export default function BrickStackMiniGame() {
         <div className="brickGame__score">{score}</div>
         {gameOver && (
           <button className="brickGame__restart" onClick={resetGame}>
-            Play Again
+            {t.miniGame?.playAgain || "Play Again"}
           </button>
         )}
       </div>
@@ -401,8 +403,8 @@ export default function BrickStackMiniGame() {
 
         {gameOver && (
           <div className="brickGame__overlay">
-            <div className="brickGame__overlayText">Game Over!</div>
-            <div className="brickGame__overlayScore">Score: {score}</div>
+            <div className="brickGame__overlayText">{t.miniGame?.gameOver || "Game Over!"}</div>
+            <div className="brickGame__overlayScore">{t.miniGame?.score || "Score"}: {score}</div>
           </div>
         )}
       </div>

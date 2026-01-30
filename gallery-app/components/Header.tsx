@@ -50,12 +50,12 @@ function HeaderContent() {
 
                 {/* Actions - Positioned absolute right */}
                 <div className="header__actions">
+                    <Link href="/gallery" className="header__btn">
+                        {t.header.gallery}
+                    </Link>
                     {!isLoading ? (
                         isAuthenticated ? (
                             <>
-                                <Link href="/gallery" className="header__btn">
-                                    {t.header.gallery}
-                                </Link>
                                 {!isPro && (
                                     <button className="header__btn" onClick={() => {/* Upgrade modal logic */ }}>
                                         {t.header.upgrade}
