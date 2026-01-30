@@ -110,28 +110,47 @@ function LdrModel({
       // CDN parts/p 보정
       if (
         fixed.includes("ldraw-parts-library") &&
-        !fixed.includes("/parts/") &&
-        !fixed.includes("/p/") &&
+        fixed.endsWith(".dat") &&
         !fixed.includes("LDConfig.ldr")
       ) {
-        if (fixed.endsWith(".dat")) {
-          const filename = fixed.split("/").pop() || "";
+        const filename = fixed.split("/").pop() || "";
 
-          // Primitive 패턴: n-n*.dat (예: 4-4edge, 1-4cyli, stug-*, rect*, box* 등)
-          const isPrimitive = /^\d+-\d+/.test(filename) ||
-            /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud)/.test(filename);
+        // Primitive 패턴: n-n*.dat (예: 4-4edge, 1-4cyli, stug-*, rect*, box* 등)
+        const isPrimitive = /^\d+-\d+/.test(filename) ||
+          /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud|empty)/.test(filename);
 
-          // Subpart 패턴: 파트번호 + s + 숫자.dat (예: 3003s02.dat)
-          const isSubpart = /^\d+s\d+\.dat$/.test(filename);
+        // Subpart 패턴: 파트번호 + s + 숫자.dat (예: 3003s02.dat)
+        const isSubpart = /^\d+s\d+\.dat$/.test(filename);
 
-          if (isSubpart) {
-            fixed = fixed.replace("/ldraw/", "/ldraw/parts/s/");
-          } else if (isPrimitive) {
-            fixed = fixed.replace("/ldraw/", "/ldraw/p/");
-          } else {
-            // 일반 파트 (숫자로 시작하는 .dat 파일)
-            fixed = fixed.replace("/ldraw/", "/ldraw/parts/");
-          }
+        // 잘못된 경로 조합 수정
+        fixed = fixed.replace("/ldraw/models/p/", "/ldraw/p/");  // /models/p/ → /p/
+        fixed = fixed.replace("/ldraw/models/parts/", "/ldraw/parts/");  // /models/parts/ → /parts/
+        fixed = fixed.replace("/ldraw/p/parts/s/", "/ldraw/parts/s/");
+        fixed = fixed.replace("/ldraw/p/parts/", "/ldraw/parts/");
+        fixed = fixed.replace("/ldraw/p/s/", "/ldraw/parts/s/");
+
+        // primitive가 /parts/에 잘못 들어간 경우 수정
+        if (isPrimitive && fixed.includes("/ldraw/parts/") && !fixed.includes("/parts/s/")) {
+          fixed = fixed.replace("/ldraw/parts/", "/ldraw/p/");
+        }
+
+        // subpart가 /p/에 잘못 들어간 경우 수정
+        if (isSubpart && fixed.includes("/ldraw/p/") && !fixed.includes("/p/48/") && !fixed.includes("/p/8/")) {
+          fixed = fixed.replace("/ldraw/p/", "/ldraw/parts/s/");
+        }
+
+        // 이미 올바른 경로가 있으면 그대로 사용
+        if (fixed.includes("/parts/") || fixed.includes("/p/")) {
+          return fixed;
+        }
+
+        // 경로가 없는 경우 적절한 경로 추가
+        if (isSubpart) {
+          fixed = fixed.replace("/ldraw/", "/ldraw/parts/s/");
+        } else if (isPrimitive) {
+          fixed = fixed.replace("/ldraw/", "/ldraw/p/");
+        } else {
+          fixed = fixed.replace("/ldraw/", "/ldraw/parts/");
         }
       }
 
