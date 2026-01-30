@@ -31,7 +31,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final AuditLogService auditLogService;
     private final AuthTokenService tokenService;
 
-    @Value("${app.front-base-url:http://localhost:5173}")
+    @Value("${app.front-base-url:http://localhost:3000}")
     private String frontBaseUrl;
 
     @Override
@@ -111,7 +111,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private String normalizeFront(String base) {
         if (base == null || base.isBlank())
-            return "http://localhost:5173";
+            return "http://localhost:3000";
         return base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
     }
 }

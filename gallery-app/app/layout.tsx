@@ -19,7 +19,9 @@ const bebasNeue = Bebas_Neue({
 const jua = Jua({
     weight: '400',
     subsets: ['latin'],
-    variable: '--font-jua'
+    variable: '--font-jua',
+    preload: true,
+    display: 'swap'
 })
 
 const mPlusRounded = M_PLUS_Rounded_1c({
@@ -48,10 +50,11 @@ export default function RootLayout({
     children: React.ReactNode
 }) {
     return (
-        <html lang="en" className={`${bebasNeue.variable} ${jua.variable} ${mPlusRounded.variable}`}>
+        <html lang="en" className={`${bebasNeue.variable} ${jua.variable} ${mPlusRounded.variable}`} suppressHydrationWarning>
             <head>
+                {/* Jua 한글 폰트 전체 로드 */}
                 <link
-                    href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@400;500;700&display=swap"
+                    href="https://fonts.googleapis.com/css2?family=Jua&display=swap"
                     rel="stylesheet"
                 />
             </head>
@@ -95,6 +98,8 @@ export default function RootLayout({
                         })(window,document,'script','dataLayer','${GTM_ID}');
                     `}
                 </Script>
+                {/* Google Pay */}
+                <Script src="https://pay.google.com/gp/p/js/pay.js" strategy="afterInteractive" />
             </body>
         </html>
     )

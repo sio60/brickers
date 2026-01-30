@@ -13,24 +13,63 @@ function LdrModel({ url }: { url: string }) {
     const [group, setGroup] = useState<THREE.Group | null>(null);
 
     useEffect(() => {
-        const loader = new LDrawLoader();
-        (loader as any).setPartsLibraryPath(CDN_BASE);
+        let cancelled = false;
 
-        // Optimize materials?
-        // loader.smoothNormals = true; 
+        const manager = new THREE.LoadingManager();
 
-        loader.load(url, (g) => {
-            // Adjust visualization
-            // Remove huge origin offset if any? Center wrapper handles it.
-            // Rotate to be upright if needed (LDraw Y is often up or down depending on perspective)
-            // Usually LDraw is Y-up but sometimes needs rotation.
-            // KidsStepPage uses g.rotation.x = Math.PI;
-            g.rotation.x = Math.PI;
-            setGroup(g);
-        }, undefined, (err) => {
-            console.error("LDraw load failed", err);
+        // URL modifier for LDraw path corrections
+        manager.setURLModifier((u) => {
+            let fixed = u.replace(/\\/g, "/");
+
+            if (fixed.includes("ldraw-parts-library") && fixed.endsWith(".dat") && !fixed.includes("LDConfig.ldr")) {
+                const filename = fixed.split("/").pop() || "";
+                const isPrimitive = /^\d+-\d+/.test(filename) ||
+                    /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud|empty)/.test(filename);
+                const isSubpart = /^\d+s\d+\.dat$/i.test(filename);
+
+                // Fix incorrect path combinations
+                fixed = fixed.replace("/ldraw/models/p/", "/ldraw/p/");
+                fixed = fixed.replace("/ldraw/models/parts/", "/ldraw/parts/");
+                fixed = fixed.replace("/ldraw/p/parts/s/", "/ldraw/parts/s/");
+                fixed = fixed.replace("/ldraw/p/parts/", "/ldraw/parts/");
+                fixed = fixed.replace("/ldraw/p/s/", "/ldraw/parts/s/");
+                fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
+
+                if (isPrimitive && fixed.includes("/ldraw/parts/") && !fixed.includes("/parts/s/")) {
+                    fixed = fixed.replace("/ldraw/parts/", "/ldraw/p/");
+                }
+                if (isSubpart && fixed.includes("/ldraw/p/") && !fixed.includes("/p/48/") && !fixed.includes("/p/8/")) {
+                    fixed = fixed.replace("/ldraw/p/", "/ldraw/parts/s/");
+                }
+                if (!fixed.includes("/parts/") && !fixed.includes("/p/")) {
+                    if (isSubpart) fixed = fixed.replace("/ldraw/", "/ldraw/parts/s/");
+                    else if (isPrimitive) fixed = fixed.replace("/ldraw/", "/ldraw/p/");
+                    else fixed = fixed.replace("/ldraw/", "/ldraw/parts/");
+                }
+            }
+            return fixed;
         });
 
+        const loader = new LDrawLoader(manager);
+        (loader as any).setPartsLibraryPath(CDN_BASE);
+
+        // Load materials first, then load model
+        (async () => {
+            try {
+                await (loader as any).preloadMaterials(`${CDN_BASE}LDConfig.ldr`);
+                if (cancelled) return;
+
+                const g = await loader.loadAsync(url);
+                if (cancelled) return;
+
+                g.rotation.x = Math.PI;
+                setGroup(g);
+            } catch (err) {
+                console.error("LDraw load failed", err);
+            }
+        })();
+
+        return () => { cancelled = true; };
     }, [url]);
 
     if (!group) return null;
