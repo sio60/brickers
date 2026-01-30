@@ -58,6 +58,8 @@ export default function MyPage() {
     const [selectedJob, setSelectedJob] = useState<MyJob | null>(null);
     // 작업 메뉴 모달 상태
     const [menuJob, setMenuJob] = useState<MyJob | null>(null);
+    // 이미지 원본 보기 모달 상태
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
 
     // 확장 상태 (문의/신고)
     const [expandedInquiryId, setExpandedInquiryId] = useState<string | null>(null);
@@ -197,6 +199,12 @@ export default function MyPage() {
         if (!menuJob) return;
 
         switch (action) {
+            case 'preview':
+                if (menuJob.sourceImageUrl) {
+                    setPreviewImage(menuJob.sourceImageUrl);
+                    setMenuJob(null);
+                }
+                break;
             case 'source':
                 if (menuJob.sourceImageUrl) {
                     downloadFile(menuJob.sourceImageUrl, `${menuJob.title || 'source'}_original.png`);
@@ -692,6 +700,23 @@ export default function MyPage() {
                         </div>
                         <div className={styles.mypage__menuList}>
                             <button
+                                className={`${styles.mypage__menuItem2} ${styles.primary}`}
+                                onClick={() => handleMenuAction('preview')}
+                                disabled={!menuJob.sourceImageUrl}
+                            >
+                                <span className={styles.mypage__menuIcon2}>🔍</span>
+                                <span>{t.jobs.menu?.previewImage || '이미지 원본 보기'}</span>
+                            </button>
+                            <button
+                                className={`${styles.mypage__menuItem2} ${styles.primary}`}
+                                onClick={() => handleMenuAction('view')}
+                                disabled={!menuJob.ldrUrl}
+                            >
+                                <span className={styles.mypage__menuIcon2}>🧱</span>
+                                <span>{t.jobs.menu?.viewBlueprint || '조립 설명서 보기'}</span>
+                            </button>
+                            <div className={styles.mypage__menuDivider} />
+                            <button
                                 className={styles.mypage__menuItem2}
                                 onClick={() => handleMenuAction('source')}
                                 disabled={!menuJob.sourceImageUrl}
@@ -701,38 +726,32 @@ export default function MyPage() {
                             </button>
                             <button
                                 className={styles.mypage__menuItem2}
-                                onClick={() => handleMenuAction('corrected')}
-                                disabled={!menuJob.correctedImageUrl}
-                            >
-                                <span className={styles.mypage__menuIcon2}>✨</span>
-                                <span>{t.jobs.menu?.enhancedImage || '개선 이미지 다운'}</span>
-                            </button>
-                            <button
-                                className={styles.mypage__menuItem2}
-                                onClick={() => handleMenuAction('glb')}
-                                disabled={!menuJob.glbUrl}
-                            >
-                                <span className={styles.mypage__menuIcon2}>📦</span>
-                                <span>{t.jobs.menu?.glbFile || '모델링 파일 다운'}</span>
-                            </button>
-                            <button
-                                className={styles.mypage__menuItem2}
                                 onClick={() => handleMenuAction('ldr')}
                                 disabled={!menuJob.ldrUrl}
                             >
                                 <span className={styles.mypage__menuIcon2}>📄</span>
-                                <span>{t.jobs.menu?.ldrFile || 'LDR 다운'}</span>
-                            </button>
-                            <button
-                                className={`${styles.mypage__menuItem2} ${styles.primary}`}
-                                onClick={() => handleMenuAction('view')}
-                                disabled={!menuJob.ldrUrl}
-                            >
-                                <span className={styles.mypage__menuIcon2}>👁️</span>
-                                <span>{t.jobs.menu?.viewBlueprint || '도면보기'}</span>
+                                <span>{t.jobs.menu?.ldrFile || 'LDR 파일 다운'}</span>
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* 이미지 원본 보기 모달 */}
+            {previewImage && (
+                <div className={styles.mypage__imagePreviewOverlay} onClick={() => setPreviewImage(null)}>
+                    <button
+                        className={styles.mypage__imagePreviewClose}
+                        onClick={() => setPreviewImage(null)}
+                    >
+                        ✕
+                    </button>
+                    <img
+                        src={previewImage}
+                        alt="Original"
+                        className={styles.mypage__imagePreviewImg}
+                        onClick={(e) => e.stopPropagation()}
+                    />
                 </div>
             )}
 

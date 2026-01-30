@@ -72,8 +72,8 @@ export default function UpgradeModal({ isOpen, onClose }: Props) {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            paymentMethodData: paymentData.paymentMethodData,
-                            planCode: "PRO"
+                            paymentData: paymentData,
+                            planId: "PRO_MONTHLY"
                         })
                     });
 

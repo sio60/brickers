@@ -8,8 +8,30 @@ import { LDrawLoader } from "three-stdlib";
 
 const CDN_BASE = "https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/";
 
+// 카메라를 쿼터뷰 각도로 설정하는 컴포넌트
+function CameraSetup() {
+    const { camera } = useThree();
+    const initialized = useRef(false);
+
+    useFrame(() => {
+        if (!initialized.current) {
+            // 쿼터뷰: 위에서 45도 각도로 내려다보기
+            const distance = camera.position.length();
+            const angle = Math.PI / 4; // 45도
+            const height = distance * Math.sin(angle);
+            const horizontal = distance * Math.cos(angle);
+
+            camera.position.set(horizontal * 0.7, height, horizontal * 0.7);
+            camera.lookAt(0, 0, 0);
+            initialized.current = true;
+        }
+    });
+
+    return null;
+}
+
 function LdrModel({ url }: { url: string }) {
-    const { scene, camera } = useThree();
+    const { camera } = useThree();
     const [group, setGroup] = useState<THREE.Group | null>(null);
 
     useEffect(() => {
@@ -76,7 +98,9 @@ function LdrModel({ url }: { url: string }) {
 
     return (
         <Bounds fit clip observe margin={1.2}>
-            <primitive object={group} />
+            <Center>
+                <primitive object={group} />
+            </Center>
         </Bounds>
     );
 }
@@ -92,11 +116,19 @@ export default function Preview3DModal({ url, onClose }: { url: string, onClose:
                     ✕ Close
                 </button>
 
-                <Canvas camera={{ position: [50, 50, 50], fov: 45 }}>
-                    <ambientLight intensity={0.8} />
-                    <directionalLight position={[10, 20, 10]} intensity={1} />
+                <Canvas camera={{ position: [100, -150, 100], fov: 35 }}>
+                    <ambientLight intensity={0.9} />
+                    <directionalLight position={[50, 100, 50]} intensity={1.2} />
+                    <directionalLight position={[-50, 50, -50]} intensity={0.4} />
+                    <CameraSetup />
                     <LdrModel url={url} />
-                    <OrbitControls makeDefault autoRotate autoRotateSpeed={2} />
+                    <OrbitControls
+                        makeDefault
+                        autoRotate
+                        autoRotateSpeed={1.5}
+                        minPolarAngle={Math.PI / 6}
+                        maxPolarAngle={Math.PI / 2.5}
+                    />
                 </Canvas>
 
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/90 px-6 py-3 rounded-full font-bold shadow-lg">

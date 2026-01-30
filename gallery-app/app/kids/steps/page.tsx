@@ -326,7 +326,7 @@ function KidsStepPageContent() {
                     <div style={{ position: "absolute", top: 14, left: "50%", transform: "translateX(-50%)", zIndex: 6, display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderRadius: 999, background: "rgba(255,255,255,0.9)", fontWeight: 900 }}>{t.kids.steps.preview}</div>
                     {loading && <div style={{ position: "absolute", inset: 0, zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.75)", fontWeight: 900 }}>{t.kids.steps.loading}</div>}
                     <div style={{ position: "absolute", inset: 0 }}>
-                        <Canvas camera={{ position: [220, 0, 220], fov: 45 }} dpr={[1, 2]}>
+                        <Canvas camera={{ position: [200, -200, 200], fov: 45 }} dpr={[1, 2]}>
                             <ambientLight intensity={0.9} />
                             <directionalLight position={[3, 5, 2]} intensity={1} />
                             <LdrModel url={ldrUrl} overrideMainLdrUrl={currentOverride} onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }} onError={() => setLoading(false)} />
