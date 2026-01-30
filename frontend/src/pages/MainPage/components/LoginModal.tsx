@@ -4,12 +4,9 @@ import kakaoIcon from "../../../assets/kakao.png";
 import googleIcon from "../../../assets/google.png";
 import { useLanguage } from "../../../contexts/LanguageContext";
 
-// ✅ 백엔드 베이스 URL (권장: .env.local에 VITE_API_BASE_URL 넣기)
-const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || "http://localhost:8080" || "https://brickers.shop";
-
-// ✅ 백엔드 OAuth2 로그인 URL
-const BACKEND_KAKAO_LOGIN = `${API_BASE}/auth/kakao`;
-const BACKEND_GOOGLE_LOGIN = `${API_BASE}/auth/google`;
+// ✅ 백엔드 OAuth2 로그인 URL (상대 경로 사용 - Nginx가 프록시 처리)
+const BACKEND_KAKAO_LOGIN = "/auth/kakao";
+const BACKEND_GOOGLE_LOGIN = "/auth/google";
 
 type Props = {
   isOpen: boolean;
