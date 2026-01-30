@@ -10,7 +10,13 @@ export const ja = {
         sortLatest: "最新順",
         sortPopular: "人気順",
         noItems: "作品がありません",
-        next: "NEXT"
+        next: "NEXT",
+        landing: {
+            goMake: "作りに行く",
+            cardTitle: "生成されたレゴ 3D",
+            titleLabel: "タイトル:",
+            authorLabel: "作成者:"
+        }
     },
     floatingMenu: {
         mypage: "マイページ",

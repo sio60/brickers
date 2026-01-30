@@ -10,7 +10,13 @@ export const en = {
         sortLatest: "Latest",
         sortPopular: "Popular",
         noItems: "No works found",
-        next: "NEXT"
+        next: "NEXT",
+        landing: {
+            goMake: "Go Make",
+            cardTitle: "Generated LEGO 3D",
+            titleLabel: "Title:",
+            authorLabel: "Creator:"
+        }
     },
     floatingMenu: {
         mypage: "My Page",

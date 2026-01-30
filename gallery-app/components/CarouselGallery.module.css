@@ -1,0 +1,189 @@
+.container {
+    width: 100%;
+    height: 550px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    padding-top: 20px;
+}
+
+.carouselWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 95%;
+    max-width: 1600px;
+    /* Increased from 1400px */
+    position: relative;
+    z-index: 20;
+}
+
+.carousel {
+    position: relative;
+    flex: 1;
+    height: 450px;
+    /* Increased slightly */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    perspective: 2000px;
+    transform-style: preserve-3d;
+}
+
+.navButton {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3.5px solid #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 6px 0px rgba(0, 0, 0, 1);
+    color: #000;
+}
+
+.prev {
+    left: 300px;
+    /* Adjusted for wider spread */
+}
+
+.next {
+    right: 300px;
+    /* Adjusted for wider spread */
+}
+
+.navButton:hover {
+    background: #000;
+    color: #fff;
+    transform: translateY(-50%) scale(1.15);
+    /* Slightly bigger pop */
+}
+
+.navButton:active {
+    transform: translateY(-50%) scale(0.95);
+    box-shadow: 0 2px 0px rgba(0, 0, 0, 1);
+}
+
+.navButton:disabled {
+    opacity: 0.15;
+    cursor: not-allowed;
+    background: #fff;
+    filter: grayscale(1);
+}
+
+.card {
+    position: absolute;
+    width: 280px;
+    height: 380px;
+    background: white;
+    border-radius: 40px;
+    border: 3px solid #000;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    cursor: pointer;
+    user-select: none;
+}
+
+.card:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 20px 45px rgba(59, 130, 246, 0.3);
+}
+
+.card.active {
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+}
+
+.preview {
+    flex: 1;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    border-bottom: 3px solid #000;
+    position: relative;
+}
+
+.previewOverlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.8);
+    padding: 8px 16px;
+    border: 2px solid #000;
+    font-size: 14px;
+    font-weight: 900;
+    border-radius: 12px;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.info {
+    padding: 20px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.metaRow {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    text-align: left;
+}
+
+.label {
+    font-size: 16px;
+    font-weight: 900;
+    color: #000;
+}
+
+.value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+}
+
+.indicators {
+    display: flex;
+    gap: 12px;
+    margin-top: 40px;
+}
+
+.indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 6px;
+    background: #ddd;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.indicator.activeIndicator {
+    width: 32px;
+    background: #000;
+}
+
+@media (max-width: 768px) {
+    .card {
+        width: 220px;
+        height: 320px;
+    }
+}

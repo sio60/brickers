@@ -237,7 +237,7 @@ export default function Background3D({
                 zIndex: 0,
                 background: "#fff",
                 overflow: "hidden",
-                pointerEvents: "none",
+                pointerEvents: "auto",
             }}
         >
             <Canvas camera={{ position: [0, 0, 10], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias: true }}>
