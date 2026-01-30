@@ -336,5 +336,10 @@ export const ko = {
         goToCreate: "작품 만들러 가기 →",
         next: "NEXT",
         newWork: "새 작품 만들기"
+    },
+    miniGame: {
+        playAgain: "다시 하기",
+        gameOver: "게임 오버!",
+        score: "점수"
     }
 };
