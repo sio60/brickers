@@ -10,7 +10,13 @@ export const ko = {
         sortLatest: "최신순",
         sortPopular: "인기순",
         noItems: "작품이 없습니다",
-        next: "NEXT"
+        next: "NEXT",
+        landing: {
+            goMake: "만들러 가기",
+            cardTitle: "생성된 레고 3D",
+            titleLabel: "제목:",
+            authorLabel: "생성한 사람:"
+        }
     },
     floatingMenu: {
         mypage: "마이페이지",
