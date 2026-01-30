@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useAuth } from "../Auth/AuthContext";
 import "./MyPage.css";
-import { getMyOverview, getMyProfile, retryJob, updateMyProfile, ApiError } from "../../api/myApi";
+import { ApiError } from "../../api/myApi";
 import type { MyOverview, MyProfile, MyJob } from "../../api/myApi";
 import SEO from "../../components/SEO";
 import Background3D from "../MainPage/components/Background3D";
@@ -16,7 +16,7 @@ type MenuItem = "profile" | "membership" | "jobs" | "gallery" | "inquiries" | "r
 export default function MyPage() {
     const navigate = useNavigate();
     const { language, setLanguage, t } = useLanguage();
-    const { authFetch } = useAuth();
+    const { authFetch, myApi } = useAuth(); // ✅ myApi 사용
 
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<MyOverview | null>(null);
@@ -44,7 +44,7 @@ export default function MyPage() {
         setLoading(true);
         setError(null);
 
-        Promise.all([getMyOverview(), getMyProfile()])
+        Promise.all([myApi.getMyOverview(), myApi.getMyProfile()])
             .then(([overviewRes, profileRes]) => {
                 setData(overviewRes);
                 setProfile(profileRes);
@@ -58,7 +58,7 @@ export default function MyPage() {
                 }
                 setLoading(false);
             });
-    }, [language]); // 언어 변경 시 에러 메시지 갱신을 위해 dependency 추가
+    }, [language, myApi]); // 언어 변경 시 에러 메시지 갱신을 위해 dependency 추가
 
     // 수정 모드 진입 시 현재 값으로 초기화
     const startEditing = () => {
@@ -78,7 +78,7 @@ export default function MyPage() {
     const saveProfile = async () => {
         try {
             setSaving(true);
-            const updated = await updateMyProfile({
+            const updated = await myApi.updateMyProfile({
                 nickname: editNickname,
                 bio: editBio,
             });
@@ -95,8 +95,8 @@ export default function MyPage() {
     const handleRetry = async (jobId: string) => {
         try {
             setRetrying(jobId);
-            await retryJob(jobId);
-            const updated = await getMyOverview();
+            await myApi.retryJob(jobId);
+            const updated = await myApi.getMyOverview();
             setData(updated);
         } catch {
             alert(t.jobs.retryFail);
@@ -164,7 +164,7 @@ export default function MyPage() {
         if (activeMenu === "jobs") {
             const fetchJobs = async () => {
                 try {
-                    const updated = await getMyOverview();
+                    const updated = await myApi.getMyOverview(); // ✅ myApi 사용
                     setData(updated);
                 } catch (e) {
                     console.error("Polling failed", e);
@@ -184,7 +184,7 @@ export default function MyPage() {
         return () => {
             if (intervalId) clearInterval(intervalId);
         };
-    }, [activeMenu]);
+    }, [activeMenu, myApi]);
 
     const fetchMyInquiries = async () => {
         try {

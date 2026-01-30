@@ -37,8 +37,8 @@ public class SecurityConfig {
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .csrf(csrf -> csrf.disable())
 
-                                // ✅ OAuth2 플로우는 세션이 필요할 수 있음
-                                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                                // ✅ 100% Stateless (JWT 전용)
+                                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                                 // ✅ API는 401로 떨어지게 (/login redirect 방지)
                                 .exceptionHandling(ex -> ex.authenticationEntryPoint(
@@ -87,9 +87,8 @@ public class SecurityConfig {
                                                 .authenticated()
                                                 // 로그인 이력 (인증 필요)
                                                 .requestMatchers(HttpMethod.GET, "/api/auth/logins").authenticated()
-                                                // 비정상 로그인 알림 (내부용 - 일단 공개)
-                                                .requestMatchers(HttpMethod.POST, "/api/auth/alert").permitAll()
-                                                .requestMatchers("/actuator/**").permitAll()
+                                                // ✅ [보안 강화] Actuator는 관리자만 접근 가능
+                                                .requestMatchers("/actuator/**").hasRole("ADMIN")
 
                                                 // -------------------------------
                                                 // ✅ Users API (공개 프로필)
@@ -210,8 +209,13 @@ public class SecurityConfig {
                 // "X-Requested-With"));
                 // config.setExposedHeaders(List.of("Location"));
 
-                // ✅ 지금 단계에선 * 허용 OK (추후 Authorization/Content-Type 정도로 제한 가능)
-                config.setAllowedHeaders(List.of("*"));
+                // ✅ 보안 권장: 허용된 헤더를 명시적으로 제한
+                config.setAllowedHeaders(List.of("*"
+                // "Authorization",
+                // "Cache-Control",
+                // "Content-Type",
+                // "X-Requested-With"
+                ));
 
                 config.setAllowCredentials(true);
 

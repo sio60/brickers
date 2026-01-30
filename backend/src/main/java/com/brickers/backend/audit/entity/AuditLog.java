@@ -25,9 +25,6 @@ public class AuditLog {
     // 행위자(관리자 또는 본인). 본인 행동이면 actorUserId=targetUserId로 넣어도 됨
     private String actorUserId;
 
-    // 세션 추적(가능하면)
-    private String tokenId;
-
     // 요청 정보(감사 목적)
     private String ip;
     private String userAgent;

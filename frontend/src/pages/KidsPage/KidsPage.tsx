@@ -6,11 +6,12 @@ import Background3D from "../MainPage/components/Background3D";
 import KidsLdrPreview from "./components/KidsLdrPreview";
 import KidsLoadingScreen from "./components/KidsLoadingScreen";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { getPresignUrl } from "../../api/myApi";
+import { useAuth } from "../Auth/AuthContext"; // ✅ 추가
 
 export default function KidsPage() {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { myApi } = useAuth(); // ✅ myApi 사용
   const [params] = useSearchParams();
   const location = useLocation();
   const age = (params.get("age") ?? "4-5") as "4-5" | "6-7" | "8-10";
@@ -70,7 +71,7 @@ export default function KidsPage() {
         // 1. Presigned URL 요청
         setDebugLog(t.kids.generate.uploadPrepare);
         console.log("[KidsPage] 📤 Step 1: Presigned URL 요청 중...");
-        const presign = await getPresignUrl(rawFile.type, rawFile.name);
+        const presign = await myApi.getPresignUrl(rawFile.type, rawFile.name); // ✅ myApi 사용
         console.log("[KidsPage] ✅ Step 1 완료 | uploadUrl:", presign.uploadUrl?.substring(0, 80) + "...");
         console.log("[KidsPage]    publicUrl:", presign.publicUrl);
 

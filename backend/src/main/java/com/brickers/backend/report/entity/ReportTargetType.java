@@ -6,5 +6,6 @@ public enum ReportTargetType {
     GALLERY_POST, // 갤러리
     INQUIRY,
     UPLOAD_FILE,
-    PAYMENT_ORDER
+    PAYMENT_ORDER,
+    GENERAL // 일반/기타
 }
