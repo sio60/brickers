@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import "./FloatingMenuButton.css";
 import mypageIcon from "../../../assets/mypage.png";
 import { useLanguage } from "../../../contexts/LanguageContext";
-import { getMyProfile } from "../../../api/myApi";
 import { useAuth } from "../../Auth/AuthContext";
 import LoginModal from "../../MainPage/components/LoginModal";
 import BrickBotModal from "./BrickBotModal"; // [NEW]
@@ -11,7 +10,7 @@ import BrickBotModal from "./BrickBotModal"; // [NEW]
 export default function FloatingMenuButton() {
     const navigate = useNavigate();
     const { t } = useLanguage();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, myApi } = useAuth(); // ✅ myApi 사용
 
     const [isAdmin, setIsAdmin] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
@@ -22,7 +21,7 @@ export default function FloatingMenuButton() {
 
     useEffect(() => {
         if (isAuthenticated) {
-            getMyProfile().then(profile => {
+            myApi.getMyProfile().then(profile => { // ✅ myApi 사용
                 if (profile.role === "ADMIN") {
                     setIsAdmin(true);
                 }
@@ -30,7 +29,7 @@ export default function FloatingMenuButton() {
         } else {
             setIsAdmin(false);
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, myApi]);
 
     const menuItems = [
         { id: "mypage", label: t.floatingMenu?.mypage || "My Page" },

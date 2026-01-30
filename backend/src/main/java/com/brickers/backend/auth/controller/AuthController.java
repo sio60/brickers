@@ -130,15 +130,19 @@ public class AuthController {
         return null;
     }
 
-    @GetMapping("/debug-auth")
-    public ResponseEntity<?> debugAuth(Authentication authentication) {
-        if (authentication == null)
-            return ResponseEntity.ok(Map.of("auth", null));
-
-        return ResponseEntity.ok(Map.of(
-                "principal", authentication.getPrincipal(),
-                "authorities", authentication.getAuthorities()));
-    }
+    /*
+     * ✅ 보안을 위해 debug-auth 엔드포인트 제거 또는 필드 제한
+     * 
+     * @GetMapping("/debug-auth")
+     * public ResponseEntity<?> debugAuth(Authentication authentication) {
+     * if (authentication == null)
+     * return ResponseEntity.ok(Map.of("auth", null));
+     * 
+     * return ResponseEntity.ok(Map.of(
+     * "principal", authentication.getPrincipal(),
+     * "authorities", authentication.getAuthorities()));
+     * }
+     */
 
     /**
      * 내 로그인 히스토리 (Page 형태)
@@ -261,7 +265,7 @@ public class AuthController {
 
     /**
      * 95. 비정상 로그인 알림 (내부용)
-     * POST /api/auth/alert
+     * POST /api/auth/alert (관리자 전용 권한 필요)
      */
     @PostMapping("/alert")
     public ResponseEntity<?> suspiciousLoginAlert(

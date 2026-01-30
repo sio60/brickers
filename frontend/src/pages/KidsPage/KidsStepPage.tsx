@@ -8,7 +8,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
-import { registerToGallery } from "../../api/myApi";
+import { useAuth } from "../Auth/AuthContext"; // ✅ 추가
 import "./KidsStepPage.css";
 import SEO from "../../components/SEO";
 
@@ -196,6 +196,7 @@ function LdrModel({
 export default function KidsStepPage() {
   const nav = useNavigate();
   const { t } = useLanguage();
+  const { myApi } = useAuth(); // ✅ myApi 사용
   const [params] = useSearchParams();
 
   const jobId = params.get("jobId") || "";
@@ -381,7 +382,7 @@ export default function KidsStepPage() {
 
     setIsSubmitting(true);
     try {
-      await registerToGallery({
+      await myApi.registerToGallery({ // ✅ myApi 사용
         title: galleryTitle,
         content: t.kids.steps.galleryModal.content,
         tags: ["Kids", "Lego"],
