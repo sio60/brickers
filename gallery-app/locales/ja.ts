@@ -333,5 +333,10 @@ export const ja = {
         goToCreate: "作品を作りに行く →",
         next: "NEXT",
         newWork: "新規作成"
+    },
+    miniGame: {
+        playAgain: "もう一度プレイ",
+        gameOver: "ゲームオーバー！",
+        score: "スコア"
     }
 };

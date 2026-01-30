@@ -1,5 +1,6 @@
 import { useLanguage } from "../../contexts/LanguageContext";
 import "./KidsLoadingScreen.css";
+import BrickStackMiniGame from "./BrickStackMiniGame";
 
 interface KidsLoadingScreenProps {
     percent: number;
@@ -18,6 +19,11 @@ export default function KidsLoadingScreen({ percent }: KidsLoadingScreenProps) {
             </div>
             <div className="kidsLoadingScreen__text">
                 {t.kids.generate.loading} {percent}%
+            </div>
+
+            {/* Game Area */}
+            <div style={{ width: '100%', marginTop: '20px' }}>
+                <BrickStackMiniGame />
             </div>
         </div>
     );
