@@ -48,7 +48,7 @@ export default function RootLayout({
     children: React.ReactNode
 }) {
     return (
-        <html lang="en" className={`${bebasNeue.variable} ${jua.variable} ${mPlusRounded.variable}`}>
+        <html lang="en" className={`${bebasNeue.variable} ${jua.variable} ${mPlusRounded.variable}`} suppressHydrationWarning>
             <head>
                 <link
                     href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@400;500;700&display=swap"
