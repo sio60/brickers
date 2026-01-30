@@ -256,7 +256,7 @@ export default function BackgroundBricks() {
             style={{
                 position: "fixed",
                 inset: 0,
-                zIndex: -1, // Behind everything
+                zIndex: 0, // Behind content but visible
                 background: "#fdfdfd", // Light background matching gallery
                 overflow: "hidden",
                 pointerEvents: "auto", // Allow hovering over bricks
