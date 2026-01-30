@@ -63,9 +63,9 @@ export default function MyPageModal({ open, onClose }: Props) {
     };
 
     const handleCardClick = (job: MyJob) => {
-        if (job.status === "DONE" && job.modelKey) {
+        if (job.status === "DONE" && job.ldrUrl) {
             onClose();
-            navigate(`/kids/steps?url=${encodeURIComponent(job.modelKey)}`);
+            navigate(`/kids/steps?url=${encodeURIComponent(job.ldrUrl)}`);
         } else if (job.status === "RUNNING" || job.status === "QUEUED") {
             alert(t.jobs.stillGenerating);
         } else if (job.status === "FAILED" || job.status === "CANCELED") {

@@ -407,7 +407,7 @@ export default function MyPage() {
                                         key={job.id}
                                         className={styles.mypage__job}
                                         onClick={() => {
-                                            if (job.status === "DONE" && job.modelKey) {
+                                            if (job.status === "DONE" && job.ldrUrl) {
                                                 setSelectedJob(job);
                                             } else if (job.status === "FAILED") {
                                                 alert(t.jobs.modalError + job.errorMessage);
@@ -636,9 +636,9 @@ export default function MyPage() {
                             ✕
                         </button>
                         <div className={styles.mypage__viewerContainer}>
-                            {selectedJob.modelKey ? (
+                            {selectedJob.ldrUrl ? (
                                 <KidsLdrPreview
-                                    url={selectedJob.modelKey}
+                                    url={selectedJob.ldrUrl}
                                     stepMode={true}
                                 />
                             ) : (
