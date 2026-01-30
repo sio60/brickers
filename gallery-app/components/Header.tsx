@@ -7,6 +7,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import LoginModal from './common/LoginModal';
+import UpgradeModal from './UpgradeModal';
 import './Header.css';
 
 function HeaderContent() {
@@ -17,6 +18,7 @@ function HeaderContent() {
     const searchParams = useSearchParams();
 
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
     // URL에 ?login=true가 있으면 자동으로 로그인 모달 열기
     useEffect(() => {
@@ -65,6 +67,7 @@ function HeaderContent() {
                                     )}
                                     <button onClick={handleLogout} className="header__btn">
                                         {t.header.logout}
+
                                     </button>
                                 </>
                             ) : (
@@ -80,6 +83,11 @@ function HeaderContent() {
             <LoginModal
                 isOpen={isLoginModalOpen}
                 onClose={() => setIsLoginModalOpen(false)}
+            />
+
+            <UpgradeModal
+                isOpen={isUpgradeModalOpen}
+                onClose={() => setIsUpgradeModalOpen(false)}
             />
         </>
     );

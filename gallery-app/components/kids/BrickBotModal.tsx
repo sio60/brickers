@@ -29,6 +29,7 @@ const CHAT_TRANSLATIONS = {
             refund: "환불 요청"
         },
         toggleSuggestions: "이런 질문을 해보세요",
+        toggleSuggestionsAfter: "다른 질문은 있으신가요?",
         placeholder: "궁금한 내용을 입력하세요...",
         send: "전송",
         header: "BrickBot",
@@ -83,6 +84,7 @@ const CHAT_TRANSLATIONS = {
             refund: "Request Refund"
         },
         toggleSuggestions: "Suggested Questions",
+        toggleSuggestionsAfter: "Do you have any other questions?",
         placeholder: "Ask me anything...",
         send: "Send",
         header: "BrickBot",
@@ -137,6 +139,7 @@ const CHAT_TRANSLATIONS = {
             refund: "返金リクエスト"
         },
         toggleSuggestions: "こんな質問はどうですか？",
+        toggleSuggestionsAfter: "他に質問はありますか？",
         placeholder: "気になることを入力してください...",
         send: "送信",
         header: "BrickBot",
@@ -494,32 +497,30 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                         </div>
 
                         {/* 예시 질문 토글 */}
-                        {messages.length <= 1 && (
-                            <div className={styles.suggestionsWrapper}>
-                                <button
-                                    className={styles.suggestionsToggle}
-                                    onClick={() => setShowSuggestions(!showSuggestions)}
-                                >
-                                    <span>{tChat.toggleSuggestions}</span>
-                                    <span className={`${styles.toggleArrow} ${showSuggestions ? styles.open : ''}`}>▲</span>
-                                </button>
-                                {showSuggestions && (
-                                    <div className={styles.suggestions}>
-                                        <div className={styles.suggestionsList}>
-                                            {suggestedQuestions.map((q, idx) => (
-                                                <button
-                                                    key={idx}
-                                                    className={styles.suggestionBtn}
-                                                    onClick={() => handleSuggestionClick(q)}
-                                                >
-                                                    {q}
-                                                </button>
-                                            ))}
-                                        </div>
+                        <div className={styles.suggestionsWrapper}>
+                            <button
+                                className={styles.suggestionsToggle}
+                                onClick={() => setShowSuggestions(!showSuggestions)}
+                            >
+                                <span>{messages.length > 1 ? tChat.toggleSuggestionsAfter : tChat.toggleSuggestions}</span>
+                                <span className={`${styles.toggleArrow} ${showSuggestions ? styles.open : ''}`}>▲</span>
+                            </button>
+                            {showSuggestions && (
+                                <div className={styles.suggestions}>
+                                    <div className={styles.suggestionsList}>
+                                        {suggestedQuestions.map((q, idx) => (
+                                            <button
+                                                key={idx}
+                                                className={styles.suggestionBtn}
+                                                onClick={() => handleSuggestionClick(q)}
+                                            >
+                                                {q}
+                                            </button>
+                                        ))}
                                     </div>
-                                )}
-                            </div>
-                        )}
+                                </div>
+                            )}
+                        </div>
 
                         <div className={styles.inputArea}>
                             <textarea

@@ -47,8 +47,7 @@ body.lang-ko,
 body.lang-ko *,
 .lang-ko,
 .lang-ko * {
-    font-family: "Chiron GoRound TC", var(--font-jua), sans-serif !important;
-    font-optical-sizing: auto;
+    font-family: var(--font-jua), "Jua", sans-serif !important;
 }
 
 body.lang-ja,

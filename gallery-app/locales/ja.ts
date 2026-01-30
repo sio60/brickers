@@ -15,7 +15,9 @@ export const ja = {
             goMake: "作りに行く",
             cardTitle: "生成されたレゴ 3D",
             titleLabel: "タイトル:",
-            authorLabel: "作成者:"
+            authorLabel: "作成者:",
+            moreWorks: "もっと作品を見たいですか？",
+            goToGallery: "ギャラリーへ"
         }
     },
     floatingMenu: {
@@ -142,9 +144,16 @@ export const ja = {
             POST: "投稿",
             COMMENT: "コメント",
             USER: "ユーザー",
-            GENERAL: "一般",
+            JOB: "作業公告",
+            GALLERY_POST: "ギャラリー",
+            INQUIRY: "問い合わせ",
+            UPLOAD_FILE: "アップロードファイル",
+            PAYMENT_ORDER: "決済注文",
+            GENERAL: "一般/その他",
         },
         adminNote: "管理者からの対応内容",
+        labelType: "タイプ",
+        labelReason: "理由",
         dataId: "データID",
     },
     kids: {
@@ -339,5 +348,10 @@ export const ja = {
         goToCreate: "作品を作りに行く →",
         next: "NEXT",
         newWork: "新規作成"
+    },
+    miniGame: {
+        playAgain: "もう一度プレイ",
+        gameOver: "ゲームオーバー！",
+        score: "スコア"
     }
 };

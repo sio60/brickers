@@ -15,7 +15,9 @@ export const ko = {
             goMake: "만들러 가기",
             cardTitle: "생성된 레고 3D",
             titleLabel: "제목:",
-            authorLabel: "생성한 사람:"
+            authorLabel: "생성한 사람:",
+            moreWorks: "더 많은 작품이 궁금하신가요?",
+            goToGallery: "갤러리 보러가기"
         }
     },
     floatingMenu: {
@@ -143,9 +145,16 @@ export const ko = {
             POST: "게시글",
             COMMENT: "댓글",
             USER: "사용자",
-            GENERAL: "일반",
+            JOB: "공고",
+            GALLERY_POST: "갤러리",
+            INQUIRY: "문의",
+            UPLOAD_FILE: "업로드 파일",
+            PAYMENT_ORDER: "결제",
+            GENERAL: "일반/기타",
         },
         adminNote: "관리자 조치 내용",
+        labelType: "유형",
+        labelReason: "사유",
         dataId: "데이터 ID",
     },
     kids: {
@@ -342,5 +351,10 @@ export const ko = {
         goToCreate: "작품 만들러 가기 →",
         next: "NEXT",
         newWork: "새 작품 만들기"
+    },
+    miniGame: {
+        playAgain: "다시 하기",
+        gameOver: "게임 오버!",
+        score: "점수"
     }
 };

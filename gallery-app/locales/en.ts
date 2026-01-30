@@ -15,7 +15,9 @@ export const en = {
             goMake: "Go Make",
             cardTitle: "Generated LEGO 3D",
             titleLabel: "Title:",
-            authorLabel: "Creator:"
+            authorLabel: "Creator:",
+            moreWorks: "Want to see more creations?",
+            goToGallery: "Go to Gallery"
         }
     },
     floatingMenu: {
@@ -142,9 +144,16 @@ export const en = {
             POST: "Post",
             COMMENT: "Comment",
             USER: "User",
+            JOB: "Job",
+            GALLERY_POST: "Gallery",
+            INQUIRY: "Inquiry",
+            UPLOAD_FILE: "Upload File",
+            PAYMENT_ORDER: "Payment",
             GENERAL: "General",
         },
         adminNote: "Admin Resolution",
+        labelType: "Type",
+        labelReason: "Reason",
         dataId: "Data ID",
     },
     kids: {
@@ -334,12 +343,17 @@ export const en = {
     },
     my: {
         title: "My Gallery",
-        subtitle: "View your creations and bookmarked items.",
+        subtitle: "Collect your creations and bookmarked works.",
         tabMy: "My Gallery",
         tabBookmarks: "Bookmarks",
         empty: "No works yet.",
-        goToCreate: "Go make something! →",
+        goToCreate: "Create New Work →",
         next: "NEXT",
-        newWork: "Create New"
+        newWork: "Create New Work"
+    },
+    miniGame: {
+        playAgain: "Play Again",
+        gameOver: "Game Over!",
+        score: "Score"
     }
 };
