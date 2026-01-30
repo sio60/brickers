@@ -7,7 +7,7 @@ import MyPageProfile from "./MyPageProfile";
 import MyPageGrid from "./MyPageGrid";
 import { useLanguage } from "../../../contexts/LanguageContext";
 
-type MenuItem = "profile" | "jobs" | "gallery" | "settings";
+type MenuItem = "profile" | "jobs" | "settings";
 
 type Props = {
     open: boolean;
@@ -20,7 +20,6 @@ export default function MyPageModal({ open, onClose }: Props) {
     const [data, setData] = useState<MyOverview | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [activeMenu, setActiveMenu] = useState<MenuItem>("jobs");
-    const [galleryItems, setGalleryItems] = useState<any[]>([]);
     const { t } = useLanguage();
 
     useEffect(() => {
@@ -40,16 +39,6 @@ export default function MyPageModal({ open, onClose }: Props) {
             });
     }, [open]);
 
-    useEffect(() => {
-        if (!open) return;
-        if (activeMenu === "gallery") {
-            setLoading(true);
-            import("../../../api/myApi").then(m => m.getMyGalleryItems()).then(res => {
-                setGalleryItems(res.content);
-                setLoading(false);
-            }).catch(() => setLoading(false));
-        }
-    }, [activeMenu, open]);
 
     if (!open) return null;
 
@@ -112,12 +101,6 @@ export default function MyPageModal({ open, onClose }: Props) {
                             {t.menu.jobs}
                         </button>
                         <button
-                            className={`mypageModal__menuItem ${activeMenu === "gallery" ? "active" : ""}`}
-                            onClick={() => setActiveMenu("gallery")}
-                        >
-                            {t.menu.gallery}
-                        </button>
-                        <button
                             className={`mypageModal__menuItem ${activeMenu === "settings" ? "active" : ""}`}
                             onClick={() => setActiveMenu("settings")}
                         >
@@ -143,18 +126,6 @@ export default function MyPageModal({ open, onClose }: Props) {
                                 )}
                                 {activeMenu === "jobs" && (
                                     <MyPageGrid jobs={allJobs} onJobClick={handleCardClick} />
-                                )}
-                                {activeMenu === "gallery" && (
-                                    <MyPageGrid
-                                        jobs={galleryItems.map(item => ({
-                                            id: item.id,
-                                            title: item.title,
-                                            sourceImageUrl: item.thumbnailUrl,
-                                            status: 'DONE',
-                                            createdAt: item.createdAt,
-                                        })) as any}
-                                        onJobClick={() => { }}
-                                    />
                                 )}
                                 {activeMenu === "settings" && (
                                     <div>{t.jobs.settingsTbd}</div>
