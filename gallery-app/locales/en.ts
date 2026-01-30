@@ -56,6 +56,7 @@ export const en = {
         profile: "Profile",
         membership: "Membership",
         jobs: "My Jobs",
+        inquiries: "My Inquiries",
         gallery: "My Gallery",
         bookmarks: "Bookmarks",
         reports: "My Reports",
