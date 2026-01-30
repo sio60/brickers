@@ -45,54 +45,45 @@ function LdrModel({
         const manager = new THREE.LoadingManager();
 
         manager.setURLModifier((u) => {
-            console.log("[LDraw URL 원본]", u);  // 디버그
             let fixed = u.replace(/\\/g, "/");
 
-            // LDraw 라이브러리 URL인 경우만 처리
+            // LDraw 라이브러리 URL인 경우 경로 수정
             if (fixed.includes("ldraw-parts-library") && fixed.endsWith(".dat") && !fixed.includes("LDConfig.ldr")) {
                 const filename = fixed.split("/").pop() || "";
 
-                // Primitive 패턴: n-n*.dat (예: 4-4edge, 1-4cyli, 3-4edge), stud*.dat, rect*.dat 등
+                // Primitive 패턴: n-n*.dat (예: 4-4edge, 1-4cyli), stud*.dat, rect*.dat, box*.dat 등
                 const isPrimitive = /^\d+-\d+/.test(filename) ||
                     /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud|empty)/.test(filename);
 
-                // Subpart 패턴: 파트번호 + s + 숫자.dat (예: 3003s02.dat, 3005s01.dat)
+                // Subpart 패턴: 파트번호 + s + 숫자.dat (예: 3003s02.dat)
                 const isSubpart = /^\d+s\d+\.dat$/i.test(filename);
 
-                // 잘못된 경로 조합 수정
-                // LDrawLoader가 여러 경로를 시도하면서 생기는 문제들
-                fixed = fixed.replace("/ldraw/models/p/", "/ldraw/p/");  // /models/p/ → /p/
-                fixed = fixed.replace("/ldraw/models/parts/", "/ldraw/parts/");  // /models/parts/ → /parts/
+                // 1. 잘못된 경로 조합 수정
+                fixed = fixed.replace("/ldraw/models/p/", "/ldraw/p/");
+                fixed = fixed.replace("/ldraw/models/parts/", "/ldraw/parts/");
                 fixed = fixed.replace("/ldraw/p/parts/s/", "/ldraw/parts/s/");
                 fixed = fixed.replace("/ldraw/p/parts/", "/ldraw/parts/");
                 fixed = fixed.replace("/ldraw/p/s/", "/ldraw/parts/s/");
+                fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
 
-                // primitive가 /parts/에 잘못 들어간 경우 수정
+                // 2. primitive가 /parts/에 잘못 들어간 경우 /p/로 수정
                 if (isPrimitive && fixed.includes("/ldraw/parts/") && !fixed.includes("/parts/s/")) {
                     fixed = fixed.replace("/ldraw/parts/", "/ldraw/p/");
                 }
 
-                // subpart가 /p/에 잘못 들어간 경우 수정
+                // 3. subpart가 /p/에 잘못 들어간 경우 /parts/s/로 수정
                 if (isSubpart && fixed.includes("/ldraw/p/") && !fixed.includes("/p/48/") && !fixed.includes("/p/8/")) {
                     fixed = fixed.replace("/ldraw/p/", "/ldraw/parts/s/");
                 }
 
-                // 이미 올바른 경로가 있으면 그대로 사용
-                if (fixed.includes("/parts/") || fixed.includes("/p/")) {
-                    return fixed;
-                }
-
-                // 경로가 없는 경우 적절한 경로 추가
-                if (isSubpart) {
-                    fixed = fixed.replace("/ldraw/", "/ldraw/parts/s/");
-                } else if (isPrimitive) {
-                    fixed = fixed.replace("/ldraw/", "/ldraw/p/");
-                } else {
-                    fixed = fixed.replace("/ldraw/", "/ldraw/parts/");
+                // 4. 경로가 없는 경우 적절한 경로 추가
+                if (!fixed.includes("/parts/") && !fixed.includes("/p/")) {
+                    if (isSubpart) fixed = fixed.replace("/ldraw/", "/ldraw/parts/s/");
+                    else if (isPrimitive) fixed = fixed.replace("/ldraw/", "/ldraw/p/");
+                    else fixed = fixed.replace("/ldraw/", "/ldraw/parts/");
                 }
             }
 
-            if (fixed !== u) console.log("[LDraw URL 변환]", u, "→", fixed);  // 디버그
             return fixed;
         });
 
@@ -118,7 +109,6 @@ function LdrModel({
         (async () => {
             try {
                 setGroup(null);
-                console.log("[LdrModel] Loading LDR from:", url);
 
                 await loader.preloadMaterials(ldconfigUrl);
                 const g = await loader.loadAsync(url);
@@ -128,7 +118,6 @@ function LdrModel({
                     return;
                 }
 
-                console.log("[LdrModel] Loaded successfully. Children:", g.children.length);
                 g.rotation.x = Math.PI;
 
                 if (onStepCountChange) {
