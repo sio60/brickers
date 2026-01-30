@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import BackgroundBricks from '@/components/BackgroundBricks';
 
 type Props = {
     params: Promise<{ slug: string }>
@@ -140,6 +141,7 @@ export default async function GalleryDetailPage({ params }: Props) {
 
     return (
         <>
+            <BackgroundBricks />
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
