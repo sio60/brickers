@@ -52,9 +52,9 @@ export default function RootLayout({
     return (
         <html lang="en" className={`${bebasNeue.variable} ${nanumGothic.variable} ${mPlusRounded.variable}`} suppressHydrationWarning>
             <head>
-                {/* 나눔고딕 한글 폰트 전체 로드 */}
+                {/* 한국어 폰트: Chiron GoRound TC */}
                 <link
-                    href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap"
+                    href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@400;500;700&display=swap"
                     rel="stylesheet"
                 />
             </head>
