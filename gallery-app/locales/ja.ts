@@ -18,6 +18,12 @@ export const ja = {
             authorLabel: "作成者:",
             moreWorks: "もっと作品を見たいですか？",
             goToGallery: "ギャラリーへ"
+        },
+        galleryList: {
+            workspace: "ワークスペース",
+            allCreations: "全ギャラリー",
+            myBookmarks: "マイブックマーク",
+            gallery: "ギャラリー"
         }
     },
     floatingMenu: {
@@ -104,6 +110,7 @@ export const ja = {
         },
         noGlbFile: "GLBファイルがありません。",
         noLdrFile: "LDRファイルがありません。",
+        noEnhancedImage: "改善された画像がありません。",
         retryFail: "再試行に失敗しました。",
         modalError: "失敗した作業です：",
         modalPending: "現在生成中か、3Dモデルの準備ができていません。",

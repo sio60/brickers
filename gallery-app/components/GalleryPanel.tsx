@@ -64,7 +64,7 @@ export default function GalleryPanel({ title, activeCategory, onCategoryChange, 
                     <div className="flex-shrink-0 flex items-center justify-between px-10 py-8 border-b border-gray-50">
                         {title && (
                             <h2 className="text-3xl font-black text-black tracking-tighter italic">
-                                {activeCategory === 'all' ? t.galleryList.allCreations : t.galleryList.myBookmarks}
+                                {activeCategory === 'all' ? t.main.galleryList.allCreations : t.main.galleryList.myBookmarks}
                             </h2>
                         )}
                         {rightAction && (
