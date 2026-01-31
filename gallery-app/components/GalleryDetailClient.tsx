@@ -20,18 +20,7 @@ type Props = {
 export default function GalleryDetailClient({ item }: Props) {
     const { isAuthenticated, authFetch } = useAuth();
     const [likeCount, setLikeCount] = useState(item.likeCount || 0);
-    const [isLiked, setIsLiked] = useState(item.isBookmarked || false); // Using isBookmarked field for 'Like' visual based on user request context, or separate? Usually mapped. Assuming mapped.
-    // Wait, user asked for separate Bookmark button. 
-    // Usually 'Like' is heart, 'Bookmark' is save. My previous code mapped 'isBookmarked' to Heart/Like.
-    // I should check data model. 'likeCount' exists. 'isBookmarked' exists.
-    // I will separate them if data allows properly. But previously logic used 'bookmark' endpoint for Heart.
-    // I will keep Heart logic using 'bookmark' endpoint for now as 'Like/Heart', and 'Bookmark' button as visual only (or duplicate logic).
-    // Actually, user said "좋아요, 댓글, 공유, 북마크". 
-    // Let's implement Heart as the main interaction we have (api/bookmark). And Bookmark button as a new todo or just visual for now.
-    // Or maybe we treat the Heart as Like, and Bookmark as Bookmark. 
-    // Current API: POST /api/gallery/{id}/bookmark -> Toggles bookmark/like.
-    // I will use this for the Heart button. Bookmark button will be just visual/dummy for now as I don't have separate endpoint.
-
+    const [isLiked, setIsLiked] = useState(item.isBookmarked || false);
     const [comments, setComments] = useState<Comment[]>([]);
     const [isCommentOpen, setIsCommentOpen] = useState(false);
     const [commentInput, setCommentInput] = useState('');
@@ -42,16 +31,12 @@ export default function GalleryDetailClient({ item }: Props) {
     const [currentSlide, setCurrentSlide] = useState(0);
 
     useEffect(() => {
-        // Increment view
         fetch(`/api/gallery/${item.id}/view`, { method: 'POST' }).catch(console.error);
-
-        // Fetch comments
         fetch(`/api/gallery/${item.id}/comments?page=0&size=50`)
             .then(res => res.json())
             .then(data => setComments(data.content || []))
             .catch(console.error);
 
-        // Sync details
         const fetchDetail = async () => {
             try {
                 const res = await authFetch(`/api/gallery/${item.id}`);
@@ -102,165 +87,133 @@ export default function GalleryDetailClient({ item }: Props) {
     };
 
     return (
-        <div className="w-full h-full md:h-[calc(100vh-100px)] bg-black relative md:rounded-3xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
-            {/* Mobile/Tablet: Full content area */}
-            <div className="relative flex-1 bg-black h-[500px] md:h-full">
-                {/* Slides */}
-                <div className="absolute inset-0">
-                    {currentSlide === 0 ? (
-                        <div className="relative w-full h-full bg-white flex items-center justify-center">
-                            {item.thumbnailUrl ? (
-                                <Image
-                                    src={item.thumbnailUrl}
-                                    alt={item.title}
-                                    fill
-                                    className="object-contain md:object-cover"
-                                />
-                            ) : (
-                                <div className="text-gray-300">이미지 없음</div>
-                            )}
-                        </div>
-                    ) : (
-                        item.ldrUrl ? <Viewer3D url={item.ldrUrl} /> : <div className="flex h-full items-center justify-center text-white">3D 모델 없음</div>
-                    )}
-                </div>
+        <div className="w-full min-h-screen pt-20 pb-10 flex items-center justify-center pointer-events-none relative z-10">
+            {/* Card Frame (Phone Style) */}
+            <div className="bg-white rounded-[40px] border-[3px] border-black w-full max-w-[420px] aspect-[9/16] relative overflow-hidden shadow-2xl pointer-events-auto flex flex-col">
 
-                {/* Navigation Arrows */}
-                {currentSlide === 1 && (
-                    <button
-                        onClick={() => setCurrentSlide(0)}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/40 active:scale-95 transition-all"
-                    >
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                    </button>
-                )}
-                {currentSlide === 0 && item.ldrUrl && (
-                    <button
-                        onClick={() => setCurrentSlide(1)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/40 active:scale-95 transition-all"
-                    >
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    </button>
-                )}
-
-                {/* Bottom Gradient Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none" />
-
-                {/* Content Info (Bottom Left) */}
-                <div className="absolute bottom-6 left-6 right-20 z-10 text-white text-left">
-                    <h1 className="text-xl font-bold mb-3 line-clamp-2 leading-tight drop-shadow-md">
-                        {item.title}
-                    </h1>
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 p-[2px]">
-                            <div className="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
-                                {item.authorNickname ? (
-                                    <span className="font-bold text-sm">{item.authorNickname[0].toUpperCase()}</span>
+                {/* Main Content Area (Image/3D) */}
+                <div className="relative flex-1 bg-white overflow-hidden">
+                    {/* Slides */}
+                    <div className="absolute inset-0 pb-32"> {/* Leave space for bottom info */}
+                        {currentSlide === 0 ? (
+                            <div className="relative w-full h-full flex items-center justify-center p-4">
+                                {item.thumbnailUrl ? (
+                                    <Image
+                                        src={item.thumbnailUrl}
+                                        alt={item.title}
+                                        fill
+                                        className="object-contain"
+                                    />
                                 ) : (
-                                    <svg className="w-6 h-6 text-gray-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
+                                    <div className="text-gray-300">이미지 없음</div>
                                 )}
                             </div>
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="font-bold text-sm">{item.authorNickname || '익명'}</span>
-                            <span className="text-xs text-gray-300">Creator</span>
-                        </div>
+                        ) : (
+                            <div className="w-full h-full rounded-[30px] overflow-hidden border border-gray-100">
+                                {item.ldrUrl ? <Viewer3D url={item.ldrUrl} /> : <div className="flex h-full items-center justify-center text-gray-400">3D 모델 없음</div>}
+                            </div>
+                        )}
                     </div>
-                </div>
 
-                {/* Right Action Bar (Vertical) */}
-                <div className="absolute bottom-6 right-4 z-20 flex flex-col items-center gap-6">
-                    {/* Like */}
-                    <div className="flex flex-col items-center gap-1">
+                    {/* Navigation Arrows */}
+                    {currentSlide === 1 && (
                         <button
-                            onClick={handleLikeToggle}
-                            className={`transition-transform active:scale-75 ${isLiked ? 'scale-110' : ''}`}
+                            onClick={() => setCurrentSlide(0)}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-black/10 rounded-full flex items-center justify-center hover:bg-black/20 active:scale-95 transition-all"
                         >
-                            <Image
-                                src="/icons/like.png"
-                                alt="Like"
-                                width={32}
-                                height={32}
-                                className="drop-shadow-md"
-                            />
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                         </button>
-                        <span className="text-white text-xs font-medium drop-shadow-md">{likeCount}</span>
-                    </div>
-
-                    {/* Comment Button */}
-                    <div className="flex flex-col items-center gap-1">
-                        <button onClick={() => setIsCommentOpen(true)} className="transition-transform active:scale-75">
-                            <Image src="/icons/comment.png" alt="Comment" width={30} height={30} className="drop-shadow-md" />
-                        </button>
-                        <span className="text-white text-xs font-medium drop-shadow-md">{comments.length}</span>
-                    </div>
-
-                    {/* Share Button (Dummy) */}
-                    <div className="flex flex-col items-center gap-1">
-                        <button className="transition-transform active:scale-75" onClick={() => alert('공유 기능은 준비 중입니다!')}>
-                            <Image src="/icons/share.png" alt="Share" width={30} height={30} className="drop-shadow-md" />
-                        </button>
-                        <span className="text-white text-xs font-medium drop-shadow-md">공유</span>
-                    </div>
-
-                    {/* Bookmark Button */}
-                    <div className="flex flex-col items-center gap-1">
+                    )}
+                    {currentSlide === 0 && item.ldrUrl && (
                         <button
-                            className={`transition-transform active:scale-75 ${isSaved ? 'scale-110' : ''}`}
-                            onClick={() => setIsSaved(!isSaved)}
+                            onClick={() => setCurrentSlide(1)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-black/10 rounded-full flex items-center justify-center hover:bg-black/20 active:scale-95 transition-all"
                         >
-                            <Image
-                                src="/icons/bookmark.png"
-                                alt="Bookmark"
-                                width={30}
-                                height={30}
-                                className="drop-shadow-md"
-                            />
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </button>
-                        <span className="text-white text-xs font-medium drop-shadow-md">저장</span>
-                    </div>
-                </div>
+                    )}
 
-                {/* Slide Indicators */}
-                {item.ldrUrl && (
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
-                        <div className={`w-1.5 h-1.5 rounded-full transition-all ${currentSlide === 0 ? 'bg-white w-3' : 'bg-white/50'}`} />
-                        <div className={`w-1.5 h-1.5 rounded-full transition-all ${currentSlide === 1 ? 'bg-white w-3' : 'bg-white/50'}`} />
-                    </div>
-                )}
-            </div>
+                    {/* Right Action Bar (Inside Card, aligned bottom-right of content area) */}
+                    <div className="absolute top-[60%] right-4 z-20 flex flex-col items-center gap-5">
+                        {/* Like */}
+                        <div className="flex flex-col items-center gap-1">
+                            <button
+                                onClick={handleLikeToggle}
+                                className={`transition-transform active:scale-75 ${isLiked ? 'scale-110' : ''}`}
+                            >
+                                <Image
+                                    src="/icons/like.png"
+                                    alt="Like"
+                                    width={28}
+                                    height={28}
+                                    className="drop-shadow-sm"
+                                />
+                            </button>
+                            {Number(likeCount) > 0 && <span className="text-black text-[10px] font-bold">{likeCount}</span>}
+                        </div>
 
-            {/* Comment Drawer / Modal */}
-            {/* On PC: Right side panel (if wide screen). On Mobile: Bottom Sheet overlay. */}
-            {/* For simplicity mimicking Instgram Reels web view, let's use a conditional rendering:
-                If comment is open, show a panel on the right (PC) or overlay (Mobile).
-                User asked for specific layout. The image 4 provided is simpler.
-                But user said "인스타 형식... 댓글...".
-                Let's make an overlay that slides up/in.
-            */}
-            {isCommentOpen && (
-                <div className="absolute inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm animate-in fade-in">
-                    <div className="w-full md:w-[400px] h-full bg-white flex flex-col animate-in slide-in-from-right duration-300 shadow-2xl">
-                        {/* Header */}
-                        <div className="p-4 border-b flex items-center justify-between">
-                            <h3 className="font-bold text-lg">댓글 ({comments.length})</h3>
-                            <button onClick={() => setIsCommentOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2">
-                                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                                </svg>
+                        {/* Comment */}
+                        <div className="flex flex-col items-center gap-1">
+                            <button onClick={() => setIsCommentOpen(true)} className="transition-transform active:scale-75">
+                                <Image src="/icons/comment.png" alt="Comment" width={26} height={26} className="drop-shadow-sm" />
+                            </button>
+                            {comments.length > 0 && <span className="text-black text-[10px] font-bold">{comments.length}</span>}
+                        </div>
+
+                        {/* Share */}
+                        <div className="flex flex-col items-center gap-1">
+                            <button className="transition-transform active:scale-75" onClick={() => alert('공유 기능은 준비 중입니다!')}>
+                                <Image src="/icons/share.png" alt="Share" width={26} height={26} className="drop-shadow-sm" />
                             </button>
                         </div>
 
-                        {/* List */}
+                        {/* Bookmark */}
+                        <div className="flex flex-col items-center gap-1">
+                            <button
+                                className={`transition-transform active:scale-75 ${isSaved ? 'scale-110' : ''}`}
+                                onClick={() => setIsSaved(!isSaved)}
+                            >
+                                <Image src="/icons/bookmark.png" alt="Bookmark" width={26} height={26} className="drop-shadow-sm" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Bottom Info Section (User Profile & Title) */}
+                <div className="absolute bottom-0 left-0 right-0 h-32 bg-white flex flex-col justify-end p-6 z-10">
+                    <div className="flex items-center gap-3 mb-2">
+                        {/* Profile Image */}
+                        <div className="w-10 h-10 rounded-full border border-gray-200 bg-gray-100 overflow-hidden flex items-center justify-center">
+                            <div className="font-bold text-gray-400 text-lg">
+                                {item.authorNickname ? item.authorNickname[0].toUpperCase() : '?'}
+                            </div>
+                        </div>
+                        {/* Nickname */}
+                        <span className="font-bold text-black text-sm">{item.authorNickname || '익명'}</span>
+                    </div>
+                    {/* Title */}
+                    <div className="font-medium text-black text-sm pl-1">{item.title}</div>
+                </div>
+
+            </div>
+
+            {/* Comment Drawer (Overlay within card or global modal?) */}
+            {/* Let's make it a global modal for better UX on this layout */}
+            {isCommentOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in">
+                    <div className="bg-white w-full max-w-[400px] h-[600px] rounded-[30px] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-4 border-b flex items-center justify-between">
+                            <h3 className="font-bold">댓글</h3>
+                            <button onClick={() => setIsCommentOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </div>
                         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
                             {comments.length === 0 ? (
-                                <div className="text-center text-gray-400 py-10">첫 번째 댓글을 남겨보세요!</div>
+                                <div className="text-center text-gray-400 mt-20">댓글이 없습니다.</div>
                             ) : comments.map(c => (
-                                <div key={c.id} className="flex gap-3 text-left">
-                                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold shrink-0">
-                                        {c.authorNickname[0]}
-                                    </div>
+                                <div key={c.id} className="flex gap-3">
+                                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center font-bold text-xs shrink-0">{c.authorNickname[0]}</div>
                                     <div className="flex-1">
                                         <div className="flex items-baseline gap-2">
                                             <span className="font-bold text-sm">{c.authorNickname}</span>
@@ -271,26 +224,15 @@ export default function GalleryDetailClient({ item }: Props) {
                                 </div>
                             ))}
                         </div>
-
-                        {/* Input */}
-                        <div className="p-4 border-t bg-gray-50">
-                            <div className="flex gap-2">
-                                <input
-                                    className="flex-1 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-black"
-                                    placeholder={isAuthenticated ? "댓글 달기..." : "로그인 필요"}
-                                    value={commentInput}
-                                    onChange={e => setCommentInput(e.target.value)}
-                                    disabled={!isAuthenticated}
-                                    onKeyDown={e => e.key === 'Enter' && handleCommentSubmit()}
-                                />
-                                <button
-                                    onClick={handleCommentSubmit}
-                                    disabled={!commentInput.trim() || commentLoading}
-                                    className="font-bold text-blue-500 text-sm px-2 disabled:opacity-30 hover:text-blue-700"
-                                >
-                                    게시
-                                </button>
-                            </div>
+                        <div className="p-4 bg-gray-50 border-t flex gap-2">
+                            <input
+                                className="flex-1 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-black"
+                                placeholder="댓글 입력..."
+                                value={commentInput}
+                                onChange={e => setCommentInput(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleCommentSubmit()}
+                            />
+                            <button onClick={handleCommentSubmit} disabled={!commentInput.trim()} className="font-bold text-blue-500 text-sm px-2 disabled:opacity-30">게시</button>
                         </div>
                     </div>
                 </div>
