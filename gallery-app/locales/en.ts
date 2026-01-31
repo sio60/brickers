@@ -234,7 +234,13 @@ export const en = {
                 author: "Author",
                 date: "Modified Date",
                 views: "Views"
-            }
+            },
+            viewModes: "VIEW MODES",
+            tabBrick: "Brick 3D",
+            tabModeling: "3D Modeling",
+            originalModel: "Original 3D Model",
+            previewTitle: "Brick Preview",
+            startAssembly: "Start Assembly"
         }
     },
     header: {

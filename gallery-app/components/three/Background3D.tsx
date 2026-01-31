@@ -29,6 +29,7 @@ type BrickProps = {
     scale: number;
     shape: ShapeType;
     entryDirection?: "top" | "sides" | "float";
+    id?: number;
 };
 
 type BrickSeed = Omit<BrickProps, "entryDirection"> & { id: number };
@@ -48,6 +49,7 @@ function Brick({
     scale,
     shape,
     entryDirection = "top",
+    id,
 }: BrickProps) {
     const meshRef = useRef<THREE.Mesh>(null);
 
@@ -126,16 +128,24 @@ function Brick({
                 }
             }
         } else {
-            // floating
+            // floating (둥둥 떠다니기)
+            // Gentle sine-wave bobbing
+            const time = performance.now() * 0.001;
+            const floatSpeed = 0.5;
+            const floatHeight = 0.005;
+
+            // Apply base velocity (drift)
             pos.add(vel);
 
-            rot.x += angVel.x + delta * 0.2;
-            rot.y += angVel.y + delta * 0.3;
+            // Add bobbing effect (use id or random offset if id is missing)
+            const offset = id !== undefined ? id : Math.random() * 100;
+            pos.y += Math.sin(time * floatSpeed + offset) * floatHeight;
 
-            vel.multiplyScalar(FRICTION);
-            angVel.multiplyScalar(FRICTION);
+            // Continuous gentle rotation
+            rot.x += angVel.x;
+            rot.y += angVel.y;
 
-            // bounds
+            // Bounds checking (bounce with no friction loss for infinite float)
             if (pos.y > 15 || pos.y < -15) vel.y *= -1;
             if (pos.x > 25 || pos.x < -25) vel.x *= -1;
             if (pos.z > 5 || pos.z < -30) vel.z *= -1;
@@ -246,7 +256,7 @@ export default function Background3D({
                 <directionalLight position={[-5, 5, 5]} intensity={1} />
 
                 {bricks.map(({ id, ...props }) => (
-                    <Brick key={id} {...props} entryDirection={entryDirection} />
+                    <Brick key={id} id={id} {...props} entryDirection={entryDirection} />
                 ))}
 
                 <Environment preset="city" />

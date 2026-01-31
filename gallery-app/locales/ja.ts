@@ -234,7 +234,13 @@ export const ja = {
                 author: "作成者",
                 date: "修正日",
                 views: "閲覧数"
-            }
+            },
+            viewModes: "表示モード",
+            tabBrick: "ブリック3D",
+            tabModeling: "3Dモデリング",
+            originalModel: "オリジナル3Dモデル",
+            previewTitle: "ブリックプレビュー",
+            startAssembly: "組み立て開始"
         }
     },
     header: {
