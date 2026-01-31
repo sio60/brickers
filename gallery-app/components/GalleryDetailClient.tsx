@@ -31,12 +31,16 @@ export default function GalleryDetailClient({ item }: Props) {
     const [currentSlide, setCurrentSlide] = useState(0);
 
     useEffect(() => {
+        // Increment view count
         fetch(`/api/gallery/${item.id}/view`, { method: 'POST' }).catch(console.error);
+
+        // Fetch initial comments
         fetch(`/api/gallery/${item.id}/comments?page=0&size=50`)
             .then(res => res.json())
             .then(data => setComments(data.content || []))
             .catch(console.error);
 
+        // Fetch detail for latest like state
         const fetchDetail = async () => {
             try {
                 const res = await authFetch(`/api/gallery/${item.id}`);
@@ -87,152 +91,123 @@ export default function GalleryDetailClient({ item }: Props) {
     };
 
     return (
-        <div className="w-full min-h-screen pt-20 pb-10 flex items-center justify-center pointer-events-none relative z-10">
-            {/* Card Frame (Phone Style) */}
-            <div className="bg-white rounded-[40px] border-[3px] border-black w-full max-w-[420px] aspect-[9/16] relative overflow-hidden shadow-2xl pointer-events-auto flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-transparent pointer-events-none">
+            {/* The Smartphone-style Card */}
+            <div className="relative pointer-events-auto bg-white w-full max-w-[420px] h-[85vh] max-h-[850px] aspect-[9/16] rounded-[45px] border-[5px] border-black shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
 
-                {/* Main Content Area (Image/3D) */}
+                {/* Content Area (Image/3D) */}
                 <div className="relative flex-1 bg-white overflow-hidden">
-                    {/* Slides */}
-                    <div className="absolute inset-0 pb-32"> {/* Leave space for bottom info */}
+                    {/* Centered Image/Viewer within the card frame */}
+                    <div className="absolute inset-0 flex items-center justify-center p-4 pb-24">
                         {currentSlide === 0 ? (
-                            <div className="relative w-full h-full flex items-center justify-center p-4">
+                            <div className="relative w-full h-full">
                                 {item.thumbnailUrl ? (
                                     <Image
                                         src={item.thumbnailUrl}
                                         alt={item.title}
                                         fill
-                                        className="object-contain"
+                                        className="object-contain" // Contain within the relative box
+                                        priority
                                     />
                                 ) : (
-                                    <div className="text-gray-300">이미지 없음</div>
+                                    <div className="w-full h-full flex items-center justify-center text-gray-200 uppercase font-black text-4xl">No Image</div>
                                 )}
                             </div>
                         ) : (
-                            <div className="w-full h-full rounded-[30px] overflow-hidden border border-gray-100">
-                                {item.ldrUrl ? <Viewer3D url={item.ldrUrl} /> : <div className="flex h-full items-center justify-center text-gray-400">3D 모델 없음</div>}
+                            <div className="w-full h-full rounded-[30px] overflow-hidden">
+                                {item.ldrUrl ? <Viewer3D url={item.ldrUrl} /> : <div className="flex h-full items-center justify-center text-gray-300">No 3D Model</div>}
                             </div>
                         )}
                     </div>
 
-                    {/* Navigation Arrows */}
-                    {currentSlide === 1 && (
-                        <button
-                            onClick={() => setCurrentSlide(0)}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-black/10 rounded-full flex items-center justify-center hover:bg-black/20 active:scale-95 transition-all"
-                        >
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                        </button>
-                    )}
-                    {currentSlide === 0 && item.ldrUrl && (
-                        <button
-                            onClick={() => setCurrentSlide(1)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-black/10 rounded-full flex items-center justify-center hover:bg-black/20 active:scale-95 transition-all"
-                        >
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        </button>
-                    )}
+                    {/* Navigation Buttons */}
+                    <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between z-10 pointer-events-none">
+                        {currentSlide === 1 ? (
+                            <button onClick={() => setCurrentSlide(0)} className="pointer-events-auto p-2 bg-white/50 hover:bg-white rounded-full transition-colors shadow-sm">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                        ) : <div />}
+                        {currentSlide === 0 && item.ldrUrl ? (
+                            <button onClick={() => setCurrentSlide(1)} className="pointer-events-auto p-2 bg-white/50 hover:bg-white rounded-full transition-colors shadow-sm">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        ) : <div />}
+                    </div>
 
-                    {/* Right Action Bar (Inside Card, aligned bottom-right of content area) */}
-                    <div className="absolute top-[60%] right-4 z-20 flex flex-col items-center gap-5">
+                    {/* Floating Side Action Bar */}
+                    <div className="absolute bottom-32 right-5 flex flex-col items-center gap-6 z-20">
                         {/* Like */}
-                        <div className="flex flex-col items-center gap-1">
-                            <button
-                                onClick={handleLikeToggle}
-                                className={`transition-transform active:scale-75 ${isLiked ? 'scale-110' : ''}`}
-                            >
-                                <Image
-                                    src="/icons/like.png"
-                                    alt="Like"
-                                    width={28}
-                                    height={28}
-                                    className="drop-shadow-sm"
-                                />
+                        <div className="flex flex-col items-center">
+                            <button onClick={handleLikeToggle} className={`active:scale-90 transition-transform ${isLiked ? 'scale-110' : ''}`}>
+                                <Image src="/icons/like.png" alt="Like" width={32} height={32} />
                             </button>
-                            {Number(likeCount) > 0 && <span className="text-black text-[10px] font-bold">{likeCount}</span>}
+                            <span className="text-[10px] font-bold text-black mt-1">{likeCount}</span>
                         </div>
-
-                        {/* Comment */}
-                        <div className="flex flex-col items-center gap-1">
-                            <button onClick={() => setIsCommentOpen(true)} className="transition-transform active:scale-75">
-                                <Image src="/icons/comment.png" alt="Comment" width={26} height={26} className="drop-shadow-sm" />
+                        {/* Comments */}
+                        <div className="flex flex-col items-center">
+                            <button onClick={() => setIsCommentOpen(true)} className="active:scale-90 transition-transform">
+                                <Image src="/icons/comment.png" alt="Comment" width={30} height={30} />
                             </button>
-                            {comments.length > 0 && <span className="text-black text-[10px] font-bold">{comments.length}</span>}
+                            <span className="text-[10px] font-bold text-black mt-1">{comments.length}</span>
                         </div>
-
                         {/* Share */}
-                        <div className="flex flex-col items-center gap-1">
-                            <button className="transition-transform active:scale-75" onClick={() => alert('공유 기능은 준비 중입니다!')}>
-                                <Image src="/icons/share.png" alt="Share" width={26} height={26} className="drop-shadow-sm" />
-                            </button>
-                        </div>
-
+                        <button onClick={() => alert('공유 기능 준비 중')} className="active:scale-90 transition-transform">
+                            <Image src="/icons/share.png" alt="Share" width={30} height={30} />
+                        </button>
                         {/* Bookmark */}
-                        <div className="flex flex-col items-center gap-1">
-                            <button
-                                className={`transition-transform active:scale-75 ${isSaved ? 'scale-110' : ''}`}
-                                onClick={() => setIsSaved(!isSaved)}
-                            >
-                                <Image src="/icons/bookmark.png" alt="Bookmark" width={26} height={26} className="drop-shadow-sm" />
-                            </button>
-                        </div>
+                        <button onClick={() => setIsSaved(!isSaved)} className={`active:scale-90 transition-transform ${isSaved ? 'scale-110' : ''}`}>
+                            <Image src="/icons/bookmark.png" alt="Bookmark" width={30} height={30} />
+                        </button>
                     </div>
                 </div>
 
-                {/* Bottom Info Section (User Profile & Title) */}
-                <div className="absolute bottom-0 left-0 right-0 h-32 bg-white flex flex-col justify-end p-6 z-10">
-                    <div className="flex items-center gap-3 mb-2">
-                        {/* Profile Image */}
-                        <div className="w-10 h-10 rounded-full border border-gray-200 bg-gray-100 overflow-hidden flex items-center justify-center">
-                            <div className="font-bold text-gray-400 text-lg">
-                                {item.authorNickname ? item.authorNickname[0].toUpperCase() : '?'}
-                            </div>
+                {/* Bottom Profile Area */}
+                <div className="bg-white px-8 py-8 flex flex-col gap-2 shrink-0 border-t border-gray-50">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gray-100 border-2 border-black flex items-center justify-center font-bold text-sm overflow-hidden">
+                            {item.authorNickname ? item.authorNickname[0].toUpperCase() : 'B'}
                         </div>
-                        {/* Nickname */}
-                        <span className="font-bold text-black text-sm">{item.authorNickname || '익명'}</span>
+                        <span className="font-black text-black text-sm">{item.authorNickname || 'BRICKER User'}</span>
                     </div>
-                    {/* Title */}
-                    <div className="font-medium text-black text-sm pl-1">{item.title}</div>
+                    <div className="text-black font-bold text-lg leading-tight pl-1 line-clamp-1">{item.title}</div>
                 </div>
-
             </div>
 
-            {/* Comment Drawer (Overlay within card or global modal?) */}
-            {/* Let's make it a global modal for better UX on this layout */}
+            {/* Modal for Comments */}
             {isCommentOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-white w-full max-w-[400px] h-[600px] rounded-[30px] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="p-4 border-b flex items-center justify-between">
-                            <h3 className="font-bold">댓글</h3>
-                            <button onClick={() => setIsCommentOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto p-4">
+                    <div className="bg-white w-full max-w-[400px] h-[600px] rounded-[40px] border-[5px] border-black shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b-4 border-black flex items-center justify-between">
+                            <h3 className="font-black text-lg">COMMENTS</h3>
+                            <button onClick={() => setIsCommentOpen(false)} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="4"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                             </button>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+                        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
                             {comments.length === 0 ? (
-                                <div className="text-center text-gray-400 mt-20">댓글이 없습니다.</div>
+                                <div className="flex-1 flex items-center justify-center text-gray-300 font-bold italic">No comments yet.</div>
                             ) : comments.map(c => (
                                 <div key={c.id} className="flex gap-3">
-                                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center font-bold text-xs shrink-0">{c.authorNickname[0]}</div>
+                                    <div className="w-8 h-8 rounded-full border-2 border-black flex items-center justify-center font-black text-xs shrink-0">{c.authorNickname[0]}</div>
                                     <div className="flex-1">
-                                        <div className="flex items-baseline gap-2">
-                                            <span className="font-bold text-sm">{c.authorNickname}</span>
-                                            <span className="text-xs text-gray-400">{formatDate(c.createdAt)}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-black text-sm">{c.authorNickname}</span>
+                                            <span className="text-[10px] text-gray-400 font-bold">{formatDate(c.createdAt)}</span>
                                         </div>
-                                        <p className="text-sm text-gray-800 break-words">{c.content}</p>
+                                        <p className="text-sm text-gray-700 font-medium leading-relaxed mt-1">{c.content}</p>
                                     </div>
                                 </div>
                             ))}
                         </div>
-                        <div className="p-4 bg-gray-50 border-t flex gap-2">
+                        <div className="p-6 bg-gray-50 border-t-4 border-black flex gap-3">
                             <input
-                                className="flex-1 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-black"
-                                placeholder="댓글 입력..."
+                                className="flex-1 bg-white border-4 border-black rounded-2xl px-4 py-2 text-sm font-bold focus:outline-none"
+                                placeholder="Write a comment..."
                                 value={commentInput}
                                 onChange={e => setCommentInput(e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && handleCommentSubmit()}
                             />
-                            <button onClick={handleCommentSubmit} disabled={!commentInput.trim()} className="font-bold text-blue-500 text-sm px-2 disabled:opacity-30">게시</button>
+                            <button onClick={handleCommentSubmit} disabled={!commentInput.trim() || commentLoading} className="bg-black text-white px-6 rounded-2xl font-black text-xs hover:bg-gray-800 disabled:opacity-50 transition-all active:scale-95 uppercase">Send</button>
                         </div>
                     </div>
                 </div>
