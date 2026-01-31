@@ -22,8 +22,8 @@ export default function GalleryPanel({ title, activeCategory, onCategoryChange, 
     const { t } = useLanguage();
 
     const menuItems: MenuItem[] = [
-        { id: 'all', label: t.galleryList.allCreations },
-        { id: 'bookmarks', label: t.galleryList.myBookmarks },
+        { id: 'all', label: t.main.galleryList.allCreations },
+        { id: 'bookmarks', label: t.main.galleryList.myBookmarks },
     ];
 
     return (
@@ -31,8 +31,8 @@ export default function GalleryPanel({ title, activeCategory, onCategoryChange, 
             {/* Sidebar */}
             <div className="w-64 flex-shrink-0 bg-black rounded-3xl overflow-hidden flex flex-col shadow-2xl">
                 <div className="px-8 py-10 border-b border-gray-800">
-                    <h2 className="text-yellow-400 text-xs font-black uppercase tracking-[0.2em] mb-2">{t.galleryList.workspace}</h2>
-                    <h1 className="text-white text-2xl font-black italic tracking-tighter uppercase">{t.galleryList.gallery}</h1>
+                    <h2 className="text-yellow-400 text-xs font-black uppercase tracking-[0.2em] mb-2">{t.main.galleryList.workspace}</h2>
+                    <h1 className="text-white text-2xl font-black italic tracking-tighter uppercase">{t.main.galleryList.gallery}</h1>
                 </div>
 
                 <nav className="flex-1 py-8 px-4 flex flex-col gap-2">

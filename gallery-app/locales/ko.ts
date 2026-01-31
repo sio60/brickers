@@ -111,6 +111,7 @@ export const ko = {
         },
         noGlbFile: "GLB 파일이 없습니다.",
         noLdrFile: "LDR 파일이 없습니다.",
+        noEnhancedImage: "개선 이미지가 없습니다.",
         retryFail: "작업 재시도에 실패했습니다.",
         modalError: "실패한 작업입니다: ",
         modalPending: "아직 생성 중이거나 3D 모델이 준비되지 않았습니다.",
