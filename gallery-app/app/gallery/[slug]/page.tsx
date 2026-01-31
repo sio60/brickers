@@ -164,7 +164,7 @@ export default async function GalleryDetailPage({ params }: Props) {
 
                     <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
                         {/* Main Image */}
-                        <div className="relative aspect-video bg-gray-50">
+                        <div className="relative h-[400px] md:h-[500px] bg-gray-50">
                             {item.thumbnailUrl ? (
                                 <Image
                                     src={item.thumbnailUrl}
