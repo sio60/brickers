@@ -246,7 +246,7 @@ export const ja = {
             tabBrick: "ブリック3D",
             tabModeling: "3Dモデリング",
             tabOriginal: "オリジナル画像",
-            originalModel: "オリジナル3Dモデル",
+            originalModel: "AI 3Dモデル",
             previewTitle: "ブリックプレビュー",
             startAssembly: "組み立て開始"
         }
