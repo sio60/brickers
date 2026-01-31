@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { GalleryItem } from '@/types/gallery';
 import Image from 'next/image';
 import Viewer3D from './Viewer3D';
+import { Canvas } from "@react-three/fiber";
+import { Bounds, Center, Gltf, Environment, OrbitControls } from "@react-three/drei";
 
 type Comment = {
     id: string;
@@ -21,17 +23,21 @@ type Props = {
 
 export default function GalleryDetailClient({ item }: Props) {
     const { t } = useLanguage();
+    const router = useRouter();
     const { isAuthenticated, authFetch } = useAuth();
+
+    // Interaction State
     const [likeCount, setLikeCount] = useState(item.likeCount || 0);
     const [isLiked, setIsLiked] = useState(item.myReaction === 'LIKE');
     const [isBookmarked, setIsBookmarked] = useState(item.isBookmarked || false);
+
+    // Comments State
     const [comments, setComments] = useState<Comment[]>([]);
-    const [isCommentOpen, setIsCommentOpen] = useState(true);
     const [commentInput, setCommentInput] = useState('');
     const [commentLoading, setCommentLoading] = useState(false);
 
-    // Slide 0: Image, 1: 3D
-    const [currentSlide, setCurrentSlide] = useState(0);
+    // View State
+    const [activeTab, setActiveTab] = useState<'LDR' | 'GLB'>('LDR');
 
     useEffect(() => {
         // Increment view count
@@ -44,12 +50,8 @@ export default function GalleryDetailClient({ item }: Props) {
                 if (res.ok) {
                     const data = await res.json();
                     setComments(data.content || []);
-                } else {
-                    console.warn(`[Comments] Failed to fetch: ${res.status}`);
                 }
-            } catch (error) {
-                console.error("[Comments] Fetch error:", error);
-            }
+            } catch (error) { console.error("[Comments] Fetch error:", error); }
         };
 
         // Initial fetch
@@ -87,11 +89,8 @@ export default function GalleryDetailClient({ item }: Props) {
                 const data = await res.json();
                 const newLiked = data.currentReaction === 'LIKE';
                 setIsLiked(newLiked);
-                if (data.likeCount !== undefined) {
-                    setLikeCount(data.likeCount);
-                } else {
-                    setLikeCount(prev => newLiked ? prev + 1 : prev - 1);
-                }
+                if (data.likeCount !== undefined) setLikeCount(data.likeCount);
+                else setLikeCount(prev => newLiked ? prev + 1 : prev - 1);
             }
         } catch (error) { console.error(error); }
     };
@@ -131,181 +130,194 @@ export default function GalleryDetailClient({ item }: Props) {
         return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
     };
 
-    const router = useRouter();
-
     return (
-        <div className="fixed inset-0 z-[60] flex flex-col items-center pt-20 sm:pt-24 p-4 sm:p-6 bg-black/5 pointer-events-none overflow-y-auto">
-
-            {/* Navigation / Back Button - Floating above the card */}
-            <div className="w-full max-w-[900px] mb-4 flex pointer-events-auto">
+        <div className="fixed inset-0 z-[50] flex bg-white overflow-hidden">
+            {/* 1. Left Sidebar - View Modes */}
+            <div className="w-[280px] bg-[#1a1a1a] text-white flex flex-col p-6 shrink-0 relative z-20 shadow-2xl">
+                {/* Back Button */}
                 <button
                     onClick={() => router.back()}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-white rounded-full border border-black/10 font-bold text-sm shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] hover:translate-y-[-2px] transition-all active:scale-95 group"
+                    className="self-start mb-8 bg-white/10 text-white rounded-lg px-4 py-2 text-sm font-semibold hover:bg-white/20 transition-colors flex items-center gap-2"
                 >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-x-1 transition-transform">
-                        <path d="M19 12H5m7-7-7 7 7 7" />
-                    </svg>
-                    <span>{t.detail.back}</span>
+                    ← {t.kids.steps.back}
                 </button>
-            </div>
 
-            {/* Simple Card Container */}
-            <div className="relative pointer-events-auto bg-white w-full max-w-[900px] h-[80vh] min-h-[500px] max-h-[850px] rounded-[30px] shadow-[0_20px_60px_rgba(0,0,0,0.2)] flex flex-col md:flex-row overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <h2 className="text-xl font-bold mb-6 pl-2 tracking-wider">BRICKERS</h2>
 
-                {/* Left/Content Section: Image/3D Viewer */}
-                <div className="flex-1 relative bg-gray-50 flex flex-col overflow-hidden">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        {currentSlide === 0 ? (
-                            <div className="relative w-full h-full p-8 flex items-center justify-center">
-                                {item.thumbnailUrl ? (
-                                    <Image
-                                        src={item.thumbnailUrl}
-                                        alt={item.title}
-                                        fill
-                                        className="object-contain" // Contain within the relative box
-                                        priority
-                                    />
-                                ) : (
-                                    <div className="text-gray-300 font-bold">이미지가 없습니다</div>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="w-full h-full">
-                                {item.ldrUrl ? <Viewer3D url={item.ldrUrl} /> : <div className="flex h-full items-center justify-center text-gray-300">3D 모델 없음</div>}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Navigation for Slides */}
-                    <div className="absolute inset-x-6 top-1/2 -translate-y-1/2 flex justify-between z-10 pointer-events-none">
-                        <button
-                            disabled={currentSlide === 0}
-                            onClick={() => setCurrentSlide(0)}
-                            className={`pointer-events-auto p-3 bg-white/80 backdrop-blur-sm rounded-full transition-all shadow-md group ${currentSlide === 0 ? 'opacity-0 scale-90 translate-x-4' : 'opacity-100'}`}
-                        >
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-hover:-translate-x-0.5 transition-transform"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                        </button>
-                        <button
-                            disabled={currentSlide === 1 || !item.ldrUrl}
-                            onClick={() => setCurrentSlide(1)}
-                            className={`pointer-events-auto p-3 bg-white/80 backdrop-blur-sm rounded-full transition-all shadow-md group ${currentSlide === 1 || !item.ldrUrl ? 'opacity-0 scale-90 -translate-x-4' : 'opacity-100'}`}
-                        >
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-hover:translate-x-0.5 transition-transform"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        </button>
-                    </div>
-
-                    {/* Indicator */}
-                    {item.ldrUrl && (
-                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-                            <div className={`w-2 h-2 rounded-full transition-all duration-300 ${currentSlide === 0 ? 'bg-black w-5' : 'bg-black/20'}`} />
-                            <div className={`w-2 h-2 rounded-full transition-all duration-300 ${currentSlide === 1 ? 'bg-black w-5' : 'bg-black/20'}`} />
-                        </div>
-                    )}
+                {/* Categories */}
+                <div className="mb-3 pl-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
+                    {t.kids.steps.viewModes}
                 </div>
 
-                {/* Right/Info Section: Details & Comments */}
-                <div className="w-full md:w-[360px] bg-white flex flex-col border-l border-gray-100 relative">
-                    {/* Header: User Info */}
-                    <div className="p-6 border-b border-gray-50 flex items-center justify-between shrink-0">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500 overflow-hidden border border-gray-200">
-                                {item.authorNickname ? item.authorNickname[0].toUpperCase() : '?'}
+                <div className="flex flex-col gap-2">
+                    <button
+                        onClick={() => setActiveTab('LDR')}
+                        className={`text-left px-4 py-3 rounded-xl transition-all font-medium flex items-center gap-2 ${activeTab === 'LDR'
+                                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                                : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
+                    >
+                        <span>🧱</span> {t.kids.steps.tabBrick}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('GLB')}
+                        className={`text-left px-4 py-3 rounded-xl transition-all font-medium flex items-center gap-2 ${activeTab === 'GLB'
+                                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                                : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
+                    >
+                        <span>🧊</span> {t.kids.steps.tabModeling}
+                    </button>
+                </div>
+            </div>
+
+            {/* 2. Main Content Area - Canvas */}
+            <div className="flex-1 relative bg-gray-50 flex flex-col overflow-hidden">
+                {/* View Title Bar */}
+                <div className="h-16 bg-white border-b border-gray-200 flex items-center px-6 shrink-0 justify-between">
+                    <div className="text-lg font-extrabold text-gray-900">
+                        {activeTab === 'LDR' ? t.kids.steps.previewTitle : t.kids.steps.originalModel}
+                    </div>
+                </div>
+
+                {/* Canvas Area */}
+                <div className="flex-1 relative bg-[#f0f0f0]">
+                    {activeTab === 'LDR' ? (
+                        item.ldrUrl ? <Viewer3D url={item.ldrUrl} /> : (
+                            <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
+                                LDR Model Not Available
                             </div>
-                            <div className="flex flex-col">
-                                <span className="font-bold text-sm text-black">@{item.authorNickname || '익명'}</span>
-                                <span className="text-[10px] text-gray-400 font-medium">CREATOR</span>
+                        )
+                    ) : (
+                        item.glbUrl ? (
+                            <div className="absolute inset-0">
+                                <Canvas camera={{ position: [5, 5, 5], fov: 50 }} dpr={[1, 2]}>
+                                    <ambientLight intensity={0.8} />
+                                    <directionalLight position={[5, 10, 5]} intensity={1.5} />
+                                    <Environment preset="city" />
+                                    <Bounds fit clip observe margin={1.2}>
+                                        <Center>
+                                            <Gltf src={item.glbUrl} />
+                                        </Center>
+                                    </Bounds>
+                                    <OrbitControls makeDefault enablePan={false} enableZoom />
+                                </Canvas>
                             </div>
+                        ) : (
+                            <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
+                                GLB Model Not Available
+                            </div>
+                        )
+                    )}
+                </div>
+            </div>
+
+            {/* 3. Right Sidebar - Detail & Comments */}
+            <div className="w-[360px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10 shadow-xl">
+                {/* Scrollable Content */}
+                <div className="flex-1 overflow-y-auto">
+                    {/* User Info Header */}
+                    <div className="p-6 border-b border-gray-100 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center font-bold text-blue-600 text-sm">
+                            {item.authorNickname ? item.authorNickname[0].toUpperCase() : '?'}
                         </div>
-                        {/* Detail View Close? No, navigation back to gallery is done by the page wrapper usually */}
+                        <div className="flex flex-col">
+                            <span className="font-bold text-sm text-gray-900">@{item.authorNickname || '익명'}</span>
+                            <span className="text-[10px] text-gray-500 font-semibold tracking-wide">CREATOR</span>
+                        </div>
                     </div>
 
-                    {/* Body: Title & Actions */}
-                    <div className="p-6 flex flex-col gap-6">
-                        <h1 className="text-xl font-bold text-black leading-tight">{item.title}</h1>
+                    {/* Title & Actions */}
+                    <div className="p-6">
+                        <h1 className="text-2xl font-black text-gray-900 leading-tight mb-6">{item.title}</h1>
 
-                        {/* Interaction Bar */}
-                        <div className="flex items-center gap-8">
-                            <div className="flex flex-col items-center gap-1 group">
-                                <button onClick={handleLikeToggle} className={`transition-transform active:scale-90 ${isLiked ? 'scale-110' : ''}`}>
+                        <div className="flex items-center gap-6">
+                            <button
+                                onClick={handleLikeToggle}
+                                className={`flex flex-col items-center gap-1 group transition-all ${isLiked ? 'scale-110' : 'hover:scale-105'}`}
+                            >
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm border transition-all ${isLiked ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200 group-hover:border-gray-300'}`}>
                                     <Image
                                         src="/icons/like.png"
                                         alt="Like"
-                                        width={32}
-                                        height={32}
-                                        style={isLiked ? { filter: 'invert(48%) sepia(50%) saturate(2243%) hue-rotate(195deg) brightness(101%) contrast(93%)' } : {}}
+                                        width={24}
+                                        height={24}
+                                        style={isLiked ? { filter: 'invert(48%) sepia(50%) saturate(2243%) hue-rotate(195deg) brightness(101%) contrast(93%)' } : { opacity: 0.6 }}
                                     />
-                                </button>
-                                <span className={`text-[10px] font-bold transition-colors ${isLiked ? 'text-blue-500' : 'text-gray-500 group-hover:text-black'}`}>{likeCount}</span>
-                            </div>
+                                </div>
+                                <span className={`text-xs font-bold ${isLiked ? 'text-blue-500' : 'text-gray-400'}`}>{likeCount}</span>
+                            </button>
 
-                            <div className="flex flex-col items-center gap-1">
-                                <button onClick={() => alert('공유 기능 준비 중')} className="transition-transform active:scale-90 underline-offset-4">
-                                    <Image src="/icons/share.png" alt="Share" width={30} height={30} />
-                                </button>
-                                <span className="text-[10px] font-bold text-gray-500">Share</span>
-                            </div>
-                            <div className="ml-auto">
-                                <button onClick={handleBookmarkToggle} className={`transition-transform active:scale-90 ${isBookmarked ? 'scale-110' : ''}`}>
+                            <button
+                                onClick={handleBookmarkToggle}
+                                className={`flex flex-col items-center gap-1 group transition-all ${isBookmarked ? 'scale-110' : 'hover:scale-105'}`}
+                            >
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm border transition-all ${isBookmarked ? 'bg-yellow-50 border-yellow-200' : 'bg-white border-gray-200 group-hover:border-gray-300'}`}>
                                     <Image
                                         src="/icons/bookmark.png"
                                         alt="Bookmark"
-                                        width={30}
-                                        height={30}
-                                        style={isBookmarked ? { filter: 'invert(80%) sepia(55%) saturate(2000%) hue-rotate(5deg) brightness(100%) contrast(101%)' } : {}}
+                                        width={24}
+                                        height={24}
+                                        style={isBookmarked ? { filter: 'invert(80%) sepia(55%) saturate(2000%) hue-rotate(5deg) brightness(100%) contrast(101%)' } : { opacity: 0.6 }}
                                     />
-                                </button>
-                            </div>
+                                </div>
+                                <span className={`text-xs font-bold ${isBookmarked ? 'text-yellow-500' : 'text-gray-400'}`}>Save</span>
+                            </button>
+
+                            <button
+                                onClick={() => alert('공유 기능 준비 중')}
+                                className="flex flex-col items-center gap-1 group hover:scale-105 transition-all ml-auto"
+                            >
+                                <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm group-hover:border-gray-300">
+                                    <Image src="/icons/share.png" alt="Share" width={22} height={22} className="opacity-60" />
+                                </div>
+                                <span className="text-xs font-bold text-gray-400">Share</span>
+                            </button>
                         </div>
                     </div>
 
-                    {/* Bottom Comment Drawer (Always open now) */}
-                    <div className="absolute inset-x-0 bottom-0 bg-white border-t border-gray-100 flex flex-col h-[65%] z-20">
-                        {/* Drawer Header */}
-                        <div className="px-6 py-4 flex items-center justify-between border-b border-gray-50 shrink-0">
-                            <span className="font-bold text-xs uppercase tracking-wider text-gray-500">COMMENTS ({comments.length})</span>
-                        </div>
+                    {/* Comments Section */}
+                    <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 min-h-[300px]">
+                        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
+                            COMMENTS ({comments.length})
+                        </h3>
 
-                        {/* Drawer List */}
-                        <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-4 bg-gray-50/50">
+                        <div className="flex flex-col gap-3">
                             {comments.length === 0 ? (
-                                <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-2">
-                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="opacity-20"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                                    <span className="text-xs font-bold italic opacity-60">아직 댓글이 없습니다</span>
+                                <div className="text-center py-10 text-gray-400">
+                                    <p className="text-sm">No comments yet.</p>
                                 </div>
                             ) : comments.map(c => (
-                                <div key={c.id} className="flex gap-3 bg-white p-3 rounded-2xl border border-gray-100/50 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                    <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center font-bold text-[10px] shrink-0 text-gray-500 uppercase">{c.authorNickname[0]}</div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between gap-2">
-                                            <span className="font-bold text-xs truncate">@{c.authorNickname}</span>
-                                            <span className="text-[9px] text-gray-400 font-medium shrink-0">{formatDate(c.createdAt)}</span>
-                                        </div>
-                                        <p className="text-xs text-black/80 font-medium leading-relaxed mt-1 break-words">{c.content}</p>
+                                <div key={c.id} className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="font-bold text-xs text-gray-900">@{c.authorNickname}</span>
+                                        <span className="text-[10px] text-gray-400">{formatDate(c.createdAt)}</span>
                                     </div>
+                                    <p className="text-xs text-gray-600 leading-relaxed">{c.content}</p>
                                 </div>
                             ))}
                         </div>
+                    </div>
+                </div>
 
-                        {/* Drawer Input */}
-                        <div className={`p-4 sm:p-6 bg-white border-t border-gray-50 shrink-0 ${!isAuthenticated ? 'opacity-70 grayscale' : ''}`}>
-                            <div className="flex gap-2">
-                                <input
-                                    className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-2.5 text-xs font-bold focus:ring-2 focus:ring-black/5 outline-none transition-all placeholder:text-gray-300 disabled:cursor-not-allowed"
-                                    placeholder={isAuthenticated ? "멋진 감상평을 남겨주세요..." : "로그인 후 댓글을 남겨주세요"}
-                                    value={commentInput}
-                                    onChange={e => setCommentInput(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && handleCommentSubmit()}
-                                    disabled={!isAuthenticated || commentLoading}
-                                />
-                                <button
-                                    onClick={handleCommentSubmit}
-                                    disabled={!isAuthenticated || !commentInput.trim() || commentLoading}
-                                    className="bg-black text-white px-6 rounded-2xl font-bold text-[11px] hover:bg-gray-800 active:scale-95 disabled:opacity-30 disabled:active:scale-100 transition-all uppercase tracking-wider"
-                                >
-                                    {commentLoading ? '...' : 'POST'}
-                                </button>
-                            </div>
-                        </div>
+                {/* Comment Input */}
+                <div className="p-4 border-t border-gray-200 bg-white">
+                    <div className="flex gap-2">
+                        <input
+                            className="flex-1 bg-gray-100 border-none rounded-xl px-4 py-3 text-xs font-medium focus:ring-2 focus:ring-black/5 outline-none transition-all placeholder:text-gray-400"
+                            placeholder={isAuthenticated ? "Add a comment..." : "Login to comment"}
+                            value={commentInput}
+                            onChange={e => setCommentInput(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleCommentSubmit()}
+                            disabled={!isAuthenticated || commentLoading}
+                        />
+                        <button
+                            onClick={handleCommentSubmit}
+                            disabled={!isAuthenticated || !commentInput.trim() || commentLoading}
+                            className="bg-black text-white px-4 rounded-xl font-bold text-[10px] hover:bg-gray-800 disabled:opacity-30 transition-all uppercase"
+                        >
+                            POST
+                        </button>
                     </div>
                 </div>
             </div>

@@ -19,7 +19,6 @@ type DisplayItem = GalleryItem | PlaceholderItem;
 interface CarouselGalleryProps {
     items?: GalleryItem[];
     loading?: boolean;
-    onPreview?: (url: string) => void;
 }
 
 const PLACEHOLDER_ITEMS: PlaceholderItem[] = Array(5).fill(null).map((_, i) => ({
@@ -30,7 +29,7 @@ const PLACEHOLDER_ITEMS: PlaceholderItem[] = Array(5).fill(null).map((_, i) => (
     isPlaceholder: true as const,
 }));
 
-export default function CarouselGallery({ items = [], loading = false, onPreview }: CarouselGalleryProps) {
+export default function CarouselGallery({ items = [], loading = false }: CarouselGalleryProps) {
     const { t } = useLanguage();
     const router = useRouter();
     const displayItems: DisplayItem[] = loading ? PLACEHOLDER_ITEMS : items;
@@ -95,11 +94,8 @@ export default function CarouselGallery({ items = [], loading = false, onPreview
         if ('isPlaceholder' in item && item.isPlaceholder) {
             return;
         }
-        if (index === activeIndex && 'ldrUrl' in item && item.ldrUrl) {
-            onPreview?.(item.ldrUrl);
-        } else {
-            setActiveIndex(index);
-        }
+        // Navigate to Gallery Detail page
+        router.push(`/gallery/${item.id}`);
     };
 
     return (
@@ -127,9 +123,64 @@ export default function CarouselGallery({ items = [], loading = false, onPreview
                 </div>
             )}
 
-            <div className="flex items-center justify-between w-full max-w-[1200px] relative z-20 pointer-events-none">
+            {/* Cards Container - Centered */}
+            <div className="w-full max-w-[1200px] h-[450px] relative flex items-center justify-center perspective-[2000px] preserve-3d pointer-events-auto z-20">
+                {displayItems.map((item, index) => {
+                    const isPlaceholder = 'isPlaceholder' in item && item.isPlaceholder;
+                    return (
+                        <div
+                            key={item.id}
+                            className={`absolute w-[260px] h-[360px] bg-white rounded-[20px] border-[1.5px] border-black/10 shadow-[0_4px_12px_rgba(0,0,0,0.06),0_12px_28px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden transition-all duration-400 cursor-pointer select-none preserve-3d md:w-[220px] md:h-[320px] hover:border-black/20 hover:shadow-[0_6px_16px_rgba(0,0,0,0.1),0_16px_36px_rgba(0,0,0,0.14)] ${index === activeIndex ? 'border-black/15 shadow-[0_8px_24px_rgba(0,0,0,0.12),0_24px_48px_rgba(0,0,0,0.16)]' : ''} ${isPlaceholder ? 'cursor-default' : ''}`}
+                            style={getCardStyle(index)}
+                            onClick={() => handleCardClick(index, item)}
+                        >
+                            <div className="flex-1 flex items-center justify-center p-4 border-b-2 border-black/8 relative bg-gradient-to-b from-[#fafafa] to-[#f0f0f0]">
+                                {isPlaceholder ? (
+                                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#f5f5f5] to-[#e8e8e8] animate-pulse">
+                                        <svg className="w-[60px] h-[60px] text-[#ccc]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                            <rect x="3" y="3" width="7" height="7" rx="1" />
+                                            <rect x="14" y="3" width="7" height="7" rx="1" />
+                                            <rect x="3" y="14" width="7" height="7" rx="1" />
+                                            <rect x="14" y="14" width="7" height="7" rx="1" />
+                                        </svg>
+                                    </div>
+                                ) : item.thumbnailUrl ? (
+                                    <Image
+                                        src={item.thumbnailUrl}
+                                        alt={item.title}
+                                        fill
+                                        style={{ objectFit: 'cover' }}
+                                    />
+                                ) : null}
+                            </div>
+                            <div className="p-4 bg-white flex flex-col gap-1.5">
+                                {isPlaceholder ? (
+                                    <>
+                                        <div className="h-4 bg-gradient-to-r from-[#e0e0e0] via-[#f0f0f0] to-[#e0e0e0] bg-[length:200%_100%] animate-shimmer rounded w-[70%]" />
+                                        <div className="h-4 bg-gradient-to-r from-[#e0e0e0] via-[#f0f0f0] to-[#e0e0e0] bg-[length:200%_100%] animate-shimmer rounded w-[50%]" />
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="flex items-center justify-start gap-1.5 text-left overflow-hidden">
+                                            <span className="text-[13px] font-bold text-[#666] shrink-0">{t.main.landing.titleLabel} </span>
+                                            <span className="text-sm font-semibold text-[#222] overflow-hidden text-ellipsis whitespace-nowrap">{item.title}</span>
+                                        </div>
+                                        <div className="flex items-center justify-start gap-1.5 text-left overflow-hidden">
+                                            <span className="text-[13px] font-bold text-[#666] shrink-0">{t.main.landing.authorLabel} </span>
+                                            <span className="text-sm font-semibold text-[#222] overflow-hidden text-ellipsis whitespace-nowrap">{item.authorNickname || 'Anonymous'}</span>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Controls & Pagination */}
+            <div className="flex items-center gap-8 mt-10 z-50 pointer-events-auto">
                 <button
-                    className="pointer-events-auto bg-transparent border-none flex items-center justify-center cursor-pointer z-[100] transition-all duration-200 text-black text-[60px] font-[100] p-5 leading-none font-sans hover:scale-120 hover:text-[#333] active:scale-90 disabled:opacity-10 disabled:cursor-default"
+                    className="bg-transparent border-none flex items-center justify-center cursor-pointer transition-all duration-200 text-black text-[40px] font-[100] leading-none font-sans hover:scale-110 hover:text-[#333] active:scale-95 disabled:opacity-10 disabled:cursor-default"
                     onClick={handlePrev}
                     disabled={activeIndex === 0}
                     aria-label="Previous"
@@ -137,77 +188,24 @@ export default function CarouselGallery({ items = [], loading = false, onPreview
                     &lt;
                 </button>
 
-                <div className="relative flex-1 h-[450px] flex items-center justify-center perspective-[2000px] preserve-3d pointer-events-auto">
-                    {displayItems.map((item, index) => {
-                        const isPlaceholder = 'isPlaceholder' in item && item.isPlaceholder;
-                        return (
-                            <div
-                                key={item.id}
-                                className={`absolute w-[260px] h-[360px] bg-white rounded-[20px] border-[1.5px] border-black/10 shadow-[0_4px_12px_rgba(0,0,0,0.06),0_12px_28px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden transition-all duration-400 cursor-pointer select-none preserve-3d md:w-[220px] md:h-[320px] hover:border-black/20 hover:shadow-[0_6px_16px_rgba(0,0,0,0.1),0_16px_36px_rgba(0,0,0,0.14)] ${index === activeIndex ? 'border-black/15 shadow-[0_8px_24px_rgba(0,0,0,0.12),0_24px_48px_rgba(0,0,0,0.16)]' : ''} ${isPlaceholder ? 'cursor-default' : ''}`}
-                                style={getCardStyle(index)}
-                                onClick={() => handleCardClick(index, item)}
-                            >
-                                <div className="flex-1 flex items-center justify-center p-4 border-b-2 border-black/8 relative bg-gradient-to-b from-[#fafafa] to-[#f0f0f0]">
-                                    {isPlaceholder ? (
-                                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#f5f5f5] to-[#e8e8e8] animate-pulse">
-                                            <svg className="w-[60px] h-[60px] text-[#ccc]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                                <rect x="3" y="3" width="7" height="7" rx="1" />
-                                                <rect x="14" y="3" width="7" height="7" rx="1" />
-                                                <rect x="3" y="14" width="7" height="7" rx="1" />
-                                                <rect x="14" y="14" width="7" height="7" rx="1" />
-                                            </svg>
-                                        </div>
-                                    ) : item.thumbnailUrl ? (
-                                        <Image
-                                            src={item.thumbnailUrl}
-                                            alt={item.title}
-                                            fill
-                                            style={{ objectFit: 'cover' }}
-                                        />
-                                    ) : null}
-                                </div>
-                                <div className="p-4 bg-white flex flex-col gap-1.5">
-                                    {isPlaceholder ? (
-                                        <>
-                                            <div className="h-4 bg-gradient-to-r from-[#e0e0e0] via-[#f0f0f0] to-[#e0e0e0] bg-[length:200%_100%] animate-shimmer rounded w-[70%]" />
-                                            <div className="h-4 bg-gradient-to-r from-[#e0e0e0] via-[#f0f0f0] to-[#e0e0e0] bg-[length:200%_100%] animate-shimmer rounded w-[50%]" />
-                                        </>
-                                    ) : (
-                                        <>
-                                            <div className="flex items-center justify-start gap-1.5 text-left overflow-hidden">
-                                                <span className="text-[13px] font-bold text-[#666] shrink-0">{t.main.landing.titleLabel} </span>
-                                                <span className="text-sm font-semibold text-[#222] overflow-hidden text-ellipsis whitespace-nowrap">{item.title}</span>
-                                            </div>
-                                            <div className="flex items-center justify-start gap-1.5 text-left overflow-hidden">
-                                                <span className="text-[13px] font-bold text-[#666] shrink-0">{t.main.landing.authorLabel} </span>
-                                                <span className="text-sm font-semibold text-[#222] overflow-hidden text-ellipsis whitespace-nowrap">{item.authorNickname || 'Anonymous'}</span>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
+                <div className="flex gap-3">
+                    {displayItems.map((_, index) => (
+                        <button
+                            key={index}
+                            className={`w-3 h-3 rounded-full border-none cursor-pointer transition-all duration-300 ${index === activeIndex ? 'w-8 bg-black' : 'bg-[#ddd]'}`}
+                            onClick={() => setActiveIndex(index)}
+                        />
+                    ))}
                 </div>
 
                 <button
-                    className="pointer-events-auto bg-transparent border-none flex items-center justify-center cursor-pointer z-[100] transition-all duration-200 text-black text-[60px] font-[100] p-5 leading-none font-sans hover:scale-120 hover:text-[#333] active:scale-90 disabled:opacity-10 disabled:cursor-default"
+                    className="bg-transparent border-none flex items-center justify-center cursor-pointer transition-all duration-200 text-black text-[40px] font-[100] leading-none font-sans hover:scale-110 hover:text-[#333] active:scale-95 disabled:opacity-10 disabled:cursor-default"
                     onClick={handleNext}
                     disabled={activeIndex === displayItems.length - 1}
                     aria-label="Next"
                 >
                     &gt;
                 </button>
-            </div>
-
-            <div className="flex gap-3 mt-10">
-                {displayItems.map((_, index) => (
-                    <button
-                        key={index}
-                        className={`w-3 h-3 rounded-full border-none cursor-pointer transition-all duration-300 ${index === activeIndex ? 'w-8 bg-black' : 'bg-[#ddd]'}`}
-                        onClick={() => setActiveIndex(index)}
-                    />
-                ))}
             </div>
 
             <style jsx>{`
