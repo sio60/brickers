@@ -99,6 +99,7 @@ export const en = {
         menu: {
             previewImage: "View Original Image",
             viewBlueprint: "View Assembly Guide",
+            sourceImage: "Download Original Image",
             glbFile: "Download Model (glb)",
             ldrFile: "Download Blueprint (ldr)"
         },
@@ -235,7 +236,7 @@ export const en = {
                 date: "Modified Date",
                 views: "Views"
             },
-            viewModes: "VIEW MODES",
+            viewModes: "View Modes",
             tabBrick: "Brick 3D",
             tabModeling: "3D Modeling",
             originalModel: "Original 3D Model",
@@ -330,7 +331,13 @@ export const en = {
             inProgress: "Feature in progress"
         },
         error: "An error occurred.",
-        failed: "Processing failed."
+        failed: "Processing failed.",
+        label: {
+            target: "Target",
+            reporter: "Reporter",
+            order: "Order",
+            user: "User"
+        }
     },
     mypage: {
         stats: {
@@ -345,7 +352,8 @@ export const en = {
         payment: {
             date: "Payment Date",
             nextDate: "Next Payment"
-        }
+        },
+        preparing: "Content is coming soon..."
     },
     // gallery specific (from original gallery-app)
     detail: {

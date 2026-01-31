@@ -7,7 +7,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import CarouselGallery from "@/components/CarouselGallery";
 import AgeSelectionModal from "@/components/kids/AgeSelectionModal";
-import Preview3DModal from "@/components/Preview3DModal";
 import { GalleryItem } from "@/types/gallery";
 import styles from '@/app/LandingPage.module.css';
 
@@ -24,7 +23,6 @@ function LandingPageContent({ initialItems }: Props) {
     const { isAuthenticated } = useAuth();
 
     const [isAgeModalOpen, setIsAgeModalOpen] = useState(false);
-    const [selectedLdrUrl, setSelectedLdrUrl] = useState<string | null>(null);
     const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(initialItems);
     const [isLoading, setIsLoading] = useState(initialItems.length === 0);
 
@@ -83,11 +81,10 @@ function LandingPageContent({ initialItems }: Props) {
                 <CarouselGallery
                     items={galleryItems}
                     loading={isLoading}
-                    onPreview={setSelectedLdrUrl}
                 />
             </div>
 
-            {!selectedLdrUrl && (
+            {!galleryItems.length && !isLoading ? null : (
                 <div className={styles.hero}>
                     <button
                         className={styles.goMakeBtn}
@@ -104,13 +101,6 @@ function LandingPageContent({ initialItems }: Props) {
                 onClose={() => setIsAgeModalOpen(false)}
                 onSelect={handleLevelSelect}
             />
-
-            {selectedLdrUrl && (
-                <Preview3DModal
-                    url={selectedLdrUrl}
-                    onClose={() => setSelectedLdrUrl(null)}
-                />
-            )}
         </div>
     );
 }
