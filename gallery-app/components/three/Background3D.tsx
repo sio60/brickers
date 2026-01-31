@@ -124,31 +124,13 @@ function Brick({
 
                 if (Math.abs(vel.y) < 0.1 && Math.abs(vel.x) < 0.1) {
                     isFalling.current = false;
-                    vel.set(randomRange(-0.02, 0.02), randomRange(0.01, 0.05), randomRange(-0.02, 0.02));
+                    vel.set(0, 0, 0);
+                    angVel.set(0, 0, 0);
                 }
             }
         } else {
-            // floating (둥둥 떠다니기)
-            // Gentle sine-wave bobbing
-            const time = performance.now() * 0.001;
-            const floatSpeed = 0.5;
-            const floatHeight = 0.005;
-
-            // Apply base velocity (drift)
-            pos.add(vel);
-
-            // Add bobbing effect (use id or random offset if id is missing)
-            const offset = id !== undefined ? id : Math.random() * 100;
-            pos.y += Math.sin(time * floatSpeed + offset) * floatHeight;
-
-            // Continuous gentle rotation
-            rot.x += angVel.x;
-            rot.y += angVel.y;
-
-            // Bounds checking (bounce with no friction loss for infinite float)
-            if (pos.y > 15 || pos.y < -15) vel.y *= -1;
-            if (pos.x > 25 || pos.x < -25) vel.x *= -1;
-            if (pos.z > 5 || pos.z < -30) vel.z *= -1;
+            // Static state (stopped)
+            // No updates to position or rotation
         }
 
         meshRef.current.position.copy(pos);
@@ -165,7 +147,7 @@ function Brick({
             randomRange(-0.1, 0.1),
             randomRange(-0.1, 0.1)
         );
-        isFalling.current = false;
+        isFalling.current = true;
     };
 
     const renderGeometry = () => {
