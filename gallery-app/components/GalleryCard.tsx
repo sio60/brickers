@@ -10,6 +10,7 @@ type Props = {
     item: GalleryItem;
     isLoggedIn: boolean;
     onLikeToggle?: (id: string, currentState: boolean) => void;
+    onBookmarkToggle?: (id: string, currentState: boolean) => void;
     onLoginRequired?: () => void;
 };
 
@@ -19,7 +20,7 @@ function isValidImageUrl(url?: string): boolean {
     return url.startsWith('http://') || url.startsWith('https://');
 }
 
-export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onLoginRequired }: Props) {
+export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmarkToggle, onLoginRequired }: Props) {
     const safeTitle = item.title.replace(/\s+/g, '-').replace(/[^\w\-\uAC00-\uD7A3]/g, '');
     const slug = `${safeTitle}-${item.id}`;
     const hasValidImage = isValidImageUrl(item.thumbnailUrl);
@@ -35,6 +36,19 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onLoginReq
 
         const isCurrentlyLiked = item.myReaction === 'LIKE';
         onLikeToggle?.(item.id, isCurrentlyLiked);
+    };
+
+    const handleBookmarkClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!isLoggedIn) {
+            onLoginRequired?.();
+            return;
+        }
+
+        const isCurrentlyBookmarked = !!item.isBookmarked;
+        onBookmarkToggle?.(item.id, isCurrentlyBookmarked);
     };
 
     const formatDate = (dateStr?: string) => {
@@ -89,31 +103,59 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onLoginReq
                             )}
                         </div>
 
-                        {/* Bookmark/Like button */}
-                        <button
-                            onClick={handleLikeClick}
-                            className={`flex items-center gap-1 px-2.5 py-1 rounded-full border border-black transition-all ${item.myReaction === 'LIKE'
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-1.5">
+                            {/* Bookmark button */}
+                            {onBookmarkToggle && (
+                                <button
+                                    onClick={handleBookmarkClick}
+                                    className={`flex items-center justify-center w-7 h-7 rounded-full border border-black transition-all ${item.isBookmarked
+                                        ? 'bg-yellow-400 text-black'
+                                        : 'bg-white text-black hover:bg-gray-50'
+                                        }`}
+                                    aria-label={item.isBookmarked ? '북마크 취소' : '북마크 추가'}
+                                >
+                                    <svg
+                                        className={`w-3.5 h-3.5 ${item.isBookmarked ? 'fill-black' : 'fill-none'}`}
+                                        stroke="currentColor"
+                                        strokeWidth="2.5"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"
+                                        />
+                                    </svg>
+                                </button>
+                            )}
+
+                            {/* Like button */}
+                            <button
+                                onClick={handleLikeClick}
+                                className={`flex items-center gap-1 px-2.5 py-1 rounded-full border border-black transition-all ${item.myReaction === 'LIKE'
                                     ? 'bg-black text-white'
                                     : 'bg-white text-black hover:bg-gray-50'
-                                }`}
-                            aria-label={item.myReaction === 'LIKE' ? '좋아요 취소' : '좋아요 추가'}
-                        >
-                            <svg
-                                className={`w-3.5 h-3.5 ${item.myReaction === 'LIKE' ? 'fill-white' : 'fill-none text-gray-400'}`}
-                                stroke="currentColor"
-                                strokeWidth="2.5"
-                                viewBox="0 0 24 24"
+                                    }`}
+                                aria-label={item.myReaction === 'LIKE' ? '좋아요 취소' : '좋아요 추가'}
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M14 9l-1.154-4.832A2.212 2.212 0 0010.697 2.5a2.212 2.212 0 00-2.149 2.149v4.351H5.432a2.33 2.33 0 00-2.332 2.332c0 .942.553 1.758 1.354 2.138-.113.385-.175.792-.175 1.213 0 .762.2 1.478.553 2.1-.2.433-.314.914-.314 1.424 0 .866.326 1.656.862 2.253.536.597 1.272.96 2.088.96h7.5c2.209 0 4-1.791 4-4v-5c0-1.105-.895-2-2-2h-3z"
-                                />
-                            </svg>
-                            <span className="text-[10px] font-black leading-none">
-                                {item.likeCount || 0}
-                            </span>
-                        </button>
+                                <svg
+                                    className={`w-3.5 h-3.5 ${item.myReaction === 'LIKE' ? 'fill-white' : 'fill-none text-gray-400'}`}
+                                    stroke="currentColor"
+                                    strokeWidth="2.5"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M14 9l-1.154-4.832A2.212 2.212 0 0010.697 2.5a2.212 2.212 0 00-2.149 2.149v4.351H5.432a2.33 2.33 0 00-2.332 2.332c0 .942.553 1.758 1.354 2.138-.113.385-.175.792-.175 1.213 0 .762.2 1.478.553 2.1-.2.433-.314.914-.314 1.424 0 .866.326 1.656.862 2.253.536.597 1.272.96 2.088.96h7.5c2.209 0 4-1.791 4-4v-5c0-1.105-.895-2-2-2h-3z"
+                                    />
+                                </svg>
+                                <span className="text-[10px] font-black leading-none">
+                                    {item.likeCount || 0}
+                                </span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
