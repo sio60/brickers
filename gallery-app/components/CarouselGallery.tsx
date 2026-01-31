@@ -161,13 +161,17 @@ export default function CarouselGallery({ items = [], loading = false }: Carouse
                                     </>
                                 ) : (
                                     <>
-                                        <div className="flex items-center justify-start gap-1.5 text-left overflow-hidden">
-                                            <span className="text-[13px] font-bold text-[#666] shrink-0">{t.main.landing.titleLabel} </span>
-                                            <span className="text-sm font-semibold text-[#222] overflow-hidden text-ellipsis whitespace-nowrap">{item.title}</span>
+                                        <div className="flex flex-col gap-0.5 text-left">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-[11px] font-bold text-[#888] uppercase tracking-wider shrink-0">{t.main.landing.titleLabel}</span>
+                                            </div>
+                                            <span className="text-[13px] font-bold text-[#222] truncate w-full block">{item.title}</span>
                                         </div>
-                                        <div className="flex items-center justify-start gap-1.5 text-left overflow-hidden">
-                                            <span className="text-[13px] font-bold text-[#666] shrink-0">{t.main.landing.authorLabel} </span>
-                                            <span className="text-sm font-semibold text-[#222] overflow-hidden text-ellipsis whitespace-nowrap">{item.authorNickname || 'Anonymous'}</span>
+                                        <div className="flex flex-col gap-0.5 text-left mt-1">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-[11px] font-bold text-[#888] uppercase tracking-wider shrink-0">{t.main.landing.authorLabel}</span>
+                                            </div>
+                                            <span className="text-[13px] font-medium text-[#444] truncate w-full block">{item.authorNickname || 'Anonymous'}</span>
                                         </div>
                                     </>
                                 )}

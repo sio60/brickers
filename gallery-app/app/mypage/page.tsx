@@ -350,7 +350,7 @@ export default function MyPage() {
                                                     style={{ width: 'auto', display: 'inline-block', fontSize: '24px', fontWeight: 'bold', padding: '4px 8px' }}
                                                     value={editNickname}
                                                     onChange={(e) => setEditNickname(e.target.value)}
-                                                    placeholder="Nickname"
+                                                    placeholder={t.profile.nickname}
                                                 />
                                             )}
                                         </div>
@@ -365,7 +365,7 @@ export default function MyPage() {
                                                 className={styles.mypage__formTextarea}
                                                 value={editBio}
                                                 onChange={(e) => setEditBio(e.target.value)}
-                                                placeholder="Bio"
+                                                placeholder={t.mypage.bioPlaceholder}
                                             />
                                         )}
 
@@ -610,7 +610,7 @@ export default function MyPage() {
                     <div className={styles.mypage__section}>
                         <h2 className={styles.mypage__sectionTitle}>Pages</h2>
                         <div className={styles.mypage__card}>
-                            <p>Preparing content for {activeMenu}...</p>
+                            <p>{t.mypage.preparing}</p>
                         </div>
                     </div>
                 );
@@ -702,7 +702,7 @@ export default function MyPage() {
                                 disabled={!menuJob.sourceImageUrl}
                             >
                                 <Icons.Search className={styles.mypage__menuIcon2} />
-                                <span>{t.jobs.menu?.previewImage || '이미지 원본 보기'}</span>
+                                <span>{t.jobs.menu?.previewImage}</span>
                             </button>
                             <button
                                 className={`${styles.mypage__menuItem2} ${styles.primary}`}
@@ -710,7 +710,7 @@ export default function MyPage() {
                                 disabled={!menuJob.ldrUrl}
                             >
                                 <Icons.Layers className={styles.mypage__menuIcon2} />
-                                <span>{t.jobs.menu?.viewBlueprint || '조립 설명서 보기'}</span>
+                                <span>{t.jobs.menu?.viewBlueprint}</span>
                             </button>
                             <div className={styles.mypage__menuDivider} />
                             <button
@@ -719,7 +719,7 @@ export default function MyPage() {
                                 disabled={!menuJob.glbUrl}
                             >
                                 <Icons.DownloadImage className={styles.mypage__menuIcon2} />
-                                <span>{t.jobs.menu?.sourceImage || '원본 이미지 다운'}</span>
+                                <span>{t.jobs.menu?.glbFile}</span>
                             </button>
                             <button
                                 className={styles.mypage__menuItem2}
@@ -727,7 +727,7 @@ export default function MyPage() {
                                 disabled={!menuJob.ldrUrl}
                             >
                                 <Icons.DownloadFile className={styles.mypage__menuIcon2} />
-                                <span>{t.jobs.menu?.ldrFile || 'LDR 파일 다운'}</span>
+                                <span>{t.jobs.menu?.ldrFile}</span>
                             </button>
                         </div>
                     </div>

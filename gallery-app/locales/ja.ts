@@ -313,7 +313,13 @@ export const ja = {
             inProgress: "機能開発中"
         },
         error: "エラーが発生しました。",
-        failed: "処理に失敗しました。"
+        failed: "処理に失敗しました。",
+        label: {
+            target: "対象",
+            reporter: "報告者",
+            order: "注文番号",
+            user: "ユーザー"
+        }
     },
     mypage: {
         stats: {
@@ -328,7 +334,8 @@ export const ja = {
         payment: {
             date: "決済日",
             nextDate: "次回決済日"
-        }
+        },
+        preparing: "コンテンツ準備中です..."
     },
     common: {
         loading: "読み込み中...",

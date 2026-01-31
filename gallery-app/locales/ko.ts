@@ -99,6 +99,7 @@ export const ko = {
         menu: {
             previewImage: "이미지 원본 보기",
             viewBlueprint: "조립 설명서 보기",
+            sourceImage: "원본 이미지 다운로드",
             glbFile: "모델링 파일 다운(glb)",
             ldrFile: "도면 파일 다운(ldr)"
         },
@@ -330,7 +331,13 @@ export const ko = {
             inProgress: "기능 구현 중"
         },
         error: "오류가 발생했습니다.",
-        failed: "처리에 실패했습니다."
+        failed: "처리에 실패했습니다.",
+        label: {
+            target: "대상",
+            reporter: "신고자",
+            order: "주문 번호",
+            user: "사용자"
+        }
     },
     mypage: {
         stats: {
@@ -345,7 +352,8 @@ export const ko = {
         payment: {
             date: "결제일",
             nextDate: "다음 결제일"
-        }
+        },
+        preparing: "콘텐츠 준비 중입니다..."
     },
     // gallery 전용 (기존 gallery-app)
     detail: {

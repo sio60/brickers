@@ -320,8 +320,8 @@ export default function AdminPage() {
                                             </h4>
                                             <p>{item.details}</p>
                                             <div className={styles.meta}>
-                                                Target: {item.targetType}({item.targetId}) •
-                                                Reporter: {item.reporterEmail || item.createdBy} •
+                                                {t.admin.label.target}: {item.targetType}({item.targetId}) •
+                                                {t.admin.label.reporter}: {item.reporterEmail || item.createdBy} •
                                                 {new Date(item.createdAt).toLocaleDateString()}
                                             </div>
                                         </div>
@@ -366,14 +366,14 @@ export default function AdminPage() {
                                 {refunds.map(item => (
                                     <div key={item.orderId} className={styles.listItem}>
                                         <h4>
-                                            Order #{item.orderId}
+                                            {t.admin.label.order} #{item.orderId}
                                             <span className={`${styles.statusBadge} ${styles[item.status]}`}>
                                                 {item.status}
                                             </span>
                                         </h4>
                                         <p>{t.admin.refund.amount}: {item.amount}</p>
                                         <div className={styles.meta}>
-                                            User: {item.userId} • {new Date(item.requestedAt).toLocaleDateString()}
+                                            {t.admin.label.user}: {item.userId} • {new Date(item.requestedAt).toLocaleDateString()}
                                         </div>
                                         <div className={styles.actions}>
                                             <button onClick={() => alert(t.admin.refund.inProgress)}>
