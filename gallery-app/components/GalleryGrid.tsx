@@ -7,11 +7,11 @@ import { useLanguage } from '../contexts/LanguageContext';
 type Props = {
     items: GalleryItem[];
     isLoggedIn: boolean;
-    onBookmarkToggle?: (id: string, currentState: boolean) => void;
+    onLikeToggle?: (id: string, currentState: boolean) => void;
     onLoginRequired?: () => void;
 };
 
-export default function GalleryGrid({ items, isLoggedIn, onBookmarkToggle, onLoginRequired }: Props) {
+export default function GalleryGrid({ items, isLoggedIn, onLikeToggle, onLoginRequired }: Props) {
     const { t } = useLanguage();
 
     if (!items || items.length === 0) {
@@ -26,13 +26,13 @@ export default function GalleryGrid({ items, isLoggedIn, onBookmarkToggle, onLog
     }
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 justify-center">
             {items.map((item) => (
                 <GalleryCard
                     key={item.id}
                     item={item}
                     isLoggedIn={isLoggedIn}
-                    onBookmarkToggle={onBookmarkToggle}
+                    onLikeToggle={onLikeToggle}
                     onLoginRequired={onLoginRequired}
                 />
             ))}
