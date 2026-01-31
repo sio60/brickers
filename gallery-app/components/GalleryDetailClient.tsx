@@ -52,11 +52,33 @@ export default function GalleryDetailClient({ item }: Props) {
             }
         };
 
+        // Sync latest status (especially bookmark) from server with auth token
+        const fetchDetail = async () => {
+            try {
+                // Use authFetch if available, otherwise regular fetch logic (though bookmark needs auth)
+                // If isAuthenticated is false, we might not need to refetch unless we want real-time like counts
+                const res = await authFetch(`/api/gallery/${item.id}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.likeCount !== undefined) setLikeCount(data.likeCount);
+                    if (data.viewCount !== undefined) setViewCount(data.viewCount); // Update view count from detail as well
+                    if (data.isBookmarked !== undefined) setIsLiked(data.isBookmarked);
+                }
+            } catch (error) {
+                console.error('Failed to sync gallery detail:', error);
+            }
+        };
+
         if (item.id) {
             incrementView();
             fetchComments();
+            fetchDetail();
+
+            // Real-time update: Poll stats every 3 seconds to see other users' interactions
+            const intervalId = setInterval(fetchDetail, 3000);
+            return () => clearInterval(intervalId);
         }
-    }, [item.id]);
+    }, [item.id, authFetch]);
 
     const handleLikeToggle = async () => {
         if (!isAuthenticated) {

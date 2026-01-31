@@ -37,46 +37,43 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 54px;
-    height: 54px;
-    border-radius: 50%;
-    background: #fff;
-    border: 3.5px solid #000;
+    background: transparent;
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     z-index: 100;
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 6px 0px rgba(0, 0, 0, 1);
+    transition: all 0.2s ease;
     color: #000;
+    font-size: 60px;
+    font-weight: 100;
+    padding: 20px;
+    line-height: 1;
+    font-family: sans-serif;
+    /* Clean sans-serif for arrows */
 }
 
 .prev {
-    left: 80px;
+    left: 20px;
 }
 
 .next {
-    right: 80px;
+    right: 20px;
 }
 
 .navButton:hover {
-    background: #000;
-    color: #fff;
-    transform: translateY(-50%) scale(1.15);
-    /* Slightly bigger pop */
+    transform: translateY(-50%) scale(1.2);
+    color: #333;
 }
 
 .navButton:active {
-    transform: translateY(-50%) scale(0.95);
-    box-shadow: 0 2px 0px rgba(0, 0, 0, 1);
+    transform: translateY(-50%) scale(0.9);
 }
 
 .navButton:disabled {
-    opacity: 0.15;
-    cursor: not-allowed;
-    background: #fff;
-    filter: grayscale(1);
+    opacity: 0.1;
+    cursor: default;
 }
 
 .card {
