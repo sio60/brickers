@@ -239,6 +239,7 @@ export const en = {
             viewModes: "View Modes",
             tabBrick: "Brick 3D",
             tabModeling: "3D Modeling",
+            tabOriginal: "Original Image",
             originalModel: "Original 3D Model",
             previewTitle: "Brick Preview",
             startAssembly: "Start Assembly"
