@@ -51,25 +51,26 @@ export default function CarouselGallery({ items = [], loading = false, onPreview
 
     const getCardStyle = (index: number) => {
         const offset = index - activeIndex;
-        const absOffset = Math.abs(offset);
+        // 3D Cylinder Layout
+        const theta = 40; // Angle between cards (degrees)
+        const radius = 550; // Radius of the cylinder
+        const angle = offset * theta;
 
-        // Arc/Coverflow style - cards curve around like a cylinder
-        const x = offset * 220; // Horizontal spacing
-        const z = -absOffset * 120; // Push back for depth
-        const rotateY = offset * -35; // Rotate inward (negative for left, positive for right)
-        const scale = 1 - (absOffset * 0.08);
-        const zIndex = 10 - absOffset;
-        const opacity = 1 - (absOffset * 0.15);
-
-        // Blur effect for non-active cards
-        const blur = absOffset > 0 ? Math.min(absOffset * 2, 4) : 0;
+        // Calculate opacity/visibility based on rotation to hide back-facing cards nicely
+        // Normalize angle to -180 ~ 180 to determine "back" side
+        const normalizedAngle = ((angle % 360) + 540) % 360 - 180;
+        const isBack = Math.abs(normalizedAngle) > 90;
 
         return {
-            transform: `perspective(1000px) translateX(${x}px) translateZ(${z}px) rotateY(${rotateY}deg) scale(${scale})`,
-            zIndex,
-            opacity: opacity > 0.3 ? opacity : 0.3,
-            filter: blur > 0 ? `blur(${blur}px)` : 'none',
-            pointerEvents: absOffset <= 1 ? 'auto' : 'none',
+            transform: `translateZ(-500px) rotateY(${angle}deg) translateZ(${radius}px)`,
+            // translateZ(-500px) moves the whole pivot back so the front card is near z=0 (screen plane)
+            // Then rotateY distributes them in a circle
+            // Then translateZ(radius) pushes them out to the cylinder surface
+
+            opacity: Math.abs(normalizedAngle) > 100 ? 0 : 1, // Hide cards that are completely behind
+            zIndex: 100 - Math.abs(Math.round(normalizedAngle)), // Simple z-sorting
+            pointerEvents: Math.abs(normalizedAngle) < 20 ? 'auto' : 'none', // Allow clicks mostly on front cards
+            transition: 'all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)',
         } as React.CSSProperties;
     };
 
@@ -126,10 +127,9 @@ export default function CarouselGallery({ items = [], loading = false, onPreview
                     disabled={activeIndex === 0}
                     aria-label="Previous"
                 >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
+                    &lt;
                 </button>
+
 
                 <div className={styles.carousel}>
                     {displayItems.map((item, index) => {
@@ -190,9 +190,7 @@ export default function CarouselGallery({ items = [], loading = false, onPreview
                     disabled={activeIndex === displayItems.length - 1}
                     aria-label="Next"
                 >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
+                    &gt;
                 </button>
             </div>
 
@@ -205,6 +203,6 @@ export default function CarouselGallery({ items = [], loading = false, onPreview
                     />
                 ))}
             </div>
-        </div>
+        </div >
     );
 }

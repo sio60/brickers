@@ -47,7 +47,7 @@ export default function GalleryCard({ item, isLoggedIn, onBookmarkToggle, onLogi
 
     return (
         <Link href={`/gallery/${slug}`} className="block">
-            <div className="gallery-card bg-white rounded-2xl overflow-hidden border border-gray-100">
+            <div className="gallery-card bg-white rounded-2xl overflow-hidden border-2 border-black hover:shadow-lg transition-shadow">
                 {/* Thumbnail */}
                 <div className="relative aspect-square bg-gray-100 overflow-hidden">
                     {hasValidImage ? (
@@ -102,8 +102,8 @@ export default function GalleryCard({ item, isLoggedIn, onBookmarkToggle, onLogi
                         >
                             <svg
                                 className={`w-5 h-5 transition-colors ${item.isBookmarked
-                                        ? 'fill-black text-black'
-                                        : 'fill-none text-gray-400 hover:text-black'
+                                    ? 'fill-black text-black'
+                                    : 'fill-none text-gray-400 hover:text-black'
                                     }`}
                                 stroke="currentColor"
                                 strokeWidth="2"
