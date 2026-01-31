@@ -8,6 +8,7 @@ import styles from "./MyPage.module.css";
 import { getMyOverview, getMyProfile, retryJob, updateMyProfile, ApiError } from "@/lib/api/myApi";
 import type { MyOverview, MyProfile, MyJob } from "@/lib/api/myApi";
 import KidsLdrPreview from "@/components/kids/KidsLdrPreview";
+import BackgroundBricks from "@/components/BackgroundBricks";
 import UpgradeModal from "@/components/UpgradeModal";
 
 // SVG Icons
@@ -335,9 +336,6 @@ export default function MyPage() {
                                             alt="Profile"
                                             className={styles.mypage__avatar}
                                         />
-                                        <div className={styles.mypage__avatarUpload}>
-                                            <Icons.Camera />
-                                        </div>
                                     </div>
                                     <div className={styles.mypage__profileInfo}>
                                         <div className={styles.mypage__nameRow}>
@@ -449,7 +447,7 @@ export default function MyPage() {
                                             </div>
                                         </div>
                                         <div className={styles.mypage__jobInfo}>
-                                            <div className={styles.mypage__jobTitle} style={{ fontSize: '14px' }}>{job.title || "Untitled"}</div>
+                                            <div className={styles.mypage__jobTitle}>{job.title || "Untitled"}</div>
                                             <div className={styles.mypage__jobDate}>{formatDate(job.createdAt)}</div>
                                         </div>
                                     </div>
@@ -621,9 +619,10 @@ export default function MyPage() {
 
     return (
         <div className={`${styles.mypage} ${styles['lang-' + language]}`}>
+            <BackgroundBricks />
             <div className={styles.mypage__container}>
                 <div className={styles.mypage__layout}>
-                    <button className={styles.mypage__exitBtn} onClick={() => router.push("/")}>
+                    <button className={styles.mypage__exitBtn} onClick={() => router.back()}>
                         <Icons.X />
                     </button>
 
@@ -680,12 +679,12 @@ export default function MyPage() {
                 <div className={styles.mypage__modalOverlay} onClick={() => setMenuJob(null)}>
                     <div className={styles.mypage__menuModal} onClick={e => e.stopPropagation()}>
                         <button
-                            className={styles.mypage__closeBtn}
+                            className={`${styles.mypage__closeBtn} ${styles.dark}`}
                             onClick={() => setMenuJob(null)}
                         >
                             ✕
                         </button>
-                        <div className={styles.mypage__menuHeader}>
+                        <div className={styles.mypage__menuHeader} style={{ paddingRight: '60px' }}>
                             <img
                                 src={menuJob.sourceImageUrl || "/placeholder.png"}
                                 alt={menuJob.title}
@@ -757,8 +756,8 @@ export default function MyPage() {
             {selectedJob && (
                 <div className={styles.mypage__modalOverlay}>
                     <div className={styles.mypage__modalContent}>
-                        <button className={styles.mypage__closeBtn} onClick={() => setSelectedJob(null)}>
-                            <Icons.X />
+                        <button className={`${styles.mypage__closeBtn} ${styles.dark}`} onClick={() => setSelectedJob(null)}>
+                            ✕
                         </button>
                         <div className={styles.mypage__viewerContainer}>
                             {selectedJob.ldrUrl ? (

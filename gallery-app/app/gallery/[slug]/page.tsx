@@ -25,24 +25,40 @@ type GalleryDetail = {
 
 // Helpers
 function extractId(slug: string) {
-    const parts = slug.split('-');
-    return parts[parts.length - 1];
+    if (!slug) return '';
+    try {
+        const decodedSlug = decodeURIComponent(slug);
+        const parts = decodedSlug.split('-');
+        return parts[parts.length - 1];
+    } catch (e) {
+        // Fallback for non-encoded or poorly encoded slugs
+        const parts = slug.split('-');
+        return parts[parts.length - 1];
+    }
 }
 
 async function getGalleryDetail(id: string): Promise<GalleryDetail | null> {
+    if (!id) return null;
     try {
         const apiBase = process.env.API_BASE || 'http://backend:8080';
+        console.log(`[SSR] Fetching gallery detail for ID: ${id} from ${apiBase}`);
+
         const res = await fetch(`${apiBase}/api/gallery/${id}`, {
-            next: { revalidate: 60 }
+            next: { revalidate: 60 },
+            headers: {
+                'Accept': 'application/json',
+            }
         });
+
         if (!res.ok) {
-            console.error('Failed to fetch gallery detail:', res.status);
+            const errorText = await res.text().catch(() => 'No error body');
+            console.error(`[SSR] API Error (${res.status}):`, errorText);
             return null;
         }
-        return res.json();
+
+        return await res.json();
     } catch (error) {
-        // Build time에는 backend가 없으므로 null 반환
-        console.error('Gallery detail fetch error (likely build time):', error);
+        console.error('[SSR] Gallery detail fetch unexpected error:', error);
         return null;
     }
 }

@@ -118,6 +118,13 @@ interface Viewer3DProps {
 export default function Viewer3D({ url }: Viewer3DProps) {
     const [loading, setLoading] = useState(true);
 
+    const proxiedUrl = useMemo(() => {
+        if (url && url.startsWith('http')) {
+            return `/api/proxy-image?url=${encodeURIComponent(url)}`;
+        }
+        return url;
+    }, [url]);
+
     return (
         <div className="w-full h-full relative bg-gray-50 flex items-center justify-center">
             {loading && (
@@ -131,16 +138,17 @@ export default function Viewer3D({ url }: Viewer3DProps) {
                 <ambientLight intensity={0.9} />
                 <directionalLight position={[3, 5, 2]} intensity={1} />
                 <LdrModel
-                    url={url}
+                    url={proxiedUrl}
                     onLoaded={() => setLoading(false)}
-                    onError={() => setLoading(false)}
+                    onError={(e) => {
+                        console.error("3D Viewer Error:", e);
+                        setLoading(false);
+                    }}
                 />
                 <OrbitControls makeDefault enablePan={false} enableZoom />
             </Canvas>
 
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/80 backdrop-blur rounded-full text-xs text-gray-500 pointer-events-none">
-                터치하여 회전 • 줌
-            </div>
+            {/* 터치 안내 문구 제거됨 */}
         </div>
     );
 }

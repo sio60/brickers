@@ -181,7 +181,7 @@ function LdrModel({
     if (!group) return null;
 
     return (
-        <Bounds fit clip observe margin={1.2}>
+        <Bounds fit clip observe margin={0.8}>
             <primitive object={group} />
         </Bounds>
     );
@@ -305,10 +305,11 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, ste
             <Canvas
                 camera={{ position: [200, 200, 200], fov: 45 }}
                 dpr={[1, 2]}
+                gl={{ alpha: true }}
             >
-                <ambientLight intensity={0.9} />
-                <directionalLight position={[10, 20, 10]} intensity={1.2} />
-                <directionalLight position={[-10, -20, -10]} intensity={0.5} />
+                <ambientLight intensity={1.2} />
+                <directionalLight position={[10, 20, 10]} intensity={1.5} />
+                <directionalLight position={[-10, -20, -10]} intensity={0.8} />
 
                 <LdrModel
                     url={url}
@@ -324,7 +325,7 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, ste
                     }}
                 />
 
-                <OrbitControls makeDefault enablePan={false} enableZoom minDistance={10} maxDistance={1000} />
+                <OrbitControls makeDefault enablePan={false} enableZoom minDistance={10} maxDistance={1000} autoRotate={false} />
             </Canvas>
         </div>
     );
