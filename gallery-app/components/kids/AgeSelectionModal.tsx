@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from "react";
-import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import KidsModelSelectModal from "./KidsModelSelectModal";
 import styles from "./AgeSelectionModal.module.css";
@@ -73,9 +72,6 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
                                 className={`${styles.ageBtn} ${selectedAge === "4-5" ? styles.active : ""}`}
                                 onClick={() => handleSelect("4-5")}
                             >
-                                <div className={styles.imageWrapper}>
-                                    <Image src="/35.png" alt="4-5 years" width={100} height={100} className={styles.ageImg} />
-                                </div>
                                 <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "1")}</div>
                             </button>
 
@@ -83,9 +79,6 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
                                 className={`${styles.ageBtn} ${selectedAge === "6-7" ? styles.active : ""}`}
                                 onClick={() => handleSelect("6-7")}
                             >
-                                <div className={styles.imageWrapper}>
-                                    <Image src="/67.png" alt="6-7 years" width={100} height={100} className={styles.ageImg} />
-                                </div>
                                 <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "2")}</div>
                             </button>
 
@@ -93,9 +86,6 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
                                 className={`${styles.ageBtn} ${selectedAge === "8-10" ? styles.active : ""}`}
                                 onClick={() => handleSelect("8-10")}
                             >
-                                <div className={styles.imageWrapper}>
-                                    <Image src="/810.png" alt="8-10 years" width={100} height={100} className={styles.ageImg} />
-                                </div>
                                 <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "3")}</div>
                             </button>
                         </div>

@@ -20,7 +20,8 @@ type GalleryDetail = {
     likeCount: number;
     viewCount: number;
     tags: string[];
-    ldrUrl?: string; // Added for linking to viewer
+    ldrUrl?: string;
+    glbUrl?: string; // Original GLB model URL
 }
 
 // Helpers

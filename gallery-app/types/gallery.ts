@@ -10,6 +10,7 @@ export type GalleryItem = {
     isBookmarked?: boolean;
     myReaction?: 'LIKE' | 'DISLIKE' | null;
     ldrUrl?: string;
+    glbUrl?: string;
 };
 
 export type PageResponse<T> = {
