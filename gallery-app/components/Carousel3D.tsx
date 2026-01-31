@@ -41,9 +41,9 @@ function Card({
     const absOffset = Math.abs(offset);
 
     // Coverflow Layout Calculation
-    const x = offset * 2.2;
+    const x = offset * 1.6;
     const z = -absOffset * 1.2;
-    const rotY = offset * -0.6; // ~35 degrees in radians
+    const rotY = offset * -0.6; // ~34.4 degrees in radians
 
     // Animation Spring
     const { position, rotation, scale, materialColor } = useSpring({
