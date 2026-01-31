@@ -22,6 +22,7 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
     const router = useRouter();
     const [items, setItems] = useState<GalleryItem[]>(initialItems);
     const [category, setCategory] = useState('all');
+    const [sort, setSort] = useState('latest');
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(initialTotalPages);
     const [totalElements, setTotalElements] = useState(initialTotalElements);
@@ -33,7 +34,7 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
         setLoading(true);
         try {
             const endpoint = category === 'bookmarks' ? '/api/gallery/bookmarks/my' : '/api/gallery';
-            const res = await fetch(`${endpoint}?page=${targetPage}&size=24&sort=latest`);
+            const res = await fetch(`${endpoint}?page=${targetPage}&size=24&sort=${sort}`);
             if (res.ok) {
                 const data = await res.json();
                 const content = (data.content || []).map((item: any) => ({
@@ -67,7 +68,7 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
 
         try {
             const endpoint = newCategory === 'bookmarks' ? '/api/gallery/bookmarks/my' : '/api/gallery';
-            const res = await fetch(`${endpoint}?page=0&size=24&sort=latest`);
+            const res = await fetch(`${endpoint}?page=0&size=24&sort=${sort}`);
             if (res.ok) {
                 const data = await res.json();
                 const content = (data.content || []).map((item: any) => ({
@@ -93,6 +94,34 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
             }
         } catch (error) {
             console.error('Category change failed:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSortChange = async (newSort: string) => {
+        if (newSort === sort) return;
+
+        setSort(newSort);
+        setLoading(true);
+        setPage(0);
+
+        try {
+            const endpoint = category === 'bookmarks' ? '/api/gallery/bookmarks/my' : '/api/gallery';
+            const res = await fetch(`${endpoint}?page=0&size=24&sort=${newSort}`);
+            if (res.ok) {
+                const data = await res.json();
+                const content = (data.content || []).map((item: any) => ({
+                    ...item,
+                    isBookmarked: item.bookmarked || (category === 'bookmarks'),
+                    myReaction: item.myReaction
+                }));
+                setItems(content);
+                setTotalPages(data.totalPages);
+                setTotalElements(data.totalElements);
+            }
+        } catch (error) {
+            console.error('Sort change failed:', error);
         } finally {
             setLoading(false);
         }
@@ -143,11 +172,23 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
             activeCategory={category}
             onCategoryChange={handleCategoryChange}
             rightAction={
-                <div className="flex items-center bg-gray-100 rounded-xl p-1">
-                    <button className="px-4 py-2 text-sm font-bold bg-white text-black shadow-sm rounded-lg">
+                <div className="flex items-center gap-1 bg-gray-100 rounded-full p-1 border border-gray-200">
+                    <button
+                        onClick={() => handleSortChange('latest')}
+                        className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${sort === 'latest'
+                            ? 'bg-white text-blue-600 shadow-sm'
+                            : 'text-gray-400 hover:text-gray-600'
+                            }`}
+                    >
                         {t.main.sortLatest}
                     </button>
-                    <button className="px-4 py-2 text-sm font-bold text-gray-500 hover:text-black transition-colors">
+                    <button
+                        onClick={() => handleSortChange('popular')}
+                        className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${sort === 'popular'
+                            ? 'bg-white text-blue-600 shadow-sm'
+                            : 'text-gray-400 hover:text-gray-600'
+                            }`}
+                    >
                         {t.main.sortPopular}
                     </button>
                 </div>

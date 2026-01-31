@@ -18,6 +18,12 @@ export const ko = {
             authorLabel: "생성한 사람:",
             moreWorks: "더 많은 작품이 궁금하신가요?",
             goToGallery: "갤러리 보러가기"
+        },
+        galleryList: {
+            workspace: "워크스페이스",
+            allCreations: "전체 갤러리",
+            myBookmarks: "내 북마크",
+            gallery: "갤러리"
         }
     },
     floatingMenu: {
@@ -363,7 +369,17 @@ export const ko = {
         noDescription: "설명이 없습니다.",
         views: "조회",
         likes: "좋아요",
-        view3d: "3D로 보기 & 만들기"
+        view3d: "3D로 보기 & 만들기",
+        save: "저장",
+        share: "공유",
+        creator: "크리에이터",
+        comments: "댓글",
+        noComments: "댓글이 없습니다.",
+        placeholderComment: "댓글을 입력하세요...",
+        loginToComment: "로그인 후 댓글을 남겨보세요",
+        post: "등록",
+        noGlb: "3D 모델 파일이 없습니다.",
+        noImg: "원본 이미지가 없습니다."
     },
     my: {
         title: "내 갤러리",

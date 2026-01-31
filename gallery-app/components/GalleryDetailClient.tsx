@@ -133,16 +133,16 @@ export default function GalleryDetailClient({ item }: Props) {
     return (
         <div className="fixed inset-0 z-[50] flex bg-white overflow-hidden">
             {/* 1. Left Sidebar - View Modes */}
-            <div className="w-[280px] bg-[#1a1a1a] text-white flex flex-col p-6 shrink-0 relative z-20 shadow-2xl">
-                <h2 className="text-xl font-bold mb-6 pl-2 tracking-wider">BRICKERS</h2>
+            <div className="w-[280px] bg-[#1a1a1a] text-white flex flex-col py-6 shrink-0 relative z-20 shadow-2xl">
+                <h2 className="text-xl font-bold mb-6 px-8 tracking-wider">BRICKERS</h2>
 
 
 
-                <div className="flex flex-col gap-2 flex-1">
+                <div className="flex flex-col gap-1 flex-1">
                     <button
                         onClick={() => setActiveTab('LDR')}
-                        className={`text-left px-4 py-3 rounded-xl transition-all font-medium flex items-center gap-2 ${activeTab === 'LDR'
-                            ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/30'
+                        className={`text-left px-8 py-4 transition-all font-medium flex items-center gap-3 ${activeTab === 'LDR'
+                            ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/10'
                             : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
                             }`}
                     >
@@ -150,8 +150,8 @@ export default function GalleryDetailClient({ item }: Props) {
                     </button>
                     <button
                         onClick={() => setActiveTab('GLB')}
-                        className={`text-left px-4 py-3 rounded-xl transition-all font-medium flex items-center gap-2 ${activeTab === 'GLB'
-                            ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/30'
+                        className={`text-left px-8 py-4 transition-all font-medium flex items-center gap-3 ${activeTab === 'GLB'
+                            ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/10'
                             : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
                             }`}
                     >
@@ -159,8 +159,8 @@ export default function GalleryDetailClient({ item }: Props) {
                     </button>
                     <button
                         onClick={() => setActiveTab('IMG')}
-                        className={`text-left px-4 py-3 rounded-xl transition-all font-medium flex items-center gap-2 ${activeTab === 'IMG'
-                            ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/30'
+                        className={`text-left px-8 py-4 transition-all font-medium flex items-center gap-3 ${activeTab === 'IMG'
+                            ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/10'
                             : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
                             }`}
                     >
@@ -171,7 +171,7 @@ export default function GalleryDetailClient({ item }: Props) {
                 {/* Back Button (Moved to bottom) */}
                 <button
                     onClick={() => router.back()}
-                    className="mt-auto bg-white/10 text-white rounded-lg px-4 py-3 text-sm font-semibold hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
+                    className="mt-auto bg-white/10 text-white rounded-lg px-4 py-3 mx-6 text-sm font-semibold hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
                 >
                     ← {t.kids.steps.back}
                 </button>
@@ -216,53 +216,57 @@ export default function GalleryDetailClient({ item }: Props) {
                                     </Canvas>
                                 </div>
                             ) : (
-                                <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
-                                    GLB Model Not Available
-                                </div>
-                            )
-                        )
+                            ): (
+                                    <div className = "absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
+                                    {t.detail.noGlb}
+                </div>
+                )
+                )
+                )
                     }
 
-                    {
-                        activeTab === 'IMG' && (
-                            item.sourceImageUrl ? (
-                                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 p-8">
-                                    <div className="relative w-full h-full max-w-2xl max-h-full">
-                                        <Image
-                                            src={item.sourceImageUrl}
-                                            alt="Original Source"
-                                            fill
-                                            className="object-contain" // Maintain aspect ratio
-                                        />
-                                    </div>
+                {
+                    activeTab === 'IMG' && (
+                        item.sourceImageUrl ? (
+                            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 p-8">
+                                <div className="relative w-full h-full max-w-2xl max-h-full">
+                                    <Image
+                                        src={item.sourceImageUrl}
+                                        alt="Original Source"
+                                        fill
+                                        className="object-contain" // Maintain aspect ratio
+                                    />
                                 </div>
-                            ) : (
-                                <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
-                                    Original Image Not Available
-                                </div>
-                            )
-                        )
+                            </div>
+                        ) : (
+                        ): (
+                                <div className = "absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
+                                    {t.detail.noImg}
+            </div>
+            )
+            )
+            )
                     }
-                </div >
+        </div >
             </div >
 
-            {/* 3. Right Sidebar - Detail & Comments */}
-            < div className="w-[360px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10 shadow-xl" >
-                {/* Scrollable Content */}
-                < div className="flex-1 overflow-y-auto" >
-                    {/* User Info Header */}
-                    < div className="p-6 border-b border-gray-100 flex items-center gap-3" >
+        {/* 3. Right Sidebar - Detail & Comments */ }
+        < div className = "w-[360px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10 shadow-xl" >
+            {/* Scrollable Content */ }
+            < div className = "flex-1 overflow-y-auto" >
+                {/* User Info Header */ }
+                < div className = "p-6 border-b border-gray-100 flex items-center gap-3" >
                         <div className="w-10 h-10 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center font-bold text-blue-600 text-sm">
                             {item.authorNickname ? item.authorNickname[0].toUpperCase() : '?'}
                         </div>
                         <div className="flex flex-col">
-                            <span className="font-bold text-sm text-gray-900">@{item.authorNickname || '익명'}</span>
-                            <span className="text-[10px] text-gray-500 font-semibold tracking-wide">CREATOR</span>
+                            <span className="font-bold text-sm text-gray-900">@{item.authorNickname || t.common.anonymous}</span>
+                            <span className="text-[10px] text-gray-500 font-semibold tracking-wide">{t.detail.creator}</span>
                         </div>
                     </div >
 
-                    {/* Title & Actions */}
-                    < div className="p-6" >
+        {/* Title & Actions */ }
+        < div className = "p-6" >
                         <h1 className="text-2xl font-black text-gray-900 leading-tight mb-6">{item.title}</h1>
 
                         <div className="flex items-center gap-6">
@@ -295,7 +299,7 @@ export default function GalleryDetailClient({ item }: Props) {
                                         style={isBookmarked ? { filter: 'invert(80%) sepia(55%) saturate(2000%) hue-rotate(5deg) brightness(100%) contrast(101%)' } : { opacity: 0.6 }}
                                     />
                                 </div>
-                                <span className={`text-xs font-bold ${isBookmarked ? 'text-yellow-500' : 'text-gray-400'}`}>Save</span>
+                                <span className={`text-xs font-bold ${isBookmarked ? 'text-yellow-500' : 'text-gray-400'}`}>{t.detail.save}</span>
                             </button>
 
                             <button
@@ -305,21 +309,21 @@ export default function GalleryDetailClient({ item }: Props) {
                                 <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm group-hover:border-gray-300">
                                     <Image src="/icons/share.png" alt="Share" width={22} height={22} className="opacity-60" />
                                 </div>
-                                <span className="text-xs font-bold text-gray-400">Share</span>
+                                <span className="text-xs font-bold text-gray-400">{t.detail.share}</span>
                             </button>
                         </div>
                     </div >
 
-                    {/* Comments Section */}
-                    < div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 min-h-[300px]" >
+        {/* Comments Section */ }
+        < div className = "px-6 py-4 border-t border-gray-100 bg-gray-50/50 min-h-[300px]" >
                         <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
-                            COMMENTS ({comments.length})
+                            {t.detail.comments} ({comments.length})
                         </h3>
 
                         <div className="flex flex-col gap-3">
                             {comments.length === 0 ? (
                                 <div className="text-center py-10 text-gray-400">
-                                    <p className="text-sm">No comments yet.</p>
+                                    <p className="text-sm">{t.detail.noComments}</p>
                                 </div>
                             ) : comments.map(c => (
                                 <div key={c.id} className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
@@ -334,25 +338,25 @@ export default function GalleryDetailClient({ item }: Props) {
                     </div >
                 </div >
 
-                {/* Comment Input */}
-                < div className="p-4 border-t border-gray-200 bg-white" >
-                    <div className="flex gap-2">
-                        <input
-                            className="flex-1 bg-gray-100 border-none rounded-xl px-4 py-3 text-xs font-medium focus:ring-2 focus:ring-black/5 outline-none transition-all placeholder:text-gray-400"
-                            placeholder={isAuthenticated ? "Add a comment..." : "Login to comment"}
-                            value={commentInput}
-                            onChange={e => setCommentInput(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && handleCommentSubmit()}
-                            disabled={!isAuthenticated || commentLoading}
-                        />
-                        <button
-                            onClick={handleCommentSubmit}
-                            disabled={!isAuthenticated || !commentInput.trim() || commentLoading}
-                            className="bg-black text-white px-4 rounded-xl font-bold text-[10px] hover:bg-gray-800 disabled:opacity-30 transition-all uppercase"
-                        >
-                            POST
-                        </button>
-                    </div>
+        {/* Comment Input */ }
+        < div className = "p-4 border-t border-gray-200 bg-white" >
+            <div className="flex gap-2">
+                <input
+                    className="flex-1 bg-gray-100 border-none rounded-xl px-4 py-3 text-xs font-medium focus:ring-2 focus:ring-black/5 outline-none transition-all placeholder:text-gray-400"
+                    placeholder={isAuthenticated ? t.detail.placeholderComment : t.detail.loginToComment}
+                    value={commentInput}
+                    onChange={e => setCommentInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleCommentSubmit()}
+                    disabled={!isAuthenticated || commentLoading}
+                />
+                <button
+                    onClick={handleCommentSubmit}
+                    disabled={!isAuthenticated || !commentInput.trim() || commentLoading}
+                    className="bg-black text-white px-4 rounded-xl font-bold text-[10px] hover:bg-gray-800 disabled:opacity-30 transition-all uppercase"
+                >
+                    {t.detail.post}
+                </button>
+            </div>
                 </div >
             </div >
         </div >
