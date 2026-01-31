@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment, useTexture, Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -51,6 +51,9 @@ function Card({
         config: config.gentle
     });
 
+    // Bypass TypeScript error for animated material
+    const AnimatedMaterial = a.meshPhysicalMaterial as any;
+
     return (
         <a.mesh
             ref={mesh}
@@ -60,7 +63,7 @@ function Card({
             onClick={(e) => { e.stopPropagation(); onClick(); }}
         >
             <boxGeometry args={[2.0, 2.8, 0.05]} /> {/* Card Aspect Ratio */}
-            <meshPhysicalMaterial
+            <AnimatedMaterial
                 map={texture}
                 color={materialColor}
                 metalness={0.1}
@@ -131,11 +134,7 @@ function Scene({ items, onPreview }: Carousel3DProps) {
     );
 }
 
-import { Suspense } from 'react';
 
-// ... (existing imports)
-
-// ... (at the end of file)
 export default function Carousel3D({ items = [], onPreview }: Carousel3DProps) {
     if (items.length === 0) return null;
 
