@@ -216,17 +216,14 @@ export default function GalleryDetailClient({ item }: Props) {
                                     </Canvas>
                                 </div>
                             ) : (
-                            ): (
-                                    <div className = "absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
+                                <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
                                     {t.detail.noGlb}
-                </div>
-                )
-                )
-                )
+                                </div>
+                            )
+                        )
                     }
 
-                {
-                    activeTab === 'IMG' && (
+                    {activeTab === 'IMG' && (
                         item.sourceImageUrl ? (
                             <div className="absolute inset-0 flex items-center justify-center bg-gray-100 p-8">
                                 <div className="relative w-full h-full max-w-2xl max-h-full">
@@ -239,23 +236,21 @@ export default function GalleryDetailClient({ item }: Props) {
                                 </div>
                             </div>
                         ) : (
-                        ): (
-                                <div className = "absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
-                                    {t.detail.noImg}
-            </div>
-            )
-            )
-            )
+                            <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
+                                {t.detail.noImg}
+                            </div>
+                        )
+                    )
                     }
-        </div >
+                </div >
             </div >
 
-        {/* 3. Right Sidebar - Detail & Comments */ }
-        < div className = "w-[360px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10 shadow-xl" >
-            {/* Scrollable Content */ }
-            < div className = "flex-1 overflow-y-auto" >
-                {/* User Info Header */ }
-                < div className = "p-6 border-b border-gray-100 flex items-center gap-3" >
+            {/* 3. Right Sidebar - Detail & Comments */}
+            < div className="w-[360px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10 shadow-xl" >
+                {/* Scrollable Content */}
+                < div className="flex-1 overflow-y-auto" >
+                    {/* User Info Header */}
+                    < div className="p-6 border-b border-gray-100 flex items-center gap-3" >
                         <div className="w-10 h-10 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center font-bold text-blue-600 text-sm">
                             {item.authorNickname ? item.authorNickname[0].toUpperCase() : '?'}
                         </div>
@@ -265,8 +260,8 @@ export default function GalleryDetailClient({ item }: Props) {
                         </div>
                     </div >
 
-        {/* Title & Actions */ }
-        < div className = "p-6" >
+                    {/* Title & Actions */}
+                    < div className="p-6" >
                         <h1 className="text-2xl font-black text-gray-900 leading-tight mb-6">{item.title}</h1>
 
                         <div className="flex items-center gap-6">
@@ -314,8 +309,8 @@ export default function GalleryDetailClient({ item }: Props) {
                         </div>
                     </div >
 
-        {/* Comments Section */ }
-        < div className = "px-6 py-4 border-t border-gray-100 bg-gray-50/50 min-h-[300px]" >
+                    {/* Comments Section */}
+                    < div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 min-h-[300px]" >
                         <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
                             {t.detail.comments} ({comments.length})
                         </h3>
@@ -338,25 +333,25 @@ export default function GalleryDetailClient({ item }: Props) {
                     </div >
                 </div >
 
-        {/* Comment Input */ }
-        < div className = "p-4 border-t border-gray-200 bg-white" >
-            <div className="flex gap-2">
-                <input
-                    className="flex-1 bg-gray-100 border-none rounded-xl px-4 py-3 text-xs font-medium focus:ring-2 focus:ring-black/5 outline-none transition-all placeholder:text-gray-400"
-                    placeholder={isAuthenticated ? t.detail.placeholderComment : t.detail.loginToComment}
-                    value={commentInput}
-                    onChange={e => setCommentInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleCommentSubmit()}
-                    disabled={!isAuthenticated || commentLoading}
-                />
-                <button
-                    onClick={handleCommentSubmit}
-                    disabled={!isAuthenticated || !commentInput.trim() || commentLoading}
-                    className="bg-black text-white px-4 rounded-xl font-bold text-[10px] hover:bg-gray-800 disabled:opacity-30 transition-all uppercase"
-                >
-                    {t.detail.post}
-                </button>
-            </div>
+                {/* Comment Input */}
+                < div className="p-4 border-t border-gray-200 bg-white" >
+                    <div className="flex gap-2">
+                        <input
+                            className="flex-1 bg-gray-100 border-none rounded-xl px-4 py-3 text-xs font-medium focus:ring-2 focus:ring-black/5 outline-none transition-all placeholder:text-gray-400"
+                            placeholder={isAuthenticated ? t.detail.placeholderComment : t.detail.loginToComment}
+                            value={commentInput}
+                            onChange={e => setCommentInput(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleCommentSubmit()}
+                            disabled={!isAuthenticated || commentLoading}
+                        />
+                        <button
+                            onClick={handleCommentSubmit}
+                            disabled={!isAuthenticated || !commentInput.trim() || commentLoading}
+                            className="bg-black text-white px-4 rounded-xl font-bold text-[10px] hover:bg-gray-800 disabled:opacity-30 transition-all uppercase"
+                        >
+                            {t.detail.post}
+                        </button>
+                    </div>
                 </div >
             </div >
         </div >
