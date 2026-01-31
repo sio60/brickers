@@ -21,12 +21,12 @@ type Props = {
 export default function GalleryDetailClient({ item }: Props) {
     const { isAuthenticated, authFetch } = useAuth();
     const [likeCount, setLikeCount] = useState(item.likeCount || 0);
-    const [isLiked, setIsLiked] = useState(item.isBookmarked || false);
+    const [isLiked, setIsLiked] = useState(item.myReaction === 'LIKE');
+    const [isBookmarked, setIsBookmarked] = useState(item.isBookmarked || false);
     const [comments, setComments] = useState<Comment[]>([]);
     const [isCommentOpen, setIsCommentOpen] = useState(true);
     const [commentInput, setCommentInput] = useState('');
     const [commentLoading, setCommentLoading] = useState(false);
-    const [isSaved, setIsSaved] = useState(false);
 
     // Slide 0: Image, 1: 3D
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -59,7 +59,8 @@ export default function GalleryDetailClient({ item }: Props) {
                 if (res.ok) {
                     const data = await res.json();
                     if (data.likeCount !== undefined) setLikeCount(data.likeCount);
-                    if (data.isBookmarked !== undefined) setIsLiked(data.isBookmarked);
+                    if (data.myReaction !== undefined) setIsLiked(data.myReaction === 'LIKE');
+                    if (data.bookmarked !== undefined) setIsBookmarked(data.bookmarked);
                 }
             } catch (error) { console.error(error); }
         };
@@ -71,11 +72,31 @@ export default function GalleryDetailClient({ item }: Props) {
     const handleLikeToggle = async () => {
         if (!isAuthenticated) return alert('로그인이 필요합니다.');
         try {
+            const res = await authFetch(`/api/gallery/${item.id}/reaction`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'LIKE' }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const newLiked = data.currentReaction === 'LIKE';
+                setIsLiked(newLiked);
+                if (data.likeCount !== undefined) {
+                    setLikeCount(data.likeCount);
+                } else {
+                    setLikeCount(prev => newLiked ? prev + 1 : prev - 1);
+                }
+            }
+        } catch (error) { console.error(error); }
+    };
+
+    const handleBookmarkToggle = async () => {
+        if (!isAuthenticated) return alert('로그인이 필요합니다.');
+        try {
             const res = await authFetch(`/api/gallery/${item.id}/bookmark`, { method: 'POST' });
             if (res.ok) {
-                const newState = !isLiked;
-                setIsLiked(newState);
-                setLikeCount(prev => newState ? prev + 1 : prev - 1);
+                const data = await res.json();
+                setIsBookmarked(data.bookmarked !== undefined ? data.bookmarked : !isBookmarked);
             }
         } catch (error) { console.error(error); }
     };
@@ -108,16 +129,6 @@ export default function GalleryDetailClient({ item }: Props) {
 
     return (
         <div className="fixed inset-0 z-[60] flex flex-col items-center pt-10 sm:pt-16 p-4 sm:p-6 bg-black/5 pointer-events-none overflow-y-auto">
-            {/* Top Back Button Area */}
-            <div className="w-full max-w-[900px] mb-4 flex justify-start pointer-events-auto shrink-0">
-                <button
-                    onClick={() => router.back()}
-                    className="flex items-center gap-2 bg-white px-5 py-2.5 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] text-black hover:bg-gray-50 font-bold transition-all active:scale-95 border border-gray-100"
-                >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" className="mr-1"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                    <span className="text-sm">BACK</span>
-                </button>
-            </div>
 
             {/* Simple Card Container */}
             <div className="relative pointer-events-auto bg-white w-full max-w-[900px] h-[80vh] min-h-[500px] max-h-[850px] rounded-[30px] shadow-[0_20px_60px_rgba(0,0,0,0.2)] flex flex-col md:flex-row overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -215,13 +226,13 @@ export default function GalleryDetailClient({ item }: Props) {
                                 <span className="text-[10px] font-bold text-gray-500">Share</span>
                             </div>
                             <div className="ml-auto">
-                                <button onClick={() => setIsSaved(!isSaved)} className={`transition-transform active:scale-90 ${isSaved ? 'scale-110' : ''}`}>
+                                <button onClick={handleBookmarkToggle} className={`transition-transform active:scale-90 ${isBookmarked ? 'scale-110' : ''}`}>
                                     <Image
                                         src="/icons/bookmark.png"
                                         alt="Bookmark"
                                         width={30}
                                         height={30}
-                                        style={isSaved ? { filter: 'invert(80%) sepia(55%) saturate(2000%) hue-rotate(5deg) brightness(100%) contrast(101%)' } : {}}
+                                        style={isBookmarked ? { filter: 'invert(80%) sepia(55%) saturate(2000%) hue-rotate(5deg) brightness(100%) contrast(101%)' } : {}}
                                     />
                                 </button>
                             </div>

@@ -32,13 +32,14 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
 
         setLoading(true);
         try {
-            const endpoint = category === 'bookmarks' ? '/api/gallery/bookmarks' : '/api/gallery';
+            const endpoint = category === 'bookmarks' ? '/api/gallery/bookmarks/my' : '/api/gallery';
             const res = await fetch(`${endpoint}?page=${targetPage}&size=24&sort=latest`);
             if (res.ok) {
                 const data = await res.json();
                 const content = (data.content || []).map((item: any) => ({
                     ...item,
-                    isBookmarked: item.bookmarked || (category === 'bookmarks')
+                    isBookmarked: item.bookmarked || (category === 'bookmarks'),
+                    myReaction: item.myReaction
                 }));
                 setItems(content);
                 setPage(targetPage);
@@ -65,13 +66,14 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
         setPage(0);
 
         try {
-            const endpoint = newCategory === 'bookmarks' ? '/api/gallery/bookmarks' : '/api/gallery';
+            const endpoint = newCategory === 'bookmarks' ? '/api/gallery/bookmarks/my' : '/api/gallery';
             const res = await fetch(`${endpoint}?page=0&size=24&sort=latest`);
             if (res.ok) {
                 const data = await res.json();
                 const content = (data.content || []).map((item: any) => ({
                     ...item,
-                    isBookmarked: item.bookmarked || (newCategory === 'bookmarks')
+                    isBookmarked: item.bookmarked || (newCategory === 'bookmarks'),
+                    myReaction: item.myReaction
                 }));
                 setItems(content);
                 setTotalPages(data.totalPages);
@@ -96,35 +98,36 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
         }
     };
 
-    const handleBookmarkToggle = async (id: string, currentState: boolean) => {
+    const handleLikeToggle = async (id: string, currentState: boolean) => {
         if (!isAuthenticated) {
             router.push('?login=true');
             return;
         }
 
         try {
-            const res = await authFetch(`/api/gallery/${id}/bookmark`, {
+            const res = await authFetch(`/api/gallery/${id}/reaction`, {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'LIKE' }),
             });
 
             if (res.ok) {
-                // Update local state
-                if (category === 'bookmarks' && currentState) {
-                    // Remove from list if we are in bookmarks category and untoggling
-                    setItems(prev => prev.filter(item => item.id !== id));
-                    setTotalElements(prev => prev - 1);
-                } else {
-                    setItems(prev =>
-                        prev.map(item =>
-                            item.id === id
-                                ? { ...item, isBookmarked: !currentState }
-                                : item
-                        )
-                    );
-                }
+                const data = await res.json();
+                // data typically contains the new state or the updated reaction count
+                setItems(prev =>
+                    prev.map(item =>
+                        item.id === id
+                            ? {
+                                ...item,
+                                myReaction: data.currentReaction === 'LIKE' ? 'LIKE' : null,
+                                likeCount: data.likeCount !== undefined ? data.likeCount : (data.currentReaction === 'LIKE' ? (item.likeCount || 0) + 1 : (item.likeCount || 0) - 1)
+                            }
+                            : item
+                    )
+                );
             }
         } catch (error) {
-            console.error('Bookmark toggle failed:', error);
+            console.error('Like toggle failed:', error);
         }
     };
 
@@ -168,7 +171,7 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
                 <GalleryGrid
                     items={items}
                     isLoggedIn={isAuthenticated}
-                    onBookmarkToggle={handleBookmarkToggle}
+                    onLikeToggle={handleLikeToggle}
                     onLoginRequired={handleLoginRequired}
                 />
             )}
