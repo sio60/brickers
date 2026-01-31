@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import GalleryDetailActions from '@/components/GalleryDetailActions';
 
 type Props = {
     params: Promise<{ slug: string }>
@@ -173,12 +174,7 @@ export default async function GalleryDetailPage({ params }: Props) {
                         <div className="flex justify-between items-center mb-6">
                             <h1 className="text-4xl font-extrabold">{item.title}</h1>
 
-                            <Link
-                                href={`/kids/steps?url=${encodeURIComponent(item.ldrUrl || '')}&isPreset=true`}
-                                className="bg-black text-white font-medium text-lg py-3 px-6 rounded-lg hover:opacity-80 transition-opacity"
-                            >
-                                3D로 보기 & 만들기
-                            </Link>
+                            <GalleryDetailActions ldrUrl={item.ldrUrl || ''} />
                         </div>
 
                         {/* Stats Row */}

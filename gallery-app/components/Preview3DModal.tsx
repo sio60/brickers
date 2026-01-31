@@ -4,6 +4,7 @@ import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { Bounds, OrbitControls, Center } from "@react-three/drei";
 import * as THREE from "three";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { LDrawLoader } from "three-stdlib";
 
 const CDN_BASE = "https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/";
@@ -78,16 +79,22 @@ function LdrModel({ url }: { url: string }) {
         // Load materials first, then load model
         (async () => {
             try {
+                const proxyUrl = `/api/proxy/ldr?url=${encodeURIComponent(url)}`;
+                console.log("Loading LDR via Proxy:", proxyUrl);
+
                 await (loader as any).preloadMaterials(`${CDN_BASE}LDConfig.ldr`);
                 if (cancelled) return;
 
-                const g = await loader.loadAsync(url);
+                // Load main model via proxy to avoid CORS
+                const g = await loader.loadAsync(proxyUrl);
                 if (cancelled) return;
 
                 g.rotation.x = Math.PI;
                 setGroup(g);
             } catch (err) {
-                console.error("LDraw load failed", err);
+                console.error("LDraw load failed:", err);
+                const errorMessage = err instanceof Error ? err.message : "Unknown error";
+                alert(`3D 모델을 불러오는데 실패했습니다.\nURL: ${url}\nError: ${errorMessage}`);
             }
         })();
 
@@ -105,7 +112,9 @@ function LdrModel({ url }: { url: string }) {
     );
 }
 
-export default function Preview3DModal({ url, onClose }: { url: string, onClose: () => void }) {
+export default function Preview3DModal({ url, onClose, buildUrl }: { url: string, onClose: () => void, buildUrl?: string }) {
+    const router = useRouter();
+
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={onClose}>
             <div className="relative w-[90vw] h-[80vh] bg-white rounded-2xl overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -131,8 +140,19 @@ export default function Preview3DModal({ url, onClose }: { url: string, onClose:
                     />
                 </Canvas>
 
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/90 px-6 py-3 rounded-full font-bold shadow-lg">
-                    3D Preview Mode
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-4">
+                    <div className="bg-white/90 px-6 py-3 rounded-full font-bold shadow-lg">
+                        3D Preview Mode
+                    </div>
+                    {buildUrl && (
+                        <button
+                            onClick={() => router.push(buildUrl)}
+                            className="bg-black text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-800 transition-colors flex items-center gap-2"
+                        >
+                            <span>🧱</span>
+                            Start Building
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
