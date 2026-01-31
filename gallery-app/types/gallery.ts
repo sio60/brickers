@@ -8,6 +8,7 @@ export type GalleryItem = {
     likeCount?: number;
     viewCount?: number;
     isBookmarked?: boolean;
+    myReaction?: 'LIKE' | 'DISLIKE' | null;
     ldrUrl?: string;
 };
 
