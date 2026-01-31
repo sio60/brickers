@@ -22,7 +22,7 @@ const CHAT_TRANSLATIONS = {
     ko: {
         welcome: "안녕하세요! 궁금한 점이 있으신가요?",
         suggestions: {
-            howTo: "레고 어떻게 만들어요?",
+            howTo: "브릭 어떻게 만들어요?",
             gallery: "갤러리는 뭐예요?",
             inquiry: "문의하기",
             report: "신고하기",
@@ -63,7 +63,7 @@ const CHAT_TRANSLATIONS = {
         },
         cancel: "취소",
         actions: {
-            create: "레고 만들기 시작",
+            create: "브릭 만들기 시작",
             gallery: "갤러리 구경하기",
             mypage: "내 정보 보기"
         },
@@ -77,7 +77,7 @@ const CHAT_TRANSLATIONS = {
     en: {
         welcome: "Hello! How can I help you today?",
         suggestions: {
-            howTo: "How do I make Lego?",
+            howTo: "How do I make Brick?",
             gallery: "What is Gallery?",
             inquiry: "Inquiry",
             report: "Report",
@@ -132,7 +132,7 @@ const CHAT_TRANSLATIONS = {
     ja: {
         welcome: "こんにちは！何かお手伝いしましょうか？",
         suggestions: {
-            howTo: "どうやってレゴを作るの？",
+            howTo: "どうやってブリックを作るの？",
             gallery: "ギャラリーって何？",
             inquiry: "お問い合わせ",
             report: "通報する",
@@ -173,7 +173,7 @@ const CHAT_TRANSLATIONS = {
         },
         cancel: "キャンセル",
         actions: {
-            create: "レゴを作り始める",
+            create: "ブリックを作り始める",
             gallery: "ギャラリーを見る",
             mypage: "マイページ"
         },

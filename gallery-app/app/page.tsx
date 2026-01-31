@@ -4,15 +4,15 @@ import { GalleryItem } from '@/types/gallery';
 
 // Metadata for SEO
 export const metadata: Metadata = {
-    title: 'Brickers - AI 레고 브릭 생성기',
-    description: '이미지를 업로드하면 AI가 레고 브릭 조립 설명서를 만들어줍니다. 누구나 쉽게 나만의 레고 작품을 만들어보세요.',
-    keywords: ['레고', 'LEGO', 'AI', '브릭', '조립', '설명서', '3D', '생성기'],
+    title: 'Brickers - AI 브릭 생성기',
+    description: '이미지를 업로드하면 AI가 브릭 조립 설명서를 만들어줍니다. 누구나 쉽게 나만의 브릭 작품을 만들어보세요.',
+    keywords: ['브릭', 'BRICK', 'AI', '조립', '설명서', '3D', '생성기'],
     alternates: {
         canonical: '/',
     },
     openGraph: {
-        title: 'Brickers - AI 레고 브릭 생성기',
-        description: '이미지를 업로드하면 AI가 레고 브릭 조립 설명서를 만들어줍니다.',
+        title: 'Brickers - AI 브릭 생성기',
+        description: '이미지를 업로드하면 AI가 브릭 조립 설명서를 만들어줍니다.',
         url: 'https://brickers.shop',
         siteName: 'Brickers',
         type: 'website',
@@ -20,8 +20,8 @@ export const metadata: Metadata = {
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'Brickers - AI 레고 브릭 생성기',
-        description: '이미지를 업로드하면 AI가 레고 브릭 조립 설명서를 만들어줍니다.',
+        title: 'Brickers - AI 브릭 생성기',
+        description: '이미지를 업로드하면 AI가 브릭 조립 설명서를 만들어줍니다.',
     },
 };
 
@@ -55,7 +55,7 @@ export default async function LandingPage() {
         '@context': 'https://schema.org',
         '@type': 'WebApplication',
         name: 'Brickers',
-        description: '이미지를 업로드하면 AI가 레고 브릭 조립 설명서를 만들어줍니다.',
+        description: '이미지를 업로드하면 AI가 브릭 조립 설명서를 만들어줍니다.',
         url: 'https://brickers.shop',
         applicationCategory: 'DesignApplication',
         operatingSystem: 'Web',
