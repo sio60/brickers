@@ -34,10 +34,10 @@ const mPlusRounded = M_PLUS_Rounded_1c({
 
 export const metadata: Metadata = {
     title: {
-        default: 'BRICKERS | AI LEGO Generator',
+        default: 'BRICKERS | AI BRICK Generator',
         template: '%s | BRICKERS'
     },
-    description: 'Transform your ideas into LEGO models with AI',
+    description: 'Transform your ideas into BRICK models with AI',
     other: {
         'preconnect': 'https://fonts.googleapis.com',
         'preconnect-link': 'https://fonts.gstatic.com',

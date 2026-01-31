@@ -123,7 +123,7 @@ function ViewerContent() {
 
     const urlParam = searchParams.get("url") || "";
     const isPreset = searchParams.get("isPreset") === "true";
-    const title = searchParams.get("title") || "LEGO Model";
+    const title = searchParams.get("title") || "BRICK Model";
 
     const [loading, setLoading] = useState(true);
     const modelGroupRef = useRef<THREE.Group | null>(null);

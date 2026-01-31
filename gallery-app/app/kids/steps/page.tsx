@@ -292,7 +292,7 @@ function KidsStepPageContent() {
             await registerToGallery({
                 title: galleryTitle,
                 content: t.kids.steps.galleryModal.content,
-                tags: ["Kids", "Lego"],
+                tags: ["Kids", "Brick"],
                 thumbnailUrl: jobThumbnailUrl || undefined,
                 ldrUrl: ldrUrl || undefined,
                 visibility: "PUBLIC",
