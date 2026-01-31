@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { GalleryItem } from '@/types/gallery';
 import Image from 'next/image';
@@ -22,7 +23,7 @@ export default function GalleryDetailClient({ item }: Props) {
     const [likeCount, setLikeCount] = useState(item.likeCount || 0);
     const [isLiked, setIsLiked] = useState(item.isBookmarked || false);
     const [comments, setComments] = useState<Comment[]>([]);
-    const [isCommentOpen, setIsCommentOpen] = useState(false);
+    const [isCommentOpen, setIsCommentOpen] = useState(true);
     const [commentInput, setCommentInput] = useState('');
     const [commentLoading, setCommentLoading] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
@@ -34,11 +35,22 @@ export default function GalleryDetailClient({ item }: Props) {
         // Increment view count
         fetch(`/api/gallery/${item.id}/view`, { method: 'POST' }).catch(console.error);
 
-        // Fetch initial comments
-        fetch(`/api/gallery/${item.id}/comments?page=0&size=50`)
-            .then(res => res.json())
-            .then(data => setComments(data.content || []))
-            .catch(console.error);
+        // Function to fetch comments
+        const fetchComments = () => {
+            fetch(`/api/gallery/${item.id}/comments?page=0&size=50`)
+                .then(res => res.json())
+                .then(data => {
+                    // Only update if count changed or for initial load
+                    setComments(data.content || []);
+                })
+                .catch(console.error);
+        };
+
+        // Initial fetch
+        fetchComments();
+
+        // Polling every 10 seconds
+        const pollInterval = setInterval(fetchComments, 10000);
 
         // Fetch detail for latest like state
         const fetchDetail = async () => {
@@ -52,6 +64,8 @@ export default function GalleryDetailClient({ item }: Props) {
             } catch (error) { console.error(error); }
         };
         fetchDetail();
+
+        return () => clearInterval(pollInterval);
     }, [item.id, authFetch]);
 
     const handleLikeToggle = async () => {
@@ -90,10 +104,23 @@ export default function GalleryDetailClient({ item }: Props) {
         return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
     };
 
+    const router = useRouter();
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-transparent pointer-events-none">
+        <div className="fixed inset-0 z-50 flex flex-col items-center pt-24 p-4 sm:p-6 bg-transparent pointer-events-none">
+            {/* Top Back Button */}
+            <div className="w-full max-w-[900px] mb-4 flex justify-start pointer-events-auto">
+                <button
+                    onClick={() => router.back()}
+                    className="flex items-center gap-2 text-black/60 hover:text-black font-bold transition-colors"
+                >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    <span>Back</span>
+                </button>
+            </div>
+
             {/* Simple Card Container */}
-            <div className="relative pointer-events-auto bg-white w-full max-w-[900px] h-[85vh] max-h-[850px] rounded-[30px] shadow-[0_10px_40px_rgba(0,0,0,0.15)] flex flex-col md:flex-row overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+            <div className="relative pointer-events-auto bg-white w-full max-w-[900px] h-[80vh] max-h-[850px] rounded-[30px] shadow-[0_10px_40px_rgba(0,0,0,0.15)] flex flex-col md:flex-row overflow-hidden animate-in fade-in zoom-in-95 duration-300">
 
                 {/* Left/Content Section: Image/3D Viewer */}
                 <div className="flex-1 relative bg-gray-50 flex flex-col overflow-hidden">
@@ -167,41 +194,45 @@ export default function GalleryDetailClient({ item }: Props) {
                         <h1 className="text-xl font-bold text-black leading-tight">{item.title}</h1>
 
                         {/* Interaction Bar */}
-                        <div className="flex items-center gap-5">
+                        <div className="flex items-center gap-8">
                             <div className="flex flex-col items-center gap-1 group">
                                 <button onClick={handleLikeToggle} className={`transition-transform active:scale-90 ${isLiked ? 'scale-110' : ''}`}>
-                                    <Image src="/icons/like.png" alt="Like" width={28} height={28} />
+                                    <Image
+                                        src="/icons/like.png"
+                                        alt="Like"
+                                        width={32}
+                                        height={32}
+                                        style={isLiked ? { filter: 'invert(48%) sepia(50%) saturate(2243%) hue-rotate(195deg) brightness(101%) contrast(93%)' } : {}}
+                                    />
                                 </button>
-                                <span className="text-[10px] font-bold text-gray-500 group-hover:text-black transition-colors">{likeCount}</span>
+                                <span className={`text-[10px] font-bold transition-colors ${isLiked ? 'text-blue-500' : 'text-gray-500 group-hover:text-black'}`}>{likeCount}</span>
                             </div>
-                            <div className="flex flex-col items-center gap-1 group">
-                                <button onClick={() => setIsCommentOpen(!isCommentOpen)} className="transition-transform active:scale-90">
-                                    <Image src="/icons/comment.png" alt="Comment" width={26} height={26} />
-                                </button>
-                                <span className="text-[10px] font-bold text-gray-500 group-hover:text-black transition-colors">{comments.length}</span>
-                            </div>
+
                             <div className="flex flex-col items-center gap-1">
-                                <button onClick={() => alert('공유 기능 준비 중')} className="transition-transform active:scale-90">
-                                    <Image src="/icons/share.png" alt="Share" width={26} height={26} />
+                                <button onClick={() => alert('공유 기능 준비 중')} className="transition-transform active:scale-90 underline-offset-4">
+                                    <Image src="/icons/share.png" alt="Share" width={30} height={30} />
                                 </button>
                                 <span className="text-[10px] font-bold text-gray-500">Share</span>
                             </div>
                             <div className="ml-auto">
                                 <button onClick={() => setIsSaved(!isSaved)} className={`transition-transform active:scale-90 ${isSaved ? 'scale-110' : ''}`}>
-                                    <Image src="/icons/bookmark.png" alt="Bookmark" width={26} height={26} />
+                                    <Image
+                                        src="/icons/bookmark.png"
+                                        alt="Bookmark"
+                                        width={30}
+                                        height={30}
+                                        style={isSaved ? { filter: 'invert(80%) sepia(55%) saturate(2000%) hue-rotate(5deg) brightness(100%) contrast(101%)' } : {}}
+                                    />
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    {/* Bottom Comment Drawer (The user requested "comment drawer comes up from below") */}
-                    <div className={`absolute inset-x-0 bottom-0 bg-white border-t border-gray-100 flex flex-col transition-all duration-500 ease-in-out z-20 ${isCommentOpen ? 'h-[75%]' : 'h-0 pointer-events-none opacity-0'}`}>
+                    {/* Bottom Comment Drawer (Always open now) */}
+                    <div className="absolute inset-x-0 bottom-0 bg-white border-t border-gray-100 flex flex-col h-[65%] z-20">
                         {/* Drawer Header */}
                         <div className="px-6 py-4 flex items-center justify-between border-b border-gray-50 shrink-0">
                             <span className="font-bold text-xs uppercase tracking-wider text-gray-500">COMMENTS ({comments.length})</span>
-                            <button onClick={() => setIsCommentOpen(false)} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                            </button>
                         </div>
 
                         {/* Drawer List */}
