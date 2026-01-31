@@ -234,7 +234,13 @@ export const ko = {
                 author: "작성자",
                 date: "수정한 날짜",
                 views: "조회수"
-            }
+            },
+            viewModes: "보기 모드",
+            tabBrick: "브릭 3D",
+            tabModeling: "3D 모델링",
+            originalModel: "원본 3D 모델",
+            previewTitle: "브릭 미리보기",
+            startAssembly: "조립 시작하기"
         }
     },
     header: {
