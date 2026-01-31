@@ -8,10 +8,11 @@ type Props = {
     items: GalleryItem[];
     isLoggedIn: boolean;
     onLikeToggle?: (id: string, currentState: boolean) => void;
+    onBookmarkToggle?: (id: string, currentState: boolean) => void;
     onLoginRequired?: () => void;
 };
 
-export default function GalleryGrid({ items, isLoggedIn, onLikeToggle, onLoginRequired }: Props) {
+export default function GalleryGrid({ items, isLoggedIn, onLikeToggle, onBookmarkToggle, onLoginRequired }: Props) {
     const { t } = useLanguage();
 
     if (!items || items.length === 0) {
@@ -33,6 +34,7 @@ export default function GalleryGrid({ items, isLoggedIn, onLikeToggle, onLoginRe
                     item={item}
                     isLoggedIn={isLoggedIn}
                     onLikeToggle={onLikeToggle}
+                    onBookmarkToggle={onBookmarkToggle}
                     onLoginRequired={onLoginRequired}
                 />
             ))}
