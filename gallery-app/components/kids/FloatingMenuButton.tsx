@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +12,7 @@ import styles from "./FloatingMenuButton.module.css";
 
 export default function FloatingMenuButton() {
     const router = useRouter();
+    const pathname = usePathname();
     const { t } = useLanguage();
     const { isAuthenticated } = useAuth();
 
@@ -67,6 +68,10 @@ export default function FloatingMenuButton() {
         }
         setIsOpen(!isOpen);
     };
+
+    if (pathname?.startsWith('/gallery/') && pathname.split('/').length > 2) {
+        return null;
+    }
 
     return (
         <>
