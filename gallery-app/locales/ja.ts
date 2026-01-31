@@ -238,6 +238,7 @@ export const ja = {
             viewModes: "表示モード",
             tabBrick: "ブリック3D",
             tabModeling: "3Dモデリング",
+            tabOriginal: "オリジナル画像",
             originalModel: "オリジナル3Dモデル",
             previewTitle: "ブリックプレビュー",
             startAssembly: "組み立て開始"
