@@ -343,7 +343,7 @@ export const ko = {
     },
     // gallery 전용 (기존 gallery-app)
     detail: {
-        back: "← 갤러리로 돌아가기",
+        back: "갤러리로 돌아가기",
         description: "작품 설명",
         noDescription: "설명이 없습니다.",
         views: "조회",

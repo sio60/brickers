@@ -132,7 +132,7 @@ export default function Viewer3D({ url }: Viewer3DProps) {
             if (url.includes('githubusercontent.com')) return url;
 
             // If it's from our own S3 or other domains, use the proxy
-            return `/api/proxy-image?url=${encodeURIComponent(url)}`;
+            return `/proxy/image?url=${encodeURIComponent(url)}`;
         }
         return url;
     }, [url]);
