@@ -131,11 +131,12 @@ export default function GalleryDetailClient({ item }: Props) {
     };
 
     return (
-        {/* 1. Left Sidebar - View Modes */ }
-        < div className = "w-[280px] bg-[#1a1a1a] text-white flex flex-col p-6 shrink-0 relative z-20 shadow-2xl" >
-            <h2 className="text-xl font-bold mb-6 pl-2 tracking-wider">BRICKERS</h2>
+        <div className="fixed inset-0 z-[50] flex bg-white overflow-hidden">
+            {/* 1. Left Sidebar - View Modes */}
+            <div className="w-[280px] bg-[#1a1a1a] text-white flex flex-col p-6 shrink-0 relative z-20 shadow-2xl">
+                <h2 className="text-xl font-bold mb-6 pl-2 tracking-wider">BRICKERS</h2>
 
-    {/* Categories */ }
+                {/* Categories */}
                 <div className="mb-3 pl-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
                     {t.kids.steps.viewModes}
                 </div>
@@ -144,8 +145,8 @@ export default function GalleryDetailClient({ item }: Props) {
                     <button
                         onClick={() => setActiveTab('LDR')}
                         className={`text-left px-4 py-3 rounded-xl transition-all font-medium flex items-center gap-2 ${activeTab === 'LDR'
-                                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
-                                : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                            : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
                             }`}
                     >
                         {t.kids.steps.tabBrick}
@@ -153,8 +154,8 @@ export default function GalleryDetailClient({ item }: Props) {
                     <button
                         onClick={() => setActiveTab('GLB')}
                         className={`text-left px-4 py-3 rounded-xl transition-all font-medium flex items-center gap-2 ${activeTab === 'GLB'
-                                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
-                                : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                            : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
                             }`}
                     >
                         {t.kids.steps.tabModeling}
@@ -162,98 +163,98 @@ export default function GalleryDetailClient({ item }: Props) {
                     <button
                         onClick={() => setActiveTab('IMG')}
                         className={`text-left px-4 py-3 rounded-xl transition-all font-medium flex items-center gap-2 ${activeTab === 'IMG'
-                                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
-                                : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                            : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
                             }`}
                     >
                         {t.kids.steps.tabOriginal}
                     </button>
                 </div>
 
-    {/* Back Button (Moved to bottom) */ }
-    <button
-        onClick={() => router.back()}
-        className="mt-auto bg-white/10 text-white rounded-lg px-4 py-3 text-sm font-semibold hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
-    >
-        ← {t.kids.steps.back}
-    </button>
+                {/* Back Button (Moved to bottom) */}
+                <button
+                    onClick={() => router.back()}
+                    className="mt-auto bg-white/10 text-white rounded-lg px-4 py-3 text-sm font-semibold hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
+                >
+                    ← {t.kids.steps.back}
+                </button>
             </div >
 
-        {/* 2. Main Content Area - Canvas */ }
-        < div className = "flex-1 relative bg-gray-50 flex flex-col overflow-hidden" >
-            {/* View Title Bar */ }
-            < div className = "h-16 bg-white border-b border-gray-200 flex items-center px-6 shrink-0 justify-between" >
-                <div className="text-lg font-extrabold text-gray-900">
-                    {activeTab === 'LDR' && t.kids.steps.previewTitle}
-                    {activeTab === 'GLB' && t.kids.steps.originalModel}
-                    {activeTab === 'IMG' && t.kids.steps.tabOriginal}
-                </div>
-                </div >
-
-        {/* Canvas Area */ }
-        < div className = "flex-1 relative bg-[#f0f0f0]" >
-            { activeTab === 'LDR' && (
-                item.ldrUrl ? <Viewer3D url={item.ldrUrl} /> : (
-                    <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
-                        LDR Model Not Available
+            {/* 2. Main Content Area - Canvas */}
+            < div className="flex-1 relative bg-gray-50 flex flex-col overflow-hidden" >
+                {/* View Title Bar */}
+                < div className="h-16 bg-white border-b border-gray-200 flex items-center px-6 shrink-0 justify-between" >
+                    <div className="text-lg font-extrabold text-gray-900">
+                        {activeTab === 'LDR' && t.kids.steps.previewTitle}
+                        {activeTab === 'GLB' && t.kids.steps.originalModel}
+                        {activeTab === 'IMG' && t.kids.steps.tabOriginal}
                     </div>
-                )
-            )
-}
+                </div >
 
-{
-    activeTab === 'GLB' && (
-        item.glbUrl ? (
-            <div className="absolute inset-0">
-                <Canvas camera={{ position: [5, 5, 5], fov: 50 }} dpr={[1, 2]}>
-                    <ambientLight intensity={0.8} />
-                    <directionalLight position={[5, 10, 5]} intensity={1.5} />
-                    <Environment preset="city" />
-                    <Bounds fit clip observe margin={1.2}>
-                        <Center>
-                            <Gltf src={item.glbUrl} />
-                        </Center>
-                    </Bounds>
-                    <OrbitControls makeDefault enablePan={false} enableZoom />
-                </Canvas>
-            </div>
-        ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
-                GLB Model Not Available
-            </div>
-        )
-    )
-}
+                {/* Canvas Area */}
+                < div className="flex-1 relative bg-[#f0f0f0]" >
+                    {activeTab === 'LDR' && (
+                        item.ldrUrl ? <Viewer3D url={item.ldrUrl} /> : (
+                            <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
+                                LDR Model Not Available
+                            </div>
+                        )
+                    )
+                    }
 
-{
-    activeTab === 'IMG' && (
-        item.sourceImageUrl ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 p-8">
-                <div className="relative w-full h-full max-w-2xl max-h-full">
-                    <Image
-                        src={item.sourceImageUrl}
-                        alt="Original Source"
-                        fill
-                        className="object-contain" // Maintain aspect ratio
-                    />
-                </div>
-            </div>
-        ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
-                Original Image Not Available
-            </div>
-        )
-    )
-}
+                    {
+                        activeTab === 'GLB' && (
+                            item.glbUrl ? (
+                                <div className="absolute inset-0">
+                                    <Canvas camera={{ position: [5, 5, 5], fov: 50 }} dpr={[1, 2]}>
+                                        <ambientLight intensity={0.8} />
+                                        <directionalLight position={[5, 10, 5]} intensity={1.5} />
+                                        <Environment preset="city" />
+                                        <Bounds fit clip observe margin={1.2}>
+                                            <Center>
+                                                <Gltf src={item.glbUrl} />
+                                            </Center>
+                                        </Bounds>
+                                        <OrbitControls makeDefault enablePan={false} enableZoom />
+                                    </Canvas>
+                                </div>
+                            ) : (
+                                <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
+                                    GLB Model Not Available
+                                </div>
+                            )
+                        )
+                    }
+
+                    {
+                        activeTab === 'IMG' && (
+                            item.sourceImageUrl ? (
+                                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 p-8">
+                                    <div className="relative w-full h-full max-w-2xl max-h-full">
+                                        <Image
+                                            src={item.sourceImageUrl}
+                                            alt="Original Source"
+                                            fill
+                                            className="object-contain" // Maintain aspect ratio
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
+                                    Original Image Not Available
+                                </div>
+                            )
+                        )
+                    }
                 </div >
             </div >
 
-    {/* 3. Right Sidebar - Detail & Comments */ }
-    < div className = "w-[360px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10 shadow-xl" >
-        {/* Scrollable Content */ }
-        < div className = "flex-1 overflow-y-auto" >
-            {/* User Info Header */ }
-            < div className = "p-6 border-b border-gray-100 flex items-center gap-3" >
+            {/* 3. Right Sidebar - Detail & Comments */}
+            < div className="w-[360px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10 shadow-xl" >
+                {/* Scrollable Content */}
+                < div className="flex-1 overflow-y-auto" >
+                    {/* User Info Header */}
+                    < div className="p-6 border-b border-gray-100 flex items-center gap-3" >
                         <div className="w-10 h-10 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center font-bold text-blue-600 text-sm">
                             {item.authorNickname ? item.authorNickname[0].toUpperCase() : '?'}
                         </div>
@@ -263,8 +264,8 @@ export default function GalleryDetailClient({ item }: Props) {
                         </div>
                     </div >
 
-    {/* Title & Actions */ }
-    < div className = "p-6" >
+                    {/* Title & Actions */}
+                    < div className="p-6" >
                         <h1 className="text-2xl font-black text-gray-900 leading-tight mb-6">{item.title}</h1>
 
                         <div className="flex items-center gap-6">
@@ -312,8 +313,8 @@ export default function GalleryDetailClient({ item }: Props) {
                         </div>
                     </div >
 
-    {/* Comments Section */ }
-    < div className = "px-6 py-4 border-t border-gray-100 bg-gray-50/50 min-h-[300px]" >
+                    {/* Comments Section */}
+                    < div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 min-h-[300px]" >
                         <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
                             COMMENTS ({comments.length})
                         </h3>
@@ -336,25 +337,25 @@ export default function GalleryDetailClient({ item }: Props) {
                     </div >
                 </div >
 
-    {/* Comment Input */ }
-    < div className = "p-4 border-t border-gray-200 bg-white" >
-        <div className="flex gap-2">
-            <input
-                className="flex-1 bg-gray-100 border-none rounded-xl px-4 py-3 text-xs font-medium focus:ring-2 focus:ring-black/5 outline-none transition-all placeholder:text-gray-400"
-                placeholder={isAuthenticated ? "Add a comment..." : "Login to comment"}
-                value={commentInput}
-                onChange={e => setCommentInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleCommentSubmit()}
-                disabled={!isAuthenticated || commentLoading}
-            />
-            <button
-                onClick={handleCommentSubmit}
-                disabled={!isAuthenticated || !commentInput.trim() || commentLoading}
-                className="bg-black text-white px-4 rounded-xl font-bold text-[10px] hover:bg-gray-800 disabled:opacity-30 transition-all uppercase"
-            >
-                POST
-            </button>
-        </div>
+                {/* Comment Input */}
+                < div className="p-4 border-t border-gray-200 bg-white" >
+                    <div className="flex gap-2">
+                        <input
+                            className="flex-1 bg-gray-100 border-none rounded-xl px-4 py-3 text-xs font-medium focus:ring-2 focus:ring-black/5 outline-none transition-all placeholder:text-gray-400"
+                            placeholder={isAuthenticated ? "Add a comment..." : "Login to comment"}
+                            value={commentInput}
+                            onChange={e => setCommentInput(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleCommentSubmit()}
+                            disabled={!isAuthenticated || commentLoading}
+                        />
+                        <button
+                            onClick={handleCommentSubmit}
+                            disabled={!isAuthenticated || !commentInput.trim() || commentLoading}
+                            className="bg-black text-white px-4 rounded-xl font-bold text-[10px] hover:bg-gray-800 disabled:opacity-30 transition-all uppercase"
+                        >
+                            POST
+                        </button>
+                    </div>
                 </div >
             </div >
         </div >

@@ -11,6 +11,7 @@ export type GalleryItem = {
     myReaction?: 'LIKE' | 'DISLIKE' | null;
     ldrUrl?: string;
     glbUrl?: string;
+    sourceImageUrl?: string;
 };
 
 export type PageResponse<T> = {
