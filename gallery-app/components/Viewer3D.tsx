@@ -83,16 +83,22 @@ function LdrModel({
         if (!url) return;
 
         (async () => {
+            console.log("[LDraw] Starting load for URL:", url);
             try {
                 // await loader.preloadMaterials(ldconfigUrl); // Optional optimization
                 const g = await loader.loadAsync(url);
-                if (cancelled) { disposeObject3D(g); return; }
+                console.log("[LDraw] Load successful:", url);
+                if (cancelled) {
+                    console.log("[LDraw] Load cancelled, disposing:", url);
+                    disposeObject3D(g);
+                    return;
+                }
                 g.rotation.x = Math.PI;
                 prev = g;
                 setGroup(g);
                 onLoaded?.(g);
             } catch (e) {
-                console.error("[LDraw] load failed:", e);
+                console.error("[LDraw] Error loading model:", url, e);
                 onError?.(e);
             }
         })();
@@ -119,11 +125,22 @@ export default function Viewer3D({ url }: Viewer3DProps) {
     const [loading, setLoading] = useState(true);
 
     const proxiedUrl = useMemo(() => {
-        if (url && url.startsWith('http')) {
+        if (!url) return "";
+        if (url.startsWith('http')) {
+            // For .ldr files, we try to load directly if it's a known safe domain (like raw.githubusercontent.com)
+            // or if we suspect it might have CORS issues, we use the proxy but ensure it's not treated as an image
+            if (url.includes('githubusercontent.com')) return url;
+
+            // If it's from our own S3 or other domains, use the proxy
             return `/api/proxy-image?url=${encodeURIComponent(url)}`;
         }
         return url;
     }, [url]);
+
+    useEffect(() => {
+        console.log("[Viewer3D] Raw URL:", url);
+        console.log("[Viewer3D] Proxied URL:", proxiedUrl);
+    }, [url, proxiedUrl]);
 
     return (
         <div className="w-full h-full relative bg-gray-50 flex items-center justify-center">
@@ -139,9 +156,12 @@ export default function Viewer3D({ url }: Viewer3DProps) {
                 <directionalLight position={[3, 5, 2]} intensity={1} />
                 <LdrModel
                     url={proxiedUrl}
-                    onLoaded={() => setLoading(false)}
+                    onLoaded={(group) => {
+                        console.log("[LDraw] Model loaded successfully, setting loading to false");
+                        setLoading(false);
+                    }}
                     onError={(e) => {
-                        console.error("3D Viewer Error:", e);
+                        console.error("[LDraw] 3D Viewer Error:", e);
                         setLoading(false);
                     }}
                 />
