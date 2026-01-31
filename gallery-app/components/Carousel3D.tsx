@@ -28,9 +28,12 @@ function Card({
 }) {
     const mesh = useRef<THREE.Mesh>(null!);
 
-    // Try to load texture if url exists, otherwise fallback
-    // Note: useTexture can suspend, so handled carefully or preloaded ideally
-    const textureUrl = item.thumbnailUrl || '/api/placeholder/400/320';
+    // Use proxy for S3 images to avoid CORS issues in WebGL
+    const rawUrl = item.thumbnailUrl || '/api/placeholder/400/320';
+    const textureUrl = rawUrl.startsWith('http')
+        ? `/api/proxy-image?url=${encodeURIComponent(rawUrl)}`
+        : rawUrl;
+
     const texture = useTexture(textureUrl);
     texture.colorSpace = THREE.SRGBColorSpace;
 
