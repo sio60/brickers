@@ -81,22 +81,24 @@
 }
 
 .ageBtn:hover {
-    transform: translateY(-8px) scale(1.02);
-    background: #ffe135;
-    /* Yellow background on hover */
-    box-shadow: 0 12px 0 #000;
-    /* LEGO-style shadow */
+    transform: translateY(-4px);
+    background: white;
+    box-shadow: none;
+    border-color: #000;
 }
 
+.ageBtn:active,
 .ageBtn.active {
-    background: #000;
-    color: white;
+    background: #ffe135;
+    /* Yellow background on active */
+    color: #000;
     transform: translateY(2px);
     box-shadow: none;
+    border-color: #000;
 }
 
 .ageBtn.active .ageLabel {
-    color: white;
+    color: #000;
 }
 
 .imageWrapper {

@@ -53,20 +53,23 @@ export default function CarouselGallery({ items = [], loading = false, onPreview
         const offset = index - activeIndex;
         const absOffset = Math.abs(offset);
 
-        // Deep 3D Perspective logic - Extended V-shape Spread
-        const x = offset * 380; // EVEN WIDER horizontal spread
-        const y = absOffset * -70; // Slightly more fan UPWARDS
-        const z = absOffset * -450; // Deeper recession for wider look
-        const rotateY = offset * -50; // More aggressive tilt
-        const scale = 1 - (absOffset * 0.15);
+        // Arc/Coverflow style - cards curve around like a cylinder
+        const x = offset * 220; // Horizontal spacing
+        const z = -absOffset * 120; // Push back for depth
+        const rotateY = offset * -35; // Rotate inward (negative for left, positive for right)
+        const scale = 1 - (absOffset * 0.08);
         const zIndex = 10 - absOffset;
-        const opacity = 1 - (absOffset * 0.35);
+        const opacity = 1 - (absOffset * 0.15);
+
+        // Blur effect for non-active cards
+        const blur = absOffset > 0 ? Math.min(absOffset * 2, 4) : 0;
 
         return {
-            transform: `perspective(1200px) translateX(${x}px) translateY(${y}px) translateZ(${z}px) rotateY(${rotateY}deg) scale(${scale})`,
+            transform: `perspective(1000px) translateX(${x}px) translateZ(${z}px) rotateY(${rotateY}deg) scale(${scale})`,
             zIndex,
-            opacity: opacity > 0.05 ? opacity : 0.05,
-            pointerEvents: 'auto', // Allow interaction
+            opacity: opacity > 0.3 ? opacity : 0.3,
+            filter: blur > 0 ? `blur(${blur}px)` : 'none',
+            pointerEvents: absOffset <= 1 ? 'auto' : 'none',
         } as React.CSSProperties;
     };
 

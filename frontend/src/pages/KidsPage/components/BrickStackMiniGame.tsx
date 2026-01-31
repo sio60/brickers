@@ -1,7 +1,7 @@
 // src/pages/KidsPage/components/BrickStackMiniGame.tsx
 import "./BrickStackMiniGame.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 import { useLanguage } from "../../../contexts/LanguageContext";
@@ -191,6 +191,25 @@ function Scene({
   );
 }
 
+// ── 카메라 컨트롤러 ──
+function CameraController({ stackHeight }: { stackHeight: number }) {
+  const { camera } = useThree();
+  const targetLookAt = useRef(new THREE.Vector3(0, 0, 0));
+
+  useFrame((state, dt) => {
+    // 카메라 Y 위치: 스택 높이에 따라 점진적으로 상승
+    const targetY = Math.max(3, stackHeight + 1.5);
+    camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetY, 2.5 * dt);
+
+    // LookAt 대상 Y: 스택의 상단 부근을 부드럽게 추적
+    const targetLookAtY = Math.max(0, stackHeight - 1);
+    targetLookAt.current.y = THREE.MathUtils.lerp(targetLookAt.current.y, targetLookAtY, 2.5 * dt);
+    camera.lookAt(0, targetLookAt.current.y, 0);
+  });
+
+  return null;
+}
+
 export default function BrickStackMiniGame() {
   const { t } = useLanguage();
   const [bricks, setBricks] = useState<Brick[]>([]);
@@ -370,12 +389,6 @@ export default function BrickStackMiniGame() {
     }, 350);
   }, [bricks, gameOver, currentColor]);
 
-  const camera = useMemo(() => {
-    // 카메라: 바닥이 화면 하단에 보이도록
-    const stackHeight = bricks.length * BRICK_HEIGHT;
-    const camY = Math.max(3, stackHeight * 0.2 + 2);
-    return { position: [0, camY, 9] as [number, number, number], fov: 50 };
-  }, [bricks.length]);
 
   return (
     <div className="brickGame">
@@ -389,7 +402,8 @@ export default function BrickStackMiniGame() {
       </div>
 
       <div className="brickGame__stage">
-        <Canvas shadows camera={camera}>
+        <Canvas shadows camera={{ position: [0, 3, 9], fov: 50 }}>
+          <CameraController stackHeight={bricks.length * BRICK_HEIGHT} />
           <Scene
             bricks={bricks}
             activeRef={activeRef}
