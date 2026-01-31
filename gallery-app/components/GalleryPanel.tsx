@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 type MenuItem = {
     id: string;
@@ -18,9 +19,11 @@ type Props = {
 };
 
 export default function GalleryPanel({ title, activeCategory, onCategoryChange, rightAction, children, footer }: Props) {
+    const { t } = useLanguage();
+
     const menuItems: MenuItem[] = [
-        { id: 'all', label: '전체 갤러리' },
-        { id: 'bookmarks', label: '내 북마크' },
+        { id: 'all', label: t.galleryList.allCreations },
+        { id: 'bookmarks', label: t.galleryList.myBookmarks },
     ];
 
     return (
@@ -28,8 +31,8 @@ export default function GalleryPanel({ title, activeCategory, onCategoryChange, 
             {/* Sidebar */}
             <div className="w-64 flex-shrink-0 bg-black rounded-3xl overflow-hidden flex flex-col shadow-2xl">
                 <div className="px-8 py-10 border-b border-gray-800">
-                    <h2 className="text-yellow-400 text-xs font-black uppercase tracking-[0.2em] mb-2">Workspace</h2>
-                    <h1 className="text-white text-2xl font-black italic tracking-tighter">GALLERY</h1>
+                    <h2 className="text-yellow-400 text-xs font-black uppercase tracking-[0.2em] mb-2">{t.galleryList.workspace}</h2>
+                    <h1 className="text-white text-2xl font-black italic tracking-tighter uppercase">{t.galleryList.gallery}</h1>
                 </div>
 
                 <nav className="flex-1 py-8 px-4 flex flex-col gap-2">
@@ -61,7 +64,7 @@ export default function GalleryPanel({ title, activeCategory, onCategoryChange, 
                     <div className="flex-shrink-0 flex items-center justify-between px-10 py-8 border-b border-gray-50">
                         {title && (
                             <h2 className="text-3xl font-black text-black tracking-tighter italic">
-                                {activeCategory === 'all' ? 'All Creations' : 'My Bookmarks'}
+                                {activeCategory === 'all' ? t.galleryList.allCreations : t.galleryList.myBookmarks}
                             </h2>
                         )}
                         {rightAction && (

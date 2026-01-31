@@ -18,6 +18,12 @@ export const en = {
             authorLabel: "Creator:",
             moreWorks: "Want to see more creations?",
             goToGallery: "Go to Gallery"
+        },
+        galleryList: {
+            workspace: "Workspace",
+            allCreations: "All Creations",
+            myBookmarks: "My Bookmarks",
+            gallery: "Gallery"
         }
     },
     floatingMenu: {
@@ -363,7 +369,17 @@ export const en = {
         noDescription: "No description available.",
         views: "Views",
         likes: "Likes",
-        view3d: "View in 3D & Build"
+        view3d: "View in 3D & Build",
+        save: "Save",
+        share: "Share",
+        creator: "CREATOR",
+        comments: "Comments",
+        noComments: "No comments yet.",
+        placeholderComment: "Add a comment...",
+        loginToComment: "Login to comment",
+        post: "POST",
+        noGlb: "GLB Model Not Available",
+        noImg: "Original Image Not Available"
     },
     my: {
         title: "My Gallery",
