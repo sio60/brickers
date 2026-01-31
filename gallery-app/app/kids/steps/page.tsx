@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
-import { Bounds, OrbitControls } from "@react-three/drei";
+import { Bounds, OrbitControls, Center, Gltf, Environment } from "@react-three/drei";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
@@ -166,7 +166,9 @@ function LdrModel({
     if (!group) return null;
     return (
         <Bounds fit clip observe margin={1.2}>
-            <primitive object={group} />
+            <Center>
+                <primitive object={group} />
+            </Center>
         </Bounds>
     );
 }
@@ -191,10 +193,16 @@ function KidsStepPageContent() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [jobThumbnailUrl, setJobThumbnailUrl] = useState<string | null>(null);
 
+    const [isPreviewMode, setIsPreviewMode] = useState(true);
+
     const revokeAll = (arr: string[]) => {
         arr.forEach((u) => { try { URL.revokeObjectURL(u); } catch { } });
     };
 
+    const [activeTab, setActiveTab] = useState<'LDR' | 'GLB'>('LDR');
+    const [glbUrl, setGlbUrl] = useState<string | null>(null);
+
+    // Fetch Job Info
     useEffect(() => {
         let alive = true;
         (async () => {
@@ -207,6 +215,7 @@ function KidsStepPageContent() {
                 if (alive) {
                     if (!ldrUrl) setLdrUrl(data.ldrUrl || data.ldr_url || "");
                     setJobThumbnailUrl(data.sourceImageUrl || null);
+                    setGlbUrl(data.glbUrl || data.glb_url || null);
                 }
             } catch (e) {
                 console.error("[KidsStepPage] failed to resolve job info:", e);
@@ -304,48 +313,193 @@ function KidsStepPageContent() {
         finally { setIsSubmitting(false); }
     };
 
-    if (!ldrUrl) return <div style={{ padding: 16 }}><button onClick={() => router.back()}>← {t.kids.steps.back}</button><div>{t.kids.steps.noUrl}</div></div>;
-
     const total = stepBlobUrls.length || 1;
     const currentOverride = stepBlobUrls[Math.min(stepIdx, stepBlobUrls.length - 1)];
     const canPrev = stepIdx > 0;
     const canNext = stepIdx < total - 1;
+    const modelUrlToUse = isPreviewMode ? undefined : currentOverride;
 
     return (
-        <div style={{ minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column" }}>
-            <div style={{ height: 72, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", borderBottom: "1px solid rgba(0,0,0,0.06)", background: "rgba(255,255,255,0.9)", backdropFilter: "blur(6px)" }}>
-                <button onClick={() => router.back()} style={{ padding: "10px 14px", borderRadius: 999, border: "1px solid rgba(0,0,0,0.12)", background: "#fff", fontWeight: 800, cursor: "pointer" }}>← {t.kids.steps.back}</button>
-                <div style={{ fontWeight: 900, opacity: 0.9 }}>BRICKERS</div>
-                <div style={{ padding: "10px 14px", borderRadius: 999, border: "1px solid rgba(0,0,0,0.12)", background: "#fff", fontWeight: 900 }}>
-                    {t.kids.steps.title.replace("{cur}", String(stepIdx + 1)).replace("{total}", String(total))}
+        <div style={{ minHeight: "100vh", background: "#f5f5f5", display: "flex" }}>
+            {/* Sidebar */}
+            <div style={{
+                width: 280,
+                background: "#1a1a1a",
+                color: "#fff",
+                display: "flex",
+                flexDirection: "column",
+                padding: "24px 16px",
+                flexShrink: 0
+            }}>
+                {/* Back Button */}
+                <button
+                    onClick={() => router.back()}
+                    style={{
+                        alignSelf: "flex-start",
+                        marginBottom: 32,
+                        background: "rgba(255,255,255,0.1)",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 8,
+                        padding: "8px 16px",
+                        cursor: "pointer",
+                        fontSize: "0.9rem",
+                        fontWeight: 600
+                    }}
+                >
+                    ← {t.kids.steps.back}
+                </button>
+
+                <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: 24, paddingLeft: 8 }}>
+                    BRICKERS
+                </h2>
+
+                {/* Categories */}
+                <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.85rem", color: "#888", fontWeight: 600 }}>
+                    {t.kids.steps.viewModes}
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <button
+                        onClick={() => setActiveTab('LDR')}
+                        style={{
+                            textAlign: "left",
+                            padding: "12px 16px",
+                            borderRadius: 12,
+                            background: activeTab === 'LDR' ? "#3b82f6" : "transparent",
+                            color: activeTab === 'LDR' ? "#fff" : "#ccc",
+                            fontWeight: activeTab === 'LDR' ? 700 : 500,
+                            border: "none",
+                            cursor: "pointer",
+                            transition: "all 0.2s"
+                        }}
+                    >
+                        🧱 {t.kids.steps.tabBrick}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('GLB')}
+                        style={{
+                            textAlign: "left",
+                            padding: "12px 16px",
+                            borderRadius: 12,
+                            background: activeTab === 'GLB' ? "#3b82f6" : "transparent",
+                            color: activeTab === 'GLB' ? "#fff" : "#ccc",
+                            fontWeight: activeTab === 'GLB' ? 700 : 500,
+                            border: "none",
+                            cursor: "pointer",
+                            transition: "all 0.2s"
+                        }}
+                    >
+                        🧊 {t.kids.steps.tabModeling}
+                    </button>
                 </div>
             </div>
 
-            <div style={{ flex: 1, display: "grid", placeItems: "center", padding: "28px 20px 36px" }}>
-                <div style={{ width: "min(1100px, 92vw)", aspectRatio: "16 / 9", borderRadius: 18, background: "rgba(255,255,255,0.92)", border: "2px solid #000", boxShadow: "0 18px 40px rgba(0,0,0,0.14)", position: "relative", overflow: "hidden" }}>
-                    <div style={{ position: "absolute", top: 14, left: "50%", transform: "translateX(-50%)", zIndex: 6, display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderRadius: 999, background: "rgba(255,255,255,0.9)", fontWeight: 900 }}>{t.kids.steps.preview}</div>
-                    {loading && <div style={{ position: "absolute", inset: 0, zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.75)", fontWeight: 900 }}>{t.kids.steps.loading}</div>}
-                    <div style={{ position: "absolute", inset: 0 }}>
-                        <Canvas camera={{ position: [200, -200, 200], fov: 45 }} dpr={[1, 2]}>
-                            <ambientLight intensity={0.9} />
-                            <directionalLight position={[3, 5, 2]} intensity={1} />
-                            <LdrModel url={ldrUrl} overrideMainLdrUrl={currentOverride} onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }} onError={() => setLoading(false)} />
-                            <OrbitControls makeDefault enablePan={false} enableZoom />
-                        </Canvas>
+            {/* Main Content Area */}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
+                {/* Top Bar inside Content Area */}
+                <div style={{
+                    height: 64,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "0 24px",
+                    background: "#fff",
+                    borderBottom: "1px solid #e5e5e5"
+                }}>
+                    <div style={{ fontSize: "1.1rem", fontWeight: 800 }}>
+                        {activeTab === 'LDR'
+                            ? (isPreviewMode ? t.kids.steps.previewTitle : t.kids.steps.title.replace("{cur}", String(stepIdx + 1)).replace("{total}", String(total)))
+                            : t.kids.steps.originalModel
+                        }
                     </div>
-                    <button disabled={!canPrev} onClick={() => { setLoading(true); setStepIdx(v => v - 1); }} style={{ position: "absolute", left: 16, bottom: 16, zIndex: 7, padding: "10px 14px", borderRadius: 14, border: "1px solid #000", background: "#fff", cursor: canPrev ? "pointer" : "not-allowed", opacity: canPrev ? 1 : 0.45, fontWeight: 900 }}>← {t.kids.steps.prev}</button>
-                    <button disabled={!canNext} onClick={() => { setLoading(true); setStepIdx(v => v + 1); }} style={{ position: "absolute", right: 16, bottom: 16, zIndex: 7, padding: "10px 14px", borderRadius: 14, border: "1px solid #000", background: "#fff", cursor: canNext ? "pointer" : "not-allowed", opacity: canNext ? 1 : 0.45, fontWeight: 900 }}>{t.kids.steps.next} →</button>
+                    {/* Action Buttons (Download/Register) - Only show relevant ones */}
+                    {searchParams.get("isPreset") !== "true" && (
+                        <div style={{ display: "flex", gap: 8 }}>
+                            {activeTab === 'GLB' && <button className="kidsStep__actionBtn" onClick={downloadGlb}>{t.kids.steps.downloadGlb}</button>}
+                            {activeTab === 'LDR' && <button className="kidsStep__actionBtn" onClick={downloadLdr}>{t.kids.steps.downloadLdr}</button>}
+                            <button className="kidsStep__actionBtn kidsStep__actionBtn--gallery" onClick={() => setIsGalleryModalOpen(true)}>{t.kids.steps.registerGallery}</button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Canvas Container */}
+                <div style={{ flex: 1, position: "relative", background: "#f0f0f0" }}>
+                    {loading && (
+                        <div style={{
+                            position: "absolute", inset: 0, zIndex: 10,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            background: "rgba(255,255,255,0.75)", fontWeight: 900
+                        }}>
+                            {t.kids.steps.loading}
+                        </div>
+                    )}
+
+                    {activeTab === 'LDR' ? (
+                        <>
+                            <div style={{ position: "absolute", inset: 0 }}>
+                                <Canvas camera={{ position: [200, -200, 200], fov: 45 }} dpr={[1, 2]}>
+                                    <ambientLight intensity={0.9} />
+                                    <directionalLight position={[3, 5, 2]} intensity={1} />
+                                    <LdrModel
+                                        url={ldrUrl}
+                                        overrideMainLdrUrl={modelUrlToUse}
+                                        onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }}
+                                        onError={() => setLoading(false)}
+                                    />
+                                    <OrbitControls makeDefault enablePan={false} enableZoom />
+                                </Canvas>
+                            </div>
+
+                            {/* LDR Overlays (Start Button or Step Nav) */}
+                            {isPreviewMode ? (
+                                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 40, pointerEvents: "none" }}>
+                                    <button
+                                        onClick={() => { setIsPreviewMode(false); setStepIdx(0); }}
+                                        style={{
+                                            pointerEvents: "auto",
+                                            padding: "14px 28px",
+                                            fontSize: "1.1rem",
+                                            borderRadius: 999,
+                                            background: "#000",
+                                            color: "#fff",
+                                            fontWeight: 700,
+                                            border: "none",
+                                            cursor: "pointer",
+                                            boxShadow: "0 4px 12px rgba(0,0,0,0.2)"
+                                        }}
+                                    >
+                                        {t.kids.steps.startAssembly}
+                                    </button>
+                                </div>
+                            ) : (
+                                <div style={{ position: "absolute", bottom: 24, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 16 }}>
+                                    <button disabled={!canPrev} onClick={() => { setLoading(true); setStepIdx(v => v - 1); }} style={{ padding: "10px 20px", borderRadius: 12, border: "1px solid #ddd", background: "#fff", cursor: canPrev ? "pointer" : "not-allowed", opacity: canPrev ? 1 : 0.5, fontWeight: 700, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>← {t.kids.steps.prev}</button>
+                                    <button disabled={!canNext} onClick={() => { setLoading(true); setStepIdx(v => v + 1); }} style={{ padding: "10px 20px", borderRadius: 12, border: "none", background: "#000", color: "#fff", cursor: canNext ? "pointer" : "not-allowed", opacity: canNext ? 1 : 0.5, fontWeight: 700, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>{t.kids.steps.next} →</button>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        // GLB Viewer
+                        <div style={{ position: "absolute", inset: 0 }}>
+                            <Canvas camera={{ position: [5, 5, 5], fov: 50 }} dpr={[1, 2]}>
+                                <ambientLight intensity={0.8} />
+                                <directionalLight position={[5, 10, 5]} intensity={1.5} />
+                                <Environment preset="city" />
+                                <Bounds fit clip observe margin={1.2}>
+                                    <Center>
+                                        {glbUrl && <Gltf src={glbUrl} />}
+                                    </Center>
+                                </Bounds>
+                                <OrbitControls makeDefault enablePan={false} enableZoom />
+                            </Canvas>
+                            {!glbUrl && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#888" }}>3D Model not available</div>}
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {searchParams.get("isPreset") !== "true" && (
-                <div className="kidsStep__actionContainer">
-                    <button className="kidsStep__actionBtn" onClick={downloadGlb}>{t.kids.steps.downloadGlb}</button>
-                    <button className="kidsStep__actionBtn" onClick={downloadLdr}>{t.kids.steps.downloadLdr}</button>
-                    <button className="kidsStep__actionBtn kidsStep__actionBtn--gallery" onClick={() => setIsGalleryModalOpen(true)}>{t.kids.steps.registerGallery}</button>
-                </div>
-            )}
-
+            {/* Gallery Modal */}
             {isGalleryModalOpen && (
                 <div className="galleryModalOverlay" onClick={() => setIsGalleryModalOpen(false)}>
                     <div className="galleryModal" onClick={(e) => e.stopPropagation()}>

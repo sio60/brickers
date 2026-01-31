@@ -168,26 +168,7 @@ export default async function GalleryDetailPage({ params }: Props) {
                 <div className="max-w-4xl mx-auto">
 
 
-                    <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
-                        {/* Main Image */}
-                        <div className="relative h-[400px] md:h-[500px] bg-gray-50">
-                            {item.thumbnailUrl ? (
-                                <Image
-                                    src={item.thumbnailUrl}
-                                    alt={item.title}
-                                    fill
-                                    className="object-contain"
-                                    priority
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                    No Image
-                                </div>
-                            )}
-                        </div>
-
-                        <GalleryDetailClient item={item} />
-                    </div>
+                    <GalleryDetailClient item={item} />
                 </div>
             </div>
         </>
