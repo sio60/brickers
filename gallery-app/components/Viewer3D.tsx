@@ -85,7 +85,7 @@ function LdrModel({
         (async () => {
             console.log("[LDraw] Starting load for URL:", url);
             try {
-                // await loader.preloadMaterials(ldconfigUrl); // Optional optimization
+                await loader.preloadMaterials(ldconfigUrl); // Required for correct colors
                 const g = await loader.loadAsync(url);
                 console.log("[LDraw] Load successful:", url);
                 if (cancelled) {
