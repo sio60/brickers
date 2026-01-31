@@ -341,7 +341,7 @@ export const ja = {
     },
     // gallery specific (from original gallery-app)
     detail: {
-        back: "← ギャラリーに戻る",
+        back: "ギャラリーに戻る",
         description: "作品説明",
         noDescription: "説明がありません。",
         views: "閲覧",
