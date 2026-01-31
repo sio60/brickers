@@ -111,6 +111,7 @@ export const en = {
         },
         noGlbFile: "GLB file not available.",
         noLdrFile: "LDR file not available.",
+        noEnhancedImage: "Enhanced image not available.",
         retryFail: "Failed to retry job.",
         modalError: "Job failed: ",
         modalPending: "Job is running or model not ready.",
