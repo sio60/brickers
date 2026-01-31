@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { GalleryItem } from '../types/gallery';
 import { useLanguage } from '@/contexts/LanguageContext';
 import styles from './CarouselGallery.module.css';
+import Carousel3D from './Carousel3D';
 
 interface PlaceholderItem {
     id: string;
@@ -35,72 +35,13 @@ export default function CarouselGallery({ items = [], loading = false, onPreview
     const { t } = useLanguage();
     const router = useRouter();
     const displayItems: DisplayItem[] = loading ? PLACEHOLDER_ITEMS : items;
-    const [activeIndex, setActiveIndex] = useState(0);
     const [showGalleryPrompt, setShowGalleryPrompt] = useState(false);
 
-    useEffect(() => {
-        if (displayItems.length > 0) {
-            setActiveIndex(Math.floor(displayItems.length / 2));
-        }
-    }, [displayItems.length]);
-
-    // Reset prompt when index changes
-    useEffect(() => {
-        setShowGalleryPrompt(false);
-    }, [activeIndex]);
-
-    const getCardStyle = (index: number) => {
-        const offset = index - activeIndex;
-        const absOffset = Math.abs(offset);
-
-        // Arc/Coverflow style - cards curve around like a cylinder
-        const x = offset * 220; // Horizontal spacing
-        const z = -absOffset * 120; // Push back for depth
-        const rotateY = offset * -35; // Rotate inward (negative for left, positive for right)
-        const scale = 1 - (absOffset * 0.08);
-        const zIndex = 10 - absOffset;
-        const opacity = 1 - (absOffset * 0.15);
-
-        // Blur effect for non-active cards
-        const blur = absOffset > 0 ? Math.min(absOffset * 2, 4) : 0;
-
-        return {
-            transform: `perspective(1000px) translateX(${x}px) translateZ(${z}px) rotateY(${rotateY}deg) scale(${scale})`,
-            zIndex,
-            opacity: opacity > 0.3 ? opacity : 0.3,
-            filter: blur > 0 ? `blur(${blur}px)` : 'none',
-            pointerEvents: absOffset <= 1 ? 'auto' : 'none',
-        } as React.CSSProperties;
-    };
-
-    const handlePrev = () => {
-        setActiveIndex(prev => (prev > 0 ? prev - 1 : prev));
-        setShowGalleryPrompt(false);
-    };
-
-    const handleNext = () => {
-        if (activeIndex === displayItems.length - 1) {
-            // Already at last item, show gallery prompt
-            setShowGalleryPrompt(true);
-        } else {
-            setActiveIndex(prev => prev + 1);
-        }
-    };
+    // Filter out valid GalleryItems for the 3D carousel
+    const validItems = displayItems.filter(item => !('isPlaceholder' in item)) as GalleryItem[];
 
     const handleGoToGallery = () => {
         router.push('/gallery');
-    };
-
-    const handleCardClick = (index: number, item: DisplayItem) => {
-        // placeholder 카드는 클릭 무시
-        if ('isPlaceholder' in item && item.isPlaceholder) {
-            return;
-        }
-        if (index === activeIndex && 'ldrUrl' in item && item.ldrUrl) {
-            onPreview?.(item.ldrUrl);
-        } else {
-            setActiveIndex(index);
-        }
     };
 
     return (
@@ -119,91 +60,27 @@ export default function CarouselGallery({ items = [], loading = false, onPreview
                 </div>
             )}
 
-            <div className={styles.carouselWrapper}>
-                <button
-                    className={`${styles.navButton} ${styles.prev}`}
-                    onClick={handlePrev}
-                    disabled={activeIndex === 0}
-                    aria-label="Previous"
-                >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
-                </button>
-
-                <div className={styles.carousel}>
-                    {displayItems.map((item, index) => {
-                        const isPlaceholder = 'isPlaceholder' in item && item.isPlaceholder;
-                        return (
-                            <div
-                                key={item.id}
-                                className={`${styles.card} ${index === activeIndex ? styles.active : ''} ${isPlaceholder ? styles.placeholderCard : ''}`}
-                                style={getCardStyle(index)}
-                                onClick={() => handleCardClick(index, item)}
-                            >
-                                <div className={styles.preview}>
-                                    {isPlaceholder ? (
-                                        <div className={styles.placeholder}>
-                                            <svg className={styles.placeholderIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                                <rect x="3" y="3" width="7" height="7" rx="1" />
-                                                <rect x="14" y="3" width="7" height="7" rx="1" />
-                                                <rect x="3" y="14" width="7" height="7" rx="1" />
-                                                <rect x="14" y="14" width="7" height="7" rx="1" />
-                                            </svg>
-                                        </div>
-                                    ) : item.thumbnailUrl ? (
-                                        <Image
-                                            src={item.thumbnailUrl}
-                                            alt={item.title}
-                                            fill
-                                            style={{ objectFit: 'cover' }}
-                                        />
-                                    ) : null}
-                                </div>
-                                <div className={styles.info}>
-                                    {isPlaceholder ? (
-                                        <>
-                                            <div className={styles.placeholderText} style={{ width: '70%' }} />
-                                            <div className={styles.placeholderText} style={{ width: '50%' }} />
-                                        </>
-                                    ) : (
-                                        <>
-                                            <div className={styles.metaRow}>
-                                                <span className={styles.label}>{t.main.landing.titleLabel} </span>
-                                                <span className={styles.value}>{item.title}</span>
-                                            </div>
-                                            <div className={styles.metaRow}>
-                                                <span className={styles.label}>{t.main.landing.authorLabel} </span>
-                                                <span className={styles.value}>{item.authorNickname || 'Anonymous'}</span>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
+            {/* Render 3D Carousel if items exist */}
+            {validItems.length > 0 ? (
+                <Carousel3D items={validItems} onPreview={onPreview} />
+            ) : (
+                // Fallback or loading state if needed
+                <div className={styles.carouselWrapper}>
+                    <div className={styles.carousel}>
+                        Loading 3D Gallery...
+                    </div>
                 </div>
+            )}
 
-                <button
-                    className={`${styles.navButton} ${styles.next}`}
-                    onClick={handleNext}
-                    disabled={activeIndex === displayItems.length - 1}
-                    aria-label="Next"
-                >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
-                </button>
-            </div>
-
+            {/* "More Works" button separate from carousel since it assumes drag interaction */}
             <div className={styles.indicators}>
-                {displayItems.map((_, index) => (
-                    <button
-                        key={index}
-                        className={`${styles.indicator} ${index === activeIndex ? styles.activeIndicator : ''}`}
-                        onClick={() => setActiveIndex(index)}
-                    />
-                ))}
+                <button
+                    className={styles.galleryPromptButton}
+                    onClick={() => setShowGalleryPrompt(true)}
+                    style={{ marginTop: '20px', fontSize: '14px', padding: '10px 20px' }}
+                >
+                    + More Works
+                </button>
             </div>
         </div>
     );
