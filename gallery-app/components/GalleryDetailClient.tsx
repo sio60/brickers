@@ -136,16 +136,13 @@ export default function GalleryDetailClient({ item }: Props) {
             <div className="w-[280px] bg-[#1a1a1a] text-white flex flex-col p-6 shrink-0 relative z-20 shadow-2xl">
                 <h2 className="text-xl font-bold mb-6 pl-2 tracking-wider">BRICKERS</h2>
 
-                {/* Categories */}
-                <div className="mb-3 pl-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                    {t.kids.steps.viewModes}
-                </div>
+
 
                 <div className="flex flex-col gap-2 flex-1">
                     <button
                         onClick={() => setActiveTab('LDR')}
                         className={`text-left px-4 py-3 rounded-xl transition-all font-medium flex items-center gap-2 ${activeTab === 'LDR'
-                            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                            ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/30'
                             : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
                             }`}
                     >
@@ -154,7 +151,7 @@ export default function GalleryDetailClient({ item }: Props) {
                     <button
                         onClick={() => setActiveTab('GLB')}
                         className={`text-left px-4 py-3 rounded-xl transition-all font-medium flex items-center gap-2 ${activeTab === 'GLB'
-                            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                            ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/30'
                             : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
                             }`}
                     >
@@ -163,7 +160,7 @@ export default function GalleryDetailClient({ item }: Props) {
                     <button
                         onClick={() => setActiveTab('IMG')}
                         className={`text-left px-4 py-3 rounded-xl transition-all font-medium flex items-center gap-2 ${activeTab === 'IMG'
-                            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                            ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/30'
                             : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
                             }`}
                     >
