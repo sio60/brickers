@@ -41,7 +41,7 @@ function Card({
     const absOffset = Math.abs(offset);
 
     // Coverflow Layout Calculation
-    const x = offset * 1.6;
+    const x = offset * 1.1;
     const z = -absOffset * 1.2;
     const rotY = offset * -0.6; // ~34.4 degrees in radians
 

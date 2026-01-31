@@ -107,20 +107,20 @@ export default function GalleryDetailClient({ item }: Props) {
     const router = useRouter();
 
     return (
-        <div className="fixed inset-0 z-50 flex flex-col items-center pt-24 p-4 sm:p-6 bg-transparent pointer-events-none">
-            {/* Top Back Button */}
-            <div className="w-full max-w-[900px] mb-4 flex justify-start pointer-events-auto">
+        <div className="fixed inset-0 z-[60] flex flex-col items-center pt-10 sm:pt-16 p-4 sm:p-6 bg-black/5 pointer-events-none overflow-y-auto">
+            {/* Top Back Button Area */}
+            <div className="w-full max-w-[900px] mb-4 flex justify-start pointer-events-auto shrink-0">
                 <button
                     onClick={() => router.back()}
-                    className="flex items-center gap-2 text-black/60 hover:text-black font-bold transition-colors"
+                    className="flex items-center gap-2 bg-white px-5 py-2.5 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] text-black hover:bg-gray-50 font-bold transition-all active:scale-95 border border-gray-100"
                 >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                    <span>Back</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" className="mr-1"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    <span className="text-sm">BACK</span>
                 </button>
             </div>
 
             {/* Simple Card Container */}
-            <div className="relative pointer-events-auto bg-white w-full max-w-[900px] h-[80vh] max-h-[850px] rounded-[30px] shadow-[0_10px_40px_rgba(0,0,0,0.15)] flex flex-col md:flex-row overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+            <div className="relative pointer-events-auto bg-white w-full max-w-[900px] h-[80vh] min-h-[500px] max-h-[850px] rounded-[30px] shadow-[0_20px_60px_rgba(0,0,0,0.2)] flex flex-col md:flex-row overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
 
                 {/* Left/Content Section: Image/3D Viewer */}
                 <div className="flex-1 relative bg-gray-50 flex flex-col overflow-hidden">
@@ -236,39 +236,43 @@ export default function GalleryDetailClient({ item }: Props) {
                         </div>
 
                         {/* Drawer List */}
-                        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5 bg-gray-50/30">
+                        <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-4 bg-gray-50/50">
                             {comments.length === 0 ? (
-                                <div className="flex-1 flex items-center justify-center text-gray-300 text-xs font-bold italic">아직 댓글이 없습니다</div>
+                                <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-2">
+                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="opacity-20"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                    <span className="text-xs font-bold italic opacity-60">아직 댓글이 없습니다</span>
+                                </div>
                             ) : comments.map(c => (
-                                <div key={c.id} className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                    <div className="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center font-bold text-[10px] shrink-0">{c.authorNickname[0]}</div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-bold text-xs">@{c.authorNickname}</span>
-                                            <span className="text-[10px] text-gray-400 font-medium">{formatDate(c.createdAt)}</span>
+                                <div key={c.id} className="flex gap-3 bg-white p-3 rounded-2xl border border-gray-100/50 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                    <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center font-bold text-[10px] shrink-0 text-gray-500 uppercase">{c.authorNickname[0]}</div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="font-bold text-xs truncate">@{c.authorNickname}</span>
+                                            <span className="text-[9px] text-gray-400 font-medium shrink-0">{formatDate(c.createdAt)}</span>
                                         </div>
-                                        <p className="text-xs text-black/80 font-medium leading-relaxed mt-1">{c.content}</p>
+                                        <p className="text-xs text-black/80 font-medium leading-relaxed mt-1 break-words">{c.content}</p>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
                         {/* Drawer Input */}
-                        <div className="p-6 bg-white border-t border-gray-50 shrink-0">
+                        <div className={`p-4 sm:p-6 bg-white border-t border-gray-50 shrink-0 ${!isAuthenticated ? 'opacity-70 grayscale' : ''}`}>
                             <div className="flex gap-2">
                                 <input
-                                    className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-2 text-xs font-bold focus:ring-1 focus:ring-black outline-none transition-all"
-                                    placeholder="멋진 감상평을 남겨주세요..."
+                                    className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-2.5 text-xs font-bold focus:ring-2 focus:ring-black/5 outline-none transition-all placeholder:text-gray-300 disabled:cursor-not-allowed"
+                                    placeholder={isAuthenticated ? "멋진 감상평을 남겨주세요..." : "로그인 후 댓글을 남겨주세요"}
                                     value={commentInput}
                                     onChange={e => setCommentInput(e.target.value)}
                                     onKeyDown={e => e.key === 'Enter' && handleCommentSubmit()}
+                                    disabled={!isAuthenticated || commentLoading}
                                 />
                                 <button
                                     onClick={handleCommentSubmit}
-                                    disabled={!commentInput.trim() || commentLoading}
-                                    className="bg-black text-white px-5 rounded-2xl font-bold text-[10px] hover:bg-gray-800 disabled:opacity-30 transition-all uppercase"
+                                    disabled={!isAuthenticated || !commentInput.trim() || commentLoading}
+                                    className="bg-black text-white px-6 rounded-2xl font-bold text-[11px] hover:bg-gray-800 active:scale-95 disabled:opacity-30 disabled:active:scale-100 transition-all uppercase tracking-wider"
                                 >
-                                    POST
+                                    {commentLoading ? '...' : 'POST'}
                                 </button>
                             </div>
                         </div>
