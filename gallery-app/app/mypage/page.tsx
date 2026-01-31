@@ -25,7 +25,11 @@ const Icons = {
     Calendar: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg>,
     X: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>,
     CornerDownRight: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="14 16 9 21 4 16" /><path d="M20 4v7a4 4 0 0 1-4 4H9" /></svg>,
-    Camera: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></svg>
+    Camera: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></svg>,
+    Search: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>,
+    Layers: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.18 6.27a2 2 0 0 0 0 3.66l9 4.1a2 2 0 0 0 1.66 0l8.99-4.1a2 2 0 0 0 0-3.66Z" /><path d="m2.18 16.27 8.99 4.1a2 2 0 0 0 1.66 0l8.99-4.1" /><path d="m2.18 11.27 8.99 4.1a2 2 0 0 0 1.66 0l8.99-4.1" /></svg>,
+    DownloadImage: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>,
+    DownloadFile: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /><polyline points="14 2 14 8 20 8" /><line x1="12" x2="12" y1="18" y2="12" /><polyline points="9 15 12 18 15 15" /></svg>
 };
 
 // types
@@ -166,22 +170,16 @@ export default function MyPage() {
         return `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}.`;
     };
 
-    // 파일 다운로드 헬퍼
-    const downloadFile = async (url: string, filename: string) => {
-        try {
-            const response = await fetch(url);
-            const blob = await response.blob();
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(link.href);
-        } catch (error) {
-            console.error('Download failed:', error);
-            alert(t.common.error);
-        }
+    // 파일 다운로드 헬퍼 (CORS 우회를 위해 a 태그 직접 사용)
+    const downloadFile = (url: string, filename: string) => {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     // 작업 메뉴 핸들러
@@ -704,7 +702,7 @@ export default function MyPage() {
                                 onClick={() => handleMenuAction('preview')}
                                 disabled={!menuJob.sourceImageUrl}
                             >
-                                <span className={styles.mypage__menuIcon2}>🔍</span>
+                                <Icons.Search className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.previewImage || '이미지 원본 보기'}</span>
                             </button>
                             <button
@@ -712,16 +710,16 @@ export default function MyPage() {
                                 onClick={() => handleMenuAction('view')}
                                 disabled={!menuJob.ldrUrl}
                             >
-                                <span className={styles.mypage__menuIcon2}>🧱</span>
+                                <Icons.Layers className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.viewBlueprint || '조립 설명서 보기'}</span>
                             </button>
                             <div className={styles.mypage__menuDivider} />
                             <button
                                 className={styles.mypage__menuItem2}
-                                onClick={() => handleMenuAction('source')}
-                                disabled={!menuJob.sourceImageUrl}
+                                onClick={() => handleMenuAction('glb')}
+                                disabled={!menuJob.glbUrl}
                             >
-                                <span className={styles.mypage__menuIcon2}>🖼️</span>
+                                <Icons.DownloadImage className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.sourceImage || '원본 이미지 다운'}</span>
                             </button>
                             <button
@@ -729,7 +727,7 @@ export default function MyPage() {
                                 onClick={() => handleMenuAction('ldr')}
                                 disabled={!menuJob.ldrUrl}
                             >
-                                <span className={styles.mypage__menuIcon2}>📄</span>
+                                <Icons.DownloadFile className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.ldrFile || 'LDR 파일 다운'}</span>
                             </button>
                         </div>

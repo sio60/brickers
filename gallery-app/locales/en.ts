@@ -6,14 +6,14 @@ export const en = {
         kidsSubtitle: "Easy & Fun Brick Creation",
         // gallery specific
         title: "Gallery",
-        subtitle: "Explore amazing LEGO creations made by AI.",
+        subtitle: "Explore amazing Brick creations made by AI.",
         sortLatest: "Latest",
         sortPopular: "Popular",
         noItems: "No works found",
         next: "NEXT",
         landing: {
             goMake: "Go Make",
-            cardTitle: "Generated LEGO 3D",
+            cardTitle: "Generated Brick 3D",
             titleLabel: "Title:",
             authorLabel: "Creator:",
             moreWorks: "Want to see more creations?",
@@ -56,6 +56,7 @@ export const en = {
         profile: "Profile",
         membership: "Membership",
         jobs: "My Jobs",
+        inquiries: "My Inquiries",
         gallery: "My Gallery",
         bookmarks: "Bookmarks",
         reports: "My Reports",
@@ -95,6 +96,14 @@ export const en = {
             DONE: "Done",
             FAILED: "Failed"
         },
+        menu: {
+            previewImage: "View Original Image",
+            viewBlueprint: "View Assembly Guide",
+            glbFile: "Download Model (glb)",
+            ldrFile: "Download Blueprint (ldr)"
+        },
+        noGlbFile: "GLB file not available.",
+        noLdrFile: "LDR file not available.",
         retryFail: "Failed to retry job.",
         modalError: "Job failed: ",
         modalPending: "Job is running or model not ready.",
@@ -166,7 +175,7 @@ export const en = {
             loading: "AI is making your brick...",
             creating: "Creating...",
             complete: "Generation complete! Please check My Page.",
-            ready: "Your Brick is Ready!",
+            ready: "It's complete!",
             next: "NEXT →",
             error: "Oops! Something went wrong.\nPlease try again later.",
             failed: "Job Failed",

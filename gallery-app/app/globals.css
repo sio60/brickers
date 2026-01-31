@@ -47,7 +47,7 @@ body.lang-ko,
 body.lang-ko *,
 .lang-ko,
 .lang-ko * {
-    font-family: var(--font-jua), "Jua", sans-serif !important;
+    font-family: var(--font-nanum), "Nanum Gothic", sans-serif !important;
 }
 
 body.lang-ja,

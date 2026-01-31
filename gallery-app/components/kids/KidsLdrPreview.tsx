@@ -120,8 +120,31 @@ function LdrModel({
 
                 g.rotation.x = Math.PI;
 
+                // 층(Layer) 정보 계산: Y 좌표(높이) 기준
+                const yCoords = new Set<number>();
+                g.traverse((obj) => {
+                    if (obj.type === 'Group' && obj.userData.isPart) {
+                        yCoords.add(Math.round(obj.position.y * 10) / 10);
+                    } else if (obj.type === 'Mesh' && !obj.userData.isLine) {
+                        // 파트가 아닌 개별 메쉬인 경우 (직접적인 자식 등)
+                        let p = obj.parent;
+                        while (p && p !== g && !p.userData.isPart) p = p.parent;
+                        if (p === g || !p) {
+                            yCoords.add(Math.round(obj.position.y * 10) / 10);
+                        }
+                    }
+                });
+
+                // 자식들을 직접 순회하여 레이어 계산 (LDrawLoader 구조 고려)
+                const layerSet = new Set<number>();
+                g.children.forEach(child => {
+                    layerSet.add(Math.round(child.position.y * 10) / 10);
+                });
+
+                const sortedLayers = Array.from(layerSet).sort((a, b) => a - b);
+
                 if (onStepCountChange) {
-                    onStepCountChange(g.children.length);
+                    onStepCountChange(sortedLayers.length);
                 }
 
                 prev = g;
@@ -141,8 +164,17 @@ function LdrModel({
 
     useEffect(() => {
         if (!group || !stepMode) return;
-        group.children.forEach((child, index) => {
-            child.visible = index < currentStep;
+
+        const layerSet = new Set<number>();
+        group.children.forEach(child => {
+            layerSet.add(Math.round(child.position.y * 10) / 10);
+        });
+        const sortedLayers = Array.from(layerSet).sort((a, b) => a - b);
+        const currentLayerY = sortedLayers[currentStep - 1];
+
+        group.children.forEach((child) => {
+            const childY = Math.round(child.position.y * 10) / 10;
+            child.visible = childY <= currentLayerY;
         });
     }, [group, currentStep, stepMode]);
 
@@ -230,14 +262,22 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, ste
                         onClick={handlePrev}
                         disabled={currentStep === 1}
                         style={{
-                            background: "none", border: "none", fontSize: "18px", fontWeight: "bold", cursor: "pointer",
-                            opacity: currentStep === 1 ? 0.3 : 1
+                            background: currentStep === 1 ? "#e0e0e0" : "#fff",
+                            color: currentStep === 1 ? "#999" : "#000",
+                            border: "2px solid #000",
+                            padding: "10px 20px",
+                            borderRadius: "25px",
+                            fontSize: "14px",
+                            fontWeight: "bold",
+                            cursor: currentStep === 1 ? "not-allowed" : "pointer",
+                            opacity: currentStep === 1 ? 0.6 : 1,
+                            minWidth: "100px"
                         }}
                     >
-                        &lt; PREV
+                        ← PREV
                     </button>
 
-                    <div style={{ fontSize: "16px", fontWeight: "800", minWidth: "80px", textAlign: "center" }}>
+                    <div style={{ fontSize: "16px", fontWeight: "800", minWidth: "100px", textAlign: "center" }}>
                         Step {currentStep} <span style={{ color: "#888", fontWeight: "normal" }}>/ {totalSteps}</span>
                     </div>
 
@@ -245,12 +285,19 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, ste
                         onClick={handleNext}
                         disabled={currentStep >= totalSteps}
                         style={{
-                            background: "#000", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "20px",
-                            fontSize: "14px", fontWeight: "bold", cursor: "pointer",
-                            opacity: currentStep >= totalSteps ? 0.5 : 1
+                            background: currentStep >= totalSteps ? "#e0e0e0" : "#000",
+                            color: currentStep >= totalSteps ? "#999" : "#fff",
+                            border: "2px solid #000",
+                            padding: "10px 20px",
+                            borderRadius: "25px",
+                            fontSize: "14px",
+                            fontWeight: "bold",
+                            cursor: currentStep >= totalSteps ? "not-allowed" : "pointer",
+                            opacity: currentStep >= totalSteps ? 0.6 : 1,
+                            minWidth: "100px"
                         }}
                     >
-                        NEXT -&gt;
+                        NEXT →
                     </button>
                 </div>
             )}

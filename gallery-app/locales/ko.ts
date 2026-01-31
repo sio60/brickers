@@ -3,17 +3,17 @@ export const ko = {
         proMode: "PRO MODE",
         proSubtitle: "정밀 · 검증 · 고급 설정",
         kidsMode: "키즈 모드",
-        kidsSubtitle: "쉽고 재미있는 레고 생성",
+        kidsSubtitle: "쉽고 재미있는 브릭 생성",
         // gallery 전용
         title: "Gallery",
-        subtitle: "AI로 만든 멋진 레고 작품들을 구경하세요.",
+        subtitle: "AI로 만든 멋진 브릭 작품들을 구경하세요.",
         sortLatest: "최신순",
         sortPopular: "인기순",
         noItems: "작품이 없습니다",
         next: "NEXT",
         landing: {
             goMake: "만들러 가기",
-            cardTitle: "생성된 레고 3D",
+            cardTitle: "생성된 브릭 3D",
             titleLabel: "제목:",
             authorLabel: "생성한 사람:",
             moreWorks: "더 많은 작품이 궁금하신가요?",
@@ -96,6 +96,14 @@ export const ko = {
             DONE: "완료",
             FAILED: "실패"
         },
+        menu: {
+            previewImage: "이미지 원본 보기",
+            viewBlueprint: "조립 설명서 보기",
+            glbFile: "모델링 파일 다운(glb)",
+            ldrFile: "도면 파일 다운(ldr)"
+        },
+        noGlbFile: "GLB 파일이 없습니다.",
+        noLdrFile: "LDR 파일이 없습니다.",
         retryFail: "작업 재시도에 실패했습니다.",
         modalError: "실패한 작업입니다: ",
         modalPending: "아직 생성 중이거나 3D 모델이 준비되지 않았습니다.",
@@ -164,10 +172,10 @@ export const ko = {
         model1: "모델 1",
         model2: "모델 2",
         generate: {
-            loading: "AI가 레고를 만들고 있어요...",
+            loading: "AI가 브릭을 만들고 있어요...",
             creating: "생성 중...",
             complete: "생성이 완료되었습니다! 마이페이지에서 확인해주세요.",
-            ready: "레고가 완성되었어요!",
+            ready: "완성되었어요!",
             next: "다음으로 →",
             error: "앗! 문제가 발생했어요.\n나중에 다시 시도해 주세요.",
             failed: "작업 실패",
