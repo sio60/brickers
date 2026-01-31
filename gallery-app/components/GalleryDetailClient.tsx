@@ -37,7 +37,7 @@ export default function GalleryDetailClient({ item }: Props) {
     const [commentLoading, setCommentLoading] = useState(false);
 
     // View State
-    const [activeTab, setActiveTab] = useState<'LDR' | 'GLB' | 'IMG'>('LDR');
+    const [activeTab, setActiveTab] = useState<'LDR' | 'GLB' | 'IMG'>('IMG');
 
     useEffect(() => {
         // Increment view count
@@ -140,9 +140,18 @@ export default function GalleryDetailClient({ item }: Props) {
 
                 <div className="flex flex-col gap-1 flex-1">
                     <button
+                        onClick={() => setActiveTab('IMG')}
+                        className={`text-left px-8 py-4 transition-all font-medium flex items-center gap-3 ${activeTab === 'IMG'
+                            ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/10'
+                            : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
+                    >
+                        {t.kids.steps.tabOriginal}
+                    </button>
+                    <button
                         onClick={() => setActiveTab('LDR')}
                         className={`text-left px-8 py-4 transition-all font-medium flex items-center gap-3 ${activeTab === 'LDR'
-                            ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/10'
+                            ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/10'
                             : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
                             }`}
                     >
@@ -151,20 +160,11 @@ export default function GalleryDetailClient({ item }: Props) {
                     <button
                         onClick={() => setActiveTab('GLB')}
                         className={`text-left px-8 py-4 transition-all font-medium flex items-center gap-3 ${activeTab === 'GLB'
-                            ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/10'
+                            ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/10'
                             : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
                             }`}
                     >
                         {t.kids.steps.tabModeling}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('IMG')}
-                        className={`text-left px-8 py-4 transition-all font-medium flex items-center gap-3 ${activeTab === 'IMG'
-                            ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/10'
-                            : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
-                            }`}
-                    >
-                        {t.kids.steps.tabOriginal}
                     </button>
                 </div>
 
