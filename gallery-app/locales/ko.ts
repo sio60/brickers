@@ -247,7 +247,7 @@ export const ko = {
             tabBrick: "브릭 3D",
             tabModeling: "3D 모델링",
             tabOriginal: "원본 이미지",
-            originalModel: "원본 3D 모델",
+            originalModel: "AI 3D 모델",
             previewTitle: "브릭 미리보기",
             startAssembly: "조립 시작하기"
         }
