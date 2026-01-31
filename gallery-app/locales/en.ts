@@ -247,7 +247,7 @@ export const en = {
             tabBrick: "Brick 3D",
             tabModeling: "3D Modeling",
             tabOriginal: "Original Image",
-            originalModel: "Original 3D Model",
+            originalModel: "AI 3D Model",
             previewTitle: "Brick Preview",
             startAssembly: "Start Assembly"
         }
