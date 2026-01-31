@@ -123,9 +123,9 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.PATCH, "/api/gallery/*").authenticated()
                                                 .requestMatchers(HttpMethod.DELETE, "/api/gallery/*").authenticated()
 
-                                                // ✅ 공개 갤러리 조회/검색/상세는 공개
+                                                // ✅ 공개 갤러리 조회/검색/상세/댓글은 공개
                                                 .requestMatchers(HttpMethod.GET, "/api/gallery", "/api/gallery/search",
-                                                                "/api/gallery/*")
+                                                                "/api/gallery/*", "/api/gallery/*/comments")
                                                 .permitAll()
 
                                                 // ✅ Upload API (인증 필요)

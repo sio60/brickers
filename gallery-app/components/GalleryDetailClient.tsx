@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { GalleryItem } from '@/types/gallery';
 import Image from 'next/image';
 import Viewer3D from './Viewer3D';
@@ -19,6 +20,7 @@ type Props = {
 };
 
 export default function GalleryDetailClient({ item }: Props) {
+    const { t } = useLanguage();
     const { isAuthenticated, authFetch } = useAuth();
     const [likeCount, setLikeCount] = useState(item.likeCount || 0);
     const [isLiked, setIsLiked] = useState(item.myReaction === 'LIKE');
@@ -36,14 +38,18 @@ export default function GalleryDetailClient({ item }: Props) {
         fetch(`/api/gallery/${item.id}/view`, { method: 'POST' }).catch(console.error);
 
         // Function to fetch comments
-        const fetchComments = () => {
-            fetch(`/api/gallery/${item.id}/comments?page=0&size=50`)
-                .then(res => res.json())
-                .then(data => {
-                    // Only update if count changed or for initial load
+        const fetchComments = async () => {
+            try {
+                const res = await fetch(`/api/gallery/${item.id}/comments?page=0&size=50`);
+                if (res.ok) {
+                    const data = await res.json();
                     setComments(data.content || []);
-                })
-                .catch(console.error);
+                } else {
+                    console.warn(`[Comments] Failed to fetch: ${res.status}`);
+                }
+            } catch (error) {
+                console.error("[Comments] Fetch error:", error);
+            }
         };
 
         // Initial fetch
@@ -128,7 +134,20 @@ export default function GalleryDetailClient({ item }: Props) {
     const router = useRouter();
 
     return (
-        <div className="fixed inset-0 z-[60] flex flex-col items-center pt-10 sm:pt-16 p-4 sm:p-6 bg-black/5 pointer-events-none overflow-y-auto">
+        <div className="fixed inset-0 z-[60] flex flex-col items-center pt-20 sm:pt-24 p-4 sm:p-6 bg-black/5 pointer-events-none overflow-y-auto">
+
+            {/* Navigation / Back Button - Floating above the card */}
+            <div className="w-full max-w-[900px] mb-4 flex pointer-events-auto">
+                <button
+                    onClick={() => router.back()}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-white rounded-full border border-black/10 font-bold text-sm shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] hover:translate-y-[-2px] transition-all active:scale-95 group"
+                >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-x-1 transition-transform">
+                        <path d="M19 12H5m7-7-7 7 7 7" />
+                    </svg>
+                    <span>{t.detail.back}</span>
+                </button>
+            </div>
 
             {/* Simple Card Container */}
             <div className="relative pointer-events-auto bg-white w-full max-w-[900px] h-[80vh] min-h-[500px] max-h-[850px] rounded-[30px] shadow-[0_20px_60px_rgba(0,0,0,0.2)] flex flex-col md:flex-row overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
