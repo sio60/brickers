@@ -135,6 +135,7 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.GET, "/api/uploads/**", "/uploads/**")
                                                 .permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/api/generated/**").permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/proxy-image").permitAll()
 
                                                 // -------------------------------
                                                 // ✅ Report API (신고)
