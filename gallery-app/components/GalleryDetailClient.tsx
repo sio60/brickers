@@ -131,9 +131,9 @@ export default function GalleryDetailClient({ item }: Props) {
     };
 
     return (
-        <div className="gallery-layout w-full max-w-[1200px] mx-auto my-6 flex h-[calc(100vh-160px)] gap-6 px-4 relative z-50">
+        <div className="gallery-layout w-full max-w-[1200px] mx-auto my-6 flex h-[calc(100vh-160px)] gap-3 px-4 relative z-50">
             {/* 1. Left Sidebar - View Modes */}
-            <div className="w-[240px] bg-[#1a1a1a] text-white rounded-3xl overflow-hidden flex flex-col py-6 shrink-0 relative z-20 shadow-2xl">
+            <div className="w-64 bg-[#1a1a1a] text-white rounded-3xl overflow-hidden flex flex-col py-6 shrink-0 relative z-20 shadow-2xl">
                 <h2 className="text-xl font-bold mb-6 px-8 tracking-wider">BRICKERS</h2>
 
                 <div className="flex flex-col gap-1 flex-1">
@@ -222,8 +222,8 @@ export default function GalleryDetailClient({ item }: Props) {
 
                         {activeTab === 'IMG' && (
                             item.sourceImageUrl ? (
-                                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 p-8">
-                                    <div className="relative w-full h-full max-w-2xl max-h-full">
+                                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 p-0">
+                                    <div className="relative w-full h-full max-w-full max-h-full">
                                         <Image
                                             src={item.sourceImageUrl}
                                             alt="Original Source"
@@ -242,7 +242,7 @@ export default function GalleryDetailClient({ item }: Props) {
                 </div>
 
                 {/* 3. Right Sidebar - Detail & Comments */}
-                <div className="w-[340px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10">
+                <div className="w-[300px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10">
                     {/* Scrollable Content */}
                     <div className="flex-1 overflow-y-auto">
                         {/* User Info Header */}
