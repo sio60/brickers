@@ -131,7 +131,7 @@ export default function GalleryDetailClient({ item }: Props) {
     };
 
     return (
-        <div className="gallery-layout w-full max-w-7xl mx-auto my-6 flex h-[calc(100vh-160px)] gap-6 px-4 relative z-50">
+        <div className="gallery-layout w-full max-w-[1600px] mx-auto my-6 flex h-[calc(100vh-160px)] gap-6 px-4 relative z-50">
             {/* 1. Left Sidebar - View Modes */}
             <div className="w-[240px] bg-[#1a1a1a] text-white rounded-3xl overflow-hidden flex flex-col py-6 shrink-0 relative z-20 shadow-2xl">
                 <h2 className="text-xl font-bold mb-6 px-8 tracking-wider">BRICKERS</h2>
@@ -242,7 +242,7 @@ export default function GalleryDetailClient({ item }: Props) {
                 </div>
 
                 {/* 3. Right Sidebar - Detail & Comments */}
-                <div className="w-[440px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10">
+                <div className="w-[340px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10">
                     {/* Scrollable Content */}
                     <div className="flex-1 overflow-y-auto">
                         {/* User Info Header */}
