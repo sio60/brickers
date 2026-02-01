@@ -131,7 +131,7 @@ export default function GalleryDetailClient({ item }: Props) {
     };
 
     return (
-        <div className="gallery-layout w-full max-w-[1600px] mx-auto my-6 flex h-[calc(100vh-160px)] gap-6 px-4 relative z-50">
+        <div className="gallery-layout w-full max-w-[1200px] mx-auto my-6 flex h-[calc(100vh-160px)] gap-6 px-4 relative z-50">
             {/* 1. Left Sidebar - View Modes */}
             <div className="w-[240px] bg-[#1a1a1a] text-white rounded-3xl overflow-hidden flex flex-col py-6 shrink-0 relative z-20 shadow-2xl">
                 <h2 className="text-xl font-bold mb-6 px-8 tracking-wider">BRICKERS</h2>
