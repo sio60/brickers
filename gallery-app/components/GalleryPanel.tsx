@@ -27,7 +27,7 @@ export default function GalleryPanel({ title, activeCategory, onCategoryChange, 
     ];
 
     return (
-        <div className="gallery-layout w-full max-w-[1600px] mx-auto my-6 flex h-[calc(100vh-160px)] gap-6 px-4">
+        <div className="gallery-layout w-full max-w-7xl mx-auto my-6 flex h-[calc(100vh-160px)] gap-6 px-4">
             {/* Sidebar */}
             <div className="w-64 flex-shrink-0 bg-black rounded-3xl overflow-hidden flex flex-col shadow-2xl">
                 <div className="px-8 py-10 border-b border-gray-800">
