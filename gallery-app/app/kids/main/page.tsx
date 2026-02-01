@@ -61,6 +61,7 @@ function KidsPageContent() {
 
     const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
     const [ldrUrl, setLdrUrl] = useState<string | null>(null);
+    const [glbUrl, setGlbUrl] = useState<string | null>(null);
     const [jobId, setJobId] = useState<string | null>(null);
     const [showToast, setShowToast] = useState(false);
     const [debugLog, setDebugLog] = useState<string>("");
@@ -236,6 +237,7 @@ function KidsPageContent() {
                 if (!alive) return;
 
                 setLdrUrl(modelUrl);
+                setGlbUrl(finalData.glbUrl || finalData.glb_url);
                 setStatus("done");
                 console.log("[KidsPage] ✅ 전체 프로세스 완료! | ldrUrl:", modelUrl);
             } catch (e: any) {
@@ -271,6 +273,29 @@ function KidsPageContent() {
         return stageProgress[currentStage] || 15;
     }, [status, currentStage]);
 
+    const downloadLdr = async () => {
+        if (!ldrUrl) return;
+        try {
+            const res = await fetch(ldrUrl);
+            const text = await res.text();
+            const blob = new Blob([text], { type: "text/plain" });
+            const dUrl = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = dUrl;
+            link.download = `brickers_${jobId || 'model'}.ldr`;
+            link.click();
+            URL.revokeObjectURL(dUrl);
+        } catch (err) { console.error(err); }
+    };
+
+    const downloadGlb = () => {
+        if (!glbUrl) return;
+        const link = document.createElement("a");
+        link.href = glbUrl;
+        link.download = `brickers_${jobId || 'model'}.glb`;
+        link.click();
+    };
+
     if (!isFileLoaded) {
         return <div className="page">Loading...</div>;
     }
@@ -304,6 +329,17 @@ function KidsPageContent() {
                         >
                             {t.kids.generate.next}
                         </button>
+
+                        <div className="actionBtns">
+                            <button className="dlBtn" onClick={downloadLdr}>
+                                LDR Download
+                            </button>
+                            {glbUrl && (
+                                <button className="dlBtn" onClick={downloadGlb}>
+                                    GLB Download
+                                </button>
+                            )}
+                        </div>
                     </>
                 )}
 
