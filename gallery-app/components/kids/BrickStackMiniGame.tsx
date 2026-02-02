@@ -1,5 +1,7 @@
-import "./BrickStackMiniGame.css";
-import React, { useCallback, useEffect, useRef, useState, MutableRefObject } from "react";
+'use client';
+
+import "./BrickStckMiniGame.css";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
@@ -34,22 +36,16 @@ type FallingPiece = {
 };
 
 type GameState = {
-    x: number;           // Active brick X position
-    y: number;           // Active brick Y position
-    width: number;       // Active brick width
-    dir: 1 | -1;         // Movement direction
+    x: number;
+    y: number;
+    width: number;
+    dir: 1 | -1;
     phase: 'moving' | 'falling' | 'landed';
-    targetY: number;     // Landing target Y
+    targetY: number;
 };
 
 const COLORS = [
-    "#ef4444", // red
-    "#f97316", // orange
-    "#eab308", // yellow
-    "#22c55e", // green
-    "#3b82f6", // blue
-    "#8b5cf6", // violet
-    "#ec4899", // pink
+    "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899",
 ];
 
 function getRandomColor() {
@@ -63,7 +59,7 @@ function FallingPieceComponent({ piece }: { piece: FallingPiece }) {
 
     useFrame((_, dt) => {
         const s = stateRef.current;
-        s.velocityY -= 20 * dt; // gravity
+        s.velocityY -= 20 * dt;
         s.x += s.velocityX * dt;
         s.y += s.velocityY * dt;
         s.rotation += s.rotationSpeed * dt;
@@ -96,7 +92,7 @@ function Scene({
     currentColor,
 }: {
     bricks: Brick[];
-    stateRef: MutableRefObject<GameState>;
+    stateRef: React.MutableRefObject<GameState>;
     onDrop: () => void;
     onLanded: () => void;
     currentColor: string;
@@ -107,10 +103,7 @@ function Scene({
         const state = stateRef.current;
 
         if (state.phase === 'moving') {
-            const halfBoard = BOARD_WIDTH / 2;
-            const halfWidth = state.width / 2;
-            const maxX = halfBoard - halfWidth;
-
+            const maxX = (BOARD_WIDTH - state.width) / 2;
             state.x += state.dir * MOVE_SPEED * dt;
 
             if (state.x >= maxX) {
@@ -208,7 +201,6 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
     const [score, setScore] = useState(0);
     const [gameOver, setGameOver] = useState(false);
     const [currentColor, setCurrentColor] = useState(getRandomColor());
-    // State update helper
     const [, forceUpdate] = useState(0);
     const triggerUpdate = useCallback(() => forceUpdate(n => n + 1), []);
 
@@ -250,7 +242,6 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
         return () => clearTimeout(timer);
     }, [fallingPieces]);
 
-    // Next brick spawner
     const spawnNext = useCallback((width: number, count: number) => {
         setTimeout(() => {
             const nextColor = getRandomColor();
@@ -267,11 +258,9 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
         }, 100);
     }, [getSpawnY, triggerUpdate]);
 
-    // Landing handler with cutting logic
     const onLanded = useCallback(() => {
         const state = stateRef.current;
 
-        // 1. Initial brick
         if (bricks.length === 0) {
             const newBrick: Brick = {
                 id: `brick-${Date.now()}`,
@@ -286,7 +275,6 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
             return;
         }
 
-        // 2. Overlap check
         const topBrick = bricks[bricks.length - 1];
         let finalX = state.x;
         if (Math.abs(state.x - topBrick.x) < 0.1) {
@@ -302,7 +290,6 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
         const overlapRight = Math.min(topRight, dropRight);
         const overlapWidth = overlapRight - overlapLeft;
 
-        // 3. Game Over check
         if (overlapWidth <= 0) {
             setGameOver(true);
             setFallingPieces((prev) => [
@@ -322,7 +309,6 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
             return;
         }
 
-        // 4. Handle cut pieces
         const newFalling: FallingPiece[] = [];
         if (dropLeft < overlapLeft) {
             const cutWidth = overlapLeft - dropLeft;
@@ -357,7 +343,6 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
             setFallingPieces((prev) => [...prev, ...newFalling]);
         }
 
-        // 5. Add overlapped part as new brick
         const newBrick: Brick = {
             id: `brick-${Date.now()}`,
             x: (overlapLeft + overlapRight) / 2,
@@ -380,8 +365,8 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
         if (state.phase !== 'moving') return;
 
         state.phase = 'falling';
-        forceUpdate((n) => n + 1);
-    }, [gameOver]);
+        triggerUpdate();
+    }, [gameOver, triggerUpdate]);
 
     const stackHeight = bricks.length * BRICK_HEIGHT;
 
