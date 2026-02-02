@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { getPresignUrl } from "@/lib/api/myApi";
+import { getColorThemes, applyColorVariant, base64ToBlobUrl, ThemeInfo } from "@/lib/api/colorVariantApi";
 // import KidsLoadingScreen from "@/components/kids/KidsLoadingScreen";
 import BrickStackMiniGame from "@/components/kids/BrickStackMiniGame";
 import './KidsPage.css';
@@ -66,6 +67,12 @@ function KidsPageContent() {
     const [showToast, setShowToast] = useState(false);
     const [debugLog, setDebugLog] = useState<string>("");
     const [currentStage, setCurrentStage] = useState<string>("QUEUED");
+
+    // 색상 변경 관련
+    const [isColorModalOpen, setIsColorModalOpen] = useState(false);
+    const [colorThemes, setColorThemes] = useState<ThemeInfo[]>([]);
+    const [selectedTheme, setSelectedTheme] = useState<string>("");
+    const [isApplyingColor, setIsApplyingColor] = useState(false);
 
     const processingRef = useRef(false);
 
@@ -296,6 +303,43 @@ function KidsPageContent() {
         link.click();
     };
 
+    // 색상 모달 열 때 테마 로드
+    const openColorModal = async () => {
+        setIsColorModalOpen(true);
+        if (colorThemes.length === 0) {
+            try {
+                const themes = await getColorThemes();
+                setColorThemes(themes);
+            } catch (e) {
+                console.error("테마 로드 실패:", e);
+            }
+        }
+    };
+
+    // 색상 변경 적용
+    const handleApplyColor = async () => {
+        if (!selectedTheme || !ldrUrl) return;
+
+        setIsApplyingColor(true);
+        try {
+            const result = await applyColorVariant(ldrUrl, selectedTheme);
+
+            if (result.ok && result.ldrData) {
+                const newBlobUrl = base64ToBlobUrl(result.ldrData);
+                setLdrUrl(newBlobUrl);
+                setIsColorModalOpen(false);
+                alert(`${result.themeApplied} 테마 적용 완료! (${result.changedBricks}개 브릭 변경)`);
+            } else {
+                alert(result.message || "색상 변경 실패");
+            }
+        } catch (e: any) {
+            console.error("색상 변경 실패:", e);
+            alert(e.message || "색상 변경 중 오류가 발생했습니다.");
+        } finally {
+            setIsApplyingColor(false);
+        }
+    };
+
     if (!isFileLoaded) {
         return <div className="page">Loading...</div>;
     }
@@ -339,6 +383,9 @@ function KidsPageContent() {
                                     GLB Download
                                 </button>
                             )}
+                            <button className="dlBtn colorBtn" onClick={openColorModal}>
+                                🎨 색상 변경
+                            </button>
                         </div>
                     </>
                 )}
@@ -355,6 +402,48 @@ function KidsPageContent() {
                 {showToast && (
                     <div className="toast">
                         {t.kids.generate.complete}
+                    </div>
+                )}
+
+                {/* 색상 변경 모달 */}
+                {isColorModalOpen && (
+                    <div className="colorModalOverlay" onClick={() => setIsColorModalOpen(false)}>
+                        <div className="colorModal" onClick={(e) => e.stopPropagation()}>
+                            <h3 className="colorModal__title">🎨 색상 테마 선택</h3>
+
+                            <div className="colorModal__themes">
+                                {colorThemes.length === 0 ? (
+                                    <div className="colorModal__loading">테마 로딩 중...</div>
+                                ) : (
+                                    colorThemes.map((theme) => (
+                                        <button
+                                            key={theme.name}
+                                            className={`colorModal__themeBtn ${selectedTheme === theme.name ? "colorModal__themeBtn--selected" : ""}`}
+                                            onClick={() => setSelectedTheme(theme.name)}
+                                        >
+                                            <span className="colorModal__themeName">{theme.name}</span>
+                                            <span className="colorModal__themeDesc">{theme.description}</span>
+                                        </button>
+                                    ))
+                                )}
+                            </div>
+
+                            <div className="colorModal__actions">
+                                <button
+                                    className="colorModal__btn colorModal__btn--cancel"
+                                    onClick={() => setIsColorModalOpen(false)}
+                                >
+                                    취소
+                                </button>
+                                <button
+                                    className="colorModal__btn colorModal__btn--confirm"
+                                    onClick={handleApplyColor}
+                                    disabled={!selectedTheme || isApplyingColor}
+                                >
+                                    {isApplyingColor ? "적용 중..." : "적용하기"}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
