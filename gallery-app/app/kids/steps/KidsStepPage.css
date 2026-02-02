@@ -29,12 +29,79 @@
 }
 
 .kidsStep__actionBtn--gallery {
-    background: #000000;
-    color: #ffffff;
+    background: #ffe135;
+    border-color: #000;
 }
 
 .kidsStep__actionBtn--gallery:hover {
-    background: #333333;
+    background: #ffd700;
+}
+
+/* 다운로드 메뉴 */
+.kidsStep__downloadMenu {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    background: #fff;
+    border: 2px solid #000;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    min-width: 140px;
+    overflow: hidden;
+    z-index: 1000;
+}
+
+.kidsStep__downloadItem {
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    text-align: left;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 14px;
+}
+
+.kidsStep__downloadItem:hover {
+    background: #f0f0f0;
+}
+
+.kidsStep__downloadItem:not(:last-child) {
+    border-bottom: 1px solid #eee;
+}
+
+/* 색상 변경 버튼 */
+.kidsStep__actionBtn--color {
+    background: linear-gradient(135deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+    background-size: 300% 300%;
+    border: 2px solid #333;
+    color: #000;
+    animation: gradientShift 3s ease infinite;
+}
+
+.kidsStep__actionBtn--color:hover {
+    background: #000;
+    color: #fff;
+    border-color: #000;
+    animation: none;
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
 }
 
 .galleryModalOverlay {
