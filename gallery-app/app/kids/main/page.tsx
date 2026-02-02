@@ -322,7 +322,7 @@ function KidsPageContent() {
 
         setIsApplyingColor(true);
         try {
-            const result = await applyColorVariant(ldrUrl, selectedTheme);
+            const result = await applyColorVariant(ldrUrl, selectedTheme, authFetch);
 
             if (result.ok && result.ldrData) {
                 const newBlobUrl = base64ToBlobUrl(result.ldrData);
