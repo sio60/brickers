@@ -49,7 +49,16 @@ export async function applyColorVariant(
         throw new Error(errorData.message || '색상 변경 실패');
     }
 
-    return res.json();
+    // Python API returns snake_case, convert to camelCase
+    const data = await res.json();
+    return {
+        ok: data.ok,
+        message: data.message,
+        themeApplied: data.theme_applied,
+        originalColors: data.original_colors,
+        changedBricks: data.changed_bricks,
+        ldrData: data.ldr_data,
+    };
 }
 
 /**
