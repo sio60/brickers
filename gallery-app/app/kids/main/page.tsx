@@ -399,7 +399,7 @@ function KidsPageContent() {
                                 )}
                             </div>
 
-                            <button className="dlBtn colorBtn" onClick={openColorModal}>
+                            <button className="dlBtn colorBtn" onClick={openColorModal} style={{ display: 'none' }}>
                                 색상 변경
                             </button>
                         </div>

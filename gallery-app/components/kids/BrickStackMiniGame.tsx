@@ -1,19 +1,19 @@
-// components/kids/BrickStackMiniGame.tsx
+'use client';
+
 import "./BrickStackMiniGame.css";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 import { useLanguage } from "../../contexts/LanguageContext";
 
-// ── 게임 설정 ──
-const BOARD_WIDTH = 6;       // 월드 유닛 기준 보드 너비
-const BRICK_HEIGHT = 0.4;    // 브릭 높이
-const INITIAL_BRICK_WIDTH = 2.5;  // 초기 브릭 너비
-const MOVE_SPEED = 3.5;      // 좌우 이동 속도
-const FALL_SPEED = 12;       // 낙하 속도
-const INITIAL_SPAWN_Y = 3;   // 초기 스폰 높이
-const FLOOR_Y = -3;          // 바닥 Y 위치 (화면 하단으로 더 내림)
+// --- Game Settings ---
+const BOARD_WIDTH = 6;       // Board width in world units
+const BRICK_HEIGHT = 0.4;    // Brick height
+const INITIAL_BRICK_WIDTH = 2.5;  // Initial brick width
+const MOVE_SPEED = 3.5;      // Movement speed
+const FALL_SPEED = 12;       // Falling speed
+const FLOOR_Y = -3;          // Floor Y position
 
 type Brick = {
     id: string;
@@ -32,38 +32,34 @@ type FallingPiece = {
     velocityY: number;
     rotation: number;
     rotationSpeed: number;
+    color: string;
 };
 
-type ActiveBrick = {
+type GameState = {
     x: number;
+    y: number;
     width: number;
     dir: 1 | -1;
-    falling: boolean;
+    phase: 'moving' | 'falling' | 'landed';
     targetY: number;
 };
 
 const COLORS = [
-    "#ef4444", // red
-    "#f97316", // orange
-    "#eab308", // yellow
-    "#22c55e", // green
-    "#3b82f6", // blue
-    "#8b5cf6", // violet
-    "#ec4899", // pink
+    "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899",
 ];
 
 function getRandomColor() {
     return COLORS[Math.floor(Math.random() * COLORS.length)];
 }
 
-// ── 떨어지는 조각 컴포넌트 ──
+// --- Falling Piece Component ---
 function FallingPieceComponent({ piece }: { piece: FallingPiece }) {
     const meshRef = useRef<THREE.Mesh>(null);
-    const stateRef = useRef(piece);
+    const stateRef = useRef({ ...piece });
 
     useFrame((_, dt) => {
         const s = stateRef.current;
-        s.velocityY -= 20 * dt; // 중력
+        s.velocityY -= 20 * dt;
         s.x += s.velocityX * dt;
         s.y += s.velocityY * dt;
         s.rotation += s.rotationSpeed * dt;
@@ -82,80 +78,69 @@ function FallingPieceComponent({ piece }: { piece: FallingPiece }) {
             smoothness={4}
             position={[piece.x, piece.y, 0]}
         >
-            <meshStandardMaterial color="#888" transparent opacity={0.7} />
+            <meshStandardMaterial color={piece.color} transparent opacity={0.8} />
         </RoundedBox>
     );
 }
 
-// ── 메인 씬 ──
+// --- Main Scene ---
 function Scene({
     bricks,
-    activeRef,
+    stateRef,
     onDrop,
+    onLanded,
     currentColor,
 }: {
     bricks: Brick[];
-    activeRef: React.MutableRefObject<ActiveBrick>;
+    stateRef: React.MutableRefObject<GameState>;
     onDrop: () => void;
+    onLanded: () => void;
     currentColor: string;
 }) {
     const activeMesh = useRef<THREE.Mesh>(null);
 
     useFrame((_, dt) => {
-        const a = activeRef.current;
+        const state = stateRef.current;
 
-        if (!a.falling) {
-            // 좌우 이동
-            const halfBoard = BOARD_WIDTH / 2;
-            const halfWidth = a.width / 2;
-            const maxX = halfBoard - halfWidth;
+        if (state.phase === 'moving') {
+            const maxX = (BOARD_WIDTH - state.width) / 2;
+            state.x += state.dir * MOVE_SPEED * dt;
 
-            a.x += a.dir * MOVE_SPEED * dt;
-
-            if (a.x >= maxX) {
-                a.x = maxX;
-                a.dir = -1;
-            } else if (a.x <= -maxX) {
-                a.x = -maxX;
-                a.dir = 1;
+            if (state.x >= maxX) {
+                state.x = maxX;
+                state.dir = -1;
+            } else if (state.x <= -maxX) {
+                state.x = -maxX;
+                state.dir = 1;
             }
-        } else {
-            // 낙하
-            const targetY = a.targetY;
-            const currentY = activeMesh.current?.position.y ?? INITIAL_SPAWN_Y;
-            const newY = currentY - FALL_SPEED * dt;
+        } else if (state.phase === 'falling') {
+            state.y -= FALL_SPEED * dt;
 
-            if (newY <= targetY) {
-                // 착지
-                if (activeMesh.current) {
-                    activeMesh.current.position.y = targetY;
-                }
-            } else if (activeMesh.current) {
-                activeMesh.current.position.y = newY;
+            if (state.y <= state.targetY) {
+                state.y = state.targetY;
+                state.phase = 'landed';
+                onLanded();
             }
         }
 
-        // 메쉬 위치 업데이트
-        if (activeMesh.current && !a.falling) {
-            const currentSpawnY = bricks.length === 0 ? INITIAL_SPAWN_Y : bricks[bricks.length - 1].y + 3;
-            activeMesh.current.position.set(a.x, currentSpawnY, 0);
+        if (activeMesh.current) {
+            activeMesh.current.position.set(state.x, state.y, 0);
         }
     });
 
+    const stackHeight = bricks.length * BRICK_HEIGHT;
+
     return (
         <>
-            {/* 조명 */}
             <ambientLight intensity={0.6} />
             <pointLight position={[10, 10, 10]} intensity={1} castShadow />
             <directionalLight position={[-3, 5, -3]} intensity={0.3} />
 
-            {/* 바닥 - 화면 하단에 보이도록 */}
             <mesh position={[0, FLOOR_Y - 0.2, 0]} receiveShadow>
                 <boxGeometry args={[BOARD_WIDTH + 1, 0.4, 3]} />
                 <meshStandardMaterial color="#e5e7eb" />
             </mesh>
 
-            {/* 쌓인 브릭들 */}
             {bricks.map((b) => (
                 <RoundedBox
                     key={b.id}
@@ -170,26 +155,39 @@ function Scene({
                 </RoundedBox>
             ))}
 
-            {/* 활성 브릭 */}
-            <RoundedBox
-                ref={activeMesh as any}
-                args={[activeRef.current.width - 0.05, BRICK_HEIGHT - 0.05, 1]}
-                radius={0.1}
-                smoothness={4}
-                position={[activeRef.current.x, bricks.length === 0 ? INITIAL_SPAWN_Y : bricks[bricks.length - 1].y + 3, 0]}
-                castShadow
-                receiveShadow
-            >
-                <meshStandardMaterial color={currentColor} />
-            </RoundedBox>
+            {stateRef.current.phase !== 'landed' && (
+                <RoundedBox
+                    ref={activeMesh as any}
+                    args={[stateRef.current.width - 0.05, BRICK_HEIGHT - 0.05, 1]}
+                    radius={0.1}
+                    smoothness={4}
+                    position={[stateRef.current.x, stateRef.current.y, 0]}
+                    castShadow
+                    receiveShadow
+                >
+                    <meshStandardMaterial color={currentColor} />
+                </RoundedBox>
+            )}
 
-            {/* 클릭 영역 - 카메라를 따라 이동 */}
-            <mesh position={[0, bricks.length * BRICK_HEIGHT + FLOOR_Y + 3, 0]} onPointerDown={onDrop}>
+            <mesh position={[0, stackHeight + FLOOR_Y + 3, 0]} onPointerDown={onDrop}>
                 <boxGeometry args={[BOARD_WIDTH + 4, 15, 4]} />
                 <meshBasicMaterial transparent opacity={0} />
             </mesh>
         </>
     );
+}
+
+function CameraFollow({ stackHeight }: { stackHeight: number }) {
+    useFrame((state) => {
+        const targetY = Math.max(0, stackHeight + FLOOR_Y + 3.5);
+        state.camera.position.y = THREE.MathUtils.lerp(
+            state.camera.position.y,
+            targetY,
+            0.1
+        );
+        state.camera.lookAt(0, targetY - 1, 0);
+    });
+    return null;
 }
 
 interface BrickStackProps {
@@ -203,200 +201,177 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
     const [score, setScore] = useState(0);
     const [gameOver, setGameOver] = useState(false);
     const [currentColor, setCurrentColor] = useState(getRandomColor());
+    const [, forceUpdate] = useState(0);
+    const triggerUpdate = useCallback(() => forceUpdate(n => n + 1), []);
 
-    const activeRef = useRef<ActiveBrick>({
+    const getSpawnY = useCallback((count: number) => {
+        return FLOOR_Y + BRICK_HEIGHT / 2 + count * BRICK_HEIGHT + 3;
+    }, []);
+
+    const stateRef = useRef<GameState>({
         x: 0,
+        y: getSpawnY(0),
         width: INITIAL_BRICK_WIDTH,
         dir: 1,
-        falling: false,
-        targetY: FLOOR_Y + BRICK_HEIGHT / 2,  // 바닥 위에서 시작
+        phase: 'moving',
+        targetY: FLOOR_Y + BRICK_HEIGHT / 2,
     });
 
-    // 카메라 추적용 상수
-    const CAMERA_OFFSET_Y = 3.5;
-    const CAMERA_LERP_SPEED = 0.1;
-
-    function CameraFollow({ stackHeight }: { stackHeight: number }) {
-        useFrame((state) => {
-            const targetY = Math.max(0, stackHeight + FLOOR_Y + CAMERA_OFFSET_Y);
-            state.camera.position.y = THREE.MathUtils.lerp(
-                state.camera.position.y,
-                targetY,
-                CAMERA_LERP_SPEED
-            );
-            state.camera.lookAt(0, targetY - 1, 0);
-        });
-        return null;
-    }
-
-    // 게임 리셋
     const resetGame = useCallback(() => {
         setBricks([]);
         setFallingPieces([]);
         setScore(0);
         setGameOver(false);
         setCurrentColor(getRandomColor());
-        activeRef.current = {
+        stateRef.current = {
             x: 0,
+            y: getSpawnY(0),
             width: INITIAL_BRICK_WIDTH,
             dir: 1,
-            falling: false,
+            phase: 'moving',
             targetY: FLOOR_Y + BRICK_HEIGHT / 2,
         };
-    }, []);
+        triggerUpdate();
+    }, [getSpawnY, triggerUpdate]);
 
-    // 떨어지는 조각 정리 (화면 밖으로 나감)
     useEffect(() => {
         if (fallingPieces.length === 0) return;
         const timer = setTimeout(() => {
-            setFallingPieces([]);
-        }, 2000);
+            setFallingPieces((prev) => prev.slice(5));
+        }, 3000);
         return () => clearTimeout(timer);
     }, [fallingPieces]);
 
-    // 드롭 로직
-    const onDrop = useCallback(() => {
-        if (gameOver) return;
-        const a = activeRef.current;
-        if (a.falling) return;
+    const spawnNext = useCallback((width: number, count: number) => {
+        setTimeout(() => {
+            const nextColor = getRandomColor();
+            setCurrentColor(nextColor);
+            stateRef.current = {
+                x: -BOARD_WIDTH / 2 + (Math.random() * 0.5),
+                y: getSpawnY(count),
+                width: width,
+                dir: Math.random() > 0.5 ? 1 : -1,
+                phase: 'moving',
+                targetY: FLOOR_Y + BRICK_HEIGHT / 2 + count * BRICK_HEIGHT,
+            };
+            triggerUpdate();
+        }, 100);
+    }, [getSpawnY, triggerUpdate]);
 
-        const dropX = a.x;
-        const dropWidth = a.width;
+    const onLanded = useCallback(() => {
+        const state = stateRef.current;
 
-        // 첫 번째 브릭은 그냥 쌓임
         if (bricks.length === 0) {
-            a.falling = true;
-            a.targetY = FLOOR_Y + BRICK_HEIGHT / 2;
-
-            setTimeout(() => {
-                const newBrick: Brick = {
-                    id: `${Date.now()}`,
-                    x: dropX,
-                    y: FLOOR_Y + BRICK_HEIGHT / 2,
-                    width: dropWidth,
-                    color: currentColor,
-                };
-                setBricks([newBrick]);
-                setScore(1);
-
-                // 다음 브릭 스폰
-                const nextColor = getRandomColor();
-                setCurrentColor(nextColor);
-                activeRef.current = {
-                    x: -BOARD_WIDTH / 2 + dropWidth / 2,
-                    width: dropWidth,
-                    dir: 1,
-                    falling: false,
-                    targetY: FLOOR_Y + BRICK_HEIGHT / 2 + BRICK_HEIGHT,
-                };
-            }, 400);
+            const newBrick: Brick = {
+                id: `brick-${Date.now()}`,
+                x: state.x,
+                y: state.targetY,
+                width: state.width,
+                color: currentColor,
+            };
+            setBricks([newBrick]);
+            setScore(1);
+            spawnNext(state.width, 1);
             return;
         }
 
-        // 이전 브릭과 겹침 계산
         const topBrick = bricks[bricks.length - 1];
+        let finalX = state.x;
+        if (Math.abs(state.x - topBrick.x) < 0.1) {
+            finalX = topBrick.x;
+        }
+
         const topLeft = topBrick.x - topBrick.width / 2;
         const topRight = topBrick.x + topBrick.width / 2;
-        const dropLeft = dropX - dropWidth / 2;
-        const dropRight = dropX + dropWidth / 2;
+        const dropLeft = finalX - state.width / 2;
+        const dropRight = finalX + state.width / 2;
 
         const overlapLeft = Math.max(topLeft, dropLeft);
         const overlapRight = Math.min(topRight, dropRight);
         const overlapWidth = overlapRight - overlapLeft;
 
-        // 겹치지 않음 = 게임 오버
         if (overlapWidth <= 0) {
             setGameOver(true);
-            // 브릭이 떨어지는 애니메이션
-            setFallingPieces([{
-                id: `fall-${Date.now()}`,
-                x: dropX,
-                y: topBrick.y + BRICK_HEIGHT,
-                width: dropWidth,
-                velocityX: a.dir * 2,
-                velocityY: 0,
-                rotation: 0,
-                rotationSpeed: a.dir * 3,
-            }]);
+            setFallingPieces((prev) => [
+                ...prev,
+                {
+                    id: `fall-${Date.now()}`,
+                    x: state.x,
+                    y: state.y,
+                    width: state.width,
+                    velocityX: state.dir * 2,
+                    velocityY: 0,
+                    rotation: 0,
+                    rotationSpeed: state.dir * 3,
+                    color: currentColor,
+                },
+            ]);
             return;
         }
 
-        // 겹치는 부분만 남김
-        const overlapCenterX = (overlapLeft + overlapRight) / 2;
-        const newY = topBrick.y + BRICK_HEIGHT;
-
-        a.falling = true;
-        a.targetY = newY;
-
-        // 잘린 조각 (미스 부분) 생성
-        const cutPieces: FallingPiece[] = [];
-
-        // 왼쪽 미스
+        const newFalling: FallingPiece[] = [];
         if (dropLeft < overlapLeft) {
             const cutWidth = overlapLeft - dropLeft;
-            const cutX = dropLeft + cutWidth / 2;
-            cutPieces.push({
-                id: `cut-left-${Date.now()}`,
-                x: cutX,
-                y: newY,
+            newFalling.push({
+                id: `cut-l-${Date.now()}`,
+                x: dropLeft + cutWidth / 2,
+                y: state.y,
                 width: cutWidth,
                 velocityX: -2,
                 velocityY: 1,
                 rotation: 0,
                 rotationSpeed: -4,
+                color: currentColor,
             });
         }
-
-        // 오른쪽 미스
         if (dropRight > overlapRight) {
             const cutWidth = dropRight - overlapRight;
-            const cutX = overlapRight + cutWidth / 2;
-            cutPieces.push({
-                id: `cut-right-${Date.now()}`,
-                x: cutX,
-                y: newY,
+            newFalling.push({
+                id: `cut-r-${Date.now()}`,
+                x: overlapRight + cutWidth / 2,
+                y: state.y,
                 width: cutWidth,
                 velocityX: 2,
                 velocityY: 1,
                 rotation: 0,
                 rotationSpeed: 4,
+                color: currentColor,
             });
         }
 
-        if (cutPieces.length > 0) {
-            setFallingPieces(cutPieces);
+        if (newFalling.length > 0) {
+            setFallingPieces((prev) => [...prev, ...newFalling]);
         }
 
-        setTimeout(() => {
-            const newBrick: Brick = {
-                id: `${Date.now()}`,
-                x: overlapCenterX,
-                y: newY,
-                width: overlapWidth,
-                color: currentColor,
-            };
+        const newBrick: Brick = {
+            id: `brick-${Date.now()}`,
+            x: (overlapLeft + overlapRight) / 2,
+            y: state.targetY,
+            width: overlapWidth,
+            color: currentColor,
+        };
 
-            setBricks((prev) => [...prev, newBrick]);
-            setScore((s) => s + 1);
+        setBricks((prev) => {
+            const updated = [...prev, newBrick];
+            spawnNext(overlapWidth, updated.length);
+            return updated;
+        });
+        setScore((s) => s + 1);
+    }, [bricks, currentColor, spawnNext]);
 
-            // 다음 브릭 스폰
-            const nextColor = getRandomColor();
-            setCurrentColor(nextColor);
-            activeRef.current = {
-                x: -BOARD_WIDTH / 2 + overlapWidth / 2,
-                width: overlapWidth,
-                dir: 1,
-                falling: false,
-                targetY: newY + BRICK_HEIGHT,
-            };
-        }, 350);
-    }, [bricks, gameOver, currentColor]);
+    const onDrop = useCallback(() => {
+        if (gameOver) return;
+        const state = stateRef.current;
+        if (state.phase !== 'moving') return;
+
+        state.phase = 'falling';
+        triggerUpdate();
+    }, [gameOver, triggerUpdate]);
 
     const stackHeight = bricks.length * BRICK_HEIGHT;
 
     return (
         <div className="brickGame">
-            {/* Progress Overlay */}
             {percent !== undefined && (
                 <div className="brickGame__progress">
                     <div className="brickGame__progressText">
@@ -409,7 +384,7 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
                 </div>
             )}
 
-            <div className="brickGame__header">
+            <div className="brickGame__header" style={{ marginTop: percent !== undefined ? 80 : 0 }}>
                 <div className="brickGame__score">
                     <span className="brickGame__scoreValue">{score}</span>
                     <span className="brickGame__scoreLabel">BRICKS</span>
@@ -421,8 +396,9 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
                     <CameraFollow stackHeight={stackHeight} />
                     <Scene
                         bricks={bricks}
-                        activeRef={activeRef}
+                        stateRef={stateRef}
                         onDrop={onDrop}
+                        onLanded={onLanded}
                         currentColor={currentColor}
                     />
                     {fallingPieces.map((p) => (
