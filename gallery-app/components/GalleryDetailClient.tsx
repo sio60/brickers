@@ -15,6 +15,8 @@ type Comment = {
     authorNickname: string;
     content: string;
     createdAt: string;
+    parentId?: string;
+    children?: Comment[];
 };
 
 type Props = {
@@ -35,6 +37,11 @@ export default function GalleryDetailClient({ item }: Props) {
     const [comments, setComments] = useState<Comment[]>([]);
     const [commentInput, setCommentInput] = useState('');
     const [commentLoading, setCommentLoading] = useState(false);
+
+    // Reply State
+    const [replyingTo, setReplyingTo] = useState<string | null>(null);
+    const [replyInput, setReplyInput] = useState('');
+    const [replyLoading, setReplyLoading] = useState(false);
 
     // Toast State
     const [showToast, setShowToast] = useState(false);
@@ -106,9 +113,9 @@ export default function GalleryDetailClient({ item }: Props) {
             });
             if (res.ok) {
                 const data = await res.json();
-                const newLiked = data.myReaction === 'LIKE';
+                const newLiked = data.currentReaction === 'LIKE'; // currentReaction field name check
                 setIsLiked(newLiked);
-                setLikeCount(data.likeCount);
+                if (data.likeCount !== undefined) setLikeCount(data.likeCount);
             }
         } catch (error) { console.error(error); }
     };
@@ -124,23 +131,44 @@ export default function GalleryDetailClient({ item }: Props) {
         } catch (error) { console.error(error); }
     };
 
-    const handleCommentSubmit = async () => {
+    const handleCommentSubmit = async (parentId?: string) => {
         if (!isAuthenticated) return alert('로그인이 필요합니다.');
-        if (!commentInput.trim()) return;
-        setCommentLoading(true);
+
+        const content = parentId ? replyInput : commentInput;
+        if (!content.trim()) return;
+
+        if (parentId) setReplyLoading(true);
+        else setCommentLoading(true);
+
         try {
             const res = await authFetch(`/api/gallery/${item.id}/comments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content: commentInput }),
+                body: JSON.stringify({ content, parentId }),
             });
             if (res.ok) {
                 const newComment = await res.json();
-                setComments(prev => [newComment, ...prev]);
-                setCommentInput('');
+
+                // If it's a reply, find parent and append to children
+                if (parentId) {
+                    setComments(prev => prev.map(c => {
+                        if (c.id === parentId) {
+                            return { ...c, children: [...(c.children || []), newComment] };
+                        }
+                        return c;
+                    }));
+                    setReplyInput('');
+                    setReplyingTo(null);
+                } else {
+                    setComments(prev => [newComment, ...prev]);
+                    setCommentInput('');
+                }
             }
         } catch (error) { console.error(error); }
-        finally { setCommentLoading(false); }
+        finally {
+            if (parentId) setReplyLoading(false);
+            else setCommentLoading(false);
+        }
     };
 
     const handleShare = async () => {
@@ -158,6 +186,55 @@ export default function GalleryDetailClient({ item }: Props) {
         const date = new Date(dateStr);
         return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
     };
+
+    const renderComment = (c: Comment, isReply = false) => (
+        <div key={c.id} className={`bg-white p-3 rounded-xl border border-gray-100 shadow-sm ${isReply ? 'ml-6 border-l-4 border-l-gray-200' : ''}`}>
+            <div className="flex items-center justify-between mb-1">
+                <span className="font-bold text-xs text-gray-900">@{c.authorNickname}</span>
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-gray-400">{formatDate(c.createdAt)}</span>
+                    {!isReply && (
+                        <button
+                            onClick={() => setReplyingTo(replyingTo === c.id ? null : c.id)}
+                            className="text-[10px] font-bold text-blue-500 hover:text-blue-700"
+                        >
+                            {t.detail.reply || "답글"}
+                        </button>
+                    )}
+                </div>
+            </div>
+            <p className="text-xs text-gray-600 leading-relaxed">{c.content}</p>
+
+            {/* Reply Input */}
+            {replyingTo === c.id && (
+                <div className="mt-2 flex gap-2">
+                    <input
+                        className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 outline-none"
+                        placeholder="답글을 입력하세요..."
+                        value={replyInput}
+                        onChange={e => setReplyInput(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleCommentSubmit(c.id)}
+                        disabled={replyLoading}
+                        autoFocus
+                    />
+                    <button
+                        onClick={() => handleCommentSubmit(c.id)}
+                        disabled={!replyInput.trim() || replyLoading}
+                        className="bg-blue-500 text-white px-3 rounded-lg font-bold text-[10px] hover:bg-blue-600 disabled:opacity-50"
+                    >
+                        등록
+                    </button>
+                </div>
+            )}
+
+            {/* Render Children */}
+            {c.children && c.children.length > 0 && (
+                <div className="mt-2 flex flex-col gap-2 border-t border-gray-50 pt-2">
+                    {c.children.map(child => renderComment(child, true))}
+                </div>
+            )}
+        </div>
+    );
 
     return (
         <div className="gallery-layout w-full max-w-[1440px] mx-auto my-6 flex h-[calc(100vh-160px)] gap-3 px-4 relative z-50">
@@ -364,15 +441,7 @@ export default function GalleryDetailClient({ item }: Props) {
                                     <div className="text-center py-10 text-gray-400">
                                         <p className="text-sm">{t.detail.noComments}</p>
                                     </div>
-                                ) : comments.map(c => (
-                                    <div key={c.id} className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
-                                        <div className="flex items-center justify-between mb-1">
-                                            <span className="font-bold text-xs text-gray-900">@{c.authorNickname}</span>
-                                            <span className="text-[10px] text-gray-400">{formatDate(c.createdAt)}</span>
-                                        </div>
-                                        <p className="text-xs text-gray-600 leading-relaxed">{c.content}</p>
-                                    </div>
-                                ))}
+                                ) : comments.map(c => renderComment(c))}
                             </div>
                         </div>
                     </div>
@@ -389,7 +458,7 @@ export default function GalleryDetailClient({ item }: Props) {
                                 disabled={!isAuthenticated || commentLoading}
                             />
                             <button
-                                onClick={handleCommentSubmit}
+                                onClick={() => handleCommentSubmit()}
                                 disabled={!isAuthenticated || !commentInput.trim() || commentLoading}
                                 className="bg-black text-white px-4 rounded-xl font-bold text-[10px] hover:bg-gray-800 disabled:opacity-30 transition-all uppercase"
                             >

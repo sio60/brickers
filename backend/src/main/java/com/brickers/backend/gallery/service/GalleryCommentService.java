@@ -22,9 +22,41 @@ public class GalleryCommentService {
     private final UserRepository userRepository;
 
     public Page<CommentResponse> getComments(String postId, int page, int size) {
-        Page<GalleryCommentEntity> comments = commentRepository
-                .findByPostIdAndDeletedFalseOrderByCreatedAtDesc(postId, PageRequest.of(page, size));
-        return comments.map(this::toResponse);
+        // 1. Fetch all comments for the post
+        java.util.List<GalleryCommentEntity> allComments = commentRepository.findByPostIdAndDeletedFalse(postId);
+
+        // 2. Filter root comments (parentId is null)
+        java.util.List<GalleryCommentEntity> rootComments = allComments.stream()
+                .filter(c -> c.getParentId() == null)
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .collect(java.util.stream.Collectors.toList());
+
+        // 3. Pagination in memory
+        int start = Math.min(page * size, rootComments.size());
+        int end = Math.min((page + 1) * size, rootComments.size());
+        java.util.List<GalleryCommentEntity> pagedRoots = rootComments.subList(start, end);
+
+        // 4. Map to response with children
+        java.util.List<CommentResponse> content = pagedRoots.stream()
+                .map(root -> toResponseWithChildren(root, allComments))
+                .collect(java.util.stream.Collectors.toList());
+
+        return new org.springframework.data.domain.PageImpl<>(content, PageRequest.of(page, size), rootComments.size());
+    }
+
+    private CommentResponse toResponseWithChildren(GalleryCommentEntity root,
+            java.util.List<GalleryCommentEntity> allComments) {
+        CommentResponse response = toResponse(root);
+
+        // Filter children (replies) for this root comment
+        java.util.List<CommentResponse> children = allComments.stream()
+                .filter(c -> root.getId().equals(c.getParentId()))
+                .sorted((a, b) -> a.getCreatedAt().compareTo(b.getCreatedAt()))
+                .map(this::toResponse)
+                .collect(java.util.stream.Collectors.toList());
+
+        response.setChildren(children);
+        return response;
     }
 
     public CommentResponse createComment(Authentication auth, String postId, CommentCreateRequest req) {
@@ -32,9 +64,18 @@ public class GalleryCommentService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
+        // Validate parent if provided
+        if (req.getParentId() != null) {
+            boolean parentExists = commentRepository.existsById(req.getParentId());
+            if (!parentExists) {
+                throw new IllegalArgumentException("부모 댓글이 존재하지 않습니다.");
+            }
+        }
+
         GalleryCommentEntity comment = GalleryCommentEntity.builder()
                 .postId(postId)
                 .authorId(userId)
+                .parentId(req.getParentId()) // Set parentId
                 .authorNickname(user.getNickname())
                 .authorProfileImage(user.getProfileImage())
                 .content(req.getContent())
@@ -72,6 +113,7 @@ public class GalleryCommentService {
                 .authorNickname(entity.getAuthorNickname())
                 .authorProfileImage(entity.getAuthorProfileImage())
                 .content(entity.getContent())
+                .parentId(entity.getParentId()) // Map parentId
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();

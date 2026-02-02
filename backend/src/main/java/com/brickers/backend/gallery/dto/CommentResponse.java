@@ -14,6 +14,8 @@ public class CommentResponse {
     private String authorNickname;
     private String authorProfileImage;
     private String content;
+    private String parentId;
+    private java.util.List<CommentResponse> children;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
