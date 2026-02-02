@@ -1,49 +1,80 @@
-# Brick Generator (Adult & Kids Mode)
+# Brick Generator
 
-이미지나 3D 모델을 기반으로 최적화된 브릭 설계도와 조립 가이드를 생성하는 AI 플랫폼입니다. 사용자의 숙련도에 따라 **Adult Mode**와 **Kids Mode** 두 가지 환경을 제공합니다.
+![Main Screen](assets/main.png)
+
+이미지나 3D 모델을 기반으로 최적화된 브릭 설계도와 조립 가이드를 생성하는 AI 플랫폼입니다. 사용자의 숙련도에 따라 **Level 1 ~ 3**까지 난이도를 조절할 수 있습니다.
 
 ---
 
 ## Key Features
 
-### 1. Adult Mode (전문가/정밀 모드)
-세밀한 제어와 물리적 검증이 필요한 전문가를 위한 모드입니다.
-* **커스텀 전략**: 부품 최소화, 대칭 강조, 디테일 우선순위 등 알고리즘 가중치 조절 가능.
-* **3D 검증 & 히트맵**: 설계된 모델의 물리적 구조 결함을 히트맵으로 식별하여 조립 안정성 확인.
-* **전문 데이터 추출**: `LDR` 파일, 상세 `BOM(부품 리스트)`, 전문 조립 설명서(PDF) 제공.
+### 1. Difficulty Levels (난이도 선택)
+사용자의 숙련도와 목적에 따라 3단계의 난이도(Level 1~3)를 선택할 수 있습니다.
+* **Level 1 (Easy)**: 적은 브릭 수로 형태를 단순화하여 누구나 쉽게 조립 가능.
+* **Level 2 (Normal)**: 적절한 디테일과 브릭 수의 균형.
+* **Level 3 (Hard)**: 더 많은 브릭을 사용하여 정교한 디테일 표현.
 
-### 2. Kids Mode (어린이/간편 모드)
-복잡한 설정 없이 누구나 쉽게 브릭 모델을 만들 수 있는 모드입니다.
-* **원클릭 생성**: 사진 촬영 후 별도 설정 없이 즉시 모델링 진행.
-* **지능형 최적화**: 어린이의 손 크기를 고려한 큰 브릭 위주 배치 및 원색 위주 컬러링.
-* **안전 가이드**: 한 페이지당 1~2개의 부품만 보여주는 확대형 조립 가이드 제공.
+### 2. AI Modeling (지능형 모델링)
+AI가 이미지를 분석하여 브릭 모델을 자동으로 생성합니다.
+* **자동 생성**: 사진 촬영 또는 이미지 업로드 후 별도 설정 없이 즉시 모델링 진행.
+* **최적화**: 선택한 Level에 맞춰 브릭 수와 디테일을 자동으로 조절.
+
+### 3. AI BrickBot (Chatbot)
+![BrickBot](assets/brickbot.png)
+사용자를 돕는 AI 챗봇 가이드입니다.
+* **가이드 제공**: 서비스 이용 방법 및 조립 팁 제공.
+* **실시간 지원**: 궁금한 점을 언제든 물어볼 수 있는 대화형 인터페이스.
+
+### 4. Multi-language Support (다국어 지원)
+![Language Support](assets/language.png)
+글로벌 사용자를 위한 다국어 인터페이스를 제공합니다.
+* **지원 언어**: 한국어(KO), 영어(EN), 일본어(JA)
+* **실시간 전환**: 설정에서 즉시 언어 변경 가능.
 
 ---
 
 ## User Flow
 
 ### [Step 1] 인증 및 진입
-- 회원가입 및 로그인 (SNS 연동 및 보호자 인증 포함)
-- 사용자 연령 및 목적에 따른 **모드 선택** (Adult / Kids)
+- 회원가입 및 로그인
+- **난이도 선택** (난이도 및 예산에 따른 크기 조절)
+
+![Select Level](assets/selectlevel.png)
 
 ### [Step 2] 소스 입력 및 분석
-- **Adult**: 3D 파일(OBJ, STL 등) 또는 고해상도 이미지 업로드
-- **Kids**: 모바일 촬영 또는 이미지 갤러리 선택
+- 모바일 촬영 또는 이미지 갤러리 선택
+
+![Image Upload](assets/imageupload.png)
 
 ### [Step 3] 생성 및 최적화
-- **Adult**: 전략 설정(Stability vs Detail) 후 엔진 구동 및 반복 수정(Iteration)
-- **Kids**: 시스템 자동 전처리 및 안정성 95% 이상 보정 적용
+- 선택한 난이도에 맞춰 AI가 브릭 모델 생성 및 최적화
+
+![Creating Game](assets/creatinggame.png)
 
 ### [Step 4] 결과 수령
 - 설계 완료(Finalize) 후 각 모드에 최적화된 형태의 데이터 다운로드
+
+![Success](assets/success.png)
 
 ---
 
 ## Output Format
 
-| 항목 | Adult Mode | Kids Mode |
-| :--- | :--- | :--- |
-| **설계도** | 전문 조립 설명서 (High-Detail) | 확대형 쉬운 설명서 (1~2 Step) |
-| **데이터 파일** | LDR, 3D Model | 이미지 가이드 |
-| **부품 리스트** | 전문 BOM (Excel/CSV) | 장바구니 구매 링크 |
+| 항목 | 내용 |
+| :--- | :--- |
+| **설계도** | 난이도별 최적화된 조립 설명서 (Web/PDF) |
+| **데이터 파일** | LDR, 3D Model (GLB) |
+
+---
+
+## More Screenshots
+
+### Gallery
+![Gallery](assets/gallery.png)
+
+### My Page
+![My Page](assets/mypage.png)
+
+### Admin Page
+![Admin Page](assets/adminpage.png)
 
