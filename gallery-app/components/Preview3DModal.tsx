@@ -133,10 +133,8 @@ export default function Preview3DModal({ url, onClose, buildUrl }: { url: string
                     <LdrModel url={url} />
                     <OrbitControls
                         makeDefault
-                        autoRotate
-                        autoRotateSpeed={1.5}
-                        minPolarAngle={Math.PI / 6}
-                        maxPolarAngle={Math.PI / 2.5}
+                        enablePan={false}
+                        enableZoom
                     />
                 </Canvas>
 
