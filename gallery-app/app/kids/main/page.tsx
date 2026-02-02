@@ -9,6 +9,7 @@ import { getPresignUrl } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, ThemeInfo } from "@/lib/api/colorVariantApi";
 // import KidsLoadingScreen from "@/components/kids/KidsLoadingScreen";
 import BrickStackMiniGame from "@/components/kids/BrickStackMiniGame";
+import { registerToGallery } from "@/lib/api/myApi"; // Import API
 import './KidsPage.css';
 
 // SSR 제외
@@ -73,6 +74,14 @@ function KidsPageContent() {
     const [colorThemes, setColorThemes] = useState<ThemeInfo[]>([]);
     const [selectedTheme, setSelectedTheme] = useState<string>("");
     const [isApplyingColor, setIsApplyingColor] = useState(false);
+
+    // 갤러리 등록 관련
+    const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
+    const [galleryTitle, setGalleryTitle] = useState("");
+    const [isRegistering, setIsRegistering] = useState(false);
+
+    // 다운로드 드롭다운 상태
+    const [isDownloadOpen, setIsDownloadOpen] = useState(false);
 
     const processingRef = useRef(false);
 
@@ -340,6 +349,35 @@ function KidsPageContent() {
         }
     };
 
+    // 갤러리 등록 핸들러
+    const handleRegisterGallery = async () => {
+        if (!galleryTitle.trim()) {
+            alert(t.kids.steps.galleryModal.placeholder || "제목을 입력해주세요.");
+            return;
+        }
+        if (!ldrUrl) return;
+
+        setIsRegistering(true);
+        try {
+            await registerToGallery({
+                title: galleryTitle,
+                content: "Made with Brickers Kids",
+                tags: ["Kids", "Lego", "AI"],
+                ldrUrl: ldrUrl,
+                visibility: "PUBLIC",
+                // thumbnailUrl은 백엔드에서 생성하거나 생략 가능
+            });
+            alert(t.kids.steps.galleryModal.success || "갤러리에 등록되었습니다!");
+            setIsGalleryModalOpen(false);
+            setGalleryTitle("");
+        } catch (e: any) {
+            console.error("Gallery registration failed:", e);
+            alert(t.kids.steps.galleryModal.fail || "등록에 실패했습니다.");
+        } finally {
+            setIsRegistering(false);
+        }
+    };
+
     if (!isFileLoaded) {
         return <div className="page">Loading...</div>;
     }
@@ -351,7 +389,7 @@ function KidsPageContent() {
             <div className="center">
                 {status === "loading" && (
                     <>
-                        <div className="debugLog">{debugLog}</div>
+                        {/* <div className="debugLog">{debugLog}</div> */}
                         <BrickStackMiniGame percent={percent} />
                     </>
                 )}
@@ -359,32 +397,46 @@ function KidsPageContent() {
                 {status === "done" && ldrUrl && (
                     <>
                         <div className="resultTitle">{t.kids.generate.ready}</div>
-                        <div className="resultCard">
+                        <div className="resultCard" style={{ position: 'relative' }}>
                             <div className="viewer3d">
                                 <KidsLdrPreview url={ldrUrl} />
                             </div>
+
+                            {/* 우측 하단 Next 버튼 */}
+                            <button
+                                className="nextBtn nextBtn--ab"
+                                onClick={() => {
+                                    router.push(`/kids/steps?url=${encodeURIComponent(ldrUrl)}&jobId=${jobId ?? ""}&age=${age}`);
+                                }}
+                            >
+                                {t.kids.generate.next}
+                            </button>
                         </div>
 
-                        <button
-                            className="nextBtn"
-                            onClick={() => {
-                                router.push(`/kids/steps?url=${encodeURIComponent(ldrUrl)}&jobId=${jobId ?? ""}&age=${age}`);
-                            }}
-                        >
-                            {t.kids.generate.next}
-                        </button>
-
+                        {/* 하단 버튼 그룹 */}
                         <div className="actionBtns">
-                            <button className="dlBtn" onClick={downloadLdr}>
-                                LDR Download
-                            </button>
-                            {glbUrl && (
-                                <button className="dlBtn" onClick={downloadGlb}>
-                                    GLB Download
+                            {/* 다운로드 드롭다운 */}
+                            <div className="dropdownContainer">
+                                <button
+                                    className="dlBtn"
+                                    onClick={() => setIsDownloadOpen(!isDownloadOpen)}
+                                >
+                                    Download ▼
                                 </button>
-                            )}
+                                {isDownloadOpen && (
+                                    <div className="dropdownMenu">
+                                        <button onClick={downloadLdr}>LDR Download</button>
+                                        {glbUrl && <button onClick={downloadGlb}>GLB Download</button>}
+                                    </div>
+                                )}
+                            </div>
+
                             <button className="dlBtn colorBtn" onClick={openColorModal}>
-                                🎨 색상 변경
+                                색상 변경
+                            </button>
+
+                            <button className="dlBtn galleryBtn" onClick={() => setIsGalleryModalOpen(true)}>
+                                갤러리 등록
                             </button>
                         </div>
                     </>
@@ -441,6 +493,39 @@ function KidsPageContent() {
                                     disabled={!selectedTheme || isApplyingColor}
                                 >
                                     {isApplyingColor ? "적용 중..." : "적용하기"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* 갤러리 등록 모달 */}
+                {isGalleryModalOpen && (
+                    <div className="colorModalOverlay" onClick={() => setIsGalleryModalOpen(false)}>
+                        <div className="colorModal" onClick={(e) => e.stopPropagation()}>
+                            <h3 className="colorModal__title">갤러리에 등록하기</h3>
+                            <div style={{ marginBottom: '24px' }}>
+                                <input
+                                    type="text"
+                                    className="galleryInput"
+                                    placeholder={t.kids.steps.galleryModal?.placeholder || "제목을 입력해주세요"}
+                                    value={galleryTitle}
+                                    onChange={(e) => setGalleryTitle(e.target.value)}
+                                />
+                            </div>
+                            <div className="colorModal__actions">
+                                <button
+                                    className="colorModal__btn colorModal__btn--cancel"
+                                    onClick={() => setIsGalleryModalOpen(false)}
+                                >
+                                    취소
+                                </button>
+                                <button
+                                    className="colorModal__btn colorModal__btn--confirm"
+                                    onClick={handleRegisterGallery}
+                                    disabled={!galleryTitle.trim() || isRegistering}
+                                >
+                                    {isRegistering ? "등록 중..." : "등록하기"}
                                 </button>
                             </div>
                         </div>
