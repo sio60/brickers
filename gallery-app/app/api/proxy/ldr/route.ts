@@ -1,13 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const GITHUB_LDRAW_BASE = 'https://raw.githubusercontent.com/ldraw/ldraw/master/';
+const GITHUB_GK_BASE = 'https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/';
+
 function buildFallbacks(url: string): string[] {
     const fallbacks: string[] = [];
+    const lowerUrl = url.toLowerCase();
 
     if (url.includes('/ldraw/parts/') && !url.includes('/ldraw/unofficial/parts/')) {
         fallbacks.push(url.replace('/ldraw/parts/', '/ldraw/unofficial/parts/'));
     }
     if (url.includes('/ldraw/p/') && !url.includes('/ldraw/unofficial/p/')) {
         fallbacks.push(url.replace('/ldraw/p/', '/ldraw/unofficial/p/'));
+    }
+
+    // If coming from gkjohnson repo, try official LDraw repo as fallback
+    if (lowerUrl.startsWith(GITHUB_GK_BASE)) {
+        const suffix = url.slice(GITHUB_GK_BASE.length);
+        fallbacks.push(`${GITHUB_LDRAW_BASE}${suffix}`);
+        if (suffix.startsWith('parts/')) {
+            fallbacks.push(`${GITHUB_LDRAW_BASE}unofficial/${suffix}`);
+        }
+        if (suffix.startsWith('p/')) {
+            fallbacks.push(`${GITHUB_LDRAW_BASE}unofficial/${suffix}`);
+        }
     }
 
     return fallbacks;
