@@ -30,6 +30,7 @@ export default function GalleryDetailClient({ item }: Props) {
 
     // Interaction State
     const [likeCount, setLikeCount] = useState(item.likeCount || 0);
+    const [commentCount, setCommentCount] = useState(item.commentCount || 0);
     const [isLiked, setIsLiked] = useState(item.myReaction === 'LIKE');
     const [isBookmarked, setIsBookmarked] = useState(item.bookmarked || false);
 
@@ -65,13 +66,10 @@ export default function GalleryDetailClient({ item }: Props) {
     const [recommendations, setRecommendations] = useState<GalleryItem[]>([]);
 
     useEffect(() => {
-        // Increment view count
-        fetch(`/api/gallery/${item.id}/view`, { method: 'POST' }).catch(console.error);
-
         // Function to fetch comments
         const fetchComments = async () => {
             try {
-                const res = await fetch(`/api/gallery/${item.id}/comments?page=0&size=50`);
+                const res = await fetch(`/api/gallery/${item.id}/comments?page=0&size=100`);
                 if (res.ok) {
                     const data = await res.json();
                     setComments(data.content || []);
@@ -92,6 +90,7 @@ export default function GalleryDetailClient({ item }: Props) {
                 if (res.ok) {
                     const data = await res.json();
                     if (data.likeCount !== undefined) setLikeCount(data.likeCount);
+                    if (data.commentCount !== undefined) setCommentCount(data.commentCount);
                     if (data.myReaction !== undefined) setIsLiked(data.myReaction === 'LIKE');
                     if (data.bookmarked !== undefined) setIsBookmarked(data.bookmarked);
                 }
@@ -113,7 +112,8 @@ export default function GalleryDetailClient({ item }: Props) {
         fetchRecommendations();
 
         return () => clearInterval(pollInterval);
-    }, [item.id, authFetch]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [item.id]);
 
     const handleLikeToggle = async () => {
         if (!isAuthenticated) return alert('로그인이 필요합니다.');
@@ -176,12 +176,14 @@ export default function GalleryDetailClient({ item }: Props) {
 
                 if (parentId) {
                     setComments(prev => updateCommentsRecursive(prev));
+                    setCommentCount(prev => prev + 1); // Locally increment count
                     setReplyInput('');
                     setReplyingTo(null);
                     // Automatically expand parent to see the new reply
                     if (!expandedComments.has(parentId)) toggleExpand(parentId);
                 } else {
                     setComments(prev => [newComment, ...prev]);
+                    setCommentCount(prev => prev + 1); // Locally increment count
                     setCommentInput('');
                 }
             }
@@ -215,7 +217,7 @@ export default function GalleryDetailClient({ item }: Props) {
         return (
             <div key={c.id} className="w-full">
                 {/* Instagram Style Row */}
-                <div className={`flex gap-3 py-3 ${depth > 0 ? 'ml-10' : ''}`}>
+                <div className={`flex gap-3 py-2 ${depth > 0 ? 'ml-2' : ''}`}>
                     {/* Avatar */}
                     <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200 shadow-sm overflow-hidden">
                         <span className="text-[10px] font-bold text-gray-500">{c.authorNickname ? c.authorNickname[0].toUpperCase() : '?'}</span>
@@ -269,13 +271,13 @@ export default function GalleryDetailClient({ item }: Props) {
 
                 {/* Sub-replies */}
                 {hasChildren && (
-                    <div className="ml-10 flex flex-col">
+                    <div className="ml-8 flex flex-col">
                         <button
                             onClick={() => toggleExpand(c.id)}
-                            className="flex items-center gap-3 py-1.5 group"
+                            className="flex items-center gap-3 py-1 group"
                         >
                             <div className="w-8 border-t border-gray-200 group-hover:border-gray-400 transition-all"></div>
-                            <span className="text-[11px] font-bold text-gray-400 group-hover:text-gray-600 transition-colors">
+                            <span className="text-[11px] font-bold text-gray-400 group-hover:text-gray-600 transition-colors flex items-center gap-1.5">
                                 {isExpanded ? '답글 숨기기' : `답글 ${c.children?.length}개 더 보기`}
                             </span>
                         </button>
@@ -488,7 +490,7 @@ export default function GalleryDetailClient({ item }: Props) {
                         {/* Comments Section */}
                         <div className="px-6 py-4 border-t border-gray-100 bg-white min-h-[300px]">
                             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
-                                {t.detail.comments} ({comments.length})
+                                {t.detail.comments} ({commentCount})
                             </h3>
 
                             <div className="flex flex-col gap-3">

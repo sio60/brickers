@@ -1,3 +1,7 @@
+# docker-compose-local.yml (로컬 개발용 - Backend + Frontend만)
+# AI 서버는 brickers-ai/docker-compose-local.yml로 별도 실행
+# 사용법: docker compose -f docker-compose-local.yml up --build
+
 services:
   # ============================================
   # 1. Backend (Spring Boot)
@@ -6,13 +10,15 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    image: brickers-backend:local
     container_name: brickers-backend-local
+    restart: "no"
     ports:
       - "8080:8080"
     environment:
       - TZ=Asia/Seoul
       # MongoDB (로컬 테스트용 Atlas)
-      - PRIMARY_MONGODB_URI=mongodb+srv://brickers_local:%21Team1324@brickers-local.moldufp.mongodb.net/brickers?retryWrites=true&w=majority
+      - PRIMARY_MONGODB_URI=${PRIMARY_MONGODB_URI}
       # AWS S3
       - AWS_S3_BUCKET=${AWS_S3_BUCKET}
       - AWS_REGION=${AWS_REGION}
@@ -24,7 +30,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - JWT_ACCESS_EXPIRATION=${JWT_ACCESS_EXPIRATION}
       - JWT_REFRESH_EXPIRATION=${JWT_REFRESH_EXPIRATION}
-      # OAuth (로컬에서는 OAuth 테스트 어려움 - 필요시 수정)
+      # OAuth
       - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
       - KAKAO_CLIENT_SECRET=${KAKAO_CLIENT_SECRET}
       - KAKAO_ADMIN_KEY=${KAKAO_ADMIN_KEY}
@@ -38,22 +44,20 @@ services:
       - COOKIE_SAMESITE=Lax
       # Base URLs
       - FRONT_BASE_URL=http://localhost:3000
-      # AI Server
-      - AI_SERVER_URL=http://ai-server:8000
+      # AI Server (별도 실행 - host.docker.internal로 접근)
+      - AI_SERVER_URL=${AI_SERVER_URL:-http://host.docker.internal:8000}
       # OpenAI
       - APP_OPENAI_API_KEY=${APP_OPENAI_API_KEY:-sk-dummy}
-      # SQS (로컬에서는 비활성화 - 직접 호출 사용)
-      - AWS_SQS_ENABLED=false
-      - AWS_SQS_REQUEST_QUEUE_URL=${AWS_SQS_REQUEST_QUEUE_URL:-}
-      - AWS_SQS_RESULT_QUEUE_URL=${AWS_SQS_RESULT_QUEUE_URL:-}
+      # SQS (로컬 전용 큐)
+      - AWS_SQS_ENABLED=true
+      - AWS_SQS_REQUEST_QUEUE_URL=https://sqs.ap-northeast-2.amazonaws.com/381328847032/brickers-request-queue-local
+      - AWS_SQS_RESULT_QUEUE_URL=https://sqs.ap-northeast-2.amazonaws.com/381328847032/brickers-result-queue-local
       # Gallery Revalidate
       - GALLERY_REVALIDATE_ENABLED=true
       - GALLERY_REVALIDATE_URL=http://frontend:3000/api/revalidate
       - GALLERY_REVALIDATE_SECRET=local-secret
     networks:
       - brickers-local
-    depends_on:
-      - ai-server
 
   # ============================================
   # 2. Frontend (Next.js - Gallery App)
@@ -62,14 +66,16 @@ services:
     build:
       context: ./gallery-app
       dockerfile: Dockerfile
+    image: brickers-frontend:local
     container_name: brickers-frontend-local
+    restart: "no"
     ports:
       - "3000:3000"
     environment:
       - TZ=Asia/Seoul
       - NODE_ENV=production
       # Next.js - 클라이언트에서 상대경로 사용
-      - NEXT_PUBLIC_API_BASE_URL=
+      - NEXT_PUBLIC_API_BASE_URL=http://backend:8080
       # Next.js - SSR에서 Docker 내부 네트워크 사용
       - API_BASE=http://backend:8080
       - REVALIDATE_SECRET=local-secret
@@ -77,36 +83,6 @@ services:
       - brickers-local
     depends_on:
       - backend
-
-  # ============================================
-  # 3. AI Server (FastAPI)
-  # ============================================
-  ai-server:
-    build:
-      context: ../brickers-ai
-      dockerfile: Dockerfile
-    container_name: brickers-ai-local
-    ports:
-      - "8000:8000"
-    environment:
-      - TZ=Asia/Seoul
-      # MongoDB (로컬 테스트용 Atlas)
-      - MONGODB_URI=mongodb+srv://brickers_local:%21Team1324@brickers-local.moldufp.mongodb.net/brickers?retryWrites=true&w=majority
-      - MONGODB_NAME=${AI_MONGODB_NAME:-brickers}
-      - PARTS_COLLECTION=${AI_PARTS_COLLECTION:-ldraw_parts}
-      - VECTOR_INDEX=${AI_VECTOR_INDEX:-idx_parts_vec}
-      - VECTOR_FIELD=${AI_VECTOR_FIELD:-embedding}
-      - EMBEDDING_DIMS=${AI_EMBEDDING_DIMS:-512}
-      # AWS S3
-      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
-      - AWS_REGION=${AWS_REGION}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-    volumes:
-      # 소스코드 볼륨 마운트 (hot reload)
-      - ../brickers-ai:/app
-    networks:
-      - brickers-local
 
 networks:
   brickers-local:
