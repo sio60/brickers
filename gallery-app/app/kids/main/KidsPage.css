@@ -1,0 +1,412 @@
+.page {
+    position: relative;
+    width: 100%;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 10;
+    width: 100%;
+    max-width: 800px;
+    padding: 20px;
+}
+
+.debugLog {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+    font-family: monospace;
+    text-align: center;
+}
+
+.resultTitle {
+    font-family: 'KblJumpCondensed', sans-serif;
+    font-size: 48px;
+    color: #000;
+    margin-bottom: 30px;
+    margin-top: 60px;
+    text-align: center;
+}
+
+.resultCard {
+    width: 100%;
+    max-width: 600px;
+    aspect-ratio: 1;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    border: 3px solid #000;
+    border-radius: 24px;
+    /* overflow: hidden; */
+    /* Removing to allow absolute nextBtn to overflow slightly if needed */
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+}
+
+.viewer3d {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+}
+
+.nextBtn {
+    background: #000;
+    color: #fff;
+    font-family: 'KblJumpCondensed', sans-serif;
+    font-size: 20px;
+    padding: 10px 40px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.actionBtns {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.dlBtn {
+    background: #fff;
+    color: #000;
+    font-family: 'KblJumpCondensed', sans-serif;
+    font-size: 16px;
+    padding: 10px 24px;
+    border-radius: 50px;
+    border: 2px solid #000;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: bold;
+}
+
+.dlBtn:hover {
+    background: #eee;
+    transform: scale(1.05);
+}
+
+.nextBtn:hover {
+    background: #333;
+    transform: scale(1.05);
+}
+
+.error {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 24px;
+    border-radius: 16px;
+    border: 2px solid #ff4d4f;
+    text-align: center;
+    color: #000;
+    max-width: 400px;
+}
+
+.toast {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: #ffffff;
+    border: 2px solid #000000;
+    color: #000000;
+    padding: 16px 24px;
+    z-index: 9999;
+    font-weight: bold;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* 색상 변경 버튼 */
+.colorBtn {
+    background: linear-gradient(135deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+    background-size: 300% 300%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.colorBtn:hover {
+    animation: none;
+    background: #000;
+    color: #fff;
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* 색상 모달 */
+.colorModalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.colorModal {
+    background: #fff;
+    width: min(420px, 90vw);
+    max-height: 80vh;
+    border-radius: 24px;
+    padding: 32px;
+    border: 3px solid #000;
+    box-shadow: 0 12px 0 rgba(0, 0, 0, 0.15);
+    animation: modalAppear 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow-y: auto;
+}
+
+@keyframes modalAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.colorModal__title {
+    margin: 0 0 24px;
+    font-size: 22px;
+    font-weight: 900;
+    color: #000;
+    text-align: center;
+}
+
+.colorModal__themes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.colorModal__loading {
+    padding: 20px;
+    text-align: center;
+    color: #888;
+}
+
+.colorModal__themeBtn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 2px solid #e0e0e0;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.colorModal__themeBtn:hover {
+    border-color: #000;
+    background: #f9f9f9;
+}
+
+.colorModal__themeBtn--selected {
+    border-color: #000;
+    background: #000;
+    color: #fff;
+}
+
+.colorModal__themeName {
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 4px;
+    text-transform: capitalize;
+}
+
+.colorModal__themeDesc {
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0.7;
+}
+
+.colorModal__themeBtn--selected .colorModal__themeDesc {
+    opacity: 0.85;
+}
+
+.colorModal__actions {
+    display: flex;
+    gap: 12px;
+}
+
+.colorModal__btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 800;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.colorModal__btn--cancel {
+    background: #f0f0f0;
+    color: #555;
+}
+
+.colorModal__btn--cancel:hover {
+    background: #e5e5e5;
+}
+
+.colorModal__btn--confirm {
+    background: #000;
+    color: #fff;
+    flex: 1.5;
+}
+
+.colorModal__btn--confirm:hover {
+    background: #333;
+}
+
+.colorModal__btn--confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Next Button Absolute Positioning */
+.nextBtn--ab {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    margin: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 20;
+}
+
+/* Dropdown */
+.dropdownContainer {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdownMenu {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    border: 2px solid #000;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-width: 160px;
+    margin-bottom: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+}
+
+.dropdownMenu button {
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    font-family: 'KblJumpCondensed', sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+.modalCloseBtn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #000;
+    z-index: 100;
+}
+
+.modalCloseBtn:hover {
+    transform: rotate(90deg) scale(1.1);
+}
+
+.dropdownMenu button:last-child {
+    border-bottom: none;
+}
+
+.dropdownMenu button:hover {
+    background: #f0f0f0;
+}
+
+/* Gallery Input */
+.galleryInput {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid #000;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    background: #f9f9f9;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.galleryInput:focus {
+    background: #fff;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Gallery Button */
+.galleryBtn {
+    background: #000;
+    color: #fff;
+    border: 2px solid #000;
+}
+
+.galleryBtn:hover {
+    background: #333;
+    border-color: #333;
+    transform: scale(1.05);
+}
