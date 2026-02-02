@@ -412,44 +412,43 @@ function KidsStepPageContent() {
                     left: 24,
                     zIndex: 20,
                     width: 260,
-                    background: "rgba(26, 26, 26, 0.8)",
-                    backdropFilter: "blur(12px)",
+                    background: "#fff",
                     borderRadius: 32,
-                    color: "#fff",
+                    color: "#000",
                     display: "flex",
                     flexDirection: "column",
                     padding: "24px 16px",
-                    border: "2px solid rgba(255, 255, 255, 0.1)",
-                    boxShadow: "0 20px 50px rgba(0, 0, 0, 0.3)"
+                    border: "3px solid #000",
+                    boxShadow: "0 20px 50px rgba(0, 0, 0, 0.1)"
                 }}>
                     <button
                         onClick={() => router.back()}
                         style={{
                             alignSelf: "flex-start",
                             marginBottom: 20,
-                            background: "rgba(255, 255, 255, 0.1)",
-                            color: "#fff",
-                            border: "none",
+                            background: "#fff",
+                            color: "#000",
+                            border: "2px solid #000",
                             borderRadius: 12,
                             padding: "8px 16px",
                             cursor: "pointer",
                             fontSize: "0.85rem",
-                            fontWeight: 700,
+                            fontWeight: 800,
                             transition: "all 0.2s"
                         }}
                     >
                         ← {t.kids.steps.back}
                     </button>
 
-                    <h2 style={{ fontSize: "1.2rem", fontWeight: 800, marginBottom: 20, paddingLeft: 8, letterSpacing: "-0.5px" }}>
+                    <h2 style={{ fontSize: "1.3rem", fontWeight: 900, marginBottom: 20, paddingLeft: 8, letterSpacing: "-0.5px" }}>
                         BRICKERS
                     </h2>
 
-                    <div style={{ marginBottom: 10, paddingLeft: 8, fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.4)", fontWeight: 800, textTransform: "uppercase" }}>
+                    <div style={{ marginBottom: 10, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800, textTransform: "uppercase" }}>
                         {t.kids.steps.viewModes}
                     </div>
 
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         <button
                             onClick={() => setActiveTab('LDR')}
                             style={{
@@ -457,9 +456,9 @@ function KidsStepPageContent() {
                                 padding: "14px 16px",
                                 borderRadius: 16,
                                 background: activeTab === 'LDR' ? "#ffe135" : "transparent",
-                                color: activeTab === 'LDR' ? "#000" : "#aaa",
+                                color: "#000",
                                 fontWeight: 800,
-                                border: "none",
+                                border: activeTab === 'LDR' ? "2px solid #000" : "2px solid transparent",
                                 cursor: "pointer",
                                 transition: "all 0.2s"
                             }}
@@ -473,9 +472,9 @@ function KidsStepPageContent() {
                                 padding: "14px 16px",
                                 borderRadius: 16,
                                 background: activeTab === 'GLB' ? "#ffe135" : "transparent",
-                                color: activeTab === 'GLB' ? "#000" : "#aaa",
+                                color: "#000",
                                 fontWeight: 800,
-                                border: "none",
+                                border: activeTab === 'GLB' ? "2px solid #000" : "2px solid transparent",
                                 cursor: "pointer",
                                 transition: "all 0.2s"
                             }}
@@ -484,8 +483,8 @@ function KidsStepPageContent() {
                         </button>
                     </div>
 
-                    <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
-                        <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.4)", fontWeight: 800, textTransform: "uppercase" }}>
+                    <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
+                        <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800, textTransform: "uppercase" }}>
                             {t.kids.steps.registerGallery}
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -528,37 +527,6 @@ function KidsStepPageContent() {
                     }
                 </div>
 
-                {/* Top Right Actions */}
-                {searchParams.get("isPreset") !== "true" && (
-                    <div style={{ position: "absolute", top: 32, right: 32, zIndex: 20, display: "flex", gap: 12 }}>
-                        <button
-                            className="kidsStep__actionBtn kidsStep__actionBtn--color"
-                            onClick={() => setIsColorModalOpen(true)}
-                        >
-                            {t.kids.steps.changeColor || "색상 변경"}
-                        </button>
-
-                        <div style={{ position: "relative" }}>
-                            <button
-                                className="kidsStep__actionBtn"
-                                onClick={() => setIsDownloadOpen(!isDownloadOpen)}
-                            >
-                                Download {isDownloadOpen ? "▲" : "▼"}
-                            </button>
-                            {isDownloadOpen && (
-                                <div className="kidsStep__downloadMenu">
-                                    <button className="kidsStep__downloadItem" onClick={() => { downloadLdr(); setIsDownloadOpen(false); }}>LDR File</button>
-                                    <button className="kidsStep__downloadItem" onClick={() => { downloadGlb(); setIsDownloadOpen(false); }}>GLB File</button>
-                                    {colorChangedLdrBase64 && (
-                                        <button className="kidsStep__downloadItem" onClick={() => { downloadColorChangedLdr(); setIsDownloadOpen(false); }}>
-                                            Changed LDR
-                                        </button>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
 
                 {/* Main 3D Card Area */}
                 <div className="kidsStep__card">
