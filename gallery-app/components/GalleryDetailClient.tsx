@@ -265,39 +265,39 @@ export default function GalleryDetailClient({ item }: Props) {
                                     onClick={handleLikeToggle}
                                     className={`flex flex-col items-center gap-1 group transition-all ${isLiked ? 'scale-110' : 'hover:scale-105'}`}
                                 >
-                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm border transition-all ${isLiked ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200 group-hover:border-gray-300'}`}>
+                                    <div className="flex items-center justify-center transition-all">
                                         <Image
-                                            src="/icons/like.png"
+                                            src={isLiked ? "/icons/likefull.png" : "/icons/like.png"}
                                             alt="Like"
                                             width={24}
                                             height={24}
-                                            style={isLiked ? { filter: 'invert(48%) sepia(50%) saturate(2243%) hue-rotate(195deg) brightness(101%) contrast(93%)' } : { opacity: 0.6 }}
+                                            style={isLiked ? {} : { opacity: 0.6 }}
                                         />
                                     </div>
-                                    <span className={`text-xs font-bold ${isLiked ? 'text-blue-500' : 'text-gray-400'}`}>{likeCount}</span>
+                                    <span className={`text-xs font-bold ${isLiked ? 'text-gray-900' : 'text-gray-400'}`}>{likeCount}</span>
                                 </button>
 
                                 <button
                                     onClick={handleBookmarkToggle}
                                     className={`flex flex-col items-center gap-1 group transition-all ${isBookmarked ? 'scale-110' : 'hover:scale-105'}`}
                                 >
-                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm border transition-all ${isBookmarked ? 'bg-yellow-50 border-yellow-200' : 'bg-white border-gray-200 group-hover:border-gray-300'}`}>
+                                    <div className="flex items-center justify-center transition-all">
                                         <Image
-                                            src="/icons/bookmark.png"
+                                            src={isBookmarked ? "/icons/bookmarkfull.png" : "/icons/bookmark.png"}
                                             alt="Bookmark"
                                             width={24}
                                             height={24}
-                                            style={isBookmarked ? { filter: 'invert(80%) sepia(55%) saturate(2000%) hue-rotate(5deg) brightness(100%) contrast(101%)' } : { opacity: 0.6 }}
+                                            style={isBookmarked ? {} : { opacity: 0.6 }}
                                         />
                                     </div>
-                                    <span className={`text-xs font-bold ${isBookmarked ? 'text-yellow-500' : 'text-gray-400'}`}>{t.detail.save}</span>
+                                    <span className={`text-xs font-bold ${isBookmarked ? 'text-gray-900' : 'text-gray-400'}`}>{t.detail.save}</span>
                                 </button>
 
                                 <button
                                     onClick={() => alert('공유 기능 준비 중')}
                                     className="flex flex-col items-center gap-1 group hover:scale-105 transition-all ml-auto"
                                 >
-                                    <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm group-hover:border-gray-300">
+                                    <div className="flex items-center justify-center transition-all">
                                         <Image src="/icons/share.png" alt="Share" width={22} height={22} className="opacity-60" />
                                     </div>
                                     <span className="text-xs font-bold text-gray-400">{t.detail.share}</span>
