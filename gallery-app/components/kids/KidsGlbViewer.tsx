@@ -37,6 +37,8 @@ export default function KidsGlbViewer({ url }: Props) {
                 <OrbitControls
                     enablePan={false}
                     enableZoom={true}
+                    autoRotate
+                    autoRotateSpeed={1.5}
                 />
             </Canvas>
 
