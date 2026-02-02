@@ -367,7 +367,7 @@ function KidsPageContent() {
                         <div className="resultTitle">{t.kids.generate.ready}</div>
                         <div className="resultCard" style={{ position: 'relative' }}>
                             <div className="viewer3d">
-                                <KidsLdrPreview url={ldrUrl} />
+                                <KidsLdrPreview key={ldrUrl} url={ldrUrl} />
                             </div>
 
                             {/* 우측 하단 Next 버튼 */}
