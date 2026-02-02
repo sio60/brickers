@@ -41,7 +41,8 @@ function LdrModel({
             // Normalize accidental double segments
             fixed = fixed.replace("/ldraw/p/p/", "/ldraw/p/");
             fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
-            if (fixed.includes("ldraw-parts-library") && fixed.endsWith(".dat") && !fixed.includes("LDConfig.ldr")) {
+            const lowerFixed = fixed.toLowerCase();
+            if (lowerFixed.includes("ldraw-parts-library") && lowerFixed.endsWith(".dat") && !lowerFixed.includes("ldconfig.ldr")) {
                 const filename = fixed.split("/").pop() || "";
                 const lowerName = filename.toLowerCase();
                 if (filename && lowerName !== filename) {
