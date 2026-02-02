@@ -644,29 +644,20 @@ function KidsStepPageContent() {
                             </button>
 
                             {colorChangedLdrBase64 && (
-                                <button
-                                    onClick={restoreOriginalColor}
-                                    style={{
-                                        width: "100%",
-                                        textAlign: "left",
-                                        padding: "10px 16px",
-                                        borderRadius: 16,
-                                        background: "transparent",
-                                        color: "#888",
-                                        fontWeight: 800,
-                                        border: "2px solid transparent",
-                                        cursor: "pointer",
-                                        transition: "all 0.2s",
-                                        fontSize: "0.85rem",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 6
-                                    }}
-                                    onMouseOver={(e) => e.currentTarget.style.color = "#000"}
-                                    onMouseOut={(e) => e.currentTarget.style.color = "#888"}
-                                >
-                                    ↺ 원본으로 되돌리기
-                                </button>
+                                <>
+                                    <button
+                                        onClick={downloadColorChangedLdr}
+                                        className="kidsStep__downloadColorBtn"
+                                    >
+                                        ⬇ 변경된 LDR 다운로드
+                                    </button>
+                                    <button
+                                        onClick={restoreOriginalColor}
+                                        className="kidsStep__restoreBtn"
+                                    >
+                                        ↺ 원본으로 되돌리기
+                                    </button>
+                                </>
                             )}
                         </div>
 
@@ -819,7 +810,7 @@ function KidsStepPageContent() {
                     <div className="galleryModal colorModal" onClick={(e) => e.stopPropagation()}>
                         <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)} aria-label="close">✕</button>
                         <h3 className="galleryModal__title">
-                            🎨 {t.kids.steps.colorThemeTitle || "색상 테마 선택"}
+                            {t.kids.steps.colorThemeTitle || "색상 테마 선택"}
                         </h3>
 
                         <div className="colorModal__themes">

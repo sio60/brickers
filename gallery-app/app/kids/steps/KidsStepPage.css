@@ -405,8 +405,10 @@
 
 .colorModal__themeBtn--selected {
     border-color: #000;
-    background: #000;
-    color: #fff;
+}
+
+.colorModal__themeBtn--selected .colorModal__themeName {
+    color: #ffe135;
 }
 
 .colorModal__themeName {
@@ -421,25 +423,47 @@
 }
 
 .colorModal__themeBtn--selected .colorModal__themeDesc {
-    color: #ccc;
+    color: #333;
 }
 
-/* Sidebar Color Button - White with Hover Yellow */
-.kidsStep__colorBtn {
+/* 색상 변경된 LDR 다운로드 버튼 */
+.kidsStep__downloadColorBtn {
     width: 100%;
     text-align: left;
     padding: 14px 16px;
     border-radius: 16px;
-    background: #fff;
-    color: #000;
+    background: #4CAF50;
+    color: #fff;
     font-weight: 800;
     border: 2px solid #000;
     cursor: pointer;
     transition: all 0.2s;
 }
 
-.kidsStep__colorBtn:hover {
-    background: #ffe135;
+.kidsStep__downloadColorBtn:hover {
+    background: #45a049;
     transform: translateY(-2px);
     box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* 원본 복원 버튼 */
+.kidsStep__restoreBtn {
+    width: 100%;
+    text-align: left;
+    padding: 10px 16px;
+    border-radius: 16px;
+    background: transparent;
+    color: #888;
+    font-weight: 800;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.kidsStep__restoreBtn:hover {
+    color: #000;
 }
