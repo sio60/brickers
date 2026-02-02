@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
-import { Bounds, OrbitControls, Center, Gltf, Environment } from "@react-three/drei";
+import { Bounds, OrbitControls, Center, Gltf, Environment, useBounds } from "@react-three/drei";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
@@ -193,13 +193,24 @@ function LdrModel({
     }
 
     return (
-        <Bounds fit clip observe margin={1.2}>
+        <Bounds fit clip margin={1.35}>
             <Center>
                 <primitive object={group} />
                 {boundMesh}
             </Center>
         </Bounds>
     );
+}
+
+function FitOnceOnLoad({ trigger }: { trigger: string }) {
+    const bounds = useBounds();
+
+    useEffect(() => {
+        // Fit once when model url changes
+        bounds.refresh().fit();
+    }, [bounds, trigger]);
+
+    return null;
 }
 
 // LDR 파싱 및 정렬 유틸
@@ -273,7 +284,7 @@ function parseAndProcessSteps(ldrText: string) {
     const body = segments.slice(1);
 
     // Y 내림차순 (큰 값 = 바닥 = 먼저 조립)
-    body.sort((a, b) => b.avgY - a.avgY);
+    body.sort((a, b) => a.avgY - b.avgY);
 
     const sortedSegments = [header, ...body];
 
@@ -717,6 +728,7 @@ function KidsStepPageContent() {
                                             customBounds={modelBounds}
                                         />
                                     </Center>
+                                    <FitOnceOnLoad trigger={`${ldrUrl}|${modelUrlToUse ?? ''}`} />
                                     <OrbitControls makeDefault enablePan={false} enableZoom />
                                 </Canvas>
                             </div>
@@ -777,11 +789,12 @@ function KidsStepPageContent() {
                                 <ambientLight intensity={0.8} />
                                 <directionalLight position={[5, 10, 5]} intensity={1.5} />
                                 <Environment preset="city" />
-                                <Bounds fit clip observe margin={1.2}>
+                                <Bounds fit clip margin={1.35}>
                                     <Center>
                                         {glbUrl && <Gltf src={glbUrl} />}
                                     </Center>
                                 </Bounds>
+                                <FitOnceOnLoad trigger={glbUrl ?? ''} />
                                 <OrbitControls makeDefault enablePan={false} enableZoom />
                             </Canvas>
                             {!glbUrl && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#888", fontWeight: 700 }}>3D Model not available</div>}
