@@ -631,7 +631,7 @@ function KidsStepPageContent() {
                     <div className="galleryModal colorModal" onClick={(e) => e.stopPropagation()}>
                         <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)} aria-label="close">✕</button>
                         <h3 className="galleryModal__title">
-                            🎨 {t.kids.steps.colorThemeTitle || "색상 테마 선택"}
+                            {t.kids.steps.colorThemeTitle || "색상 테마 선택"}
                         </h3>
 
                         <div className="colorModal__themes">
