@@ -47,11 +47,6 @@ function LdrModel({
                 if (filename && lowerName !== filename) {
                     fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
                 }
-
-                const lowerName = filename.toLowerCase();
-                if (filename && lowerName !== filename) {
-                    fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
-                }
                 
                 const isPrimitive = /^\d+-\d+/.test(filename) ||
                     /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud|empty)/.test(filename);
