@@ -53,7 +53,7 @@ export async function applyColorVariant(
 }
 
 /**
- * Base64 LDR 데이터를 Blob URL로 변환
+ * Base64 LDR 데이터를 Blob URL로 변환 (뷰어용)
  */
 export function base64ToBlobUrl(base64Data: string): string {
     const binaryString = atob(base64Data);
@@ -63,4 +63,25 @@ export function base64ToBlobUrl(base64Data: string): string {
     }
     const blob = new Blob([bytes], { type: 'text/plain' });
     return URL.createObjectURL(blob);
+}
+
+/**
+ * Base64 LDR 데이터를 다운로드
+ */
+export function downloadLdrFromBase64(base64Data: string, filename: string): void {
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }

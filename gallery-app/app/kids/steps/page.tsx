@@ -11,6 +11,7 @@ import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawCondit
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { registerToGallery } from "@/lib/api/myApi";
+import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
 import './KidsStepPage.css';
 
 // SSR 제외
@@ -194,6 +195,14 @@ function KidsStepPageContent() {
     const [jobThumbnailUrl, setJobThumbnailUrl] = useState<string | null>(null);
 
     const [isPreviewMode, setIsPreviewMode] = useState(true);
+    const [isDownloadOpen, setIsDownloadOpen] = useState(false);
+
+    // Color Variant State
+    const [isColorModalOpen, setIsColorModalOpen] = useState(false);
+    const [colorThemes, setColorThemes] = useState<any[]>([]);
+    const [selectedTheme, setSelectedTheme] = useState<string>("");
+    const [isApplyingColor, setIsApplyingColor] = useState(false);
+    const [colorChangedLdrBase64, setColorChangedLdrBase64] = useState<string | null>(null);
 
     const revokeAll = (arr: string[]) => {
         arr.forEach((u) => { try { URL.revokeObjectURL(u); } catch { } });
@@ -201,6 +210,62 @@ function KidsStepPageContent() {
 
     const [activeTab, setActiveTab] = useState<'LDR' | 'GLB'>('LDR');
     const [glbUrl, setGlbUrl] = useState<string | null>(null);
+
+    // 색상 테마 목록 로드
+    useEffect(() => {
+        if (isColorModalOpen && colorThemes.length === 0) {
+            getColorThemes()
+                .then(setColorThemes)
+                .catch((e) => console.error("테마 로드 실패:", e));
+        }
+    }, [isColorModalOpen, colorThemes.length]);
+
+    // 색상 변경 적용
+    const handleApplyColor = async () => {
+        if (!selectedTheme || !ldrUrl) return;
+
+        setIsApplyingColor(true);
+        try {
+            const result = await applyColorVariant(ldrUrl, selectedTheme);
+
+            if (result.ok && result.ldrData) {
+                // 새 blob URL 생성 및 저장
+                const newBlobUrl = base64ToBlobUrl(result.ldrData);
+                // setLdrUrl(newBlobUrl); // 원본 URL은 유지하고 override를 통해 보여줄수도 있지만, 여기선 ldrUrl을 업데이트하는게 나을지 판단 필요
+                // 일단 base64만 저장해둠 (다운로드용)
+                setColorChangedLdrBase64(result.ldrData);
+
+                // step blob들 재생성
+                const text = atob(result.ldrData);
+                const stepTexts = buildCumulativeStepTexts(text);
+                const blobs = stepTexts.map((t) =>
+                    URL.createObjectURL(new Blob([t], { type: "text/plain" }))
+                );
+
+                revokeAll(blobRef.current);
+                blobRef.current = blobs;
+                setStepBlobUrls(blobs);
+                setStepIdx(stepTexts.length - 1); // 마지막 단계로 이동
+                setIsPreviewMode(false); // 미리보기 모드 해제하여 변경된 결과 바로 확인
+
+                setIsColorModalOpen(false);
+                alert(`${result.themeApplied} 테마 적용 완료! (${result.changedBricks}개 브릭 변경)`);
+            } else {
+                alert(result.message || "색상 변경 실패");
+            }
+        } catch (e: any) {
+            console.error("색상 변경 실패:", e);
+            alert(e.message || "색상 변경 중 오류가 발생했습니다.");
+        } finally {
+            setIsApplyingColor(false);
+        }
+    };
+
+    const downloadColorChangedLdr = () => {
+        if (colorChangedLdrBase64) {
+            downloadLdrFromBase64(colorChangedLdrBase64, `brickers_${selectedTheme}.ldr`);
+        }
+    };
 
     // Fetch Job Info
     useEffect(() => {
@@ -415,10 +480,40 @@ function KidsStepPageContent() {
                     </div>
                     {/* Action Buttons (Download/Register) - Only show relevant ones */}
                     {searchParams.get("isPreset") !== "true" && (
-                        <div style={{ display: "flex", gap: 8 }}>
-                            {activeTab === 'GLB' && <button className="kidsStep__actionBtn" onClick={downloadGlb}>{t.kids.steps.downloadGlb}</button>}
-                            {activeTab === 'LDR' && <button className="kidsStep__actionBtn" onClick={downloadLdr}>{t.kids.steps.downloadLdr}</button>}
-                            <button className="kidsStep__actionBtn kidsStep__actionBtn--gallery" onClick={() => setIsGalleryModalOpen(true)}>{t.kids.steps.registerGallery}</button>
+                        <div style={{ display: "flex", gap: 12, position: "relative" }}>
+                            <button
+                                className={`kidsStep__actionBtn kidsStep__actionBtn--color`}
+                                onClick={() => setIsColorModalOpen(true)}
+                            >
+                                🎨 {t.kids.steps.changeColor || "색상 변경"}
+                            </button>
+
+                            <div style={{ position: "relative" }}>
+                                <button
+                                    className="kidsStep__actionBtn"
+                                    onClick={() => setIsDownloadOpen(!isDownloadOpen)}
+                                >
+                                    📥 Download {isDownloadOpen ? "▲" : "▼"}
+                                </button>
+                                {isDownloadOpen && (
+                                    <div className="kidsStep__downloadMenu">
+                                        <button className="kidsStep__downloadItem" onClick={() => { downloadLdr(); setIsDownloadOpen(false); }}>LDR File</button>
+                                        <button className="kidsStep__downloadItem" onClick={() => { downloadGlb(); setIsDownloadOpen(false); }}>GLB File</button>
+                                        {colorChangedLdrBase64 && (
+                                            <button className="kidsStep__downloadItem" onClick={() => { downloadColorChangedLdr(); setIsDownloadOpen(false); }}>
+                                                Changed LDR
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            <button
+                                className="kidsStep__actionBtn kidsStep__actionBtn--gallery"
+                                onClick={() => setIsGalleryModalOpen(true)}
+                            >
+                                ✨ {t.kids.steps.registerGallery}
+                            </button>
                         </div>
                     )}
                 </div>
@@ -508,6 +603,52 @@ function KidsStepPageContent() {
                         <div className="galleryModal__actions">
                             <button className="galleryModal__btn galleryModal__btn--cancel" onClick={() => setIsGalleryModalOpen(false)}>{t.kids.steps.galleryModal.cancel}</button>
                             <button className="galleryModal__btn galleryModal__btn--confirm" onClick={handleRegisterGallery} disabled={isSubmitting}>{isSubmitting ? "..." : t.kids.steps.galleryModal.confirm}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 색상 변경 모달 */}
+            {isColorModalOpen && (
+                <div className="galleryModalOverlay" onClick={() => setIsColorModalOpen(false)}>
+                    <div className="galleryModal colorModal" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="galleryModal__title">
+                            🎨 {t.kids.steps.colorThemeTitle || "색상 테마 선택"}
+                        </h3>
+
+                        <div className="colorModal__themes">
+                            {colorThemes.length === 0 ? (
+                                <div style={{ padding: "20px", textAlign: "center", color: "#888" }}>
+                                    테마 로딩 중...
+                                </div>
+                            ) : (
+                                colorThemes.map((theme: ThemeInfo) => (
+                                    <button
+                                        key={theme.name}
+                                        className={`colorModal__themeBtn ${selectedTheme === theme.name ? "colorModal__themeBtn--selected" : ""}`}
+                                        onClick={() => setSelectedTheme(theme.name)}
+                                    >
+                                        <span className="colorModal__themeName">{theme.name}</span>
+                                        <span className="colorModal__themeDesc">{theme.description}</span>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+
+                        <div className="galleryModal__actions">
+                            <button
+                                className="galleryModal__btn galleryModal__btn--cancel"
+                                onClick={() => setIsColorModalOpen(false)}
+                            >
+                                {t.kids.steps.galleryModal.cancel}
+                            </button>
+                            <button
+                                className="galleryModal__btn galleryModal__btn--confirm"
+                                onClick={handleApplyColor}
+                                disabled={!selectedTheme || isApplyingColor}
+                            >
+                                {isApplyingColor ? "..." : (t.kids.steps.apply || "적용하기")}
+                            </button>
                         </div>
                     </div>
                 </div>
