@@ -10,6 +10,7 @@ import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { registerToGallery } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
 import './KidsStepPage.css';
@@ -178,6 +179,7 @@ function KidsStepPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { t } = useLanguage();
+    const { authFetch } = useAuth();
 
     const jobId = searchParams.get("jobId") || "";
     const urlParam = searchParams.get("url") || "";
@@ -226,7 +228,7 @@ function KidsStepPageContent() {
 
         setIsApplyingColor(true);
         try {
-            const result = await applyColorVariant(ldrUrl, selectedTheme);
+            const result = await applyColorVariant(ldrUrl, selectedTheme, authFetch);
 
             if (result.ok && result.ldrData) {
                 // 새 blob URL 생성 및 저장
