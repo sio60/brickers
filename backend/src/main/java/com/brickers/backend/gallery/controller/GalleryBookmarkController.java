@@ -27,8 +27,8 @@ public class GalleryBookmarkController {
     /** 내 북마크 목록 */
     @GetMapping("/bookmarks/my")
     public Page<MyBookmarkItemResponse> myBookmarks(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "12") int size,
             Authentication auth) {
         return bookmarkService.listMyBookmarks(auth, page, size);
     }
