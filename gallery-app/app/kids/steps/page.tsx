@@ -441,7 +441,7 @@ function KidsStepPageContent() {
                             transition: "all 0.2s"
                         }}
                     >
-                        🧱 {t.kids.steps.tabBrick}
+                        {t.kids.steps.tabBrick}
                     </button>
                     <button
                         onClick={() => setActiveTab('GLB')}
@@ -457,14 +457,14 @@ function KidsStepPageContent() {
                             transition: "all 0.2s"
                         }}
                     >
-                        🧊 {t.kids.steps.tabModeling}
+                        {t.kids.steps.tabModeling}
                     </button>
                 </div>
 
                 {/* Registration Section */}
                 <div style={{ marginTop: 'auto', paddingTop: 24, borderTop: '1px solid #333' }}>
                     <div style={{ marginBottom: 16, paddingLeft: 4, fontSize: "0.85rem", color: "#888", fontWeight: 700 }}>
-                        ✨ {t.kids.steps.registerGallery}
+                        {t.kids.steps.registerGallery}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                         <input
@@ -510,7 +510,7 @@ function KidsStepPageContent() {
                                 className={`kidsStep__actionBtn kidsStep__actionBtn--color`}
                                 onClick={() => setIsColorModalOpen(true)}
                             >
-                                🎨 {t.kids.steps.changeColor || "색상 변경"}
+                                {t.kids.steps.changeColor || "색상 변경"}
                             </button>
 
                             <div style={{ position: "relative" }}>
@@ -518,7 +518,7 @@ function KidsStepPageContent() {
                                     className="kidsStep__actionBtn"
                                     onClick={() => setIsDownloadOpen(!isDownloadOpen)}
                                 >
-                                    📥 Download {isDownloadOpen ? "▲" : "▼"}
+                                    Download {isDownloadOpen ? "▲" : "▼"}
                                 </button>
                                 {isDownloadOpen && (
                                     <div className="kidsStep__downloadMenu">
@@ -537,90 +537,82 @@ function KidsStepPageContent() {
                 </div>
 
                 {/* Canvas Container */}
-                <div style={{ flex: 1, position: "relative", background: "#f0f0f0" }}>
-                    {loading && (
-                        <div style={{
-                            position: "absolute", inset: 0, zIndex: 10,
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            background: "rgba(255,255,255,0.75)", fontWeight: 900
-                        }}>
-                            {t.kids.steps.loading}
-                        </div>
-                    )}
+                <div style={{ flex: 1, position: "relative", background: "#f0f0f0", display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
+                    <div className="kidsStep__card">
+                        {loading && (
+                            <div style={{
+                                position: "absolute", inset: 0, zIndex: 10,
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                background: "rgba(255,255,255,0.75)", fontWeight: 900,
+                                borderRadius: '20px'
+                            }}>
+                                {t.kids.steps.loading}
+                            </div>
+                        )}
 
-                    {activeTab === 'LDR' ? (
-                        <>
+                        {activeTab === 'LDR' ? (
+                            <>
+                                <div style={{ position: "absolute", inset: 0 }}>
+                                    <Canvas camera={{ position: [200, -200, 200], fov: 45 }} dpr={[1, 2]}>
+                                        <ambientLight intensity={0.9} />
+                                        <directionalLight position={[3, 5, 2]} intensity={1} />
+                                        <LdrModel
+                                            url={ldrUrl}
+                                            overrideMainLdrUrl={modelUrlToUse}
+                                            onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }}
+                                            onError={() => setLoading(false)}
+                                        />
+                                        <OrbitControls makeDefault enablePan={false} enableZoom />
+                                    </Canvas>
+                                </div>
+
+                                {/* LDR Overlays (Start Button or Step Nav) */}
+                                {isPreviewMode ? (
+                                    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 40, pointerEvents: "none" }}>
+                                        <button
+                                            onClick={() => { setIsPreviewMode(false); setStepIdx(0); }}
+                                            className="kidsStep__startNavBtn"
+                                        >
+                                            {t.kids.steps.startAssembly}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div style={{ position: "absolute", bottom: 24, right: 32, display: "flex", gap: 16 }}>
+                                        <button
+                                            className="kidsStep__navBtn"
+                                            disabled={!canPrev}
+                                            onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}
+                                        >
+                                            ← {t.kids.steps.prev}
+                                        </button>
+                                        <button
+                                            className="kidsStep__navBtn kidsStep__navBtn--next"
+                                            disabled={!canNext}
+                                            onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}
+                                        >
+                                            {t.kids.steps.next} →
+                                        </button>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            // GLB Viewer
                             <div style={{ position: "absolute", inset: 0 }}>
-                                <Canvas camera={{ position: [200, -200, 200], fov: 45 }} dpr={[1, 2]}>
-                                    <ambientLight intensity={0.9} />
-                                    <directionalLight position={[3, 5, 2]} intensity={1} />
-                                    <LdrModel
-                                        url={ldrUrl}
-                                        overrideMainLdrUrl={modelUrlToUse}
-                                        onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }}
-                                        onError={() => setLoading(false)}
-                                    />
+                                <Canvas camera={{ position: [5, 5, 5], fov: 50 }} dpr={[1, 2]}>
+                                    <ambientLight intensity={0.8} />
+                                    <directionalLight position={[5, 10, 5]} intensity={1.5} />
+                                    <Environment preset="city" />
+                                    <Bounds fit clip observe margin={1.2}>
+                                        <Center>
+                                            {glbUrl && <Gltf src={glbUrl} />}
+                                        </Center>
+                                    </Bounds>
                                     <OrbitControls makeDefault enablePan={false} enableZoom />
                                 </Canvas>
+                                {!glbUrl && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#888" }}>3D Model not available</div>}
                             </div>
-
-                            {/* LDR Overlays (Start Button or Step Nav) */}
-                            {isPreviewMode ? (
-                                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 40, pointerEvents: "none" }}>
-                                    <button
-                                        onClick={() => { setIsPreviewMode(false); setStepIdx(0); }}
-                                        style={{
-                                            pointerEvents: "auto",
-                                            padding: "14px 28px",
-                                            fontSize: "1.1rem",
-                                            borderRadius: 999,
-                                            background: "#000",
-                                            color: "#fff",
-                                            fontWeight: 700,
-                                            border: "none",
-                                            cursor: "pointer",
-                                            boxShadow: "0 4px 12px rgba(0,0,0,0.2)"
-                                        }}
-                                    >
-                                        {t.kids.steps.startAssembly}
-                                    </button>
-                                </div>
-                            ) : (
-                                <div style={{ position: "absolute", bottom: 24, right: 32, display: "flex", gap: 16 }}>
-                                    <button
-                                        className="kidsStep__navBtn"
-                                        disabled={!canPrev}
-                                        onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}
-                                    >
-                                        ← {t.kids.steps.prev}
-                                    </button>
-                                    <button
-                                        className="kidsStep__navBtn kidsStep__navBtn--next"
-                                        disabled={!canNext}
-                                        onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}
-                                    >
-                                        {t.kids.steps.next} →
-                                    </button>
-                                </div>
-                            )}
-                        </>
-                    ) : (
-                        // GLB Viewer
-                        <div style={{ position: "absolute", inset: 0 }}>
-                            <Canvas camera={{ position: [5, 5, 5], fov: 50 }} dpr={[1, 2]}>
-                                <ambientLight intensity={0.8} />
-                                <directionalLight position={[5, 10, 5]} intensity={1.5} />
-                                <Environment preset="city" />
-                                <Bounds fit clip observe margin={1.2}>
-                                    <Center>
-                                        {glbUrl && <Gltf src={glbUrl} />}
-                                    </Center>
-                                </Bounds>
-                                <OrbitControls makeDefault enablePan={false} enableZoom />
-                            </Canvas>
-                            {!glbUrl && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#888" }}>3D Model not available</div>}
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
 

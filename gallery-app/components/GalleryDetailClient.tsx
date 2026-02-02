@@ -265,13 +265,19 @@ export default function GalleryDetailClient({ item }: Props) {
                                     className="flex flex-col items-center gap-1 group transition-all"
                                 >
                                     <div className="flex items-center justify-center transition-all">
-                                        <Image
-                                            src={isLiked ? "/icons/likefull.png" : "/icons/like.png"}
-                                            alt="Like"
-                                            width={isLiked ? 20 : 24}
-                                            height={isLiked ? 20 : 24}
-                                            style={isLiked ? {} : { opacity: 0.6 }}
-                                        />
+                                        <svg
+                                            className={`w-6 h-6 transition-all duration-300 ${isLiked ? 'fill-red-500 text-red-500' : 'fill-none text-gray-400 group-hover:text-red-400'}`}
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            viewBox="0 0 24 24"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="M14 9l-1.154-4.832A2.212 2.212 0 0010.697 2.5a2.212 2.212 0 00-2.149 2.149v4.351H5.432a2.33 2.33 0 00-2.332 2.332c0 .942.553 1.758 1.354 2.138-.113.385-.175.792-.175 1.213 0 .762.2 1.478.553 2.1-.2.433-.314.914-.314 1.424 0 .866.326 1.656.862 2.253.536.597 1.272.96 2.088.96h7.5c2.209 0 4-1.791 4-4v-5c0-1.105-.895-2-2-2h-3z"
+                                            />
+                                        </svg>
                                     </div>
                                     <span className={`text-xs font-bold ${isLiked ? 'text-gray-900' : 'text-gray-400'}`}>{likeCount}</span>
                                 </button>
@@ -281,13 +287,19 @@ export default function GalleryDetailClient({ item }: Props) {
                                     className="flex flex-col items-center gap-1 group transition-all"
                                 >
                                     <div className="flex items-center justify-center transition-all">
-                                        <Image
-                                            src={isBookmarked ? "/icons/bookmarkfull.png" : "/icons/bookmark.png"}
-                                            alt="Bookmark"
-                                            width={isBookmarked ? 20 : 24}
-                                            height={isBookmarked ? 20 : 24}
-                                            style={isBookmarked ? {} : { opacity: 0.6 }}
-                                        />
+                                        <svg
+                                            className={`w-6 h-6 transition-all duration-300 ${isBookmarked ? 'fill-yellow-400 text-yellow-400' : 'fill-none text-gray-400 group-hover:text-yellow-400'}`}
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            viewBox="0 0 24 24"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                                            />
+                                        </svg>
                                     </div>
                                     <span className={`text-xs font-bold ${isBookmarked ? 'text-gray-900' : 'text-gray-400'}`}>{t.detail.save}</span>
                                 </button>
