@@ -5,8 +5,11 @@ import com.brickers.backend.audit.entity.AuditLog;
 import com.brickers.backend.audit.repository.AuditLogRepository;
 import com.brickers.backend.audit.service.AuditLogService;
 import com.brickers.backend.auth.dto.LoginHistoryResponse;
+import com.brickers.backend.auth.dto.MobileKakaoLoginRequest;
+import com.brickers.backend.auth.dto.MobileLoginResponse;
 import com.brickers.backend.auth.dto.TokenStatusResponse;
 import com.brickers.backend.auth.dto.UserMeResponse;
+import com.brickers.backend.auth.service.MobileAuthService;
 import com.brickers.backend.auth.jwt.JwtProvider;
 import com.brickers.backend.auth.refresh.RefreshToken;
 import com.brickers.backend.auth.refresh.RefreshTokenRepository;
@@ -42,6 +45,7 @@ public class AuthController {
     private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
     private final AuditLogRepository auditLogRepository;
+    private final MobileAuthService mobileAuthService;
 
     /** ✅ refresh-cookie로 access 재발급 + refresh rotation */
     @PostMapping("/refresh")
@@ -290,5 +294,44 @@ public class AuthController {
         log.warn("[Suspicious Login Alert] userId={}, reason={}", userId, reason);
 
         return ResponseEntity.ok(Map.of("ok", true, "recorded", true));
+    }
+
+    /**
+     * 모바일 카카오 로그인
+     * POST /api/auth/mobile/kakao
+     *
+     * 앱에서 카카오 SDK로 로그인 후 받은 access token을 전송하면
+     * 백엔드에서 카카오 API로 사용자 정보 조회 후 JWT 발급
+     */
+    @PostMapping("/mobile/kakao")
+    public ResponseEntity<MobileLoginResponse> mobileKakaoLogin(
+            @RequestBody MobileKakaoLoginRequest request,
+            HttpServletRequest httpRequest) {
+
+        log.info("[MobileAuth] Kakao login request received");
+
+        if (request.getKakaoAccessToken() == null || request.getKakaoAccessToken().isBlank()) {
+            log.warn("[MobileAuth] Missing kakaoAccessToken");
+            return ResponseEntity.badRequest().build();
+        }
+
+        try {
+            MobileLoginResponse response = mobileAuthService.loginWithKakaoToken(request.getKakaoAccessToken());
+
+            // 감사 로그
+            auditLogService.log(
+                    AuditEventType.LOGIN,
+                    response.getUser().getId(),
+                    response.getUser().getId(),
+                    httpRequest,
+                    Map.of("provider", "kakao", "platform", "mobile"));
+
+            log.info("[MobileAuth] Login success for user: {}", response.getUser().getId());
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("[MobileAuth] Login failed: {}", e.getMessage(), e);
+            return ResponseEntity.status(401).build();
+        }
     }
 }
