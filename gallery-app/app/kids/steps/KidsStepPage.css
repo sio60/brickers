@@ -102,3 +102,154 @@
 .galleryModal__btn:hover {
     transform: translateY(-2px);
 }
+
+/* 색상 변경 버튼 애니메이션 */
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.kidsStep__colorBtn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 색상 모달 */
+.colorModalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.colorModal {
+    background: #fff;
+    width: min(420px, 90vw);
+    max-height: 80vh;
+    border-radius: 24px;
+    padding: 32px;
+    border: 3px solid #000;
+    box-shadow: 0 12px 0 rgba(0, 0, 0, 0.15);
+    animation: modalAppear 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow-y: auto;
+}
+
+@keyframes modalAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.colorModal__title {
+    margin: 0 0 24px;
+    font-size: 22px;
+    font-weight: 900;
+    color: #000;
+    text-align: center;
+}
+
+.colorModal__themes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.colorModal__loading {
+    padding: 20px;
+    text-align: center;
+    color: #888;
+}
+
+.colorModal__themeBtn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 2px solid #e0e0e0;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.colorModal__themeBtn:hover {
+    border-color: #000;
+    background: #f9f9f9;
+}
+
+.colorModal__themeBtn--selected {
+    border-color: #000;
+    background: #000;
+    color: #fff;
+}
+
+.colorModal__themeName {
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 4px;
+    text-transform: capitalize;
+}
+
+.colorModal__themeDesc {
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0.7;
+}
+
+.colorModal__themeBtn--selected .colorModal__themeDesc {
+    opacity: 0.85;
+}
+
+.colorModal__actions {
+    display: flex;
+    gap: 12px;
+}
+
+.colorModal__btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 800;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.colorModal__btn--cancel {
+    background: #f0f0f0;
+    color: #555;
+}
+
+.colorModal__btn--cancel:hover {
+    background: #e5e5e5;
+}
+
+.colorModal__btn--confirm {
+    background: #000;
+    color: #fff;
+    flex: 1.5;
+}
+
+.colorModal__btn--confirm:hover {
+    background: #333;
+}
+
+.colorModal__btn--confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

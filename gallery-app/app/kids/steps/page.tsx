@@ -10,7 +10,9 @@ import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { registerToGallery } from "@/lib/api/myApi";
+import { getColorThemes, applyColorVariant, base64ToBlobUrl, ThemeInfo } from "@/lib/api/colorVariantApi";
 import './KidsStepPage.css';
 
 // SSR 제외
@@ -177,6 +179,7 @@ function KidsStepPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { t } = useLanguage();
+    const { authFetch } = useAuth();
 
     const jobId = searchParams.get("jobId") || "";
     const urlParam = searchParams.get("url") || "";
@@ -194,6 +197,12 @@ function KidsStepPageContent() {
     const [jobThumbnailUrl, setJobThumbnailUrl] = useState<string | null>(null);
 
     const [isPreviewMode, setIsPreviewMode] = useState(true);
+
+    // 색상 변경 관련
+    const [isColorModalOpen, setIsColorModalOpen] = useState(false);
+    const [colorThemes, setColorThemes] = useState<ThemeInfo[]>([]);
+    const [selectedTheme, setSelectedTheme] = useState<string>("");
+    const [isApplyingColor, setIsApplyingColor] = useState(false);
 
     const revokeAll = (arr: string[]) => {
         arr.forEach((u) => { try { URL.revokeObjectURL(u); } catch { } });
@@ -313,6 +322,46 @@ function KidsStepPageContent() {
         finally { setIsSubmitting(false); }
     };
 
+    // 색상 모달 열 때 테마 로드
+    const openColorModal = async () => {
+        setIsColorModalOpen(true);
+        if (colorThemes.length === 0) {
+            try {
+                const themes = await getColorThemes();
+                setColorThemes(themes);
+            } catch (e) {
+                console.error("테마 로드 실패:", e);
+            }
+        }
+    };
+
+    // 색상 변경 적용
+    const handleApplyColor = async () => {
+        if (!selectedTheme || !ldrUrl) return;
+
+        setIsApplyingColor(true);
+        try {
+            const result = await applyColorVariant(ldrUrl, selectedTheme, authFetch);
+
+            if (result.ok && result.ldrData) {
+                const newBlobUrl = base64ToBlobUrl(result.ldrData);
+                setLdrUrl(newBlobUrl);
+                // 스텝 데이터도 다시 로드 필요
+                setStepBlobUrls([]);
+                setStepIdx(0);
+                setIsColorModalOpen(false);
+                alert(`${result.themeApplied} 테마 적용 완료! (${result.changedBricks}개 브릭 변경)`);
+            } else {
+                alert(result.message || "색상 변경 실패");
+            }
+        } catch (e: any) {
+            console.error("색상 변경 실패:", e);
+            alert(e.message || "색상 변경 중 오류가 발생했습니다.");
+        } finally {
+            setIsApplyingColor(false);
+        }
+    };
+
     const total = stepBlobUrls.length || 1;
     const currentOverride = stepBlobUrls[Math.min(stepIdx, stepBlobUrls.length - 1)];
     const canPrev = stepIdx > 0;
@@ -393,6 +442,32 @@ function KidsStepPageContent() {
                         🧊 {t.kids.steps.tabModeling}
                     </button>
                 </div>
+
+                {/* 색상 변경 버튼 */}
+                {searchParams.get("isPreset") !== "true" && (
+                    <>
+                        <div style={{ marginTop: 24, marginBottom: 12, paddingLeft: 8, fontSize: "0.85rem", color: "#888", fontWeight: 600 }}>
+                            색상 변경
+                        </div>
+                        <button
+                            onClick={openColorModal}
+                            className="kidsStep__colorBtn"
+                            style={{
+                                textAlign: "left",
+                                padding: "12px 16px",
+                                borderRadius: 12,
+                                background: "#3b82f6",
+                                color: "#fff",
+                                fontWeight: 700,
+                                border: "none",
+                                cursor: "pointer",
+                                transition: "all 0.2s"
+                            }}
+                        >
+                            색상 변경
+                        </button>
+                    </>
+                )}
             </div>
 
             {/* Main Content Area */}
@@ -508,6 +583,48 @@ function KidsStepPageContent() {
                         <div className="galleryModal__actions">
                             <button className="galleryModal__btn galleryModal__btn--cancel" onClick={() => setIsGalleryModalOpen(false)}>{t.kids.steps.galleryModal.cancel}</button>
                             <button className="galleryModal__btn galleryModal__btn--confirm" onClick={handleRegisterGallery} disabled={isSubmitting}>{isSubmitting ? "..." : t.kids.steps.galleryModal.confirm}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 색상 변경 모달 */}
+            {isColorModalOpen && (
+                <div className="colorModalOverlay" onClick={() => setIsColorModalOpen(false)}>
+                    <div className="colorModal" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="colorModal__title">🎨 색상 테마 선택</h3>
+
+                        <div className="colorModal__themes">
+                            {colorThemes.length === 0 ? (
+                                <div className="colorModal__loading">테마 로딩 중...</div>
+                            ) : (
+                                colorThemes.map((theme) => (
+                                    <button
+                                        key={theme.name}
+                                        className={`colorModal__themeBtn ${selectedTheme === theme.name ? "colorModal__themeBtn--selected" : ""}`}
+                                        onClick={() => setSelectedTheme(theme.name)}
+                                    >
+                                        <span className="colorModal__themeName">{theme.name}</span>
+                                        <span className="colorModal__themeDesc">{theme.description}</span>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+
+                        <div className="colorModal__actions">
+                            <button
+                                className="colorModal__btn colorModal__btn--cancel"
+                                onClick={() => setIsColorModalOpen(false)}
+                            >
+                                취소
+                            </button>
+                            <button
+                                className="colorModal__btn colorModal__btn--confirm"
+                                onClick={handleApplyColor}
+                                disabled={!selectedTheme || isApplyingColor}
+                            >
+                                {isApplyingColor ? "적용 중..." : "적용하기"}
+                            </button>
                         </div>
                     </div>
                 </div>
