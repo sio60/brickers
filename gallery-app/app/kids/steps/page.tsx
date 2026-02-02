@@ -85,6 +85,10 @@ function LdrModel({
 
         manager.setURLModifier((u) => {
             let fixed = u.replace(/\\/g, "/");
+
+            // Normalize accidental double segments
+            fixed = fixed.replace("/ldraw/p/p/", "/ldraw/p/");
+            fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
             if (overrideMainLdrUrl) {
                 try {
                     const abs = new URL(fixed, window.location.href).href;

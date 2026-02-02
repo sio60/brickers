@@ -38,6 +38,9 @@ function LdrModel({
         // URL Modifier logic from original viewer
         manager.setURLModifier((u) => {
             let fixed = u.replace(/\\/g, "/");
+            // Normalize accidental double segments
+            fixed = fixed.replace("/ldraw/p/p/", "/ldraw/p/");
+            fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
             if (fixed.includes("ldraw-parts-library") && fixed.endsWith(".dat") && !fixed.includes("LDConfig.ldr")) {
                 const filename = fixed.split("/").pop() || "";
                 const isPrimitive = /^\d+-\d+/.test(filename) ||
