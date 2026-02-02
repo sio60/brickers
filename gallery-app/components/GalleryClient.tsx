@@ -142,7 +142,6 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
 
             if (res.ok) {
                 const data = await res.json();
-                // data typically contains the new state or the updated reaction count
                 setItems(prev =>
                     prev.map(item =>
                         item.id === id
@@ -157,6 +156,32 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
             }
         } catch (error) {
             console.error('Like toggle failed:', error);
+        }
+    };
+
+    const handleBookmarkToggle = async (id: string, currentState: boolean) => {
+        if (!isAuthenticated) {
+            router.push('?login=true');
+            return;
+        }
+
+        try {
+            const res = await authFetch(`/api/gallery/${id}/bookmark`, {
+                method: 'POST',
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setItems(prev =>
+                    prev.map(item =>
+                        item.id === id
+                            ? { ...item, isBookmarked: data.bookmarked }
+                            : item
+                    )
+                );
+            }
+        } catch (error) {
+            console.error('Bookmark toggle failed:', error);
         }
     };
 
@@ -213,6 +238,7 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
                     items={items}
                     isLoggedIn={isAuthenticated}
                     onLikeToggle={handleLikeToggle}
+                    onBookmarkToggle={handleBookmarkToggle}
                     onLoginRequired={handleLoginRequired}
                 />
             )}
