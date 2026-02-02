@@ -43,6 +43,16 @@ function LdrModel({
             fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
             if (fixed.includes("ldraw-parts-library") && fixed.endsWith(".dat") && !fixed.includes("LDConfig.ldr")) {
                 const filename = fixed.split("/").pop() || "";
+                const lowerName = filename.toLowerCase();
+                if (filename && lowerName !== filename) {
+                    fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
+                }
+
+                const lowerName = filename.toLowerCase();
+                if (filename && lowerName !== filename) {
+                    fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
+                }
+                
                 const isPrimitive = /^\d+-\d+/.test(filename) ||
                     /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud|empty)/.test(filename);
                 const isSubpart = /^\d+s\d+\.dat$/i.test(filename);
@@ -65,6 +75,9 @@ function LdrModel({
                     else if (isPrimitive) fixed = fixed.replace("/ldraw/", "/ldraw/p/");
                     else fixed = fixed.replace("/ldraw/", "/ldraw/parts/");
                 }
+            }
+            if (fixed.startsWith(CDN_BASE)) {
+                return `/api/proxy/ldr?url=${encodeURIComponent(fixed)}`;
             }
             return fixed;
         });
