@@ -10,6 +10,7 @@ import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { registerToGallery } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
 import './KidsStepPage.css';
@@ -178,6 +179,7 @@ function KidsStepPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { t } = useLanguage();
+    const { authFetch } = useAuth();
 
     const jobId = searchParams.get("jobId") || "";
     const urlParam = searchParams.get("url") || "";
@@ -226,7 +228,7 @@ function KidsStepPageContent() {
 
         setIsApplyingColor(true);
         try {
-            const result = await applyColorVariant(ldrUrl, selectedTheme);
+            const result = await applyColorVariant(ldrUrl, selectedTheme, authFetch);
 
             if (result.ok && result.ldrData) {
                 // 새 blob URL 생성 및 저장
@@ -458,6 +460,29 @@ function KidsStepPageContent() {
                         🧊 {t.kids.steps.tabModeling}
                     </button>
                 </div>
+
+                {/* Registration Section */}
+                <div style={{ marginTop: 'auto', paddingTop: 24, borderTop: '1px solid #333' }}>
+                    <div style={{ marginBottom: 16, paddingLeft: 4, fontSize: "0.85rem", color: "#888", fontWeight: 700 }}>
+                        ✨ {t.kids.steps.registerGallery}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <input
+                            type="text"
+                            className="kidsStep__sidebarInput"
+                            placeholder={t.kids.steps.galleryModal.placeholder}
+                            value={galleryTitle}
+                            onChange={(e) => setGalleryTitle(e.target.value)}
+                        />
+                        <button
+                            className="kidsStep__sidebarBtn"
+                            onClick={handleRegisterGallery}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? "..." : t.kids.steps.registerGallery}
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {/* Main Content Area */}
@@ -472,7 +497,7 @@ function KidsStepPageContent() {
                     background: "#fff",
                     borderBottom: "1px solid #e5e5e5"
                 }}>
-                    <div style={{ fontSize: "1.1rem", fontWeight: 800 }}>
+                    <div style={{ fontSize: "0.9rem", fontWeight: 800, color: "#444" }}>
                         {activeTab === 'LDR'
                             ? (isPreviewMode ? t.kids.steps.previewTitle : t.kids.steps.title.replace("{cur}", String(stepIdx + 1)).replace("{total}", String(total)))
                             : t.kids.steps.originalModel
@@ -507,13 +532,6 @@ function KidsStepPageContent() {
                                     </div>
                                 )}
                             </div>
-
-                            <button
-                                className="kidsStep__actionBtn kidsStep__actionBtn--gallery"
-                                onClick={() => setIsGalleryModalOpen(true)}
-                            >
-                                ✨ {t.kids.steps.registerGallery}
-                            </button>
                         </div>
                     )}
                 </div>
@@ -568,9 +586,21 @@ function KidsStepPageContent() {
                                     </button>
                                 </div>
                             ) : (
-                                <div style={{ position: "absolute", bottom: 24, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 16 }}>
-                                    <button disabled={!canPrev} onClick={() => { setLoading(true); setStepIdx(v => v - 1); }} style={{ padding: "10px 20px", borderRadius: 12, border: "1px solid #ddd", background: "#fff", cursor: canPrev ? "pointer" : "not-allowed", opacity: canPrev ? 1 : 0.5, fontWeight: 700, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>← {t.kids.steps.prev}</button>
-                                    <button disabled={!canNext} onClick={() => { setLoading(true); setStepIdx(v => v + 1); }} style={{ padding: "10px 20px", borderRadius: 12, border: "none", background: "#000", color: "#fff", cursor: canNext ? "pointer" : "not-allowed", opacity: canNext ? 1 : 0.5, fontWeight: 700, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>{t.kids.steps.next} →</button>
+                                <div style={{ position: "absolute", bottom: 24, right: 32, display: "flex", gap: 16 }}>
+                                    <button
+                                        className="kidsStep__navBtn"
+                                        disabled={!canPrev}
+                                        onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}
+                                    >
+                                        ← {t.kids.steps.prev}
+                                    </button>
+                                    <button
+                                        className="kidsStep__navBtn kidsStep__navBtn--next"
+                                        disabled={!canNext}
+                                        onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}
+                                    >
+                                        {t.kids.steps.next} →
+                                    </button>
                                 </div>
                             )}
                         </>

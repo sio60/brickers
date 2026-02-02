@@ -169,3 +169,99 @@
 .galleryModal__btn:hover {
     transform: translateY(-2px);
 }
+
+/* Navigation Buttons */
+.kidsStep__navBtn {
+    padding: 16px 24px;
+    border-radius: 16px;
+    border: 2px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 1.05rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.kidsStep__navBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    background: #f8f8f8;
+}
+
+.kidsStep__navBtn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.kidsStep__navBtn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    background: #f0f0f0;
+    border-color: #ddd;
+}
+
+.kidsStep__navBtn--next {
+    padding: 16px 40px;
+    border: none;
+    background: #000;
+    color: #fff;
+    font-size: 1.15rem;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.kidsStep__navBtn--next:hover:not(:disabled) {
+    background: #222;
+    transform: scale(1.03) translateY(-2px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* Sidebar Registration Input */
+.kidsStep__sidebarInput {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 14px;
+    color: #fff;
+    font-size: 0.95rem;
+    outline: none;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.kidsStep__sidebarInput:focus {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.kidsStep__sidebarInput::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.kidsStep__sidebarBtn {
+    width: 100%;
+    background: #ffe135;
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.kidsStep__sidebarBtn:hover:not(:disabled) {
+    background: #ffd700;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 225, 53, 0.3);
+}
+
+.kidsStep__sidebarBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
