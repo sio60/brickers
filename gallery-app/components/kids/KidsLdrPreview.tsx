@@ -49,6 +49,10 @@ function LdrModel({
         manager.setURLModifier((u) => {
             let fixed = u.replace(/\\/g, "/");
 
+            // Normalize accidental double segments
+            fixed = fixed.replace("/ldraw/p/p/", "/ldraw/p/");
+            fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
+
             // LDraw 라이브러리 URL인 경우 경로 수정
             if (fixed.includes("ldraw-parts-library") && fixed.endsWith(".dat") && !fixed.includes("LDConfig.ldr")) {
                 const filename = fixed.split("/").pop() || "";
