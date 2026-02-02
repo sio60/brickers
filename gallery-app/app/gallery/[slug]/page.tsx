@@ -23,6 +23,8 @@ type GalleryDetail = {
     tags: string[];
     ldrUrl?: string;
     glbUrl?: string; // Original GLB model URL
+    bookmarked?: boolean;
+    myReaction?: 'LIKE' | 'DISLIKE' | null;
 }
 
 // Helpers
