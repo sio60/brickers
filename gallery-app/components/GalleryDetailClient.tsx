@@ -395,7 +395,7 @@ export default function GalleryDetailClient({ item }: Props) {
                                     <button
                                         key={rec.id}
                                         onClick={() => router.push(`/gallery/${recSlug}`)}
-                                        className="group text-left flex flex-col gap-2 p-2 rounded-2xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-100"
+                                        className="group text-left flex flex-col gap-2 p-2 rounded-2xl bg-white transition-all border-2 border-black hover:shadow-[4px_4px_0px_rgba(0,0,0,0.05)] hover:-translate-y-0.5"
                                     >
                                         <div className="relative aspect-square w-full bg-[#f9f9f9] rounded-xl overflow-hidden border border-gray-100">
                                             {(rec.sourceImageUrl || rec.thumbnailUrl) ? (

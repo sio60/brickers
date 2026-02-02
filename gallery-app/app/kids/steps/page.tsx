@@ -506,26 +506,6 @@ function KidsStepPageContent() {
                     </div>
                 </div>
 
-                {/* Top Center Title (Minimal) */}
-                <div style={{
-                    position: "absolute",
-                    top: 32,
-                    zIndex: 20,
-                    background: "rgba(255, 255, 255, 0.9)",
-                    backdropFilter: "blur(8px)",
-                    borderRadius: 999,
-                    padding: "8px 24px",
-                    border: "2px solid #000",
-                    fontSize: "0.9rem",
-                    fontWeight: 900,
-                    color: "#000",
-                    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)"
-                }}>
-                    {activeTab === 'LDR'
-                        ? (isPreviewMode ? t.kids.steps.previewTitle : t.kids.steps.title.replace("{cur}", String(stepIdx + 1)).replace("{total}", String(total)))
-                        : t.kids.steps.originalModel
-                    }
-                </div>
 
 
                 {/* Main 3D Card Area */}
@@ -549,12 +529,14 @@ function KidsStepPageContent() {
                                 <Canvas camera={{ position: [200, -200, 200], fov: 45 }} dpr={[1, 2]}>
                                     <ambientLight intensity={0.9} />
                                     <directionalLight position={[3, 5, 2]} intensity={1} />
-                                    <LdrModel
-                                        url={ldrUrl}
-                                        overrideMainLdrUrl={modelUrlToUse}
-                                        onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }}
-                                        onError={() => setLoading(false)}
-                                    />
+                                    <Center>
+                                        <LdrModel
+                                            url={ldrUrl}
+                                            overrideMainLdrUrl={modelUrlToUse}
+                                            onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }}
+                                            onError={() => setLoading(false)}
+                                        />
+                                    </Center>
                                     <OrbitControls makeDefault enablePan={false} enableZoom />
                                 </Canvas>
                             </div>
