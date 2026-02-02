@@ -27,25 +27,24 @@
 
 .closeBtn {
     position: absolute;
-    top: 20px;
-    right: 20px;
-    background: #f0f0f0;
-    border: 2px solid #000;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    top: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
     cursor: pointer;
-    font-size: 20px;
+    font-size: 24px;
     font-weight: bold;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #000;
 }
 
 .closeBtn:hover {
-    background: #e0e0e0;
-    transform: scale(1.1);
+    transform: rotate(90deg) scale(1.1);
 }
 
 .title {

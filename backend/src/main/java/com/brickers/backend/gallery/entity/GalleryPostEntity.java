@@ -34,6 +34,12 @@ public class GalleryPostEntity {
     // LDR 파일 URL (3D 뷰어용)
     private String ldrUrl;
 
+    // 원본 이미지 URL (이미지 탭용)
+    private String sourceImageUrl;
+
+    // GLB 파일 URL (3D 모델링 탭용)
+    private String glbUrl;
+
     @Builder.Default
     private Visibility visibility = Visibility.PUBLIC;
 

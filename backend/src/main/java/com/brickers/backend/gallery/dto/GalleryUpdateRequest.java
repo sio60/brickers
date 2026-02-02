@@ -12,5 +12,8 @@ public class GalleryUpdateRequest {
     private String content;
     private List<String> tags;
     private String thumbnailUrl;
+    private String ldrUrl;
+    private String sourceImageUrl;
+    private String glbUrl;
     private Visibility visibility;
 }

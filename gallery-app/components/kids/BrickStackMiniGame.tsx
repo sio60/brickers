@@ -375,9 +375,10 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
     }, [bricks, gameOver, currentColor]);
 
     const camera = useMemo(() => {
-        // 카메라: 바닥이 화면 하단에 보이도록
+        // 카메라: 브릭이 쌓일수록 Y축을 따라 올라가도록 수식 개선
         const stackHeight = bricks.length * BRICK_HEIGHT;
-        const camY = Math.max(3, stackHeight * 0.2 + 2);
+        // 초기 높이 1에서 시작하여 stackHeight의 80%만큼 따라 올라감 (적당한 뷰포트 유지)
+        const camY = Math.max(1, stackHeight * 0.8 + 1);
         return { position: [0, camY, 9] as [number, number, number], fov: 50 };
     }, [bricks.length]);
 
