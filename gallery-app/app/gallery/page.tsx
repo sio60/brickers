@@ -39,8 +39,7 @@ async function getGalleryItems(): Promise<PageResponse<GalleryItem>> {
 
         const json = await res.json();
         const content = (json.content || []).map((item: any) => ({
-            ...item,
-            isBookmarked: item.bookmarked
+            ...item
         }));
 
         return {

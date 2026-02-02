@@ -37,8 +37,9 @@ public class GalleryController {
     public Page<GalleryResponse> listPublic(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "12") int size,
-            @RequestParam(name = "sort", defaultValue = "latest") String sort) {
-        return galleryService.listPublic(page, size, sort);
+            @RequestParam(name = "sort", defaultValue = "latest") String sort,
+            Authentication authOrNull) {
+        return galleryService.listPublic(page, size, sort, authOrNull);
     }
 
     /** 🔍 공개 게시글 검색 */
@@ -48,8 +49,9 @@ public class GalleryController {
             @RequestParam(name = "tag", required = false) String tag,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "12") int size,
-            @RequestParam(name = "sort", defaultValue = "latest") String sort) {
-        return galleryService.searchPublic(q, tag, page, size, sort);
+            @RequestParam(name = "sort", defaultValue = "latest") String sort,
+            Authentication authOrNull) {
+        return galleryService.searchPublic(q, tag, page, size, sort, authOrNull);
     }
 
     /**
