@@ -80,9 +80,6 @@ export default function GalleryDetailClient({ item }: Props) {
         // Initial fetch
         fetchComments();
 
-        // Polling every 10 seconds
-        const pollInterval = setInterval(fetchComments, 10000);
-
         // Fetch detail for latest like state
         const fetchDetail = async () => {
             try {
@@ -111,7 +108,6 @@ export default function GalleryDetailClient({ item }: Props) {
         };
         fetchRecommendations();
 
-        return () => clearInterval(pollInterval);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [item.id]);
 
