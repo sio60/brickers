@@ -56,6 +56,16 @@ function LdrModel({
             // LDraw 라이브러리 URL인 경우 경로 수정
             if (fixed.includes("ldraw-parts-library") && fixed.endsWith(".dat") && !fixed.includes("LDConfig.ldr")) {
                 const filename = fixed.split("/").pop() || "";
+                const lowerName = filename.toLowerCase();
+                if (filename && lowerName !== filename) {
+                    fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
+                }
+
+                const lowerName = filename.toLowerCase();
+                if (filename && lowerName !== filename) {
+                    fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
+                }
+                
 
                 // Primitive 패턴: n-n*.dat (예: 4-4edge, 1-4cyli), stud*.dat, rect*.dat, box*.dat 등
                 const isPrimitive = /^\d+-\d+/.test(filename) ||
@@ -90,6 +100,9 @@ function LdrModel({
                 }
             }
 
+            if (fixed.startsWith(CDN_BASE)) {
+                return `/api/proxy/ldr?url=${encodeURIComponent(fixed)}`;
+            }
             return fixed;
         });
 
