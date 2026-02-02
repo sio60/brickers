@@ -644,46 +644,20 @@ function KidsStepPageContent() {
                             </button>
 
                             {colorChangedLdrBase64 && (
-<<<<<<< HEAD
                                 <>
                                     <button
                                         onClick={downloadColorChangedLdr}
-                                        className="w-full text-left p-[14px_16px] rounded-2xl bg-[#4CAF50] text-white font-[800] border-2 border-black cursor-pointer transition-all duration-200 hover:bg-[#45a049] hover:-translate-y-[2px] hover:shadow-[0_4px_0_rgba(0,0,0,0.1)]"
+                                        className="kidsStep__downloadColorBtn"
                                     >
                                         ⬇ 변경된 LDR 다운로드
                                     </button>
                                     <button
                                         onClick={restoreOriginalColor}
-                                        className="w-full text-left p-[10px_16px] rounded-2xl bg-transparent text-[#888] font-[800] border-2 border-transparent cursor-pointer transition-all duration-200 text-[0.85rem] flex items-center gap-1.5 hover:text-black"
+                                        className="kidsStep__restoreBtn"
                                     >
                                         ↺ 원본으로 되돌리기
                                     </button>
                                 </>
-=======
-                                <button
-                                    onClick={restoreOriginalColor}
-                                    style={{
-                                        width: "100%",
-                                        textAlign: "left",
-                                        padding: "10px 16px",
-                                        borderRadius: 16,
-                                        background: "transparent",
-                                        color: "#888",
-                                        fontWeight: 800,
-                                        border: "2px solid transparent",
-                                        cursor: "pointer",
-                                        transition: "all 0.2s",
-                                        fontSize: "0.85rem",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 6
-                                    }}
-                                    onMouseOver={(e) => e.currentTarget.style.color = "#000"}
-                                    onMouseOut={(e) => e.currentTarget.style.color = "#888"}
-                                >
-                                    ↺ 원본으로 되돌리기
-                                </button>
->>>>>>> ded00357f710b1531ef2a19eda5fdb8450e42bc0
                             )}
                         </div>
 
@@ -832,19 +806,11 @@ function KidsStepPageContent() {
 
             {/* 색상 변경 모달 */}
             {isColorModalOpen && (
-<<<<<<< HEAD
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-[4px] grid place-items-center z-[1000]" onClick={() => setIsColorModalOpen(false)}>
-                    <div className="bg-white border-[3px] border-black rounded-[20px] p-8 w-[min(400px,90vw)] flex flex-col gap-5 shadow-[0_20px_40px_rgba(0,0,0,0.2)] relative" onClick={(e) => e.stopPropagation()}>
-                        <button className="absolute top-4 right-4 w-11 h-11 border-none bg-transparent cursor-pointer text-[24px] font-bold flex items-center justify-center transition-all duration-100 ease-[cubic-bezier(0.4,0,0.2,1)] text-black z-[100] hover:rotate-90 hover:scale-110" onClick={() => setIsColorModalOpen(false)} aria-label="close">✕</button>
-                        <h3 className="font-['KblJumpCondensed',sans-serif] text-[32px] m-0 text-center">
-                            {t.kids.steps.colorThemeTitle || "색상 테마 선택"}
-=======
                 <div className="galleryModalOverlay" onClick={() => setIsColorModalOpen(false)}>
                     <div className="galleryModal colorModal" onClick={(e) => e.stopPropagation()}>
                         <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)} aria-label="close">✕</button>
                         <h3 className="galleryModal__title">
-                            🎨 {t.kids.steps.colorThemeTitle || "색상 테마 선택"}
->>>>>>> ded00357f710b1531ef2a19eda5fdb8450e42bc0
+                            {t.kids.steps.colorThemeTitle || "색상 테마 선택"}
                         </h3>
 
                         <div className="colorModal__themes">
@@ -856,19 +822,11 @@ function KidsStepPageContent() {
                                 colorThemes.map((theme: ThemeInfo) => (
                                     <button
                                         key={theme.name}
-<<<<<<< HEAD
-                                        className={`flex flex-col items-start p-[14px_16px] rounded-xl border-2 transition-all duration-200 text-left cursor-pointer bg-white ${selectedTheme === theme.name ? "border-black" : "border-[#e0e0e0] hover:border-black"}`}
-                                        onClick={() => setSelectedTheme(theme.name)}
-                                    >
-                                        <span className={`text-[15px] font-[800] ${selectedTheme === theme.name ? "text-[#ffe135]" : "text-black"}`}>{theme.name}</span>
-                                        <span className={`text-[12px] mt-0.5 ${selectedTheme === theme.name ? "text-[#333]" : "text-[#888]"}`}>{theme.description}</span>
-=======
                                         className={`colorModal__themeBtn ${selectedTheme === theme.name ? "colorModal__themeBtn--selected" : ""}`}
                                         onClick={() => setSelectedTheme(theme.name)}
                                     >
                                         <span className="colorModal__themeName">{theme.name}</span>
                                         <span className="colorModal__themeDesc">{theme.description}</span>
->>>>>>> ded00357f710b1531ef2a19eda5fdb8450e42bc0
                                     </button>
                                 ))
                             )}
