@@ -1,6 +1,6 @@
 'use client';
 
-import "./BrickStckMiniGame.css";
+import "./BrickStackMiniGame.css";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
