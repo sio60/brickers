@@ -108,11 +108,6 @@ function LdrModel({
                 if (filename && lowerName !== filename) {
                     fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
                 }
-
-                const lowerName = filename.toLowerCase();
-                if (filename && lowerName !== filename) {
-                    fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
-                }
                 
 
                 // Primitive 패턴: n-n*.dat (예: 4-4edge, 1-4cyli), stud*.dat, rect*.dat, box*.dat 등
