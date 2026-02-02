@@ -48,11 +48,11 @@ public class GalleryCommentService {
             java.util.List<GalleryCommentEntity> allComments) {
         CommentResponse response = toResponse(root);
 
-        // Filter children (replies) for this root comment
+        // Filter children (replies) for this current comment
         java.util.List<CommentResponse> children = allComments.stream()
                 .filter(c -> root.getId().equals(c.getParentId()))
                 .sorted((a, b) -> a.getCreatedAt().compareTo(b.getCreatedAt()))
-                .map(this::toResponse)
+                .map(child -> toResponseWithChildren(child, allComments)) // Recursive call for nested replies
                 .collect(java.util.stream.Collectors.toList());
 
         response.setChildren(children);
