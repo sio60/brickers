@@ -239,43 +239,49 @@
 /* Sidebar Registration Input */
 .kidsStep__sidebarInput {
     width: 100%;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: #fff;
+    border: 2px solid #000;
     border-radius: 12px;
     padding: 14px;
-    color: #fff;
+    color: #000;
     font-size: 0.95rem;
     outline: none;
-    font-weight: 500;
+    font-weight: 700;
     transition: all 0.2s;
 }
 
 .kidsStep__sidebarInput:focus {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: #ffe135;
+    box-shadow: 0 0 0 3px rgba(255, 225, 53, 0.2);
 }
 
 .kidsStep__sidebarInput::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: #bbb;
 }
 
 .kidsStep__sidebarBtn {
     width: 100%;
     background: #ffe135;
     color: #000;
-    border: none;
+    border: 2px solid #000;
     border-radius: 12px;
     padding: 14px;
-    font-weight: 800;
+    font-weight: 900;
     cursor: pointer;
     font-size: 0.95rem;
     transition: all 0.2s;
+    box-shadow: 2px 2px 0px #000;
 }
 
 .kidsStep__sidebarBtn:hover:not(:disabled) {
     background: #ffd700;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 225, 53, 0.3);
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0px #000;
+}
+
+.kidsStep__sidebarBtn:active:not(:disabled) {
+    transform: translate(1px, 1px);
+    box-shadow: 0px 0px 0px #000;
 }
 
 .kidsStep__sidebarBtn:disabled {

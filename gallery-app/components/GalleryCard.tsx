@@ -63,15 +63,15 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
 
     return (
         <Link href={`/gallery/${slug}`} className="block group">
-            <div className="gallery-card bg-white rounded-3xl overflow-hidden border-2 border-black hover:shadow-xl transition-all duration-300">
+            <div className="gallery-card bg-white rounded-3xl overflow-hidden border-[3px] border-black hover:shadow-[0_20px_40px_rgba(0,0,0,0.1)] transition-all duration-300">
                 {/* Thumbnail Area */}
-                <div className="relative aspect-square bg-[#f9f9f9] overflow-hidden border-b-2 border-black">
+                <div className="relative aspect-square bg-white overflow-hidden border-b-[3px] border-black">
                     {hasValidImage ? (
-                        <div className="w-full h-full p-2.5">
+                        <div className="w-full h-full p-4">
                             <img
                                 src={displayImageUrl}
                                 alt={item.title}
-                                className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                                className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
                             />
                         </div>
                     ) : (
@@ -86,7 +86,7 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
                 {/* Content Area */}
                 <div className="p-4 flex flex-col gap-2">
                     {/* Title */}
-                    <h3 className="font-black text-[#000] text-[14px] leading-tight line-clamp-1 group-hover:text-blue-600 transition-colors">
+                    <h3 className="font-extrabold text-[#000] text-[15px] leading-tight line-clamp-1 group-hover:text-amber-500 transition-colors">
                         {item.title}
                     </h3>
 
@@ -94,13 +94,7 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
                     <div className="flex items-center justify-between gap-2">
                         <div className="flex-1 flex items-center gap-1.5 text-[11px] font-bold text-gray-400 overflow-hidden whitespace-nowrap">
                             {item.authorNickname && (
-                                <span className="truncate max-w-[80px] text-gray-700">{item.authorNickname}</span>
-                            )}
-                            {item.authorNickname && item.createdAt && (
-                                <span className="text-gray-200">|</span>
-                            )}
-                            {item.createdAt && (
-                                <span className="shrink-0">{formatDate(item.createdAt)}</span>
+                                <span className="truncate max-w-[80px] text-gray-500">@{item.authorNickname}</span>
                             )}
                         </div>
 
@@ -110,14 +104,14 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
                             {onBookmarkToggle && (
                                 <button
                                     onClick={handleBookmarkClick}
-                                    className={`flex items-center justify-center w-7 h-7 rounded-full border border-black transition-all ${item.isBookmarked
-                                        ? 'bg-yellow-400 text-black'
+                                    className={`flex items-center justify-center w-8 h-8 rounded-xl border-2 border-black transition-all ${item.isBookmarked
+                                        ? 'bg-[#ffe135] text-black shadow-[2px_2px_0px_#000]'
                                         : 'bg-white text-black hover:bg-gray-50'
                                         }`}
                                     aria-label={item.isBookmarked ? '북마크 취소' : '북마크 추가'}
                                 >
                                     <svg
-                                        className={`w-3.5 h-3.5 ${item.isBookmarked ? 'fill-black' : 'fill-none'}`}
+                                        className={`w-4 h-4 ${item.isBookmarked ? 'fill-black' : 'fill-none'}`}
                                         stroke="currentColor"
                                         strokeWidth="2.5"
                                         viewBox="0 0 24 24"
@@ -134,14 +128,14 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
                             {/* Like button */}
                             <button
                                 onClick={handleLikeClick}
-                                className={`flex items-center gap-1 px-2.5 py-1 rounded-full border border-black transition-all ${item.myReaction === 'LIKE'
-                                    ? 'bg-black text-white'
+                                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl border-2 border-black transition-all ${item.myReaction === 'LIKE'
+                                    ? 'bg-[#ffe135] text-black shadow-[2px_2px_0px_#000]'
                                     : 'bg-white text-black hover:bg-gray-50'
                                     }`}
                                 aria-label={item.myReaction === 'LIKE' ? '좋아요 취소' : '좋아요 추가'}
                             >
                                 <svg
-                                    className={`w-3.5 h-3.5 ${item.myReaction === 'LIKE' ? 'fill-white' : 'fill-none text-gray-400'}`}
+                                    className={`w-4 h-4 ${item.myReaction === 'LIKE' ? 'fill-black' : 'fill-none text-black'}`}
                                     stroke="currentColor"
                                     strokeWidth="2.5"
                                     viewBox="0 0 24 24"
@@ -152,7 +146,7 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
                                         d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
                                     />
                                 </svg>
-                                <span className="text-[10px] font-black leading-none">
+                                <span className="text-[11px] font-black leading-none">
                                     {item.likeCount || 0}
                                 </span>
                             </button>
