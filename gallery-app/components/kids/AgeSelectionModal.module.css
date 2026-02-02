@@ -1,0 +1,147 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal {
+    background: white;
+    padding: 40px;
+    border-radius: 40px;
+    width: 90%;
+    max-width: 800px;
+    position: relative;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    border: 3px solid #000;
+    text-align: center;
+}
+
+.closeBtn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #000;
+}
+
+.closeBtn:hover {
+    transform: rotate(90deg) scale(1.1);
+}
+
+.title {
+    font-size: 48px;
+    font-weight: 900;
+    margin-bottom: 40px;
+    color: #000;
+    text-transform: uppercase;
+}
+
+.buttons {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+}
+
+.ageBtn {
+    background: white;
+    border: 3px solid #000;
+    border-radius: 32px;
+    padding: 24px;
+    width: 200px;
+    height: 240px;
+    /* Fixed height for consistency */
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* Center content vertically */
+    gap: 16px;
+}
+
+.ageBtn:hover {
+    transform: translateY(-4px);
+    background: #ffe135;
+    box-shadow: none;
+    border-color: #000;
+}
+
+.ageBtn:active,
+.ageBtn.active {
+    background: #ffe135;
+    /* Yellow background on active */
+    color: #000;
+    transform: translateY(2px);
+    box-shadow: none;
+    border-color: #000;
+}
+
+.ageBtn.active .ageLabel {
+    color: #000;
+}
+
+.imageWrapper {
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ageImg {
+    border-radius: 20px;
+    object-fit: contain;
+}
+
+.ageLabel {
+    font-size: 64px;
+    font-weight: 900;
+    color: #000;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 640px) {
+    .buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .ageBtn {
+        width: 100%;
+        flex-direction: row;
+        padding: 16px 24px;
+    }
+
+    .title {
+        font-size: 32px;
+    }
+}

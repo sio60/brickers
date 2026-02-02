@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-// import styles from "./MyPage.module.css"; // Removed
+import styles from "./MyPage.module.css";
 import { getMyOverview, getMyProfile, retryJob, updateMyProfile, ApiError } from "@/lib/api/myApi";
 import type { MyOverview, MyProfile, MyJob } from "@/lib/api/myApi";
 import KidsLdrPreview from "@/components/kids/KidsLdrPreview";
@@ -357,14 +357,14 @@ export default function MyPage() {
     };
 
     const renderContent = () => {
-        if (loading) return <div className="flex flex-col items-center justify-center h-full text-gray-500 gap-4">{t.common.loading}...</div>;
+        if (loading) return <div className={styles.mypage__loading}>{t.common.loading}...</div>;
 
         if (error) {
             return (
-                <div className="flex flex-col items-center justify-center h-full text-gray-500 gap-4">
+                <div className={styles.mypage__error}>
                     <Icons.AlertTriangle />
                     <p>{error.message}</p>
-                    <button className="px-6 py-3 border-2 border-black rounded-xl font-extrabold cursor-pointer bg-white text-black shadow-[4px_4px_0_#000] transition-all duration-150 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#000] active:translate-x-1 active:translate-y-1 active:shadow-none" onClick={() => window.location.reload()}>
+                    <button className={styles.mypage__btn3d} onClick={() => window.location.reload()}>
                         {t.common.retryBtn}
                     </button>
                 </div>
@@ -374,44 +374,45 @@ export default function MyPage() {
         switch (activeMenu) {
             case "profile":
                 return (
-                    <div>
-                        <h2 className="text-[32px] font-black text-[#111] mb-8 flex items-center gap-3 before:content-[''] before:block before:w-2 before:h-8 before:bg-blue-500 before:rounded">{t.profile.title}</h2>
+                    <div className={styles.mypage__section}>
+                        <h2 className={styles.mypage__sectionTitle}>{t.profile.title}</h2>
 
                         {profile && (
-                            <div className="flex flex-col gap-10 animate-[slideUp_0.4s_ease]">
-                                <div className="flex items-center gap-10 p-10 bg-[#f8f9fa] rounded-[32px] border border-[#eee] md:flex-col md:items-start md:gap-5 md:p-6">
-                                    <div className="relative w-[140px] h-[140px] shrink-0">
+                            <div className={styles.mypage__profileDashboard}>
+                                <div className={styles.mypage__profileCard}>
+                                    <div className={styles.mypage__avatarArea}>
                                         <img
                                             src={profile.profileImage || "/default-avatar.png"}
                                             alt="Profile"
-                                            className="w-full h-full rounded-3xl object-cover border-[3px] border-black bg-white shadow-[8px_8px_0_rgba(0,0,0,0.1)]"
+                                            className={styles.mypage__avatar}
                                         />
                                     </div>
-                                    <div className="flex-1 flex flex-col gap-4 w-full">
-                                        <div className="flex items-center gap-3">
+                                    <div className={styles.mypage__profileInfo}>
+                                        <div className={styles.mypage__nameRow}>
                                             {!isEditing ? (
                                                 <>
-                                                    <h3 className="text-[32px] font-black text-[#111] m-0">{profile.nickname}</h3>
-                                                    <span className="px-[14px] py-1.5 bg-[#FFD600] text-black rounded-full text-[13px] font-extrabold">{profile.membershipPlan}</span>
+                                                    <h3 className={styles.mypage__nickname}>{profile.nickname}</h3>
+                                                    <span className={styles.mypage__roleBadge}>{profile.membershipPlan}</span>
                                                 </>
                                             ) : (
                                                 <input
-                                                    className="w-auto inline-block text-2xl font-bold px-2 py-1 border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:border-black focus:shadow-[0_0_0_2px_rgba(0,0,0,0.1)]"
+                                                    className={styles.mypage__formInput}
+                                                    style={{ width: 'auto', display: 'inline-block', fontSize: '24px', fontWeight: 'bold', padding: '4px 8px' }}
                                                     value={editNickname}
                                                     onChange={(e) => setEditNickname(e.target.value)}
                                                     placeholder={t.profile.nickname}
                                                 />
                                             )}
                                         </div>
-                                        <p className="text-base text-gray-500 m-0">{profile.email}</p>
+                                        <p className={styles.mypage__email}>{profile.email}</p>
 
                                         {!isEditing ? (
-                                            <div className="p-[16px_20px] bg-white border-2 border-dashed border-gray-200 rounded-xl text-gray-600 text-[15px] leading-relaxed min-h-[60px]">
+                                            <div className={styles.mypage__bioBox}>
                                                 {profile.bio || t.mypage.bioPlaceholder}
                                             </div>
                                         ) : (
                                             <textarea
-                                                className="w-full p-3 border-2 border-gray-200 rounded-xl text-base font-inherit bg-white resize-none mb-2 transition-all duration-200 focus:outline-none focus:border-black focus:bg-white focus:shadow-[0_0_0_2px_rgba(0,0,0,0.1)]"
+                                                className={styles.mypage__formTextarea}
                                                 value={editBio}
                                                 onChange={(e) => setEditBio(e.target.value)}
                                                 placeholder={t.mypage.bioPlaceholder}
@@ -419,36 +420,36 @@ export default function MyPage() {
                                         )}
 
                                         {!isEditing ? (
-                                            <button className="self-start flex items-center gap-2 px-6 py-3 bg-green-500 text-white border-none rounded-full text-[15px] font-bold cursor-pointer transition-all duration-200 shadow-[0_4px_0_#15803d] mt-2 hover:translate-y-[2px] hover:shadow-[0_2px_0_#15803d] active:translate-y-1 active:shadow-none" onClick={startEditing}>
+                                            <button className={styles.mypage__editBtn} onClick={startEditing}>
                                                 <Icons.Edit /> {t.profile.editBtn}
                                             </button>
                                         ) : (
-                                            <div className="flex gap-3 mt-3">
-                                                <button className="px-5 py-2.5 border-2 border-gray-200 bg-white rounded-full font-bold cursor-pointer text-gray-500 transition-all duration-200 hover:bg-gray-100 hover:border-gray-300 hover:text-[#111]" onClick={cancelEditing}>{t.common.cancel}</button>
-                                                <button className="px-5 py-2.5 bg-black text-white border-2 border-black rounded-full font-bold cursor-pointer shadow-[0_4px_0_rgba(0,0,0,0.2)] transition-all duration-200 hover:-translate-y-px hover:shadow-[0_6px_0_rgba(0,0,0,0.2)] active:translate-y-0.5 active:shadow-[0_2px_0_rgba(0,0,0,0.2)]" onClick={saveProfile} disabled={saving}>{t.common.confirm}</button>
+                                            <div className={styles.mypage__editActions}>
+                                                <button className={styles.mypage__cancelBtn} onClick={cancelEditing}>{t.common.cancel}</button>
+                                                <button className={styles.mypage__saveBtn} onClick={saveProfile} disabled={saving}>{t.common.confirm}</button>
                                             </div>
                                         )}
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-6 md:grid-cols-1">
-                                    <div className="bg-white border-2 border-[#eee] rounded-3xl p-6 flex flex-col relative shadow-[0_10px_30px_rgba(0,0,0,0.03)] transition-all duration-300 hover:-translate-y-[5px] hover:border-black hover:shadow-[0_15px_40px_rgba(0,0,0,0.08)]">
-                                        <div className="flex justify-between items-center mb-3">
-                                            <span className="text-[15px] font-bold text-gray-500">{t.mypage.stats.jobs}</span>
+                                <div className={styles.mypage__statsGrid}>
+                                    <div className={styles.mypage__statCard}>
+                                        <div className={styles.stat__header}>
+                                            <span className={styles.stat__label}>{t.mypage.stats.jobs}</span>
                                         </div>
-                                        <span className="text-[42px] font-black text-[#111]">{data?.jobs.totalCount || 0}</span>
+                                        <span className={styles.stat__value}>{data?.jobs.totalCount || 0}</span>
                                     </div>
-                                    <div className="bg-white border-2 border-[#eee] rounded-3xl p-6 flex flex-col relative shadow-[0_10px_30px_rgba(0,0,0,0.03)] transition-all duration-300 hover:-translate-y-[5px] hover:border-black hover:shadow-[0_15px_40px_rgba(0,0,0,0.08)]">
-                                        <div className="flex justify-between items-center mb-3">
-                                            <span className="text-[15px] font-bold text-gray-500">{t.mypage.stats.gallery}</span>
+                                    <div className={styles.mypage__statCard}>
+                                        <div className={styles.stat__header}>
+                                            <span className={styles.stat__label}>{t.mypage.stats.gallery}</span>
                                         </div>
-                                        <span className="text-[42px] font-black text-[#111]">{data?.gallery.totalCount || 0}</span>
+                                        <span className={styles.stat__value}>{data?.gallery.totalCount || 0}</span>
                                     </div>
-                                    <div className="bg-white border-2 border-[#eee] rounded-3xl p-6 flex flex-col relative shadow-[0_10px_30px_rgba(0,0,0,0.03)] transition-all duration-300 hover:-translate-y-[5px] hover:border-black hover:shadow-[0_15px_40px_rgba(0,0,0,0.08)]">
-                                        <div className="flex justify-between items-center mb-3">
-                                            <span className="text-[15px] font-bold text-gray-500">{t.mypage.stats.joinedAt}</span>
+                                    <div className={styles.mypage__statCard}>
+                                        <div className={styles.stat__header}>
+                                            <span className={styles.stat__label}>{t.mypage.stats.joinedAt}</span>
                                         </div>
-                                        <span className="text-[42px] font-black text-[#111] text-2xl!">
+                                        <span className={styles.stat__value} style={{ fontSize: '24px' }}>
                                             {profile.createdAt ? formatDate(profile.createdAt) : "-"}
                                         </span>
                                     </div>
@@ -460,14 +461,14 @@ export default function MyPage() {
 
             case "membership":
                 return (
-                    <div>
-                        <h2 className="text-[32px] font-black text-[#111] mb-8 flex items-center gap-3 before:content-[''] before:block before:w-2 before:h-8 before:bg-blue-500 before:rounded">{t.membership.title}</h2>
+                    <div className={styles.mypage__section}>
+                        <h2 className={styles.mypage__sectionTitle}>{t.membership.title}</h2>
                         {profile && (
-                            <div className="bg-white border-2 border-gray-200 rounded-[20px] p-6">
-                                <span className="px-[14px] py-1.5 bg-[#FFD600] text-black rounded-full text-[13px] font-extrabold text-lg! mb-5 inline-block">
+                            <div className={styles.mypage__card}>
+                                <span className={styles.mypage__roleBadge} style={{ fontSize: '18px', marginBottom: '20px', display: 'inline-block' }}>
                                     {profile.membershipPlan}
                                 </span>
-                                <p>
+                                <p className={styles.mypage__planDesc}>
                                     {t.membership.desc?.replace("{plan}", profile.membershipPlan)}
                                 </p>
                             </div>
@@ -477,63 +478,65 @@ export default function MyPage() {
 
             case "jobs":
                 return (
-                    <div>
-                        <h2 className="text-[32px] font-black text-[#111] mb-8 flex items-center gap-3 before:content-[''] before:block before:w-2 before:h-8 before:bg-blue-500 before:rounded">{t.jobs.title}</h2>
+                    <div className={styles.mypage__section}>
+                        <h2 className={styles.mypage__sectionTitle}>{t.jobs.title}</h2>
                         {data?.jobs.recent && data.jobs.recent.length > 0 ? (
-                            <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
+                            <div className={styles.mypage__jobs}>
                                 {data.jobs.recent.map((job) => (
                                     <div
                                         key={job.id}
-                                        className="bg-white border-2 border-gray-200 rounded-[20px] overflow-hidden cursor-pointer transition-all duration-200 hover:border-black hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(0,0,0,0.05)] group"
+                                        className={styles.mypage__job}
                                         onClick={() => handleJobClick(job)}
                                     >
-                                        <div className="relative w-full pt-[100%] bg-[#f9f9f9] border-b border-[#eee] overflow-hidden">
-                                            <img src={job.sourceImageUrl || "/placeholder.png"} alt={job.title} className="absolute top-0 left-0 w-full h-full object-contain p-2.5 transition-transform duration-300 group-hover:scale-105" />
-                                            <div className="absolute top-3 left-3 z-[2]">
-                                                <span className={`inline-block px-2.5 py-1 rounded-lg text-[11px] font-extrabold uppercase shadow-[0_2px_5px_rgba(0,0,0,0.1)] border-[1.5px] border-black ${getStatusClass(job.status) === 'pending' ? 'bg-white text-black' : getStatusClass(job.status) === 'running' ? 'bg-blue-500 text-white' : getStatusClass(job.status) === 'completed' ? 'bg-green-500 text-white' : getStatusClass(job.status) === 'failed' ? 'bg-red-500 text-white' : 'bg-yellow-500 text-white'}`}>
+                                        <div className={styles.mypage__jobThumbData}>
+                                            <img src={job.sourceImageUrl || "/placeholder.png"} alt={job.title} className={styles.mypage__jobThumb} />
+                                            <div className={styles.mypage__jobOverlay}>
+                                                <span className={`${styles.mypage__jobStatus} ${styles[getStatusClass(job.status)]}`}>
                                                     {getStatusLabel(job.status)}
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="p-4 flex flex-col gap-1.5">
-                                            <div className="text-[15px] font-extrabold text-[#111] whitespace-nowrap overflow-hidden text-ellipsis">{job.title || "Untitled"}</div>
-                                            <div className="text-xs text-[#999] font-medium">{formatDate(job.createdAt)}</div>
+                                        <div className={styles.mypage__jobInfo}>
+                                            <div className={styles.mypage__jobTitle}>{job.title || "Untitled"}</div>
+                                            <div className={styles.mypage__jobDate}>{formatDate(job.createdAt)}</div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                        ) : <p className="text-gray-500 text-center py-10">{t.jobs.empty}</p>}
+                        ) : <p className={styles.mypage__empty}>{t.jobs.empty}</p>}
                     </div>
                 );
 
+            // ... (Other cases implementation using similar generic styles)
+
             case "inquiries":
                 return (
-                    <div>
-                        <h2 className="text-[32px] font-black text-[#111] mb-8 flex items-center gap-3 before:content-[''] before:block before:w-2 before:h-8 before:bg-blue-500 before:rounded">{t.inquiries.title}</h2>
-                        <div>
+                    <div className={styles.mypage__section}>
+                        <h2 className={styles.mypage__sectionTitle}>{t.inquiries.title}</h2>
+                        <div className={styles.mypage__inquiriesList}>
                             {listLoading ? (
-                                <p className="text-gray-500 text-center py-10">{t.common.loading}...</p>
+                                <p className={styles.mypage__loadingText}>{t.common.loading}...</p>
                             ) : inquiries.length > 0 ? (
                                 inquiries.map((inquiry: any) => (
                                     <div
                                         key={inquiry.id}
-                                        className="bg-white border-2 border-gray-200 rounded-[20px] p-6 mb-5 transition-colors duration-200 hover:border-[#aaa]"
+                                        className={styles.mypage__inquiryCard}
                                         onClick={() => setExpandedInquiryId(expandedInquiryId === inquiry.id ? null : inquiry.id)}
                                         style={{ cursor: 'pointer' }}
                                     >
-                                        <div className="flex justify-between items-start mb-2">
-                                            <span className={`inline-block px-3 py-1.5 border border-[#111] rounded text-sm font-bold mb-3 ${inquiry.status === 'ANSWERED' ? 'bg-[#111] text-white' : 'bg-white text-[#111]'}`}>
+                                        <div className={styles.inquiry__header}>
+                                            <span className={`${styles.inquiry__statusBadge} ${inquiry.status === 'ANSWERED' ? styles.answered : ''}`}>
                                                 {getInquiryStatusLabel(inquiry.status)}
                                             </span>
-                                            <span className="text-sm text-[#999]">{formatDate(inquiry.createdAt)}</span>
+                                            <span className={styles.inquiry__date}>{formatDate(inquiry.createdAt)}</span>
                                         </div>
-                                        <h3 className="text-lg font-extrabold text-[#111] mb-2 block">{inquiry.title}</h3>
+                                        <h3 className={styles.inquiry__title}>{inquiry.title}</h3>
 
                                         {expandedInquiryId === inquiry.id && (
                                             <div style={{ marginTop: '12px', borderTop: '1px solid #eee', paddingTop: '12px' }}>
-                                                <p className="text-base text-[#444] mb-2 leading-relaxed">{inquiry.content}</p>
+                                                <p className={styles.inquiry__content}>{inquiry.content}</p>
                                                 {inquiry.answer && (
-                                                    <div className="mt-4 p-4 bg-[#f9fafb] rounded-lg relative">
+                                                    <div className={styles.inquiry__answer}>
                                                         <strong>{t.inquiries.adminAnswer}:</strong> {typeof inquiry.answer === 'string' ? inquiry.answer : inquiry.answer?.content}
                                                     </div>
                                                 )}
@@ -542,7 +545,7 @@ export default function MyPage() {
                                     </div>
                                 ))
                             ) : (
-                                <p className="text-gray-500 text-center py-10">{t.inquiries.empty}</p>
+                                <p className={styles.mypage__empty}>{t.inquiries.empty}</p>
                             )}
                         </div>
                     </div>
@@ -550,50 +553,50 @@ export default function MyPage() {
 
             case "reports":
                 return (
-                    <div>
-                        <h2 className="text-[32px] font-black text-[#111] mb-8 flex items-center gap-3 before:content-[''] before:block before:w-2 before:h-8 before:bg-blue-500 before:rounded">{t.reports.title}</h2>
-                        <div>
+                    <div className={styles.mypage__section}>
+                        <h2 className={styles.mypage__sectionTitle}>{t.reports.title}</h2>
+                        <div className={styles.mypage__inquiriesList}>
                             {listLoading ? (
-                                <p className="text-gray-500 text-center py-10">{t.common.loading}...</p>
+                                <p className={styles.mypage__loadingText}>{t.common.loading}...</p>
                             ) : reports.length > 0 ? (
                                 reports.map((report: any) => (
                                     <div
                                         key={report.id}
-                                        className="bg-white border-2 border-gray-200 rounded-[20px] p-6 mb-5 transition-colors duration-200 hover:border-[#aaa]"
+                                        className={styles.mypage__inquiryCard}
                                         onClick={() => setExpandedReportId(expandedReportId === report.id ? null : report.id)}
                                         style={{ cursor: 'pointer', position: 'relative' }}
                                     >
                                         {/* Header: Status and Date */}
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                            <span className={`inline-block px-3 py-1.5 rounded text-sm font-bold mb-3 ${report.status === 'RESOLVED' ? 'bg-black text-white' : 'bg-white border border-gray-200 text-[#333]'}`}>
+                                            <span className={`${styles.report__statusBadge} ${report.status === 'RESOLVED' ? styles.resolved : styles.pending}`}>
                                                 {getReportStatusLabel(report.status)}
                                             </span>
-                                            <span className="text-sm text-[#999]">{formatDate(report.createdAt)}</span>
+                                            <span className={styles.inquiry__date}>{formatDate(report.createdAt)}</span>
                                         </div>
 
                                         {/* Main Content: Type, Reason, Description */}
-                                        <span className="text-base font-semibold text-gray-500 mb-1 block">{getReportTargetLabel(report.targetType)}</span>
-                                        <span className="text-2xl font-extrabold text-[#111] mb-2 block leading-tight">{getReportReasonLabel(report.reason)}</span>
+                                        <span className={styles.report__type}>{getReportTargetLabel(report.targetType)}</span>
+                                        <span className={styles.report__reason}>{getReportReasonLabel(report.reason)}</span>
 
-                                        <p className="text-base text-[#444] mb-2 leading-relaxed">
+                                        <p className={styles.report__description}>
                                             {report.details || report.description}
                                         </p>
-                                        <div className="text-[13px] text-[#999]">
+                                        <div className={styles.report__dataId}>
                                             {t.reports.dataId}: {report.targetId || report.dataId || "N/A"}
                                         </div>
 
                                         {/* Admin Answer (Resolution Note) - Show when expanded */}
                                         {expandedReportId === report.id && (report.resolutionNote || report.adminComment) && (
-                                            <div className="mt-4 p-4 bg-[#f9fafb] rounded-lg relative">
-                                                <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-white border border-gray-200 rounded text-xs font-bold text-[#333] mb-2">
+                                            <div className={styles.report__adminAnswerBox}>
+                                                <div className={styles.report__adminTitleBadge}>
                                                     <Icons.CornerDownRight />
                                                     {t.reports.adminNote}
                                                 </div>
-                                                <p className="text-[15px] text-[#333] leading-relaxed">
+                                                <p className={styles.report__resolutionNote}>
                                                     {report.resolutionNote || report.adminComment}
                                                 </p>
                                                 {report.resolvedAt && (
-                                                    <span className="block text-right text-xs text-[#999] mt-2">
+                                                    <span className={styles.report__resolvedDate}>
                                                         {formatDate(report.resolvedAt)}
                                                     </span>
                                                 )}
@@ -602,7 +605,7 @@ export default function MyPage() {
                                     </div>
                                 ))
                             ) : (
-                                <p className="text-gray-500 text-center py-10">{t.reports.empty}</p>
+                                <p className={styles.mypage__empty}>{t.reports.empty}</p>
                             )}
                         </div>
                     </div>
@@ -610,30 +613,30 @@ export default function MyPage() {
 
             case "settings":
                 return (
-                    <div>
-                        <h2 className="text-[32px] font-black text-[#111] mb-8 flex items-center gap-3 before:content-[''] before:block before:w-2 before:h-8 before:bg-blue-500 before:rounded">{t.settings.title}</h2>
-                        <div className="bg-white border-2 border-gray-200 rounded-[20px] p-6">
+                    <div className={styles.mypage__section}>
+                        <h2 className={styles.mypage__sectionTitle}>{t.settings.title}</h2>
+                        <div className={styles.mypage__card}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                                 {/* Language Settings */}
                                 <div>
                                     <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '12px' }}>{t.settings.language}</h3>
                                     <div style={{ display: 'flex', gap: '12px' }}>
                                         <button
-                                            className={`px-6 py-3 border-2 border-black rounded-xl font-extrabold cursor-pointer bg-white text-black shadow-[4px_4px_0_#000] transition-all duration-150 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#000] active:translate-x-1 active:translate-y-1 active:shadow-none ${language === 'ko' ? "bg-[#FFD600]" : ""}`}
+                                            className={`${styles.mypage__btn3d} ${language === 'ko' ? styles.active : ''}`}
                                             onClick={() => setLanguage('ko')}
                                             style={{ backgroundColor: language === 'ko' ? '#FFD600' : '#fff' }}
                                         >
                                             {t.settings.langKo}
                                         </button>
                                         <button
-                                            className={`px-6 py-3 border-2 border-black rounded-xl font-extrabold cursor-pointer bg-white text-black shadow-[4px_4px_0_#000] transition-all duration-150 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#000] active:translate-x-1 active:translate-y-1 active:shadow-none ${language === 'en' ? "bg-[#FFD600]" : ""}`}
+                                            className={`${styles.mypage__btn3d} ${language === 'en' ? styles.active : ''}`}
                                             onClick={() => setLanguage('en')}
                                             style={{ backgroundColor: language === 'en' ? '#FFD600' : '#fff' }}
                                         >
                                             {t.settings.langEn}
                                         </button>
                                         <button
-                                            className={`px-6 py-3 border-2 border-black rounded-xl font-extrabold cursor-pointer bg-white text-black shadow-[4px_4px_0_#000] transition-all duration-150 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#000] active:translate-x-1 active:translate-y-1 active:shadow-none ${language === 'ja' ? "bg-[#FFD600]" : ""}`}
+                                            className={`${styles.mypage__btn3d} ${language === 'ja' ? styles.active : ''}`}
                                             onClick={() => setLanguage('ja')}
                                             style={{ backgroundColor: language === 'ja' ? '#FFD600' : '#fff' }}
                                         >
@@ -654,9 +657,9 @@ export default function MyPage() {
 
             default:
                 return (
-                    <div>
-                        <h2 className="text-[32px] font-black text-[#111] mb-8 flex items-center gap-3 before:content-[''] before:block before:w-2 before:h-8 before:bg-blue-500 before:rounded">Pages</h2>
-                        <div className="bg-white border-2 border-gray-200 rounded-[20px] p-6">
+                    <div className={styles.mypage__section}>
+                        <h2 className={styles.mypage__sectionTitle}>Pages</h2>
+                        <div className={styles.mypage__card}>
                             <p>{t.mypage.preparing}</p>
                         </div>
                     </div>
@@ -665,56 +668,56 @@ export default function MyPage() {
     };
 
     return (
-        <div className={`min-h-screen w-full relative bg-transparent font-sans ${language === 'ko' ? "font-['Cafe24Surround']" : language === 'ja' ? "font-['Jua']" : ""}`}>
+        <div className={`${styles.mypage} ${styles['lang-' + language]}`}>
             <BackgroundBricks />
-            <div className="max-w-[1200px] mx-auto my-10 pt-[60px] relative z-10 flex flex-col h-[85vh] md:h-auto md:min-h-[90vh] md:m-5">
-                <div className="flex gap-0 bg-white border-[3px] border-black rounded-[32px] overflow-hidden h-full shadow-[0_20px_60px_rgba(0,0,0,0.1)] relative md:flex-col md:rounded-[20px]">
-                    <button className="absolute top-6 right-6 w-11 h-11 border-none bg-transparent cursor-pointer text-2xl font-bold flex items-center justify-center transition-all duration-200 text-black z-50 hover:text-black hover:rotate-90 hover:scale-110" onClick={() => router.back()}>
+            <div className={styles.mypage__container}>
+                <div className={styles.mypage__layout}>
+                    <button className={styles.mypage__exitBtn} onClick={() => router.back()}>
                         <Icons.X />
                     </button>
 
-                    <div className="w-[260px] bg-[#fdfdfd] border-r-2 border-[#eee] p-[32px_20px] flex flex-col gap-10 shrink-0 md:w-full md:border-r-0 md:border-b-2 md:p-5 md:gap-5">
-                        <div className="flex flex-col gap-2 relative md:flex-row md:gap-3 md:flex-wrap after:md:hidden after:content-[''] after:block after:h-px after:border-b-2 after:border-dashed after:border-gray-200 after:mt-6 after:mb-2 last:after:hidden">
-                            <button className={`flex items-center gap-3 p-[14px_16px] border-none bg-transparent cursor-pointer text-[15px] font-bold text-gray-600 text-left rounded-xl transition-all duration-200 relative hover:bg-gray-100 hover:text-[#111] ${activeMenu === 'profile' ? "bg-[#FFD600] text-black font-extrabold shadow-[0_4px_12px_rgba(255,214,0,0.3)] after:content-[''] after:absolute after:right-4 after:w-1.5 after:h-1.5 after:bg-black after:rounded-full" : ''}`} onClick={() => setActiveMenu('profile')}>
-                                <Icons.User className="w-5 h-5 shrink-0" /> {t.menu.profile}
+                    <div className={styles.mypage__sidebar}>
+                        <div className={styles.mypage__menuGroup}>
+                            <button className={`${styles.mypage__menuItem} ${activeMenu === 'profile' ? styles.active : ''}`} onClick={() => setActiveMenu('profile')}>
+                                <Icons.User className={styles.mypage__menuIcon} /> {t.menu.profile}
                             </button>
-                            <button className={`flex items-center gap-3 p-[14px_16px] border-none bg-transparent cursor-pointer text-[15px] font-bold text-gray-600 text-left rounded-xl transition-all duration-200 relative hover:bg-gray-100 hover:text-[#111] ${activeMenu === 'membership' ? "bg-[#FFD600] text-black font-extrabold shadow-[0_4px_12px_rgba(255,214,0,0.3)] after:content-[''] after:absolute after:right-4 after:w-1.5 after:h-1.5 after:bg-black after:rounded-full" : ''}`} onClick={() => setActiveMenu('membership')}>
-                                <Icons.CreditCard className="w-5 h-5 shrink-0" /> {t.menu.membership}
-                            </button>
-                        </div>
-
-                        <div className="flex flex-col gap-2 relative md:flex-row md:gap-3 md:flex-wrap after:md:hidden after:content-[''] after:block after:h-px after:border-b-2 after:border-dashed after:border-gray-200 after:mt-6 after:mb-2 last:after:hidden">
-                            <button className={`flex items-center gap-3 p-[14px_16px] border-none bg-transparent cursor-pointer text-[15px] font-bold text-gray-600 text-left rounded-xl transition-all duration-200 relative hover:bg-gray-100 hover:text-[#111] ${activeMenu === 'jobs' ? "bg-[#FFD600] text-black font-extrabold shadow-[0_4px_12px_rgba(255,214,0,0.3)] after:content-[''] after:absolute after:right-4 after:w-1.5 after:h-1.5 after:bg-black after:rounded-full" : ''}`} onClick={() => setActiveMenu('jobs')}>
-                                <Icons.Briefcase className="w-5 h-5 shrink-0" /> {t.menu.jobs}
-                            </button>
-                            <button className={`flex items-center gap-3 p-[14px_16px] border-none bg-transparent cursor-pointer text-[15px] font-bold text-gray-600 text-left rounded-xl transition-all duration-200 relative hover:bg-gray-100 hover:text-[#111] ${activeMenu === 'inquiries' ? "bg-[#FFD600] text-black font-extrabold shadow-[0_4px_12px_rgba(255,214,0,0.3)] after:content-[''] after:absolute after:right-4 after:w-1.5 after:h-1.5 after:bg-black after:rounded-full" : ''}`} onClick={() => setActiveMenu('inquiries')}>
-                                <Icons.Mail className="w-5 h-5 shrink-0" /> {t.menu.inquiries}
-                            </button>
-                            <button className={`flex items-center gap-3 p-[14px_16px] border-none bg-transparent cursor-pointer text-[15px] font-bold text-gray-600 text-left rounded-xl transition-all duration-200 relative hover:bg-gray-100 hover:text-[#111] ${activeMenu === 'reports' ? "bg-[#FFD600] text-black font-extrabold shadow-[0_4px_12px_rgba(255,214,0,0.3)] after:content-[''] after:absolute after:right-4 after:w-1.5 after:h-1.5 after:bg-black after:rounded-full" : ''}`} onClick={() => setActiveMenu('reports')}>
-                                <Icons.AlertTriangle className="w-5 h-5 shrink-0" /> {t.menu.reports}
+                            <button className={`${styles.mypage__menuItem} ${activeMenu === 'membership' ? styles.active : ''}`} onClick={() => setActiveMenu('membership')}>
+                                <Icons.CreditCard className={styles.mypage__menuIcon} /> {t.menu.membership}
                             </button>
                         </div>
 
-                        <div className="flex flex-col gap-2 relative md:flex-row md:gap-3 md:flex-wrap after:md:hidden after:content-[''] after:block after:h-px after:border-b-2 after:border-dashed after:border-gray-200 after:mt-6 after:mb-2 last:after:hidden">
-                            <button className={`flex items-center gap-3 p-[14px_16px] border-none bg-transparent cursor-pointer text-[15px] font-bold text-gray-600 text-left rounded-xl transition-all duration-200 relative hover:bg-gray-100 hover:text-[#111] ${activeMenu === 'settings' ? "bg-[#FFD600] text-black font-extrabold shadow-[0_4px_12px_rgba(255,214,0,0.3)] after:content-[''] after:absolute after:right-4 after:w-1.5 after:h-1.5 after:bg-black after:rounded-full" : ''}`} onClick={() => setActiveMenu('settings')}>
-                                <Icons.Settings className="w-5 h-5 shrink-0" /> {t.menu.settings}
+                        <div className={styles.mypage__menuGroup}>
+                            <button className={`${styles.mypage__menuItem} ${activeMenu === 'jobs' ? styles.active : ''}`} onClick={() => setActiveMenu('jobs')}>
+                                <Icons.Briefcase className={styles.mypage__menuIcon} /> {t.menu.jobs}
+                            </button>
+                            <button className={`${styles.mypage__menuItem} ${activeMenu === 'inquiries' ? styles.active : ''}`} onClick={() => setActiveMenu('inquiries')}>
+                                <Icons.Mail className={styles.mypage__menuIcon} /> {t.menu.inquiries}
+                            </button>
+                            <button className={`${styles.mypage__menuItem} ${activeMenu === 'reports' ? styles.active : ''}`} onClick={() => setActiveMenu('reports')}>
+                                <Icons.AlertTriangle className={styles.mypage__menuIcon} /> {t.menu.reports}
                             </button>
                         </div>
 
-                        <button className="mt-auto flex items-center gap-2 p-[12px_16px] text-red-500 text-sm font-semibold cursor-pointer bg-transparent border-none transition-all duration-200 hover:underline hover:opacity-80 md:ml-auto" onClick={() => {/* Handle delete */ }}>
+                        <div className={styles.mypage__menuGroup}>
+                            <button className={`${styles.mypage__menuItem} ${activeMenu === 'settings' ? styles.active : ''}`} onClick={() => setActiveMenu('settings')}>
+                                <Icons.Settings className={styles.mypage__menuIcon} /> {t.menu.settings}
+                            </button>
+                        </div>
+
+                        <button className={styles.mypage__deleteLink} onClick={() => {/* Handle delete */ }}>
                             {t.menu.delete} <Icons.LogOut width={16} height={16} />
                         </button>
                     </div>
 
-                    <div className="flex-1 p-[40px_60px] overflow-y-auto bg-white relative md:p-5">
+                    <div className={styles.mypage__content}>
                         {renderContent()}
                     </div>
 
                     {/* Decorations */}
-                    <div className="absolute -bottom-5 right-10 flex gap-1 z-20">
-                        <div className="w-[60px] h-[30px] rounded-[4px_4px_0_0] border-[3px] border-black border-b-0 relative bg-white after:content-[''] after:absolute after:-top-2 after:left-2 after:w-3 after:h-1.5 after:bg-inherit after:border-[3px] after:border-black after:border-b-0 after:rounded-[2px_2px_0_0] after:shadow-[26px_0_0_-3px_inherit,26px_0_0_0_#000]" style={{ backgroundColor: '#FFD600', height: '40px' }}></div>
-                        <div className="w-[60px] h-[30px] rounded-[4px_4px_0_0] border-[3px] border-black border-b-0 relative bg-white after:content-[''] after:absolute after:-top-2 after:left-2 after:w-3 after:h-1.5 after:bg-inherit after:border-[3px] after:border-black after:border-b-0 after:rounded-[2px_2px_0_0] after:shadow-[26px_0_0_-3px_inherit,26px_0_0_0_#000]" style={{ backgroundColor: '#3b82f6', height: '30px' }}></div>
-                        <div className="w-[60px] h-[30px] rounded-[4px_4px_0_0] border-[3px] border-black border-b-0 relative bg-white after:content-[''] after:absolute after:-top-2 after:left-2 after:w-3 after:h-1.5 after:bg-inherit after:border-[3px] after:border-black after:border-b-0 after:rounded-[2px_2px_0_0] after:shadow-[26px_0_0_-3px_inherit,26px_0_0_0_#000]" style={{ backgroundColor: '#ef4444', height: '50px' }}></div>
+                    <div className={styles.mypage__decorations}>
+                        <div className={styles.mypage__decorationsBrick} style={{ backgroundColor: '#FFD600', height: '40px' }}></div>
+                        <div className={styles.mypage__decorationsBrick} style={{ backgroundColor: '#3b82f6', height: '30px' }}></div>
+                        <div className={styles.mypage__decorationsBrick} style={{ backgroundColor: '#ef4444', height: '50px' }}></div>
                     </div>
                 </div>
             </div>
@@ -723,57 +726,57 @@ export default function MyPage() {
 
             {/* 작업 메뉴 모달 */}
             {menuJob && (
-                <div className="fixed top-0 left-0 w-screen h-screen bg-black/60 z-[1500] flex justify-center items-center animate-[fadeIn_0.2s_ease]" onClick={() => setMenuJob(null)}>
-                    <div className="relative w-[90%] max-w-[400px] bg-white rounded-[32px] border-[3px] border-black shadow-[0_40px_100px_rgba(0,0,0,0.2)] overflow-hidden animate-[slideUp_0.3s_ease]" onClick={e => e.stopPropagation()}>
+                <div className={styles.mypage__modalOverlay} onClick={() => setMenuJob(null)}>
+                    <div className={styles.mypage__menuModal} onClick={e => e.stopPropagation()}>
                         <button
-                            className="absolute top-4 right-4 w-11 h-11 border-none bg-transparent cursor-pointer text-2xl font-bold flex items-center justify-center transition-all duration-200 text-black z-100 hover:rotate-90 hover:scale-110 text-black"
+                            className={`${styles.mypage__closeBtn} ${styles.dark}`}
                             onClick={() => setMenuJob(null)}
                         >
                             ✕
                         </button>
-                        <div className="flex items-center gap-4 p-6 border-b-2 border-[#f0f0f0]" style={{ paddingRight: '60px' }}>
+                        <div className={styles.mypage__menuHeader} style={{ paddingRight: '60px' }}>
                             <img
                                 src={menuJob.sourceImageUrl || "/placeholder.png"}
                                 alt={menuJob.title}
-                                className="w-20 h-20 rounded-xl object-cover border-2 border-black"
+                                className={styles.mypage__menuThumb}
                             />
-                            <div className="flex-1">
-                                <h3 className="text-lg font-bold m-[0_0_4px_0] text-black">{menuJob.title || t.mypage.noTitle}</h3>
-                                <span className="text-[13px] text-[#888]">{formatDate(menuJob.createdAt)}</span>
+                            <div className={styles.mypage__menuInfo}>
+                                <h3 className={styles.mypage__menuTitle}>{menuJob.title || t.mypage.noTitle}</h3>
+                                <span className={styles.mypage__menuDate}>{formatDate(menuJob.createdAt)}</span>
                             </div>
                         </div>
-                        <div className="flex flex-col p-4 gap-2">
+                        <div className={styles.mypage__menuList}>
                             <button
-                                className="flex items-center gap-3 p-[16px_20px] bg-[#FFD600] border-2 border-black rounded-2xl text-[15px] font-bold text-[#333] cursor-pointer transition-all duration-200 text-left shadow-[0_4px_0_#000] hover:bg-[#FFD600] hover:translate-y-[2px] hover:shadow-[0_2px_0_#000] disabled:opacity-40 disabled:cursor-not-allowed"
+                                className={`${styles.mypage__menuItem2} ${styles.primary}`}
                                 onClick={() => handleMenuAction('preview')}
                                 disabled={!menuJob.sourceImageUrl}
                             >
-                                <Icons.Search className="w-5 h-5 flex items-center justify-center" />
+                                <Icons.Search className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.previewImage}</span>
                             </button>
                             <button
-                                className="flex items-center gap-3 p-[16px_20px] bg-[#FFD600] border-2 border-black rounded-2xl text-[15px] font-bold text-[#333] cursor-pointer transition-all duration-200 text-left shadow-[0_4px_0_#000] hover:bg-[#FFD600] hover:translate-y-[2px] hover:shadow-[0_2px_0_#000] disabled:opacity-40 disabled:cursor-not-allowed"
+                                className={`${styles.mypage__menuItem2} ${styles.primary}`}
                                 onClick={() => handleMenuAction('view')}
                                 disabled={!menuJob.ldrUrl}
                             >
-                                <Icons.Layers className="w-5 h-5 flex items-center justify-center" />
+                                <Icons.Layers className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.viewBlueprint}</span>
                             </button>
-                            <div className="h-px bg-[#eee] my-2" />
+                            <div className={styles.mypage__menuDivider} />
                             <button
-                                className="flex items-center gap-3 p-[16px_20px] bg-[#f8f9fa] border border-[#eee] rounded-2xl text-[15px] font-bold text-[#333] cursor-pointer transition-all duration-200 text-left hover:bg-black hover:text-white hover:translate-x-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                                className={styles.mypage__menuItem2}
                                 onClick={() => handleMenuAction('glb')}
                                 disabled={!menuJob.glbUrl}
                             >
-                                <Icons.DownloadImage className="w-5 h-5 flex items-center justify-center" />
+                                <Icons.DownloadImage className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.glbFile}</span>
                             </button>
                             <button
-                                className="flex items-center gap-3 p-[16px_20px] bg-[#f8f9fa] border border-[#eee] rounded-2xl text-[15px] font-bold text-[#333] cursor-pointer transition-all duration-200 text-left hover:bg-black hover:text-white hover:translate-x-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                                className={styles.mypage__menuItem2}
                                 onClick={() => handleMenuAction('ldr')}
                                 disabled={!menuJob.ldrUrl}
                             >
-                                <Icons.DownloadFile className="w-5 h-5 flex items-center justify-center" />
+                                <Icons.DownloadFile className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.ldrFile}</span>
                             </button>
                             <div className="h-px bg-[#eee] my-2" />
@@ -792,9 +795,9 @@ export default function MyPage() {
 
             {/* 이미지 원본 보기 모달 */}
             {previewImage && (
-                <div className="fixed top-0 left-0 w-screen h-screen bg-black/90 z-[2000] flex justify-center items-center cursor-zoom-out animate-[fadeIn_0.2s_ease]" onClick={() => setPreviewImage(null)}>
+                <div className={styles.mypage__imagePreviewOverlay} onClick={() => setPreviewImage(null)}>
                     <button
-                        className="absolute top-5 right-5 w-12 h-12 rounded-full bg-transparent text-white border-none text-2xl font-bold cursor-pointer z-100 flex justify-center items-center transition-all duration-200 hover:rotate-90 hover:scale-110"
+                        className={styles.mypage__imagePreviewClose}
                         onClick={() => setPreviewImage(null)}
                     >
                         ✕
@@ -802,7 +805,7 @@ export default function MyPage() {
                     <img
                         src={previewImage}
                         alt="Original"
-                        className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-[0_20px_60px_rgba(0,0,0,0.5)] cursor-default"
+                        className={styles.mypage__imagePreviewImg}
                         onClick={(e) => e.stopPropagation()}
                     />
                 </div>
@@ -810,12 +813,12 @@ export default function MyPage() {
 
             {/* 3D 뷰어 모달 */}
             {selectedJob && (
-                <div className="fixed top-0 left-0 w-screen h-screen bg-black/60 z-[1500] flex justify-center items-center animate-[fadeIn_0.2s_ease]">
-                    <div className="relative w-[90vw] max-w-[900px] h-[80vh] bg-white rounded-3xl border-[3px] border-black shadow-[0_20px_60px_rgba(0,0,0,0.4)] overflow-hidden animate-[slideUp_0.3s_ease]">
-                        <button className="absolute top-4 right-4 w-11 h-11 border-none bg-transparent cursor-pointer text-2xl font-bold flex items-center justify-center transition-all duration-200 z-50 hover:rotate-90 hover:scale-110 text-black" onClick={() => setSelectedJob(null)}>
+                <div className={styles.mypage__modalOverlay}>
+                    <div className={styles.mypage__modalContent}>
+                        <button className={`${styles.mypage__closeBtn} ${styles.dark}`} onClick={() => setSelectedJob(null)}>
                             ✕
                         </button>
-                        <div className="w-full h-full bg-[#f8f9fa]">
+                        <div className={styles.mypage__viewerContainer}>
                             {selectedJob.ldrUrl ? (
                                 <KidsLdrPreview url={selectedJob.ldrUrl} stepMode={true} />
                             ) : null}
