@@ -102,6 +102,7 @@ export default function UpgradeModal({ isOpen, onClose }: Props) {
     return (
         <div className={styles.upgradeModalOverlay} onClick={onClose}>
             <div className={styles.upgradeModal} onClick={(e) => e.stopPropagation()}>
+                <button className={styles.upgradeModal__closeBtn} onClick={onClose} aria-label="close">✕</button>
                 <h2 className={styles.upgradeModal__title}>{t.upgradeModal.title}</h2>
 
                 <p className={styles.upgradeModal__message}>

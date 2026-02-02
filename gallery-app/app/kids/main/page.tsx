@@ -64,6 +64,7 @@ function KidsPageContent() {
     const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
     const [ldrUrl, setLdrUrl] = useState<string | null>(null);
     const [glbUrl, setGlbUrl] = useState<string | null>(null);
+    const [jobThumbnailUrl, setJobThumbnailUrl] = useState<string | null>(null);
     const [jobId, setJobId] = useState<string | null>(null);
     const [showToast, setShowToast] = useState(false);
     const [debugLog, setDebugLog] = useState<string>("");
@@ -115,6 +116,7 @@ function KidsPageContent() {
                 const presign = await getPresignUrl(rawFile.type, rawFile.name);
                 console.log("[KidsPage] ✅ Step 1 완료 | uploadUrl:", presign.uploadUrl?.substring(0, 80) + "...");
                 console.log("[KidsPage]    publicUrl:", presign.publicUrl);
+                if (alive) setJobThumbnailUrl(presign.publicUrl);
 
                 // 2. S3에 직접 업로드
                 setDebugLog(t.kids.generate.uploading);
@@ -229,6 +231,7 @@ function KidsPageContent() {
                     if (statusData.status === "DONE") {
                         console.log("[KidsPage] ✅ Job DONE! | ldrUrl:", statusData.ldrUrl);
                         finalData = statusData;
+                        if (alive && statusData.glbUrl) setGlbUrl(statusData.glbUrl);
                         setShowToast(true);
                         setTimeout(() => setShowToast(false), 5000);
                         break;
@@ -364,8 +367,9 @@ function KidsPageContent() {
                 content: "Made with Brickers Kids",
                 tags: ["Kids", "Lego", "AI"],
                 ldrUrl: ldrUrl,
+                sourceImageUrl: jobThumbnailUrl || undefined,
+                glbUrl: glbUrl || undefined,
                 visibility: "PUBLIC",
-                // thumbnailUrl은 백엔드에서 생성하거나 생략 가능
             });
             alert(t.kids.steps.galleryModal.success || "갤러리에 등록되었습니다!");
             setIsGalleryModalOpen(false);
@@ -461,7 +465,8 @@ function KidsPageContent() {
                 {isColorModalOpen && (
                     <div className="colorModalOverlay" onClick={() => setIsColorModalOpen(false)}>
                         <div className="colorModal" onClick={(e) => e.stopPropagation()}>
-                            <h3 className="colorModal__title">🎨 색상 테마 선택</h3>
+                            <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)} aria-label="close">✕</button>
+                            <h3 className="colorModal__title">🎨 {t.kids.steps?.colorThemeTitle || "색상 테마 선택"}</h3>
 
                             <div className="colorModal__themes">
                                 {colorThemes.length === 0 ? (
@@ -503,6 +508,7 @@ function KidsPageContent() {
                 {isGalleryModalOpen && (
                     <div className="colorModalOverlay" onClick={() => setIsGalleryModalOpen(false)}>
                         <div className="colorModal" onClick={(e) => e.stopPropagation()}>
+                            <button className="modalCloseBtn" onClick={() => setIsGalleryModalOpen(false)} aria-label="close">✕</button>
                             <h3 className="colorModal__title">갤러리에 등록하기</h3>
                             <div style={{ marginBottom: '24px' }}>
                                 <input

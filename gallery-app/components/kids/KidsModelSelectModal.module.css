@@ -38,15 +38,24 @@
 
 .close {
     position: absolute;
-    right: 12px;
-    top: 12px;
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    border: 0;
+    right: 16px;
+    top: 16px;
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
     cursor: pointer;
-    background: rgba(0, 0, 0, 0.08);
-    font-weight: 900;
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #000;
+}
+
+.close:hover {
+    transform: rotate(90deg) scale(1.1);
 }
 
 .grid {

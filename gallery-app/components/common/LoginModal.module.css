@@ -20,6 +20,30 @@
     align-items: center;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+}
+
+.closeBtn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #000;
+    z-index: 100;
+}
+
+.closeBtn:hover {
+    transform: rotate(90deg) scale(1.1);
 }
 
 @keyframes modalPop {
@@ -27,6 +51,7 @@
         transform: scale(0.9);
         opacity: 0;
     }
+
     100% {
         transform: scale(1);
         opacity: 1;

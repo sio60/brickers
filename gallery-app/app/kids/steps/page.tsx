@@ -371,6 +371,8 @@ function KidsStepPageContent() {
                 tags: ["Kids", "Brick"],
                 thumbnailUrl: jobThumbnailUrl || undefined,
                 ldrUrl: ldrUrl || undefined,
+                sourceImageUrl: jobThumbnailUrl || undefined,
+                glbUrl: glbUrl || undefined,
                 visibility: "PUBLIC",
             });
             alert(t.kids.steps.galleryModal.success);
@@ -537,7 +539,7 @@ function KidsStepPageContent() {
                 </div>
 
                 {/* Canvas Container */}
-                <div style={{ flex: 1, position: "relative", background: "#f0f0f0", display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
+                <div style={{ flex: 1, position: "relative", background: "#ffffff", display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px' }}>
                     <div className="kidsStep__card">
                         {loading && (
                             <div style={{
@@ -634,6 +636,7 @@ function KidsStepPageContent() {
             {isColorModalOpen && (
                 <div className="galleryModalOverlay" onClick={() => setIsColorModalOpen(false)}>
                     <div className="galleryModal colorModal" onClick={(e) => e.stopPropagation()}>
+                        <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)} aria-label="close">✕</button>
                         <h3 className="galleryModal__title">
                             🎨 {t.kids.steps.colorThemeTitle || "색상 테마 선택"}
                         </h3>
