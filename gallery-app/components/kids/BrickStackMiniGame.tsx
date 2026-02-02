@@ -1,18 +1,19 @@
-// components/kids/BrickStackMiniGame.tsx
-import "./BrickStackMiniGame.css";
-import { useCallback, useEffect, useRef, useState } from "react";
+'use client';
+
+import "./BrickStckMiniGame.css";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 import { useLanguage } from "../../contexts/LanguageContext";
 
-// ── 게임 설정 ──
-const BOARD_WIDTH = 6;       // 월드 유닛 기준 보드 너비
-const BRICK_HEIGHT = 0.4;    // 브릭 높이
-const INITIAL_BRICK_WIDTH = 2.5;  // 초기 브릭 너비
-const MOVE_SPEED = 3.5;      // 좌우 이동 속도
-const FALL_SPEED = 12;       // 낙하 속도
-const FLOOR_Y = -3;          // 바닥 Y 위치
+// --- Game Settings ---
+const BOARD_WIDTH = 6;       // Board width in world units
+const BRICK_HEIGHT = 0.4;    // Brick height
+const INITIAL_BRICK_WIDTH = 2.5;  // Initial brick width
+const MOVE_SPEED = 3.5;      // Movement speed
+const FALL_SPEED = 12;       // Falling speed
+const FLOOR_Y = -3;          // Floor Y position
 
 type Brick = {
     id: string;
@@ -35,37 +36,30 @@ type FallingPiece = {
 };
 
 type GameState = {
-    x: number;           // 활성 브릭 X 위치
-    y: number;           // 활성 브릭 Y 위치
-    width: number;       // 활성 브릭 너비
-    dir: 1 | -1;         // 이동 방향
-
-    phase: 'moving' | 'falling' | 'landed';  // 상태 명확히 구분
-    targetY: number;     // 착지 목표 Y
+    x: number;
+    y: number;
+    width: number;
+    dir: 1 | -1;
+    phase: 'moving' | 'falling' | 'landed';
+    targetY: number;
 };
 
 const COLORS = [
-    "#ef4444", // red
-    "#f97316", // orange
-    "#eab308", // yellow
-    "#22c55e", // green
-    "#3b82f6", // blue
-    "#8b5cf6", // violet
-    "#ec4899", // pink
+    "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899",
 ];
 
 function getRandomColor() {
     return COLORS[Math.floor(Math.random() * COLORS.length)];
 }
 
-// ── 떨어지는 조각 컴포넌트 ──
+// --- Falling Piece Component ---
 function FallingPieceComponent({ piece }: { piece: FallingPiece }) {
     const meshRef = useRef<THREE.Mesh>(null);
     const stateRef = useRef({ ...piece });
 
     useFrame((_, dt) => {
         const s = stateRef.current;
-        s.velocityY -= 20 * dt; // 중력
+        s.velocityY -= 20 * dt;
         s.x += s.velocityX * dt;
         s.y += s.velocityY * dt;
         s.rotation += s.rotationSpeed * dt;
@@ -89,7 +83,7 @@ function FallingPieceComponent({ piece }: { piece: FallingPiece }) {
     );
 }
 
-// ── 메인 씬 ──
+// --- Main Scene ---
 function Scene({
     bricks,
     stateRef,
@@ -109,11 +103,7 @@ function Scene({
         const state = stateRef.current;
 
         if (state.phase === 'moving') {
-
-            const halfBoard = BOARD_WIDTH / 2;
-            const halfWidth = state.width / 2;
-            const maxX = halfBoard - halfWidth;
-
+            const maxX = (BOARD_WIDTH - state.width) / 2;
             state.x += state.dir * MOVE_SPEED * dt;
 
             if (state.x >= maxX) {
@@ -124,7 +114,6 @@ function Scene({
                 state.dir = 1;
             }
         } else if (state.phase === 'falling') {
-
             state.y -= FALL_SPEED * dt;
 
             if (state.y <= state.targetY) {
@@ -134,12 +123,10 @@ function Scene({
             }
         }
 
-
         if (activeMesh.current) {
             activeMesh.current.position.set(state.x, state.y, 0);
         }
     });
-
 
     const stackHeight = bricks.length * BRICK_HEIGHT;
 
@@ -148,7 +135,6 @@ function Scene({
             <ambientLight intensity={0.6} />
             <pointLight position={[10, 10, 10]} intensity={1} castShadow />
             <directionalLight position={[-3, 5, -3]} intensity={0.3} />
-
 
             <mesh position={[0, FLOOR_Y - 0.2, 0]} receiveShadow>
                 <boxGeometry args={[BOARD_WIDTH + 1, 0.4, 3]} />
@@ -169,7 +155,6 @@ function Scene({
                 </RoundedBox>
             ))}
 
-
             {stateRef.current.phase !== 'landed' && (
                 <RoundedBox
                     ref={activeMesh as any}
@@ -184,7 +169,6 @@ function Scene({
                 </RoundedBox>
             )}
 
-
             <mesh position={[0, stackHeight + FLOOR_Y + 3, 0]} onPointerDown={onDrop}>
                 <boxGeometry args={[BOARD_WIDTH + 4, 15, 4]} />
                 <meshBasicMaterial transparent opacity={0} />
@@ -192,7 +176,6 @@ function Scene({
         </>
     );
 }
-
 
 function CameraFollow({ stackHeight }: { stackHeight: number }) {
     useFrame((state) => {
@@ -219,12 +202,11 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
     const [gameOver, setGameOver] = useState(false);
     const [currentColor, setCurrentColor] = useState(getRandomColor());
     const [, forceUpdate] = useState(0);
+    const triggerUpdate = useCallback(() => forceUpdate(n => n + 1), []);
 
-
-    const getSpawnY = useCallback((brickCount: number) => {
-        return FLOOR_Y + BRICK_HEIGHT / 2 + brickCount * BRICK_HEIGHT + 3;
+    const getSpawnY = useCallback((count: number) => {
+        return FLOOR_Y + BRICK_HEIGHT / 2 + count * BRICK_HEIGHT + 3;
     }, []);
-
 
     const stateRef = useRef<GameState>({
         x: 0,
@@ -234,7 +216,6 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
         phase: 'moving',
         targetY: FLOOR_Y + BRICK_HEIGHT / 2,
     });
-
 
     const resetGame = useCallback(() => {
         setBricks([]);
@@ -250,24 +231,36 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
             phase: 'moving',
             targetY: FLOOR_Y + BRICK_HEIGHT / 2,
         };
-        forceUpdate((n) => n + 1);
-    }, [getSpawnY]);
+        triggerUpdate();
+    }, [getSpawnY, triggerUpdate]);
 
-ev
     useEffect(() => {
         if (fallingPieces.length === 0) return;
         const timer = setTimeout(() => {
-            setFallingPieces((prev) => prev.slice(5)); // Keep list manageable
+            setFallingPieces((prev) => prev.slice(5));
         }, 3000);
         return () => clearTimeout(timer);
     }, [fallingPieces]);
 
+    const spawnNext = useCallback((width: number, count: number) => {
+        setTimeout(() => {
+            const nextColor = getRandomColor();
+            setCurrentColor(nextColor);
+            stateRef.current = {
+                x: -BOARD_WIDTH / 2 + (Math.random() * 0.5),
+                y: getSpawnY(count),
+                width: width,
+                dir: Math.random() > 0.5 ? 1 : -1,
+                phase: 'moving',
+                targetY: FLOOR_Y + BRICK_HEIGHT / 2 + count * BRICK_HEIGHT,
+            };
+            triggerUpdate();
+        }, 100);
+    }, [getSpawnY, triggerUpdate]);
 
-    // 착지 완료 핸들러 (컷팅 로직 포함)
     const onLanded = useCallback(() => {
         const state = stateRef.current;
 
-        // 1. 첫 번째 브릭은 항상 성공
         if (bricks.length === 0) {
             const newBrick: Brick = {
                 id: `brick-${Date.now()}`,
@@ -278,18 +271,14 @@ ev
             };
             setBricks([newBrick]);
             setScore(1);
-            spawnNext(state.width, updatedCount => updatedCount);
-
+            spawnNext(state.width, 1);
             return;
         }
 
-        // 2. 이전 브릭과 겹침 판정
         const topBrick = bricks[bricks.length - 1];
-
-
-        // Snap: 아주 미세한 차이는 정렬해줌 (매너 판정)
         let finalX = state.x;
-   finalX = topBrick.x;
+        if (Math.abs(state.x - topBrick.x) < 0.1) {
+            finalX = topBrick.x;
         }
 
         const topLeft = topBrick.x - topBrick.width / 2;
@@ -301,10 +290,8 @@ ev
         const overlapRight = Math.min(topRight, dropRight);
         const overlapWidth = overlapRight - overlapLeft;
 
-        // 3. 겹치지 않으면 게임 오버
         if (overlapWidth <= 0) {
             setGameOver(true);
-
             setFallingPieces((prev) => [
                 ...prev,
                 {
@@ -322,18 +309,12 @@ ev
             return;
         }
 
-        // 4. 잘리는 조각 처리
         const newFalling: FallingPiece[] = [];
-        const isLeftMiss = dropLeft < overlapLeft;
-        const isRightMiss = dropRight > overlapRight;
-
-        if (isLeftMiss) {
-
+        if (dropLeft < overlapLeft) {
             const cutWidth = overlapLeft - dropLeft;
-            const cutX = dropLeft + cutWidth / 2;
             newFalling.push({
-                id: `cut-left-${Date.now()}`,
-                x: cutX,
+                id: `cut-l-${Date.now()}`,
+                x: dropLeft + cutWidth / 2,
                 y: state.y,
                 width: cutWidth,
                 velocityX: -2,
@@ -343,13 +324,11 @@ ev
                 color: currentColor,
             });
         }
-
-        if (isRightMiss) {
+        if (dropRight > overlapRight) {
             const cutWidth = dropRight - overlapRight;
-            const cutX = overlapRight + cutWidth / 2;
             newFalling.push({
-                id: `cut-right-${Date.now()}`,
-                x: cutX,
+                id: `cut-r-${Date.now()}`,
+                x: overlapRight + cutWidth / 2,
                 y: state.y,
                 width: cutWidth,
                 velocityX: 2,
@@ -364,12 +343,9 @@ ev
             setFallingPieces((prev) => [...prev, ...newFalling]);
         }
 
-
-        // 5. 겹친 부분만 브릭으로 추가
-        const overlapCenterX = (overlapLeft + overlapRight) / 2;
         const newBrick: Brick = {
             id: `brick-${Date.now()}`,
-            x: overlapCenterX,
+            x: (overlapLeft + overlapRight) / 2,
             y: state.targetY,
             width: overlapWidth,
             color: currentColor,
@@ -381,24 +357,7 @@ ev
             return updated;
         });
         setScore((s) => s + 1);
-    }, [bricks, currentColor]);
-
-    // 다음 브릭 생성 헬퍼
-    const spawnNext = (width: number, count: number) => {
-        setTimeout(() => {
-            const nextColor = getRandomColor();
-            setCurrentColor(nextColor);
-            stateRef.current = {
-                x: -BOARD_WIDTH / 2 + (Math.random() * 0.5), // 약간의 랜덤성
-                y: getSpawnY(count),
-                width: width,
-                dir: Math.random() > 0.5 ? 1 : -1,
-                phase: 'moving',
-                targetY: FLOOR_Y + BRICK_HEIGHT / 2 + count * BRICK_HEIGHT,
-            };
-            forceUpdate((n) => n + 1);
-        }, 100);
-    };
+    }, [bricks, currentColor, spawnNext]);
 
     const onDrop = useCallback(() => {
         if (gameOver) return;
@@ -406,9 +365,8 @@ ev
         if (state.phase !== 'moving') return;
 
         state.phase = 'falling';
-        forceUpdate((n) => n + 1);
-    }, [gameOver]);
-
+        triggerUpdate();
+    }, [gameOver, triggerUpdate]);
 
     const stackHeight = bricks.length * BRICK_HEIGHT;
 
