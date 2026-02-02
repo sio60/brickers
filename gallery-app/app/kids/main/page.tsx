@@ -361,7 +361,7 @@ function KidsPageContent() {
                         <div className="resultTitle">{t.kids.generate.ready}</div>
                         <div className="resultCard">
                             <div className="viewer3d">
-                                <KidsLdrPreview url={ldrUrl} />
+                                <KidsLdrPreview key={ldrUrl} url={ldrUrl} />
                             </div>
                         </div>
 
