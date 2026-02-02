@@ -263,7 +263,7 @@ export default function GalleryDetailClient({ item }: Props) {
                             <div className="flex items-center gap-6">
                                 <button
                                     onClick={handleLikeToggle}
-                                    className={`flex flex-col items-center gap-1 group transition-all ${isLiked ? 'scale-110' : 'hover:scale-105'}`}
+                                    className="flex flex-col items-center gap-1 group transition-all"
                                 >
                                     <div className="flex items-center justify-center transition-all">
                                         <Image
@@ -279,7 +279,7 @@ export default function GalleryDetailClient({ item }: Props) {
 
                                 <button
                                     onClick={handleBookmarkToggle}
-                                    className={`flex flex-col items-center gap-1 group transition-all ${isBookmarked ? 'scale-110' : 'hover:scale-105'}`}
+                                    className="flex flex-col items-center gap-1 group transition-all"
                                 >
                                     <div className="flex items-center justify-center transition-all">
                                         <Image
@@ -295,7 +295,7 @@ export default function GalleryDetailClient({ item }: Props) {
 
                                 <button
                                     onClick={() => alert('공유 기능 준비 중')}
-                                    className="flex flex-col items-center gap-1 group hover:scale-105 transition-all ml-auto"
+                                    className="flex flex-col items-center gap-1 group transition-all ml-auto"
                                 >
                                     <div className="flex items-center justify-center transition-all">
                                         <Image src="/icons/share.png" alt="Share" width={22} height={22} className="opacity-60" />
