@@ -39,6 +39,9 @@ export default function GalleryDetailClient({ item }: Props) {
     // View State
     const [activeTab, setActiveTab] = useState<'LDR' | 'GLB' | 'IMG'>('IMG');
 
+    // Recommendations State
+    const [recommendations, setRecommendations] = useState<GalleryItem[]>([]);
+
     useEffect(() => {
         // Increment view count
         fetch(`/api/gallery/${item.id}/view`, { method: 'POST' }).catch(console.error);
@@ -73,6 +76,19 @@ export default function GalleryDetailClient({ item }: Props) {
             } catch (error) { console.error(error); }
         };
         fetchDetail();
+
+        // Fetch recommendations (latest items)
+        const fetchRecommendations = async () => {
+            try {
+                const res = await fetch(`/api/gallery?page=0&size=12&sort=latest`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const filtered = (data.content || []).filter((i: GalleryItem) => i.id !== item.id);
+                    setRecommendations(filtered.slice(0, 10));
+                }
+            } catch (error) { console.error("[Recs] Fetch error:", error); }
+        };
+        fetchRecommendations();
 
         return () => clearInterval(pollInterval);
     }, [item.id, authFetch]);
@@ -130,7 +146,7 @@ export default function GalleryDetailClient({ item }: Props) {
     };
 
     return (
-        <div className="gallery-layout w-full max-w-[1200px] mx-auto my-6 flex h-[calc(100vh-160px)] gap-3 px-4 relative z-50">
+        <div className="gallery-layout w-full max-w-[1440px] mx-auto my-6 flex h-[calc(100vh-160px)] gap-3 px-4 relative z-50">
             {/* 1. Left Sidebar - View Modes */}
             <div className="w-64 bg-[#1a1a1a] text-white rounded-3xl overflow-hidden flex flex-col py-6 shrink-0 relative z-20 shadow-2xl">
                 <h2 className="text-xl font-bold mb-6 px-8 tracking-wider">BRICKERS</h2>
@@ -220,12 +236,12 @@ export default function GalleryDetailClient({ item }: Props) {
                         )}
 
                         {activeTab === 'IMG' && (
-                            item.sourceImageUrl ? (
+                            (item.sourceImageUrl || item.thumbnailUrl) ? (
                                 <div className="absolute inset-0 flex items-center justify-center bg-gray-100 p-0">
                                     <div className="relative w-full h-full max-w-full max-h-full">
                                         <Image
-                                            src={item.sourceImageUrl}
-                                            alt="Original Source"
+                                            src={item.sourceImageUrl || item.thumbnailUrl}
+                                            alt="Project Image"
                                             fill
                                             className="object-contain" // Maintain aspect ratio
                                         />
@@ -275,7 +291,7 @@ export default function GalleryDetailClient({ item }: Props) {
                                             <path
                                                 strokeLinecap="round"
                                                 strokeLinejoin="round"
-                                                d="M14 9l-1.154-4.832A2.212 2.212 0 0010.697 2.5a2.212 2.212 0 00-2.149 2.149v4.351H5.432a2.33 2.33 0 00-2.332 2.332c0 .942.553 1.758 1.354 2.138-.113.385-.175.792-.175 1.213 0 .762.2 1.478.553 2.1-.2.433-.314.914-.314 1.424 0 .866.326 1.656.862 2.253.536.597 1.272.96 2.088.96h7.5c2.209 0 4-1.791 4-4v-5c0-1.105-.895-2-2-2h-3z"
+                                                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
                                             />
                                         </svg>
                                     </div>
@@ -359,6 +375,64 @@ export default function GalleryDetailClient({ item }: Props) {
                                 {t.detail.post}
                             </button>
                         </div>
+                    </div>
+                </div>
+
+                {/* 4. Recommendation Sidebar */}
+                <div className="w-[260px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10 rounded-r-3xl overflow-hidden">
+                    <div className="p-5 border-b border-gray-100 bg-gray-50/30">
+                        <h3 className="text-sm font-black text-gray-900 tracking-tight italic uppercase">
+                            {t.main.galleryList.allCreations}
+                        </h3>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar">
+                        {recommendations.length > 0 ? (
+                            recommendations.map((rec) => {
+                                const safeTitle = rec.title.replace(/\s+/g, '-').replace(/[^\w\-\uAC00-\uD7A3]/g, '');
+                                const recSlug = `${safeTitle}-${rec.id}`;
+                                return (
+                                    <button
+                                        key={rec.id}
+                                        onClick={() => router.push(`/gallery/${recSlug}`)}
+                                        className="group text-left flex flex-col gap-2 p-2 rounded-2xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-100"
+                                    >
+                                        <div className="relative aspect-square w-full bg-[#f9f9f9] rounded-xl overflow-hidden border border-gray-100">
+                                            {(rec.sourceImageUrl || rec.thumbnailUrl) ? (
+                                                <Image
+                                                    src={rec.sourceImageUrl || rec.thumbnailUrl}
+                                                    alt={rec.title}
+                                                    fill
+                                                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                                />
+                                            ) : (
+                                                <div className="absolute inset-0 flex items-center justify-center text-[10px] text-gray-300 font-bold uppercase">No Img</div>
+                                            )}
+                                        </div>
+                                        <div className="px-1">
+                                            <h4 className="text-[11px] font-black text-gray-900 line-clamp-1 mb-0.5 tracking-tight group-hover:text-yellow-600 transition-colors">
+                                                {rec.title}
+                                            </h4>
+                                            <p className="text-[9px] font-bold text-gray-400">@{rec.authorNickname || 'Anonymous'}</p>
+                                        </div>
+                                    </button>
+                                );
+                            })
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-20 text-center opacity-20 grayscale">
+                                <div className="text-4xl mb-2">📦</div>
+                                <div className="text-[10px] font-black uppercase tracking-widest">Loading...</div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="p-4 border-t border-gray-50 bg-gray-50/20">
+                        <button
+                            onClick={() => router.push('/gallery')}
+                            className="w-full py-3 rounded-xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all"
+                        >
+                            {t.kids.steps.back}
+                        </button>
                     </div>
                 </div>
             </div>

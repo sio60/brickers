@@ -13,6 +13,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { registerToGallery } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
+import BackgroundBricks from "@/components/BackgroundBricks";
 import './KidsStepPage.css';
 
 // SSR 제외
@@ -389,232 +390,253 @@ function KidsStepPageContent() {
     const modelUrlToUse = isPreviewMode ? undefined : currentOverride;
 
     return (
-        <div style={{ minHeight: "100vh", background: "#f5f5f5", display: "flex" }}>
-            {/* Sidebar */}
+        <div style={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
+            {/* 3D Background Bricks */}
+            <BackgroundBricks />
+
+            {/* Content Container - Relative to center children */}
             <div style={{
-                width: 280,
-                background: "#1a1a1a",
-                color: "#fff",
+                position: "relative",
+                zIndex: 1,
+                width: "100%",
+                height: "100vh",
                 display: "flex",
                 flexDirection: "column",
-                padding: "24px 16px",
-                flexShrink: 0
+                alignItems: "center",
+                justifyContent: "center"
             }}>
-                {/* Back Button */}
-                <button
-                    onClick={() => router.back()}
-                    style={{
-                        alignSelf: "flex-start",
-                        marginBottom: 32,
-                        background: "rgba(255,255,255,0.1)",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: 8,
-                        padding: "8px 16px",
-                        cursor: "pointer",
-                        fontSize: "0.9rem",
-                        fontWeight: 600
-                    }}
-                >
-                    ← {t.kids.steps.back}
-                </button>
-
-                <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: 24, paddingLeft: 8 }}>
-                    BRICKERS
-                </h2>
-
-                {/* Categories */}
-                <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.85rem", color: "#888", fontWeight: 600 }}>
-                    {t.kids.steps.viewModes}
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {/* Floating Sidebar Overlay */}
+                <div style={{
+                    position: "absolute",
+                    top: 24,
+                    left: 24,
+                    zIndex: 20,
+                    width: 260,
+                    background: "rgba(26, 26, 26, 0.8)",
+                    backdropFilter: "blur(12px)",
+                    borderRadius: 32,
+                    color: "#fff",
+                    display: "flex",
+                    flexDirection: "column",
+                    padding: "24px 16px",
+                    border: "2px solid rgba(255, 255, 255, 0.1)",
+                    boxShadow: "0 20px 50px rgba(0, 0, 0, 0.3)"
+                }}>
                     <button
-                        onClick={() => setActiveTab('LDR')}
+                        onClick={() => router.back()}
                         style={{
-                            textAlign: "left",
-                            padding: "12px 16px",
-                            borderRadius: 12,
-                            background: activeTab === 'LDR' ? "#3b82f6" : "transparent",
-                            color: activeTab === 'LDR' ? "#fff" : "#ccc",
-                            fontWeight: activeTab === 'LDR' ? 700 : 500,
+                            alignSelf: "flex-start",
+                            marginBottom: 20,
+                            background: "rgba(255, 255, 255, 0.1)",
+                            color: "#fff",
                             border: "none",
+                            borderRadius: 12,
+                            padding: "8px 16px",
                             cursor: "pointer",
+                            fontSize: "0.85rem",
+                            fontWeight: 700,
                             transition: "all 0.2s"
                         }}
                     >
-                        {t.kids.steps.tabBrick}
+                        ← {t.kids.steps.back}
                     </button>
-                    <button
-                        onClick={() => setActiveTab('GLB')}
-                        style={{
-                            textAlign: "left",
-                            padding: "12px 16px",
-                            borderRadius: 12,
-                            background: activeTab === 'GLB' ? "#3b82f6" : "transparent",
-                            color: activeTab === 'GLB' ? "#fff" : "#ccc",
-                            fontWeight: activeTab === 'GLB' ? 700 : 500,
-                            border: "none",
-                            cursor: "pointer",
-                            transition: "all 0.2s"
-                        }}
-                    >
-                        {t.kids.steps.tabModeling}
-                    </button>
-                </div>
 
-                {/* Registration Section */}
-                <div style={{ marginTop: 'auto', paddingTop: 24, borderTop: '1px solid #333' }}>
-                    <div style={{ marginBottom: 16, paddingLeft: 4, fontSize: "0.85rem", color: "#888", fontWeight: 700 }}>
-                        {t.kids.steps.registerGallery}
+                    <h2 style={{ fontSize: "1.2rem", fontWeight: 800, marginBottom: 20, paddingLeft: 8, letterSpacing: "-0.5px" }}>
+                        BRICKERS
+                    </h2>
+
+                    <div style={{ marginBottom: 10, paddingLeft: 8, fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.4)", fontWeight: 800, textTransform: "uppercase" }}>
+                        {t.kids.steps.viewModes}
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        <input
-                            type="text"
-                            className="kidsStep__sidebarInput"
-                            placeholder={t.kids.steps.galleryModal.placeholder}
-                            value={galleryTitle}
-                            onChange={(e) => setGalleryTitle(e.target.value)}
-                        />
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                         <button
-                            className="kidsStep__sidebarBtn"
-                            onClick={handleRegisterGallery}
-                            disabled={isSubmitting}
+                            onClick={() => setActiveTab('LDR')}
+                            style={{
+                                textAlign: "left",
+                                padding: "14px 16px",
+                                borderRadius: 16,
+                                background: activeTab === 'LDR' ? "#3b82f6" : "transparent",
+                                color: activeTab === 'LDR' ? "#fff" : "#aaa",
+                                fontWeight: 800,
+                                border: "none",
+                                cursor: "pointer",
+                                transition: "all 0.2s"
+                            }}
                         >
-                            {isSubmitting ? "..." : t.kids.steps.registerGallery}
+                            {t.kids.steps.tabBrick}
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('GLB')}
+                            style={{
+                                textAlign: "left",
+                                padding: "14px 16px",
+                                borderRadius: 16,
+                                background: activeTab === 'GLB' ? "#3b82f6" : "transparent",
+                                color: activeTab === 'GLB' ? "#fff" : "#aaa",
+                                fontWeight: 800,
+                                border: "none",
+                                cursor: "pointer",
+                                transition: "all 0.2s"
+                            }}
+                        >
+                            {t.kids.steps.tabModeling}
                         </button>
                     </div>
-                </div>
-            </div>
 
-            {/* Main Content Area */}
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
-                {/* Top Bar inside Content Area */}
-                <div style={{
-                    height: 64,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "0 24px",
-                    background: "#fff",
-                    borderBottom: "1px solid #e5e5e5"
-                }}>
-                    <div style={{ fontSize: "0.9rem", fontWeight: 800, color: "#444" }}>
-                        {activeTab === 'LDR'
-                            ? (isPreviewMode ? t.kids.steps.previewTitle : t.kids.steps.title.replace("{cur}", String(stepIdx + 1)).replace("{total}", String(total)))
-                            : t.kids.steps.originalModel
-                        }
-                    </div>
-                    {/* Action Buttons (Download/Register) - Only show relevant ones */}
-                    {searchParams.get("isPreset") !== "true" && (
-                        <div style={{ display: "flex", gap: 12, position: "relative" }}>
+                    <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
+                        <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "rgba(255, 255, 255, 0.4)", fontWeight: 800, textTransform: "uppercase" }}>
+                            {t.kids.steps.registerGallery}
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                            <input
+                                type="text"
+                                className="kidsStep__sidebarInput"
+                                placeholder={t.kids.steps.galleryModal.placeholder}
+                                value={galleryTitle}
+                                onChange={(e) => setGalleryTitle(e.target.value)}
+                            />
                             <button
-                                className={`kidsStep__actionBtn kidsStep__actionBtn--color`}
-                                onClick={() => setIsColorModalOpen(true)}
+                                className="kidsStep__sidebarBtn"
+                                onClick={handleRegisterGallery}
+                                disabled={isSubmitting}
                             >
-                                {t.kids.steps.changeColor || "색상 변경"}
+                                {isSubmitting ? "..." : t.kids.steps.registerGallery}
                             </button>
+                        </div>
+                    </div>
+                </div>
 
-                            <div style={{ position: "relative" }}>
-                                <button
-                                    className="kidsStep__actionBtn"
-                                    onClick={() => setIsDownloadOpen(!isDownloadOpen)}
-                                >
-                                    Download {isDownloadOpen ? "▲" : "▼"}
-                                </button>
-                                {isDownloadOpen && (
-                                    <div className="kidsStep__downloadMenu">
-                                        <button className="kidsStep__downloadItem" onClick={() => { downloadLdr(); setIsDownloadOpen(false); }}>LDR File</button>
-                                        <button className="kidsStep__downloadItem" onClick={() => { downloadGlb(); setIsDownloadOpen(false); }}>GLB File</button>
-                                        {colorChangedLdrBase64 && (
-                                            <button className="kidsStep__downloadItem" onClick={() => { downloadColorChangedLdr(); setIsDownloadOpen(false); }}>
-                                                Changed LDR
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
+                {/* Top Center Title (Minimal) */}
+                <div style={{
+                    position: "absolute",
+                    top: 32,
+                    zIndex: 20,
+                    background: "rgba(255, 255, 255, 0.9)",
+                    backdropFilter: "blur(8px)",
+                    borderRadius: 999,
+                    padding: "8px 24px",
+                    border: "2px solid #000",
+                    fontSize: "0.9rem",
+                    fontWeight: 900,
+                    color: "#000",
+                    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)"
+                }}>
+                    {activeTab === 'LDR'
+                        ? (isPreviewMode ? t.kids.steps.previewTitle : t.kids.steps.title.replace("{cur}", String(stepIdx + 1)).replace("{total}", String(total)))
+                        : t.kids.steps.originalModel
+                    }
+                </div>
+
+                {/* Top Right Actions */}
+                {searchParams.get("isPreset") !== "true" && (
+                    <div style={{ position: "absolute", top: 32, right: 32, zIndex: 20, display: "flex", gap: 12 }}>
+                        <button
+                            className="kidsStep__actionBtn kidsStep__actionBtn--color"
+                            onClick={() => setIsColorModalOpen(true)}
+                        >
+                            {t.kids.steps.changeColor || "색상 변경"}
+                        </button>
+
+                        <div style={{ position: "relative" }}>
+                            <button
+                                className="kidsStep__actionBtn"
+                                onClick={() => setIsDownloadOpen(!isDownloadOpen)}
+                            >
+                                Download {isDownloadOpen ? "▲" : "▼"}
+                            </button>
+                            {isDownloadOpen && (
+                                <div className="kidsStep__downloadMenu">
+                                    <button className="kidsStep__downloadItem" onClick={() => { downloadLdr(); setIsDownloadOpen(false); }}>LDR File</button>
+                                    <button className="kidsStep__downloadItem" onClick={() => { downloadGlb(); setIsDownloadOpen(false); }}>GLB File</button>
+                                    {colorChangedLdrBase64 && (
+                                        <button className="kidsStep__downloadItem" onClick={() => { downloadColorChangedLdr(); setIsDownloadOpen(false); }}>
+                                            Changed LDR
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Main 3D Card Area */}
+                <div className="kidsStep__card">
+                    {loading && (
+                        <div style={{
+                            position: "absolute", inset: 0, zIndex: 20,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            background: "rgba(255,255,255,0.75)", fontWeight: 900,
+                        }}>
+                            <div className="flex flex-col items-center gap-3">
+                                <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
+                                <span>{t.kids.steps.loading}</span>
                             </div>
                         </div>
                     )}
-                </div>
 
-                {/* Canvas Container */}
-                <div style={{ flex: 1, position: "relative", background: "#ffffff", display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px' }}>
-                    <div className="kidsStep__card">
-                        {loading && (
-                            <div style={{
-                                position: "absolute", inset: 0, zIndex: 10,
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                                background: "rgba(255,255,255,0.75)", fontWeight: 900,
-                                borderRadius: '20px'
-                            }}>
-                                {t.kids.steps.loading}
-                            </div>
-                        )}
-
-                        {activeTab === 'LDR' ? (
-                            <>
-                                <div style={{ position: "absolute", inset: 0 }}>
-                                    <Canvas camera={{ position: [200, -200, 200], fov: 45 }} dpr={[1, 2]}>
-                                        <ambientLight intensity={0.9} />
-                                        <directionalLight position={[3, 5, 2]} intensity={1} />
-                                        <LdrModel
-                                            url={ldrUrl}
-                                            overrideMainLdrUrl={modelUrlToUse}
-                                            onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }}
-                                            onError={() => setLoading(false)}
-                                        />
-                                        <OrbitControls makeDefault enablePan={false} enableZoom />
-                                    </Canvas>
-                                </div>
-
-                                {/* LDR Overlays (Start Button or Step Nav) */}
-                                {isPreviewMode ? (
-                                    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 40, pointerEvents: "none" }}>
-                                        <button
-                                            onClick={() => { setIsPreviewMode(false); setStepIdx(0); }}
-                                            className="kidsStep__startNavBtn"
-                                        >
-                                            {t.kids.steps.startAssembly}
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div style={{ position: "absolute", bottom: 24, right: 32, display: "flex", gap: 16 }}>
-                                        <button
-                                            className="kidsStep__navBtn"
-                                            disabled={!canPrev}
-                                            onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}
-                                        >
-                                            ← {t.kids.steps.prev}
-                                        </button>
-                                        <button
-                                            className="kidsStep__navBtn kidsStep__navBtn--next"
-                                            disabled={!canNext}
-                                            onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}
-                                        >
-                                            {t.kids.steps.next} →
-                                        </button>
-                                    </div>
-                                )}
-                            </>
-                        ) : (
-                            // GLB Viewer
+                    {activeTab === 'LDR' ? (
+                        <>
                             <div style={{ position: "absolute", inset: 0 }}>
-                                <Canvas camera={{ position: [5, 5, 5], fov: 50 }} dpr={[1, 2]}>
-                                    <ambientLight intensity={0.8} />
-                                    <directionalLight position={[5, 10, 5]} intensity={1.5} />
-                                    <Environment preset="city" />
-                                    <Bounds fit clip observe margin={1.2}>
-                                        <Center>
-                                            {glbUrl && <Gltf src={glbUrl} />}
-                                        </Center>
-                                    </Bounds>
+                                <Canvas camera={{ position: [200, -200, 200], fov: 45 }} dpr={[1, 2]}>
+                                    <ambientLight intensity={0.9} />
+                                    <directionalLight position={[3, 5, 2]} intensity={1} />
+                                    <LdrModel
+                                        url={ldrUrl}
+                                        overrideMainLdrUrl={modelUrlToUse}
+                                        onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }}
+                                        onError={() => setLoading(false)}
+                                    />
                                     <OrbitControls makeDefault enablePan={false} enableZoom />
                                 </Canvas>
-                                {!glbUrl && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#888" }}>3D Model not available</div>}
                             </div>
-                        )}
-                    </div>
+
+                            {/* LDR Overlays (Start Button or Step Nav) */}
+                            {isPreviewMode ? (
+                                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 40, pointerEvents: "none" }}>
+                                    <button
+                                        onClick={() => { setIsPreviewMode(false); setStepIdx(0); }}
+                                        className="kidsStep__startNavBtn"
+                                    >
+                                        {t.kids.steps.startAssembly}
+                                    </button>
+                                </div>
+                            ) : (
+                                <div style={{ position: "absolute", bottom: 40, right: 40, display: "flex", gap: 16 }}>
+                                    <button
+                                        className="kidsStep__navBtn"
+                                        disabled={!canPrev}
+                                        onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}
+                                    >
+                                        ← {t.kids.steps.prev}
+                                    </button>
+                                    <button
+                                        className="kidsStep__navBtn kidsStep__navBtn--next"
+                                        disabled={!canNext}
+                                        onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}
+                                    >
+                                        {t.kids.steps.next} →
+                                    </button>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        // GLB Viewer
+                        <div style={{ position: "absolute", inset: 0 }}>
+                            <Canvas camera={{ position: [5, 5, 5], fov: 50 }} dpr={[1, 2]}>
+                                <ambientLight intensity={0.8} />
+                                <directionalLight position={[5, 10, 5]} intensity={1.5} />
+                                <Environment preset="city" />
+                                <Bounds fit clip observe margin={1.2}>
+                                    <Center>
+                                        {glbUrl && <Gltf src={glbUrl} />}
+                                    </Center>
+                                </Bounds>
+                                <OrbitControls makeDefault enablePan={false} enableZoom />
+                            </Canvas>
+                            {!glbUrl && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#888", fontWeight: 700 }}>3D Model not available</div>}
+                        </div>
+                    )}
                 </div>
             </div>
 
