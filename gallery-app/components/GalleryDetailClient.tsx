@@ -87,10 +87,9 @@ export default function GalleryDetailClient({ item }: Props) {
             });
             if (res.ok) {
                 const data = await res.json();
-                const newLiked = data.currentReaction === 'LIKE';
+                const newLiked = data.myReaction === 'LIKE';
                 setIsLiked(newLiked);
-                if (data.likeCount !== undefined) setLikeCount(data.likeCount);
-                else setLikeCount(prev => newLiked ? prev + 1 : prev - 1);
+                setLikeCount(data.likeCount);
             }
         } catch (error) { console.error(error); }
     };
@@ -269,8 +268,8 @@ export default function GalleryDetailClient({ item }: Props) {
                                         <Image
                                             src={isLiked ? "/icons/likefull.png" : "/icons/like.png"}
                                             alt="Like"
-                                            width={24}
-                                            height={24}
+                                            width={isLiked ? 20 : 24}
+                                            height={isLiked ? 20 : 24}
                                             style={isLiked ? {} : { opacity: 0.6 }}
                                         />
                                     </div>
@@ -285,8 +284,8 @@ export default function GalleryDetailClient({ item }: Props) {
                                         <Image
                                             src={isBookmarked ? "/icons/bookmarkfull.png" : "/icons/bookmark.png"}
                                             alt="Bookmark"
-                                            width={24}
-                                            height={24}
+                                            width={isBookmarked ? 20 : 24}
+                                            height={isBookmarked ? 20 : 24}
                                             style={isBookmarked ? {} : { opacity: 0.6 }}
                                         />
                                     </div>
