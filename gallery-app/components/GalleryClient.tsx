@@ -34,7 +34,12 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
         setLoading(true);
         try {
             const endpoint = category === 'bookmarks' ? '/api/gallery/bookmarks/my' : '/api/gallery';
-            const res = await fetch(`${endpoint}?page=${targetPage}&size=24&sort=${sort}`);
+
+            // Use authFetch if it's the bookmarks endpoint (which requires auth)
+            // Otherwise use regular fetch
+            const fetcher = category === 'bookmarks' ? authFetch : fetch;
+
+            const res = await fetcher(`${endpoint}?page=${targetPage}&size=24&sort=${sort}`);
             if (res.ok) {
                 const data = await res.json();
                 const content = (data.content || []).map((item: any) => ({
@@ -67,7 +72,9 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
 
         try {
             const endpoint = newCategory === 'bookmarks' ? '/api/gallery/bookmarks/my' : '/api/gallery';
-            const res = await fetch(`${endpoint}?page=0&size=24&sort=${sort}`);
+            const fetcher = newCategory === 'bookmarks' ? authFetch : fetch; // Use authFetch for bookmarks
+
+            const res = await fetcher(`${endpoint}?page=0&size=24&sort=${sort}`);
             if (res.ok) {
                 const data = await res.json();
                 const content = (data.content || []).map((item: any) => ({
@@ -106,7 +113,8 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
 
         try {
             const endpoint = category === 'bookmarks' ? '/api/gallery/bookmarks/my' : '/api/gallery';
-            const res = await fetch(`${endpoint}?page=0&size=24&sort=${newSort}`);
+            const fetcher = category === 'bookmarks' ? authFetch : fetch; // Use authFetch for bookmarks
+            const res = await fetcher(`${endpoint}?page=0&size=24&sort=${newSort}`);
             if (res.ok) {
                 const data = await res.json();
                 const content = (data.content || []).map((item: any) => ({
