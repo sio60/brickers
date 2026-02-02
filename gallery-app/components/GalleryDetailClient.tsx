@@ -270,15 +270,17 @@ export default function GalleryDetailClient({ item }: Props) {
                     >
                         {t.kids.steps.tabModeling}
                     </button>
+
+                    {/* Back Button (Moved here) */}
+                    <button
+                        onClick={() => router.back()}
+                        className="text-left px-8 py-4 transition-all font-medium flex items-center gap-3 bg-transparent text-gray-400 hover:text-white hover:bg-white/5"
+                    >
+                        ← {t.kids.steps.back}
+                    </button>
                 </div>
 
                 {/* Back Button (Moved to bottom) */}
-                <button
-                    onClick={() => router.back()}
-                    className="mt-auto bg-white/10 text-white rounded-lg px-4 py-3 mx-6 text-sm font-semibold hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
-                >
-                    ← {t.kids.steps.back}
-                </button>
             </div>
 
             {/* Content Wrapper (Canvas + Right Sidebar) */}
@@ -422,7 +424,7 @@ export default function GalleryDetailClient({ item }: Props) {
 
                                     {/* Toast Notification */}
                                     {showToast && (
-                                        <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg whitespace-nowrap z-50 animate-fade-in-up">
+                                        <div className="absolute top-12 right-0 bg-gray-900 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg whitespace-nowrap z-50 animate-fade-in-up">
                                             URL이 복사되었습니다
                                         </div>
                                     )}
@@ -470,10 +472,18 @@ export default function GalleryDetailClient({ item }: Props) {
 
                 {/* 4. Recommendation Sidebar */}
                 <div className="w-[260px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10 rounded-r-3xl overflow-hidden">
-                    <div className="p-5 border-b border-gray-100 bg-gray-50/30">
+                    <div className="p-5 border-b border-gray-100 bg-gray-50/30 flex items-center justify-between">
                         <h3 className="text-sm font-black text-gray-900 tracking-tight italic uppercase">
                             {t.main.galleryList.allCreations}
                         </h3>
+                        <button
+                            onClick={() => router.back()}
+                            className="text-gray-400 hover:text-gray-900 transition-colors p-1 rounded-full hover:bg-gray-100"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar">

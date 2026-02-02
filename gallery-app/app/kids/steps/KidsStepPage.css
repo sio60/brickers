@@ -331,8 +331,49 @@
     z-index: 100;
 }
 
+/* Main Container */
+.kidsStep__mainContainer {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-left: 300px;
+    /* Sidebar offset for visual center */
+    box-sizing: border-box;
+}
+
+@media (max-width: 1024px) {
+    .kidsStep__mainContainer {
+        padding-left: 0;
+    }
+}
+
 .modalCloseBtn:hover {
     transform: rotate(90deg) scale(1.1);
+}
+
+/* Sidebar Color Button - White with Hover Yellow */
+.kidsStep__colorBtn {
+    width: 100%;
+    text-align: left;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: #fff;
+    color: #000;
+    font-weight: 800;
+    border: 2px solid #000;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.kidsStep__colorBtn:hover {
+    background: #ffe135;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
 }
 
 /* 색상 모달 테마 버튼 */
@@ -381,4 +422,24 @@
 
 .colorModal__themeBtn--selected .colorModal__themeDesc {
     color: #ccc;
+}
+
+/* Sidebar Color Button - White with Hover Yellow */
+.kidsStep__colorBtn {
+    width: 100%;
+    text-align: left;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: #fff;
+    color: #000;
+    font-weight: 800;
+    border: 2px solid #000;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.kidsStep__colorBtn:hover {
+    background: #ffe135;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
 }
