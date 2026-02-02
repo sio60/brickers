@@ -143,6 +143,8 @@ uploads/**
 # Local Development Files
 docker-compose.local.yml
 docker-compose.local.yaml
+docker-compose-local.yml
+docker-compose-local.yaml
 nginx/local.conf
 .env.local
 
