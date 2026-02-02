@@ -1,6 +1,6 @@
 'use client';
 
-import "./BrickStackMiniGame.css";
+import styles from "./BrickStackMiniGame.module.css";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
@@ -371,27 +371,27 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
     const stackHeight = bricks.length * BRICK_HEIGHT;
 
     return (
-        <div className="brickGame">
+        <div className={styles.brickGame}>
             {percent !== undefined && (
-                <div className="brickGame__progress">
-                    <div className="brickGame__progressText">
+                <div className={styles.brickGame__progress}>
+                    <div className={styles.brickGame__progressText}>
                         <span>{t.kids.generate.loading}</span>
                         <span>{percent}%</span>
                     </div>
-                    <div className="brickGame__progressBar">
-                        <div className="brickGame__progressFill" style={{ width: `${percent}%` }}></div>
+                    <div className={styles.brickGame__progressBar}>
+                        <div className={styles.brickGame__progressFill} style={{ width: `${percent}%` }}></div>
                     </div>
                 </div>
             )}
 
-            <div className="brickGame__header" style={{ marginTop: percent !== undefined ? 80 : 0 }}>
-                <div className="brickGame__score">
-                    <span className="brickGame__scoreValue">{score}</span>
-                    <span className="brickGame__scoreLabel">BRICKS</span>
+            <div className={styles.brickGame__header} style={{ marginTop: percent !== undefined ? 80 : 0 }}>
+                <div className={styles.brickGame__score}>
+                    <span className={styles.brickGame__scoreValue}>{score}</span>
+                    <span className={styles.brickGame__scoreLabel}>BRICKS</span>
                 </div>
             </div>
 
-            <div className="brickGame__stage">
+            <div className={styles.brickGame__stage}>
                 <Canvas shadows camera={{ position: [0, 1, 9], fov: 50 }}>
                     <CameraFollow stackHeight={stackHeight} />
                     <Scene
@@ -407,10 +407,10 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
                 </Canvas>
 
                 {gameOver && (
-                    <div className="brickGame__overlay">
-                        <div className="brickGame__overlayText">{t.miniGame?.gameOver || "Game Over!"}</div>
-                        <div className="brickGame__overlayScore">{t.miniGame?.score || "Score"}: {score}</div>
-                        <button className="brickGame__restart" onClick={resetGame}>
+                    <div className={styles.brickGame__overlay}>
+                        <div className={styles.brickGame__overlayText}>{t.miniGame?.gameOver || "Game Over!"}</div>
+                        <div className={styles.brickGame__overlayScore}>{t.miniGame?.score || "Score"}: {score}</div>
+                        <button className={styles.brickGame__restart} onClick={resetGame}>
                             {t.miniGame?.playAgain || "Play Again"}
                         </button>
                     </div>
