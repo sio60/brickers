@@ -167,11 +167,7 @@ export default async function GalleryDetailPage({ params }: Props) {
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
             <div className="relative z-10 px-4 py-6">
-                <div className="max-w-4xl mx-auto">
-
-
-                    <GalleryDetailClient item={item} />
-                </div>
+                <GalleryDetailClient item={item} />
             </div>
         </>
     );
