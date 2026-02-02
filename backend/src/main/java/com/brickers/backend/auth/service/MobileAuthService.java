@@ -1,6 +1,7 @@
 package com.brickers.backend.auth.service;
 
 import com.brickers.backend.auth.dto.MobileLoginResponse;
+import com.brickers.backend.user.entity.MembershipPlan;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.entity.UserRole;
 import com.brickers.backend.user.repository.UserRepository;
@@ -52,7 +53,7 @@ public class MobileAuthService {
 
         return MobileLoginResponse.builder()
                 .accessToken(issued.accessToken())
-                .refreshToken(issued.refreshToken())
+                .refreshToken(issued.refreshCookie().getValue())
                 .user(MobileLoginResponse.MobileUserInfo.builder()
                         .id(user.getId())
                         .nickname(user.getNickname())
@@ -104,7 +105,7 @@ public class MobileAuthService {
                 .email(kakaoUser.email)
                 .profileImage(kakaoUser.profileImage)
                 .role(UserRole.USER)
-                .membershipPlan("FREE")
+                .membershipPlan(MembershipPlan.FREE)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
