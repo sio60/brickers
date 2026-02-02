@@ -43,6 +43,18 @@ export default function GalleryDetailClient({ item }: Props) {
     const [replyInput, setReplyInput] = useState('');
     const [replyLoading, setReplyLoading] = useState(false);
 
+    // Track which comments' replies are expanded
+    const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+
+    const toggleExpand = (commentId: string) => {
+        setExpandedComments(prev => {
+            const next = new Set(prev);
+            if (next.has(commentId)) next.delete(commentId);
+            else next.add(commentId);
+            return next;
+        });
+    };
+
     // Toast State
     const [showToast, setShowToast] = useState(false);
 
@@ -149,16 +161,25 @@ export default function GalleryDetailClient({ item }: Props) {
             if (res.ok) {
                 const newComment = await res.json();
 
-                // If it's a reply, find parent and append to children
-                if (parentId) {
-                    setComments(prev => prev.map(c => {
+                // Recursive update function to find parent and append child
+                const updateCommentsRecursive = (list: Comment[]): Comment[] => {
+                    return list.map(c => {
                         if (c.id === parentId) {
                             return { ...c, children: [...(c.children || []), newComment] };
                         }
+                        if (c.children && c.children.length > 0) {
+                            return { ...c, children: updateCommentsRecursive(c.children) };
+                        }
                         return c;
-                    }));
+                    });
+                };
+
+                if (parentId) {
+                    setComments(prev => updateCommentsRecursive(prev));
                     setReplyInput('');
                     setReplyingTo(null);
+                    // Automatically expand parent to see the new reply
+                    if (!expandedComments.has(parentId)) toggleExpand(parentId);
                 } else {
                     setComments(prev => [newComment, ...prev]);
                     setCommentInput('');
@@ -187,54 +208,79 @@ export default function GalleryDetailClient({ item }: Props) {
         return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
     };
 
-    const renderComment = (c: Comment, isReply = false) => (
-        <div key={c.id} className={`bg-white p-3 rounded-xl border border-gray-100 shadow-sm ${isReply ? 'ml-6 border-l-4 border-l-gray-200' : ''}`}>
-            <div className="flex items-center justify-between mb-1">
-                <span className="font-bold text-xs text-gray-900">@{c.authorNickname}</span>
-                <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-gray-400">{formatDate(c.createdAt)}</span>
-                    {!isReply && (
-                        <button
-                            onClick={() => setReplyingTo(replyingTo === c.id ? null : c.id)}
-                            className="text-[10px] font-bold text-blue-500 hover:text-blue-700"
-                        >
-                            {t.detail.reply || "답글"}
-                        </button>
+    const renderComment = (c: Comment, depth = 0, parentNickname?: string) => {
+        const isExpanded = expandedComments.has(c.id);
+        const hasChildren = c.children && c.children.length > 0;
+
+        return (
+            <div key={c.id} className="flex flex-col gap-1 w-full">
+                {/* Comment Box */}
+                <div className={`bg-white p-3 rounded-xl border border-gray-100 shadow-sm ${depth > 0 ? 'ml-4 border-l-2 border-l-blue-100' : ''}`}>
+                    <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                            <span className="font-bold text-xs text-gray-900">@{c.authorNickname}</span>
+                            {parentNickname && (
+                                <span className="text-[10px] text-blue-400 font-medium">to @{parentNickname}</span>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-gray-400">{formatDate(c.createdAt)}</span>
+                            <button
+                                onClick={() => setReplyingTo(replyingTo === c.id ? null : c.id)}
+                                className="text-[10px] font-bold text-blue-500 hover:text-blue-700"
+                            >
+                                {t.detail.reply || "답글"}
+                            </button>
+                        </div>
+                    </div>
+
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                        {c.content}
+                    </p>
+
+                    {/* Reply Input */}
+                    {replyingTo === c.id && (
+                        <div className="mt-2 flex gap-2">
+                            <input
+                                className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 outline-none"
+                                placeholder={`@${c.authorNickname}님에게 답글...`}
+                                value={replyInput}
+                                onChange={e => setReplyInput(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleCommentSubmit(c.id)}
+                                disabled={replyLoading}
+                                autoFocus
+                            />
+                            <button
+                                onClick={() => handleCommentSubmit(c.id)}
+                                disabled={!replyInput.trim() || replyLoading}
+                                className="bg-blue-500 text-white px-3 rounded-lg font-bold text-[10px] hover:bg-blue-600 disabled:opacity-50"
+                            >
+                                {replyLoading ? '...' : '등록'}
+                            </button>
+                        </div>
                     )}
                 </div>
+
+                {/* Expand/Collapse Toggle & Children */}
+                {hasChildren && (
+                    <div className="ml-4 flex flex-col gap-1">
+                        <button
+                            onClick={() => toggleExpand(c.id)}
+                            className="text-[10px] text-gray-400 self-start flex items-center gap-1 hover:text-gray-600 py-1"
+                        >
+                            {isExpanded ? '▼ 답글 숨기기' : `▶ 답글 ${c.children?.length}개 보기`}
+                        </button>
+
+                        {isExpanded && (
+                            <div className="flex flex-col gap-2 border-l border-gray-50">
+                                {c.children?.map(child => renderComment(child, depth + 1, c.authorNickname))}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
-            <p className="text-xs text-gray-600 leading-relaxed">{c.content}</p>
-
-            {/* Reply Input */}
-            {replyingTo === c.id && (
-                <div className="mt-2 flex gap-2">
-                    <input
-                        className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 outline-none"
-                        placeholder="답글을 입력하세요..."
-                        value={replyInput}
-                        onChange={e => setReplyInput(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && handleCommentSubmit(c.id)}
-                        disabled={replyLoading}
-                        autoFocus
-                    />
-                    <button
-                        onClick={() => handleCommentSubmit(c.id)}
-                        disabled={!replyInput.trim() || replyLoading}
-                        className="bg-blue-500 text-white px-3 rounded-lg font-bold text-[10px] hover:bg-blue-600 disabled:opacity-50"
-                    >
-                        등록
-                    </button>
-                </div>
-            )}
-
-            {/* Render Children */}
-            {c.children && c.children.length > 0 && (
-                <div className="mt-2 flex flex-col gap-2 border-t border-gray-50 pt-2">
-                    {c.children.map(child => renderComment(child, true))}
-                </div>
-            )}
-        </div>
-    );
+        );
+    };
 
     return (
         <div className="gallery-layout w-full max-w-[1440px] mx-auto my-6 flex h-[calc(100vh-160px)] gap-3 px-4 relative z-50">
@@ -270,15 +316,17 @@ export default function GalleryDetailClient({ item }: Props) {
                     >
                         {t.kids.steps.tabModeling}
                     </button>
+
+                    {/* Back Button (Moved here) */}
+                    <button
+                        onClick={() => router.back()}
+                        className="text-left px-8 py-4 transition-all font-medium flex items-center gap-3 bg-transparent text-gray-400 hover:text-white hover:bg-white/5"
+                    >
+                        ← {t.kids.steps.back}
+                    </button>
                 </div>
 
                 {/* Back Button (Moved to bottom) */}
-                <button
-                    onClick={() => router.back()}
-                    className="mt-auto bg-white/10 text-white rounded-lg px-4 py-3 mx-6 text-sm font-semibold hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
-                >
-                    ← {t.kids.steps.back}
-                </button>
             </div>
 
             {/* Content Wrapper (Canvas + Right Sidebar) */}
@@ -422,7 +470,7 @@ export default function GalleryDetailClient({ item }: Props) {
 
                                     {/* Toast Notification */}
                                     {showToast && (
-                                        <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg whitespace-nowrap z-50 animate-fade-in-up">
+                                        <div className="absolute top-12 right-0 bg-gray-900 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg whitespace-nowrap z-50 animate-fade-in-up">
                                             URL이 복사되었습니다
                                         </div>
                                     )}
@@ -470,10 +518,18 @@ export default function GalleryDetailClient({ item }: Props) {
 
                 {/* 4. Recommendation Sidebar */}
                 <div className="w-[260px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10 rounded-r-3xl overflow-hidden">
-                    <div className="p-5 border-b border-gray-100 bg-gray-50/30">
+                    <div className="p-5 border-b border-gray-100 bg-gray-50/30 flex items-center justify-between">
                         <h3 className="text-sm font-black text-gray-900 tracking-tight italic uppercase">
                             {t.main.galleryList.allCreations}
                         </h3>
+                        <button
+                            onClick={() => router.back()}
+                            className="text-gray-400 hover:text-gray-900 transition-colors p-1 rounded-full hover:bg-gray-100"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar">

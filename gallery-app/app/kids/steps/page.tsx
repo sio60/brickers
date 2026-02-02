@@ -64,6 +64,7 @@ function LdrModel({
     ldconfigUrl = `${CDN_BASE}LDConfig.ldr`,
     onLoaded,
     onError,
+    customBounds,
 }: {
     url: string;
     overrideMainLdrUrl?: string;
@@ -71,7 +72,9 @@ function LdrModel({
     ldconfigUrl?: string;
     onLoaded?: (group: THREE.Group) => void;
     onError?: (e: unknown) => void;
+    customBounds?: THREE.Box3 | null;
 }) {
+    // ... (loader useMemo remains same) ...
     const loader = useMemo(() => {
         THREE.Cache.enabled = true;
         const manager = new THREE.LoadingManager();
@@ -167,13 +170,132 @@ function LdrModel({
     }, [url, ldconfigUrl, loader, onLoaded, onError]);
 
     if (!group) return null;
+
+    // Custom Bounds 처리 (Invisible Box)
+    let boundMesh = null;
+    if (customBounds) {
+        const size = new THREE.Vector3();
+        customBounds.getSize(size);
+        const center = new THREE.Vector3();
+        customBounds.getCenter(center);
+
+        // LDraw 좌표계 보정 (rotation.x = Math.PI 적용됨)
+        // Group이 pi 회전하므로, box도 맞춰야 함. 하지만 Center 내부에 있으므로 Center가 알아서 처리?
+        // 아니, customBounds는 raw LDR 좌표 기준일 것.
+        // Group이 180도 돌면 Y가 반전됨.
+
+        boundMesh = (
+            <mesh position={[center.x, -center.y, center.z]}>
+                <boxGeometry args={[size.x, size.y, size.z]} />
+                <meshBasicMaterial transparent opacity={0} wireframe />
+            </mesh>
+        );
+    }
+
     return (
         <Bounds fit clip observe margin={1.2}>
             <Center>
                 <primitive object={group} />
+                {boundMesh}
             </Center>
         </Bounds>
     );
+}
+
+// LDR 파싱 및 정렬 유틸
+function parseAndProcessSteps(ldrText: string) {
+    const lines = ldrText.replace(/\r\n/g, "\n").split("\n");
+
+    // 1. 전체 Bounds 계산 및 Step 분리
+    let minX = Infinity, minY = Infinity, minZ = Infinity;
+    let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+
+    const segments: { lines: string[], avgY: number }[] = [];
+    let curLines: string[] = [];
+    let curYSum = 0;
+    let curCount = 0;
+
+    let hasStep = false;
+
+    const flush = () => {
+        const avgY = curCount > 0 ? curYSum / curCount : -Infinity; // 부품 없으면 맨 위로?
+        segments.push({ lines: curLines, avgY });
+        curLines = [];
+        curYSum = 0;
+        curCount = 0;
+    };
+
+    for (const raw of lines) {
+        const line = raw.trim();
+
+        // Step 구분
+        if (/^0\s+(STEP|ROTSTEP)\b/i.test(line)) {
+            hasStep = true;
+            flush();
+            continue;
+        }
+
+        // 부품 라인 파싱 (Type 1)
+        // 1 <colour> x y z a b c d e f g h i <file>
+        if (line.startsWith('1 ')) {
+            const parts = line.split(/\s+/);
+            if (parts.length >= 15) {
+                const x = parseFloat(parts[2]);
+                const y = parseFloat(parts[3]);
+                const z = parseFloat(parts[4]);
+
+                if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
+                    minX = Math.min(minX, x); minY = Math.min(minY, y); minZ = Math.min(minZ, z);
+                    maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); maxZ = Math.max(maxZ, z);
+
+                    curYSum += y;
+                    curCount++;
+                }
+            }
+        }
+
+        curLines.push(raw);
+    }
+    flush();
+
+    // 2. 정렬 (LDraw 좌표계: Y가 아래쪽. 즉 Y가 클수록 바닥. 바닥부터 쌓으려면 Y 내림차순 정렬)
+    // 단, 첫 번째 세그먼트(헤더 등)는 무조건 맨 앞에? 보통 헤더에는 부품이 없음.
+    // 하지만 segments[0]에 부품이 있을 수도 있음.
+    // 전략: 부품이 있는 세그먼트들만 정렬한다?
+    // 보통 헤더(메타데이터)는 curCount=0일 것임.
+
+    // 단순하게: 전체를 Y 내림차순(큰거->작은거)으로 정렬.
+    // AvgY가 -Infinity(부품없음)인 경우... 메타데이터일 수 있는데, 이들을 맨 앞으로 보낼까?
+    // 보통 메타데이터는 0 STEP 이전에 나옴 (segments[0]).
+    // segments[0]는 고정하고 나머지만 정렬?
+
+    const header = segments[0];
+    const body = segments.slice(1);
+
+    // Y 내림차순 (큰 값 = 바닥 = 먼저 조립)
+    body.sort((a, b) => b.avgY - a.avgY);
+
+    const sortedSegments = [header, ...body];
+
+    // 3. 누적 텍스트 생성
+    const out: string[] = [];
+    let acc: string[] = [];
+
+    for (const seg of sortedSegments) {
+        acc = acc.concat(seg.lines);
+        out.push(acc.join("\n"));
+    }
+
+    // Bounds 생성
+    let bounds = null;
+    if (minX !== Infinity) {
+        bounds = new THREE.Box3(
+            new THREE.Vector3(minX, minY, minZ),
+            new THREE.Vector3(maxX, maxY, maxZ)
+        );
+    }
+
+    return { stepTexts: out, bounds };
 }
 
 function KidsStepPageContent() {
@@ -190,6 +312,7 @@ function KidsStepPageContent() {
     const [loading, setLoading] = useState(true);
     const [stepIdx, setStepIdx] = useState(0);
     const [stepBlobUrls, setStepBlobUrls] = useState<string[]>([]);
+    const [modelBounds, setModelBounds] = useState<THREE.Box3 | null>(null);
     const blobRef = useRef<string[]>([]);
     const modelGroupRef = useRef<THREE.Group | null>(null);
 
@@ -273,7 +396,11 @@ function KidsStepPageContent() {
             const res = await fetch(originalLdrUrl);
             if (!res.ok) throw new Error(`LDR fetch failed: ${res.status}`);
             const text = await res.text();
-            const stepTexts = buildCumulativeStepTexts(text);
+
+            // 정렬 및 Bounds 계산 적용
+            const { stepTexts, bounds } = parseAndProcessSteps(text);
+            setModelBounds(bounds);
+
             const blobs = stepTexts.map((t) =>
                 URL.createObjectURL(new Blob([t], { type: "text/plain" }))
             );
@@ -327,7 +454,11 @@ function KidsStepPageContent() {
             const res = await fetch(ldrUrl);
             if (!res.ok) throw new Error(`LDR fetch failed: ${res.status}`);
             const text = await res.text();
-            const stepTexts = buildCumulativeStepTexts(text);
+
+            // 정렬 및 Bounds 계산 적용
+            const { stepTexts, bounds } = parseAndProcessSteps(text);
+            setModelBounds(bounds);
+
             const blobs = stepTexts.map((t) => URL.createObjectURL(new Blob([t], { type: "text/plain" })));
             if (!alive) { revokeAll(blobs); return; }
             revokeAll(blobRef.current);
@@ -415,163 +546,153 @@ function KidsStepPageContent() {
     const canNext = stepIdx < total - 1;
     const modelUrlToUse = isPreviewMode ? undefined : currentOverride;
 
+    const isPreset = searchParams.get("isPreset") === "true";
+
     return (
         <div style={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
             {/* 3D Background Bricks */}
             <BackgroundBricks />
 
             {/* Content Container - Relative to center children */}
-            <div style={{
-                position: "relative",
-                zIndex: 1,
-                width: "100%",
-                height: "100vh",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center"
-            }}>
-                {/* Floating Sidebar Overlay */}
-                <div style={{
-                    position: "absolute",
-                    top: 100,
-                    left: 24,
-                    zIndex: 20,
-                    width: 260,
-                    background: "#fff",
-                    borderRadius: 32,
-                    color: "#000",
-                    display: "flex",
-                    flexDirection: "column",
-                    padding: "24px 16px",
-                    border: "3px solid #000",
-                    boxShadow: "0 20px 50px rgba(0, 0, 0, 0.1)"
-                }}>
-                    <button
-                        onClick={() => router.back()}
-                        style={{
-                            alignSelf: "flex-start",
-                            marginBottom: 20,
-                            background: "#fff",
-                            color: "#000",
-                            border: "2px solid #000",
-                            borderRadius: 12,
-                            padding: "8px 16px",
-                            cursor: "pointer",
-                            fontSize: "0.85rem",
-                            fontWeight: 800,
-                            transition: "all 0.2s"
-                        }}
-                    >
-                        ← {t.kids.steps.back}
-                    </button>
-
-                    <h2 style={{ fontSize: "1.3rem", fontWeight: 900, marginBottom: 20, paddingLeft: 8, letterSpacing: "-0.5px" }}>
-                        BRICKERS
-                    </h2>
-
-                    <div style={{ marginBottom: 10, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800, textTransform: "uppercase" }}>
-                        {t.kids.steps.viewModes}
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="kidsStep__mainContainer" style={{ paddingLeft: isPreset ? 0 : undefined }}>
+                {/* Floating Sidebar Overlay - Hide for Preset Models */}
+                {!isPreset && (
+                    <div style={{
+                        position: "absolute",
+                        top: 100,
+                        left: 24,
+                        zIndex: 20,
+                        width: 260,
+                        background: "#fff",
+                        borderRadius: 32,
+                        color: "#000",
+                        display: "flex",
+                        flexDirection: "column",
+                        padding: "24px 16px",
+                        border: "3px solid #000",
+                        boxShadow: "0 20px 50px rgba(0, 0, 0, 0.1)"
+                    }}>
                         <button
-                            onClick={() => setActiveTab('LDR')}
+                            onClick={() => router.back()}
                             style={{
-                                textAlign: "left",
-                                padding: "14px 16px",
-                                borderRadius: 16,
-                                background: activeTab === 'LDR' ? "#ffe135" : "transparent",
+                                alignSelf: "flex-start",
+                                marginBottom: 20,
+                                background: "#fff",
                                 color: "#000",
-                                fontWeight: 800,
-                                border: activeTab === 'LDR' ? "2px solid #000" : "2px solid transparent",
+                                border: "2px solid #000",
+                                borderRadius: 12,
+                                padding: "8px 16px",
                                 cursor: "pointer",
+                                fontSize: "0.85rem",
+                                fontWeight: 800,
                                 transition: "all 0.2s"
                             }}
                         >
-                            {t.kids.steps.tabBrick}
+                            ← {t.kids.steps.back}
                         </button>
-                        <button
-                            onClick={() => setActiveTab('GLB')}
-                            style={{
-                                textAlign: "left",
-                                padding: "14px 16px",
-                                borderRadius: 16,
-                                background: activeTab === 'GLB' ? "#ffe135" : "transparent",
-                                color: "#000",
-                                fontWeight: 800,
-                                border: activeTab === 'GLB' ? "2px solid #000" : "2px solid transparent",
-                                cursor: "pointer",
-                                transition: "all 0.2s"
-                            }}
-                        >
-                            {t.kids.steps.tabModeling}
-                        </button>
-                    </div>
 
-                    {/* 색상 변경 버튼 */}
-                    <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-                        <button
-                            onClick={() => setIsColorModalOpen(true)}
-                            style={{
-                                width: "100%",
-                                textAlign: "left",
-                                padding: "14px 16px",
-                                borderRadius: 16,
-                                background: "transparent",
-                                color: "#000",
-                                fontWeight: 800,
-                                border: "2px solid transparent",
-                                cursor: "pointer",
-                                transition: "all 0.2s"
-                            }}
-                        >
-                            색상 변경
-                        </button>
-                        {colorChangedLdrBase64 && (
+                        <h2 style={{ fontSize: "1.3rem", fontWeight: 900, marginBottom: 20, paddingLeft: 8, letterSpacing: "-0.5px" }}>
+                            BRICKERS
+                        </h2>
+
+                        <div style={{ marginBottom: 10, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800, textTransform: "uppercase" }}>
+                            {t.kids.steps.viewModes}
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                             <button
-                                onClick={restoreOriginalColor}
+                                onClick={() => setActiveTab('LDR')}
                                 style={{
-                                    width: "100%",
                                     textAlign: "left",
                                     padding: "14px 16px",
                                     borderRadius: 16,
-                                    background: "transparent",
-                                    color: "#888",
+                                    background: activeTab === 'LDR' ? "#ffe135" : "transparent",
+                                    color: "#000",
                                     fontWeight: 800,
-                                    border: "2px solid transparent",
+                                    border: activeTab === 'LDR' ? "2px solid #000" : "2px solid transparent",
                                     cursor: "pointer",
-                                    transition: "all 0.2s",
-                                    fontSize: "0.9rem"
+                                    transition: "all 0.2s"
                                 }}
                             >
-                                ↩ 원본으로
+                                {t.kids.steps.tabBrick}
                             </button>
-                        )}
-                    </div>
-
-                    <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
-                        <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800, textTransform: "uppercase" }}>
-                            {t.kids.steps.registerGallery}
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                            <input
-                                type="text"
-                                className="kidsStep__sidebarInput"
-                                placeholder={t.kids.steps.galleryModal.placeholder}
-                                value={galleryTitle}
-                                onChange={(e) => setGalleryTitle(e.target.value)}
-                            />
                             <button
-                                className="kidsStep__sidebarBtn"
-                                onClick={handleRegisterGallery}
-                                disabled={isSubmitting}
+                                onClick={() => setActiveTab('GLB')}
+                                style={{
+                                    textAlign: "left",
+                                    padding: "14px 16px",
+                                    borderRadius: 16,
+                                    background: activeTab === 'GLB' ? "#ffe135" : "transparent",
+                                    color: "#000",
+                                    fontWeight: 800,
+                                    border: "2px solid #000",
+                                    cursor: "pointer",
+                                    transition: "all 0.2s"
+                                }}
                             >
-                                {isSubmitting ? "..." : t.kids.steps.registerGallery}
+                                {t.kids.steps.tabModeling}
                             </button>
                         </div>
+
+                        {/* 색상 변경 버튼 & 초기화 버튼 */}
+                        <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+                            <button
+                                onClick={() => setIsColorModalOpen(true)}
+                                className="kidsStep__colorBtn"
+                            >
+                                색상 변경
+                            </button>
+
+                            {colorChangedLdrBase64 && (
+                                <button
+                                    onClick={restoreOriginalColor}
+                                    style={{
+                                        width: "100%",
+                                        textAlign: "left",
+                                        padding: "10px 16px",
+                                        borderRadius: 16,
+                                        background: "transparent",
+                                        color: "#888",
+                                        fontWeight: 800,
+                                        border: "2px solid transparent",
+                                        cursor: "pointer",
+                                        transition: "all 0.2s",
+                                        fontSize: "0.85rem",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 6
+                                    }}
+                                    onMouseOver={(e) => e.currentTarget.style.color = "#000"}
+                                    onMouseOut={(e) => e.currentTarget.style.color = "#888"}
+                                >
+                                    ↺ 원본으로 되돌리기
+                                </button>
+                            )}
+                        </div>
+
+                        <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
+                            <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800, textTransform: "uppercase" }}>
+                                {t.kids.steps.registerGallery}
+                            </div>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                                <input
+                                    type="text"
+                                    className="kidsStep__sidebarInput"
+                                    placeholder={t.kids.steps.galleryModal.placeholder}
+                                    value={galleryTitle}
+                                    onChange={(e) => setGalleryTitle(e.target.value)}
+                                />
+                                <button
+                                    className="kidsStep__sidebarBtn"
+                                    onClick={handleRegisterGallery}
+                                    disabled={isSubmitting}
+                                >
+                                    {isSubmitting ? "..." : t.kids.steps.registerGallery}
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                )}
 
 
 
@@ -602,6 +723,7 @@ function KidsStepPageContent() {
                                             overrideMainLdrUrl={modelUrlToUse}
                                             onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }}
                                             onError={() => setLoading(false)}
+                                            customBounds={modelBounds}
                                         />
                                     </Center>
                                     <OrbitControls makeDefault enablePan={false} enableZoom />
@@ -619,18 +741,38 @@ function KidsStepPageContent() {
                                     </button>
                                 </div>
                             ) : (
-                                <div style={{ position: "absolute", bottom: 40, right: 40, display: "flex", gap: 16 }}>
+                                <div style={{
+                                    position: "absolute",
+                                    bottom: 40,
+                                    left: "50%",
+                                    transform: "translateX(-50%)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 24,
+                                    background: "#fff",
+                                    padding: "8px 12px",
+                                    borderRadius: 999,
+                                    boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
+                                    border: "3px solid #000"
+                                }}>
                                     <button
                                         className="kidsStep__navBtn"
                                         disabled={!canPrev}
                                         onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}
+                                        style={{ border: 'none', background: '#f0f0f0', borderRadius: 999, padding: "12px 24px", height: "auto", minWidth: "auto", boxShadow: "none" }}
                                     >
                                         ← {t.kids.steps.prev}
                                     </button>
+
+                                    <div style={{ fontSize: "1.2rem", fontWeight: 900, fontFamily: "sans-serif", padding: "0 8px" }}>
+                                        Step {stepIdx + 1} <span style={{ color: "#aaa", fontSize: "0.9em" }}>/ {total}</span>
+                                    </div>
+
                                     <button
                                         className="kidsStep__navBtn kidsStep__navBtn--next"
                                         disabled={!canNext}
                                         onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}
+                                        style={{ border: 'none', borderRadius: 999, padding: "12px 24px", height: "auto", minWidth: "auto", boxShadow: "none" }}
                                     >
                                         {t.kids.steps.next} →
                                     </button>
@@ -677,7 +819,7 @@ function KidsStepPageContent() {
                     <div className="galleryModal colorModal" onClick={(e) => e.stopPropagation()}>
                         <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)} aria-label="close">✕</button>
                         <h3 className="galleryModal__title">
-                            {t.kids.steps.colorThemeTitle || "색상 테마 선택"}
+                            🎨 {t.kids.steps.colorThemeTitle || "색상 테마 선택"}
                         </h3>
 
                         <div className="colorModal__themes">
