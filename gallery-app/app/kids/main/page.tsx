@@ -10,7 +10,7 @@ import { getColorThemes, applyColorVariant, base64ToBlobUrl, ThemeInfo } from "@
 // import KidsLoadingScreen from "@/components/kids/KidsLoadingScreen";
 import BrickStackMiniGame from "@/components/kids/BrickStackMiniGame";
 import { registerToGallery } from "@/lib/api/myApi"; // Import API
-import './KidsPage.css';
+// import './KidsPage.css'; // Removed
 
 // SSR 제외
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
@@ -346,33 +346,28 @@ function KidsPageContent() {
             setIsApplyingColor(false);
         }
     };
-    if (!isFileLoaded) {
-        return <div className="page">Loading...</div>;
-    }
-
     return (
-        <div className="page">
+        <div className="relative w-full h-[100dvh] flex flex-col justify-center items-center overflow-hidden">
             <Background3D entryDirection="float" />
 
-            <div className="center">
+            <div className="flex flex-col items-center z-10 w-full max-w-[800px] p-5">
                 {status === "loading" && (
                     <>
-                        {/* <div className="debugLog">{debugLog}</div> */}
                         <BrickStackMiniGame percent={percent} />
                     </>
                 )}
 
                 {status === "done" && ldrUrl && (
                     <>
-                        <div className="resultTitle">{t.kids.generate.ready}</div>
-                        <div className="resultCard" style={{ position: 'relative' }}>
-                            <div className="viewer3d">
+                        <div className="font-['KblJumpCondensed',sans-serif] text-[48px] text-black mb-[30px] mt-[60px] text-center">{t.kids.generate.ready}</div>
+                        <div className="w-full max-w-[600px] aspect-square bg-white/80 backdrop-blur-[12px] border-[3px] border-black rounded-[24px] mb-[30px] flex flex-col relative">
+                            <div className="flex-1 w-full h-full">
                                 <KidsLdrPreview key={ldrUrl} url={ldrUrl} />
                             </div>
 
                             {/* 우측 하단 Next 버튼 */}
                             <button
-                                className="nextBtn nextBtn--ab"
+                                className="absolute bottom-5 right-5 m-0 shadow-[0_4px_12px_rgba(0,0,0,0.2)] z-20 bg-black text-white font-['KblJumpCondensed',sans-serif] text-[20px] px-[40px] py-[10px] rounded-[50px] border-none cursor-pointer transition-all duration-300 ease-in-out hover:bg-[#333] hover:scale-105"
                                 onClick={() => {
                                     router.push(`/kids/steps?url=${encodeURIComponent(ldrUrl)}&jobId=${jobId ?? ""}&age=${age}`);
                                 }}
@@ -382,24 +377,24 @@ function KidsPageContent() {
                         </div>
 
                         {/* 하단 버튼 그룹 */}
-                        <div className="actionBtns">
+                        <div className="flex gap-3 mt-5">
                             {/* 다운로드 드롭다운 */}
-                            <div className="dropdownContainer">
+                            <div className="relative inline-block">
                                 <button
-                                    className="dlBtn"
+                                    className="bg-white text-black font-['KblJumpCondensed',sans-serif] text-[16px] px-[24px] py-[10px] rounded-[50px] border-2 border-black cursor-pointer transition-all duration-300 ease-in-out font-bold hover:bg-[#eee] hover:scale-105"
                                     onClick={() => setIsDownloadOpen(!isDownloadOpen)}
                                 >
                                     Download ▼
                                 </button>
                                 {isDownloadOpen && (
-                                    <div className="dropdownMenu">
-                                        <button onClick={downloadLdr}>LDR Download</button>
-                                        {glbUrl && <button onClick={downloadGlb}>GLB Download</button>}
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 bg-white border-2 border-black rounded-xl overflow-hidden flex flex-col min-w-[160px] mb-2 shadow-[0_4px_12px_rgba(0,0,0,0.1)] z-[100]">
+                                        <button className="px-4 py-3 border-none bg-transparent cursor-pointer text-left font-['KblJumpCondensed',sans-serif] text-[14px] font-bold border-b border-[#eee] transition-colors duration-200 whitespace-nowrap hover:bg-[#f0f0f0]" onClick={downloadLdr}>LDR Download</button>
+                                        {glbUrl && <button className="px-4 py-3 border-none bg-transparent cursor-pointer text-left font-['KblJumpCondensed',sans-serif] text-[14px] font-bold border-none transition-colors duration-200 whitespace-nowrap hover:bg-[#f0f0f0]" onClick={downloadGlb}>GLB Download</button>}
                                     </div>
                                 )}
                             </div>
 
-                            <button className="dlBtn colorBtn" onClick={openColorModal} style={{ display: 'none' }}>
+                            <button className="hidden bg-white text-black font-['KblJumpCondensed',sans-serif] text-[16px] px-[24px] py-[10px] rounded-[50px] border-2 border-black cursor-pointer transition-all duration-300 ease-in-out font-bold hover:bg-[#eee] hover:scale-105" onClick={openColorModal}>
                                 색상 변경
                             </button>
                         </div>
@@ -407,7 +402,7 @@ function KidsPageContent() {
                 )}
 
                 {status === "error" && (
-                    <div className="error">
+                    <div className="bg-white/90 p-6 rounded-2xl border-2 border-[#ff4d4f] text-center text-black max-w-[400px]">
                         <div style={{ fontWeight: "bold", marginBottom: "8px" }}>{t.kids.generate.failed}</div>
                         {t.kids.generate.error}
                         <br />
@@ -416,44 +411,44 @@ function KidsPageContent() {
                 )}
 
                 {showToast && (
-                    <div className="toast">
+                    <div className="fixed top-20 right-5 bg-white border-2 border-black text-black px-6 py-4 z-[9999] font-bold text-[16px] shadow-[0_4px_12px_rgba(0,0,0,0.1)] rounded-lg">
                         {t.kids.generate.complete}
                     </div>
                 )}
 
                 {/* 색상 변경 모달 */}
                 {isColorModalOpen && (
-                    <div className="colorModalOverlay" onClick={() => setIsColorModalOpen(false)}>
-                        <div className="colorModal" onClick={(e) => e.stopPropagation()}>
-                            <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)} aria-label="close">✕</button>
-                            <h3 className="colorModal__title">🎨 {t.kids.steps?.colorThemeTitle || "색상 테마 선택"}</h3>
+                    <div className="fixed inset-0 z-[3000] bg-black/40 backdrop-blur-[6px] flex items-center justify-center" onClick={() => setIsColorModalOpen(false)}>
+                        <div className="bg-white w-[min(420px,90vw)] max-h-[80vh] rounded-[24px] p-8 border-[3px] border-black shadow-[0_12px_0_rgba(0,0,0,0.15)] animate-[modalAppear_0.25s_cubic-bezier(0.34,1.56,0.64,1)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                            <button className="absolute top-4 right-4 w-11 h-11 border-none bg-transparent cursor-pointer text-[24px] font-bold flex items-center justify-center transition-all duration-200 text-black z-[100] hover:rotate-90 hover:scale-110" onClick={() => setIsColorModalOpen(false)} aria-label="close">✕</button>
+                            <h3 className="m-[0_0_24px] text-[22px] font-[900] text-black text-center">🎨 {t.kids.steps?.colorThemeTitle || "색상 테마 선택"}</h3>
 
-                            <div className="colorModal__themes">
+                            <div className="flex flex-col gap-2.5 mb-6 max-h-[300px] overflow-y-auto">
                                 {colorThemes.length === 0 ? (
-                                    <div className="colorModal__loading">테마 로딩 중...</div>
+                                    <div className="p-5 text-center text-[#888]">테마 로딩 중...</div>
                                 ) : (
                                     colorThemes.map((theme) => (
                                         <button
                                             key={theme.name}
-                                            className={`colorModal__themeBtn ${selectedTheme === theme.name ? "colorModal__themeBtn--selected" : ""}`}
+                                            className={`flex flex-col items-start p-[14px_18px] rounded-xl border-2 cursor-pointer transition-all duration-200 ease-in-out text-left ${selectedTheme === theme.name ? "border-black bg-black text-white" : "border-[#e0e0e0] bg-white hover:border-black hover:bg-[#f9f9f9]"}`}
                                             onClick={() => setSelectedTheme(theme.name)}
                                         >
-                                            <span className="colorModal__themeName">{theme.name}</span>
-                                            <span className="colorModal__themeDesc">{theme.description}</span>
+                                            <span className="text-[16px] font-[800] mb-1 capitalize">{theme.name}</span>
+                                            <span className={`text-[13px] font-[500] ${selectedTheme === theme.name ? "opacity-85" : "opacity-70"}`}>{theme.description}</span>
                                         </button>
                                     ))
                                 )}
                             </div>
 
-                            <div className="colorModal__actions">
+                            <div className="flex gap-3">
                                 <button
-                                    className="colorModal__btn colorModal__btn--cancel"
+                                    className="flex-1 p-[14px] rounded-xl border-none font-[800] cursor-pointer text-[16px] transition-all duration-200 bg-[#f0f0f0] text-[#555] hover:bg-[#e5e5e5]"
                                     onClick={() => setIsColorModalOpen(false)}
                                 >
                                     취소
                                 </button>
                                 <button
-                                    className="colorModal__btn colorModal__btn--confirm"
+                                    className="flex-[1.5] p-[14px] rounded-xl border-none font-[800] cursor-pointer text-[16px] transition-all duration-200 bg-black text-white hover:bg-[#333] disabled:opacity-50 disabled:cursor-not-allowed"
                                     onClick={handleApplyColor}
                                     disabled={!selectedTheme || isApplyingColor}
                                 >
