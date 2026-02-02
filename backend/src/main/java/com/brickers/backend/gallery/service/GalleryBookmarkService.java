@@ -94,12 +94,17 @@ public class GalleryBookmarkService {
                         return null;
 
                     return MyBookmarkItemResponse.builder()
-                            .postId(p.getId())
+                            .id(p.getId())
                             .title(p.getTitle())
                             .thumbnailUrl(p.getThumbnailUrl())
+                            .authorNickname(p.getAuthorNickname())
+                            .likeCount((int) p.getLikeCount())
+                            .viewCount((int) p.getViewCount())
+                            .brickCount(0) // GalleryPostEntity doesn't have brickCount yet
                             .tags(p.getTags())
-                            .postCreatedAt(p.getCreatedAt())
                             .bookmarkedAt(b.getCreatedAt())
+                            .createdAt(p.getCreatedAt())
+                            .bookmarked(true)
                             .build();
                 })
                 .filter(Objects::nonNull)
