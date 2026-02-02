@@ -9,7 +9,7 @@ import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 import { useAuth } from "../Auth/AuthContext"; // ✅ 추가
-import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, ThemeInfo } from "../../api/colorVariantApi";
+import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "../../api/colorVariantApi";
 import "./KidsStepPage.css";
 import SEO from "../../components/SEO";
 
