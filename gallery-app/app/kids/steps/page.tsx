@@ -12,9 +12,10 @@ import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { registerToGallery } from "@/lib/api/myApi";
+// ... imports
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
 import BackgroundBricks from "@/components/BackgroundBricks";
-import './KidsStepPage.css';
+// import './KidsStepPage.css'; // Removed
 
 // SSR 제외
 
@@ -549,96 +550,50 @@ function KidsStepPageContent() {
     const isPreset = searchParams.get("isPreset") === "true";
 
     return (
-        <div style={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
+        <div className="relative min-h-screen overflow-hidden">
             {/* 3D Background Bricks */}
             <BackgroundBricks />
 
             {/* Content Container - Relative to center children */}
-            <div className="kidsStep__mainContainer" style={{ paddingLeft: isPreset ? 0 : undefined }}>
+            <div className={`relative z-[1] w-full h-screen flex flex-col items-center justify-center ${isPreset ? 'pl-0' : 'lg:pl-[300px]'} box-border`}>
                 {/* Floating Sidebar Overlay - Hide for Preset Models */}
                 {!isPreset && (
-                    <div style={{
-                        position: "absolute",
-                        top: 100,
-                        left: 24,
-                        zIndex: 20,
-                        width: 260,
-                        background: "#fff",
-                        borderRadius: 32,
-                        color: "#000",
-                        display: "flex",
-                        flexDirection: "column",
-                        padding: "24px 16px",
-                        border: "3px solid #000",
-                        boxShadow: "0 20px 50px rgba(0, 0, 0, 0.1)"
-                    }}>
+                    <div className="absolute top-[100px] left-6 z-20 w-[260px] bg-white rounded-[32px] text-black flex flex-col p-[24px_16px] border-[3px] border-black shadow-[0_20px_50px_rgba(0,0,0,0.1)]">
                         <button
                             onClick={() => router.back()}
-                            style={{
-                                alignSelf: "flex-start",
-                                marginBottom: 20,
-                                background: "#fff",
-                                color: "#000",
-                                border: "2px solid #000",
-                                borderRadius: 12,
-                                padding: "8px 16px",
-                                cursor: "pointer",
-                                fontSize: "0.85rem",
-                                fontWeight: 800,
-                                transition: "all 0.2s"
-                            }}
+                            className="self-start mb-5 bg-white text-black border-2 border-black rounded-xl p-[8px_16px] cursor-pointer text-[0.85rem] font-[800] transition-all duration-200"
                         >
                             ← {t.kids.steps.back}
                         </button>
 
-                        <h2 style={{ fontSize: "1.3rem", fontWeight: 900, marginBottom: 20, paddingLeft: 8, letterSpacing: "-0.5px" }}>
+                        <h2 className="text-[1.3rem] font-[900] mb-5 pl-2 tracking-[-0.5px]">
                             BRICKERS
                         </h2>
 
-                        <div style={{ marginBottom: 10, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800, textTransform: "uppercase" }}>
+                        <div className="mb-2.5 pl-2 text-[0.75rem] text-[#888] font-[800] uppercase">
                             {t.kids.steps.viewModes}
                         </div>
 
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <div className="flex flex-col gap-2">
                             <button
                                 onClick={() => setActiveTab('LDR')}
-                                style={{
-                                    textAlign: "left",
-                                    padding: "14px 16px",
-                                    borderRadius: 16,
-                                    background: activeTab === 'LDR' ? "#ffe135" : "transparent",
-                                    color: "#000",
-                                    fontWeight: 800,
-                                    border: activeTab === 'LDR' ? "2px solid #000" : "2px solid transparent",
-                                    cursor: "pointer",
-                                    transition: "all 0.2s"
-                                }}
+                                className={`text-left p-[14px_16px] rounded-2xl font-[800] border-2 transition-all duration-200 cursor-pointer ${activeTab === 'LDR' ? 'bg-[#ffe135] border-black' : 'bg-transparent border-transparent'}`}
                             >
                                 {t.kids.steps.tabBrick}
                             </button>
                             <button
                                 onClick={() => setActiveTab('GLB')}
-                                style={{
-                                    textAlign: "left",
-                                    padding: "14px 16px",
-                                    borderRadius: 16,
-                                    background: activeTab === 'GLB' ? "#ffe135" : "transparent",
-                                    color: "#000",
-                                    fontWeight: 800,
-                                    border: "2px solid #000",
-                                    cursor: "pointer",
-                                    transition: "all 0.2s"
-                                }}
+                                className={`text-left p-[14px_16px] rounded-2xl font-[800] border-2 transition-all duration-200 cursor-pointer ${activeTab === 'GLB' ? 'bg-[#ffe135] border-black' : 'bg-transparent border-black'}`}
                             >
                                 {t.kids.steps.tabModeling}
                             </button>
                         </div>
 
                         {/* 색상 변경 버튼 & 초기화 버튼 */}
-                        <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+                        <div className="mt-4 flex flex-col gap-2">
                             <button
                                 onClick={() => setIsColorModalOpen(true)}
-                                className="kidsStep__colorBtn"
+                                className="w-full text-left p-[14px_16px] rounded-2xl bg-white text-black font-[800] border-2 border-black cursor-pointer transition-all duration-200 hover:bg-[#ffe135] hover:-translate-y-[2px] hover:shadow-[0_4px_0_rgba(0,0,0,0.1)]"
                             >
                                 색상 변경
                             </button>
@@ -646,44 +601,27 @@ function KidsStepPageContent() {
                             {colorChangedLdrBase64 && (
                                 <button
                                     onClick={restoreOriginalColor}
-                                    style={{
-                                        width: "100%",
-                                        textAlign: "left",
-                                        padding: "10px 16px",
-                                        borderRadius: 16,
-                                        background: "transparent",
-                                        color: "#888",
-                                        fontWeight: 800,
-                                        border: "2px solid transparent",
-                                        cursor: "pointer",
-                                        transition: "all 0.2s",
-                                        fontSize: "0.85rem",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 6
-                                    }}
-                                    onMouseOver={(e) => e.currentTarget.style.color = "#000"}
-                                    onMouseOut={(e) => e.currentTarget.style.color = "#888"}
+                                    className="w-full text-left p-[10px_16px] rounded-2xl bg-transparent text-[#888] font-[800] border-2 border-transparent cursor-pointer transition-all duration-200 text-[0.85rem] flex items-center gap-1.5 hover:text-black"
                                 >
                                     ↺ 원본으로 되돌리기
                                 </button>
                             )}
                         </div>
 
-                        <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
-                            <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800, textTransform: "uppercase" }}>
+                        <div className="mt-6 pt-6 border-t-2 border-[#eee]">
+                            <div className="mb-3 pl-2 text-[0.75rem] text-[#888] font-[800] uppercase">
                                 {t.kids.steps.registerGallery}
                             </div>
-                            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                            <div className="flex flex-col gap-2.5">
                                 <input
                                     type="text"
-                                    className="kidsStep__sidebarInput"
+                                    className="w-full bg-white border-2 border-black rounded-xl p-3.5 text-black text-[0.95rem] outline-none font-bold transition-all duration-200 focus:border-[#ffe135] focus:shadow-[0_0_0_3px_rgba(255,225,53,0.2)] placeholder:text-[#bbb]"
                                     placeholder={t.kids.steps.galleryModal.placeholder}
                                     value={galleryTitle}
                                     onChange={(e) => setGalleryTitle(e.target.value)}
                                 />
                                 <button
-                                    className="kidsStep__sidebarBtn"
+                                    className="w-full bg-[#ffe135] text-black border-2 border-black rounded-xl p-3.5 font-[900] cursor-pointer text-[0.95rem] transition-all duration-200 shadow-[2px_2px_0_#000] hover:bg-[#ffd700] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[3px_3px_0_#000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none disabled:opacity-60 disabled:cursor-not-allowed"
                                     onClick={handleRegisterGallery}
                                     disabled={isSubmitting}
                                 >
@@ -697,13 +635,9 @@ function KidsStepPageContent() {
 
 
                 {/* Main 3D Card Area */}
-                <div className="kidsStep__card">
+                <div className="relative w-[90%] max-w-[1000px] h-[75vh] md:aspect-square md:max-w-full bg-white border-[3px] border-black rounded-[40px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.15)] z-10">
                     {loading && (
-                        <div style={{
-                            position: "absolute", inset: 0, zIndex: 20,
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            background: "rgba(255,255,255,0.75)", fontWeight: 900,
-                        }}>
+                        <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/75 font-[900]">
                             <div className="flex flex-col items-center gap-3">
                                 <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
                                 <span>{t.kids.steps.loading}</span>
@@ -713,7 +647,7 @@ function KidsStepPageContent() {
 
                     {activeTab === 'LDR' ? (
                         <>
-                            <div style={{ position: "absolute", inset: 0 }}>
+                            <div className="absolute inset-0">
                                 <Canvas camera={{ position: [200, -200, 200], fov: 45 }} dpr={[1, 2]}>
                                     <ambientLight intensity={0.9} />
                                     <directionalLight position={[3, 5, 2]} intensity={1} />
@@ -732,47 +666,32 @@ function KidsStepPageContent() {
 
                             {/* LDR Overlays (Start Button or Step Nav) */}
                             {isPreviewMode ? (
-                                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 40, pointerEvents: "none" }}>
+                                <div className="absolute inset-0 flex items-end justify-center pb-10 pointer-events-none">
                                     <button
                                         onClick={() => { setIsPreviewMode(false); setStepIdx(0); }}
-                                        className="kidsStep__startNavBtn"
+                                        className="pointer-events-auto p-[14px_32px] text-[1.15rem] rounded-full bg-black text-white font-[800] border-none cursor-pointer shadow-[0_8px_16px_rgba(0,0,0,0.2)] transition-all duration-200 hover:scale-[1.05] hover:-translate-y-[2px] hover:bg-[#222] active:scale-[0.98] active:translate-y-0"
                                     >
                                         {t.kids.steps.startAssembly}
                                     </button>
                                 </div>
                             ) : (
-                                <div style={{
-                                    position: "absolute",
-                                    bottom: 40,
-                                    left: "50%",
-                                    transform: "translateX(-50%)",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 24,
-                                    background: "#fff",
-                                    padding: "8px 12px",
-                                    borderRadius: 999,
-                                    boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
-                                    border: "3px solid #000"
-                                }}>
+                                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-6 bg-white p-[8px_12px] rounded-full shadow-[0_8px_20px_rgba(0,0,0,0.15)] border-[3px] border-black">
                                     <button
-                                        className="kidsStep__navBtn"
+                                        className="border-none bg-[#f0f0f0] rounded-full p-[12px_24px] h-auto min-w-auto shadow-none cursor-pointer transition-all duration-200 hover:bg-[#e0e0e0] disabled:opacity-30 disabled:cursor-not-allowed"
                                         disabled={!canPrev}
                                         onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}
-                                        style={{ border: 'none', background: '#f0f0f0', borderRadius: 999, padding: "12px 24px", height: "auto", minWidth: "auto", boxShadow: "none" }}
                                     >
                                         ← {t.kids.steps.prev}
                                     </button>
 
-                                    <div style={{ fontSize: "1.2rem", fontWeight: 900, fontFamily: "sans-serif", padding: "0 8px" }}>
-                                        Step {stepIdx + 1} <span style={{ color: "#aaa", fontSize: "0.9em" }}>/ {total}</span>
+                                    <div className="text-[1.2rem] font-[900] font-sans px-2">
+                                        Step {stepIdx + 1} <span className="text-[#aaa] text-[0.9em]">/ {total}</span>
                                     </div>
 
                                     <button
-                                        className="kidsStep__navBtn kidsStep__navBtn--next"
+                                        className="bg-black text-white border-none rounded-full p-[12px_24px] h-auto min-w-auto shadow-none cursor-pointer transition-all duration-200 hover:bg-[#222] disabled:opacity-30 disabled:cursor-not-allowed"
                                         disabled={!canNext}
                                         onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}
-                                        style={{ border: 'none', borderRadius: 999, padding: "12px 24px", height: "auto", minWidth: "auto", boxShadow: "none" }}
                                     >
                                         {t.kids.steps.next} →
                                     </button>
@@ -781,7 +700,7 @@ function KidsStepPageContent() {
                         </>
                     ) : (
                         // GLB Viewer
-                        <div style={{ position: "absolute", inset: 0 }}>
+                        <div className="absolute inset-0">
                             <Canvas camera={{ position: [5, 5, 5], fov: 50 }} dpr={[1, 2]}>
                                 <ambientLight intensity={0.8} />
                                 <directionalLight position={[5, 10, 5]} intensity={1.5} />
@@ -793,7 +712,7 @@ function KidsStepPageContent() {
                                 </Bounds>
                                 <OrbitControls makeDefault enablePan={false} enableZoom />
                             </Canvas>
-                            {!glbUrl && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#888", fontWeight: 700 }}>3D Model not available</div>}
+                            {!glbUrl && <div className="absolute inset-0 flex items-center justify-center text-[#888] font-bold">3D Model not available</div>}
                         </div>
                     )}
                 </div>
@@ -801,13 +720,13 @@ function KidsStepPageContent() {
 
             {/* Gallery Modal */}
             {isGalleryModalOpen && (
-                <div className="galleryModalOverlay" onClick={() => setIsGalleryModalOpen(false)}>
-                    <div className="galleryModal" onClick={(e) => e.stopPropagation()}>
-                        <h3 className="galleryModal__title">{t.kids.steps.galleryModal.title}</h3>
-                        <input type="text" className="galleryModal__input" value={galleryTitle} onChange={(e) => setGalleryTitle(e.target.value)} placeholder={t.kids.steps.galleryModal.placeholder} autoFocus />
-                        <div className="galleryModal__actions">
-                            <button className="galleryModal__btn galleryModal__btn--cancel" onClick={() => setIsGalleryModalOpen(false)}>{t.kids.steps.galleryModal.cancel}</button>
-                            <button className="galleryModal__btn galleryModal__btn--confirm" onClick={handleRegisterGallery} disabled={isSubmitting}>{isSubmitting ? "..." : t.kids.steps.galleryModal.confirm}</button>
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-[4px] grid place-items-center z-[1000]" onClick={() => setIsGalleryModalOpen(false)}>
+                    <div className="bg-white border-[3px] border-black rounded-[20px] p-8 w-[min(400px,90vw)] flex flex-col gap-5 shadow-[0_20px_40px_rgba(0,0,0,0.2)]" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="font-['KblJumpCondensed',sans-serif] text-[32px] m-0 text-center">{t.kids.steps.galleryModal.title}</h3>
+                        <input type="text" className="w-full p-[12px_16px] border-2 border-black rounded-xl text-base outline-none" value={galleryTitle} onChange={(e) => setGalleryTitle(e.target.value)} placeholder={t.kids.steps.galleryModal.placeholder} autoFocus />
+                        <div className="flex gap-3">
+                            <button className="flex-1 p-3 rounded-xl border-2 border-black font-[800] cursor-pointer transition-all duration-200 bg-white hover:-translate-y-[0.5]" onClick={() => setIsGalleryModalOpen(false)}>{t.kids.steps.galleryModal.cancel}</button>
+                            <button className="flex-1 p-3 rounded-xl border-2 border-black font-[800] cursor-pointer transition-all duration-200 bg-black text-white hover:-translate-y-[0.5]" onClick={handleRegisterGallery} disabled={isSubmitting}>{isSubmitting ? "..." : t.kids.steps.galleryModal.confirm}</button>
                         </div>
                     </div>
                 </div>
@@ -815,41 +734,41 @@ function KidsStepPageContent() {
 
             {/* 색상 변경 모달 */}
             {isColorModalOpen && (
-                <div className="galleryModalOverlay" onClick={() => setIsColorModalOpen(false)}>
-                    <div className="galleryModal colorModal" onClick={(e) => e.stopPropagation()}>
-                        <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)} aria-label="close">✕</button>
-                        <h3 className="galleryModal__title">
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-[4px] grid place-items-center z-[1000]" onClick={() => setIsColorModalOpen(false)}>
+                    <div className="bg-white border-[3px] border-black rounded-[20px] p-8 w-[min(400px,90vw)] flex flex-col gap-5 shadow-[0_20px_40px_rgba(0,0,0,0.2)] relative" onClick={(e) => e.stopPropagation()}>
+                        <button className="absolute top-4 right-4 w-11 h-11 border-none bg-transparent cursor-pointer text-[24px] font-bold flex items-center justify-center transition-all duration-100 ease-[cubic-bezier(0.4,0,0.2,1)] text-black z-[100] hover:rotate-90 hover:scale-110" onClick={() => setIsColorModalOpen(false)} aria-label="close">✕</button>
+                        <h3 className="font-['KblJumpCondensed',sans-serif] text-[32px] m-0 text-center">
                             🎨 {t.kids.steps.colorThemeTitle || "색상 테마 선택"}
                         </h3>
 
-                        <div className="colorModal__themes">
+                        <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
                             {colorThemes.length === 0 ? (
-                                <div style={{ padding: "20px", textAlign: "center", color: "#888" }}>
+                                <div className="p-5 text-center text-[#888]">
                                     테마 로딩 중...
                                 </div>
                             ) : (
                                 colorThemes.map((theme: ThemeInfo) => (
                                     <button
                                         key={theme.name}
-                                        className={`colorModal__themeBtn ${selectedTheme === theme.name ? "colorModal__themeBtn--selected" : ""}`}
+                                        className={`flex flex-col items-start p-[14px_16px] rounded-xl border-2 transition-all duration-200 text-left bg-white cursor-pointer ${selectedTheme === theme.name ? "border-black bg-black text-white" : "border-[#e0e0e0] hover:border-black hover:bg-[#f9f9f9]"}`}
                                         onClick={() => setSelectedTheme(theme.name)}
                                     >
-                                        <span className="colorModal__themeName">{theme.name}</span>
-                                        <span className="colorModal__themeDesc">{theme.description}</span>
+                                        <span className={`text-[15px] font-[800] ${selectedTheme === theme.name ? "text-white" : "text-black"}`}>{theme.name}</span>
+                                        <span className={`text-[12px] mt-0.5 ${selectedTheme === theme.name ? "text-[#ccc]" : "text-[#888]"}`}>{theme.description}</span>
                                     </button>
                                 ))
                             )}
                         </div>
 
-                        <div className="galleryModal__actions">
+                        <div className="flex gap-3">
                             <button
-                                className="galleryModal__btn galleryModal__btn--cancel"
+                                className="flex-1 p-3 rounded-xl border-2 border-black font-[800] cursor-pointer transition-all duration-200 bg-white hover:-translate-y-[0.5]"
                                 onClick={() => setIsColorModalOpen(false)}
                             >
                                 {t.kids.steps.galleryModal.cancel}
                             </button>
                             <button
-                                className="galleryModal__btn galleryModal__btn--confirm"
+                                className="flex-1 p-3 rounded-xl border-2 border-black font-[800] cursor-pointer transition-all duration-200 bg-black text-white hover:-translate-y-[0.5]"
                                 onClick={handleApplyColor}
                                 disabled={!selectedTheme || isApplyingColor}
                             >

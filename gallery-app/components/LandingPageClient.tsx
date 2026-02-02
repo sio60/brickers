@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import CarouselGallery from "@/components/CarouselGallery";
 import AgeSelectionModal from "@/components/kids/AgeSelectionModal";
 import { GalleryItem } from "@/types/gallery";
-import styles from '@/app/LandingPage.module.css';
+// import styles from '@/app/LandingPage.module.css'; // Removed
 
 // SSR 제외 컴포넌트
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
@@ -74,10 +74,10 @@ function LandingPageContent({ initialItems }: Props) {
     };
 
     return (
-        <div className={styles.container}>
+        <div className="relative w-full h-[100vh] flex flex-col items-center justify-start z-[1] pt-[100px] md:pt-20">
             <Background3D entryDirection="top" />
 
-            <div className={styles.gallerySection}>
+            <div className="w-full mt-10 mb-5 z-[5]">
                 <CarouselGallery
                     items={galleryItems}
                     loading={isLoading}
@@ -85,13 +85,13 @@ function LandingPageContent({ initialItems }: Props) {
             </div>
 
             {!galleryItems.length && !isLoading ? null : (
-                <div className={styles.hero}>
+                <div className="text-center mt-10 mb-20 z-10">
                     <button
-                        className={styles.goMakeBtn}
+                        className="bg-white text-black border-[3px] border-black rounded-[50px] font-black cursor-pointer flex items-center gap-2 transition-all duration-200 ease-in-out shadow-[0_10px_0px_rgba(0,0,0,0.1)] hover:bg-black hover:text-white hover:translate-y-[2px] hover:shadow-[0_5px_0px_rgba(0,0,0,0.1)] text-[22px] px-8 py-4 md:text-lg md:px-[60px] md:py-2.5"
                         onClick={handleGoMake}
                         type="button"
                     >
-                        {t.main.landing.goMake} <span className={styles.arrow}>→</span>
+                        {t.main.landing.goMake} <span className="text-2xl">→</span>
                     </button>
                 </div>
             )}
