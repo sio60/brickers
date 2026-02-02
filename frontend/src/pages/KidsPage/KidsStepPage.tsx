@@ -8,7 +8,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
-import { useAuth } from "../Auth/AuthContext"; // ✅ 추가
+
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "../../api/colorVariantApi";
 import "./KidsStepPage.css";
 import SEO from "../../components/SEO";
@@ -193,7 +193,7 @@ function LdrModel({
       prev = g;
       setGroup(g);
       onLoaded?.(g);
-    })().catch((e) => {
+    })().catch((e: any) => {
       console.error("[LDraw] load failed:", e);
       onError?.(e);
     });
@@ -216,7 +216,7 @@ function LdrModel({
 export default function KidsStepPage() {
   const nav = useNavigate();
   const { t } = useLanguage();
-  const { myApi } = useAuth(); // ✅ myApi 사용
+
   const [params] = useSearchParams();
 
   const jobId = params.get("jobId") || "";
@@ -229,13 +229,9 @@ export default function KidsStepPage() {
   const blobRef = useRef<string[]>([]);
   const modelGroupRef = useRef<THREE.Group | null>(null);
 
-  // 갤러리 등록 모달 관련
-  const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
-  const [galleryTitle, setGalleryTitle] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Job 정보 (썸네일 URL)
-  const [jobThumbnailUrl, setJobThumbnailUrl] = useState<string | null>(null);
+
+
 
   // 색상 변경 관련
   const [isColorModalOpen, setIsColorModalOpen] = useState(false);
@@ -271,8 +267,6 @@ export default function KidsStepPage() {
             const u = data.ldrUrl || data.ldr_url || "";
             setLdrUrl(u);
           }
-          // 썸네일 URL 저장 (완전 원본 이미지 사용) - 항상 설정
-          setJobThumbnailUrl(data.sourceImageUrl || null);
         }
       } catch (e) {
         console.error("[KidsStepPage] failed to resolve job info by jobId:", e);
@@ -339,7 +333,7 @@ export default function KidsStepPage() {
     if (isColorModalOpen && colorThemes.length === 0) {
       getColorThemes()
         .then(setColorThemes)
-        .catch((e) => console.error("테마 로드 실패:", e));
+        .catch((e: any) => console.error("테마 로드 실패:", e));
     }
   }, [isColorModalOpen]);
 
@@ -462,32 +456,7 @@ export default function KidsStepPage() {
     }
   };
 
-  const handleRegisterGallery = async () => {
-    if (!galleryTitle.trim()) {
-      alert(t.kids.steps.galleryModal.placeholder);
-      return;
-    }
 
-    setIsSubmitting(true);
-    try {
-      await myApi.registerToGallery({ // ✅ myApi 사용
-        title: galleryTitle,
-        content: t.kids.steps.galleryModal.content,
-        tags: ["Kids", "Lego"],
-        thumbnailUrl: jobThumbnailUrl || undefined,
-        ldrUrl: ldrUrl || undefined,
-        visibility: "PUBLIC",
-      });
-      alert(t.kids.steps.galleryModal.success);
-      setIsGalleryModalOpen(false);
-      setGalleryTitle("");
-    } catch (err) {
-      console.error("Gallery registration failed:", err);
-      alert(t.kids.steps.galleryModal.fail);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   if (!ldrUrl) {
     return (
@@ -623,12 +592,7 @@ export default function KidsStepPage() {
             {t.kids.steps.downloadLdr}
           </button>
 
-          <button
-            className="kidsStep__actionBtn kidsStep__actionBtn--gallery"
-            onClick={() => setIsGalleryModalOpen(true)}
-          >
-            {t.kids.steps.registerGallery}
-          </button>
+
 
           <button
             className="kidsStep__actionBtn kidsStep__actionBtn--color"
@@ -648,38 +612,7 @@ export default function KidsStepPage() {
         </div>
       )}
 
-      {isGalleryModalOpen && (
-        <div className="galleryModalOverlay" onClick={() => setIsGalleryModalOpen(false)}>
-          <div className="galleryModal" onClick={(e) => e.stopPropagation()}>
-            <h3 className="galleryModal__title">
-              {t.kids.steps.galleryModal.title}
-            </h3>
-            <input
-              type="text"
-              className="galleryModal__input"
-              value={galleryTitle}
-              onChange={(e) => setGalleryTitle(e.target.value)}
-              placeholder={t.kids.steps.galleryModal.placeholder}
-              autoFocus
-            />
-            <div className="galleryModal__actions">
-              <button
-                className="galleryModal__btn galleryModal__btn--cancel"
-                onClick={() => setIsGalleryModalOpen(false)}
-              >
-                {t.kids.steps.galleryModal.cancel}
-              </button>
-              <button
-                className="galleryModal__btn galleryModal__btn--confirm"
-                onClick={handleRegisterGallery}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "..." : t.kids.steps.galleryModal.confirm}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* 색상 변경 모달 */}
       {isColorModalOpen && (
