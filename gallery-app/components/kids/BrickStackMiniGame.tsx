@@ -295,10 +295,17 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
 
         // 이전 브릭과 겹침 계산
         const topBrick = bricks[bricks.length - 1];
+
+        // 보정 (Snap): 중심 차이가 작으면 정중앙으로 보정 (난이도 완화)
+        let finalX = dropX;
+        if (Math.abs(dropX - topBrick.x) < 0.2) {
+            finalX = topBrick.x;
+        }
+
         const topLeft = topBrick.x - topBrick.width / 2;
         const topRight = topBrick.x + topBrick.width / 2;
-        const dropLeft = dropX - dropWidth / 2;
-        const dropRight = dropX + dropWidth / 2;
+        const dropLeft = finalX - dropWidth / 2;
+        const dropRight = finalX + dropWidth / 2;
 
         const overlapLeft = Math.max(topLeft, dropLeft);
         const overlapRight = Math.min(topRight, dropRight);
@@ -409,7 +416,7 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
                 </div>
             )}
 
-            <div className="brickGame__header">
+            <div className="brickGame__header" style={{ marginTop: percent !== undefined ? 80 : 0 }}>
                 <div className="brickGame__score">
                     <span className="brickGame__scoreValue">{score}</span>
                     <span className="brickGame__scoreLabel">BRICKS</span>
