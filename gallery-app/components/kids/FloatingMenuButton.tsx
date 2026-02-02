@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getMyProfile } from "@/lib/api/myApi";
 import LoginModal from "@/components/common/LoginModal";
 import BrickBotModal from "./BrickBotModal";
-// import styles from "./FloatingMenuButton.module.css"; // Removed
+import styles from "./FloatingMenuButton.module.css";
 
 export default function FloatingMenuButton() {
     const router = useRouter();
@@ -78,28 +78,28 @@ export default function FloatingMenuButton() {
             {/* 배경 오버레이 */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 z-[999] bg-transparent"
+                    className={styles.overlay}
                     onClick={() => setIsOpen(false)}
                 />
             )}
 
-            <div className="fixed bottom-6 right-6 z-[1000] flex flex-col items-end">
+            <div className={styles.container}>
                 {/* 메뉴 모달 */}
-                <div className={`absolute bottom-[72px] right-0 bg-white rounded-2xl border-2 border-black shadow-[0_8px_32px_rgba(0,0,0,0.18)] py-2 min-w-[180px] opacity-0 invisible translate-y-5 scale-95 transition-all duration-250 ease-[cubic-bezier(0.4,0,0.2,1)] pointer-events-none ${isOpen ? "opacity-100 visible translate-y-0 scale-100 pointer-events-auto" : ""}`}>
+                <div className={`${styles.modal} ${isOpen ? styles.isOpen : ""}`}>
                     {menuItems.map((item) => (
                         <button
                             key={item.id}
-                            className="flex items-center gap-3 w-full px-5 py-3.5 border-none bg-transparent cursor-pointer text-[15px] font-semibold text-[#333] transition-colors duration-150 text-left hover:bg-transparent"
+                            className={styles.item}
                             onClick={() => handleMenuClick(item.id)}
                         >
-                            <span className="flex-1">{item.label}</span>
+                            <span className={styles.itemLabel}>{item.label}</span>
                         </button>
                     ))}
                 </div>
 
                 {/* 플로팅 버튼 */}
                 <button
-                    className={`w-[60px] h-[60px] rounded-full border-2 border-black bg-white cursor-pointer flex items-center justify-center p-0 overflow-hidden transition-all duration-250 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-[0_4px_16px_rgba(0,0,0,0.15)] hover:bg-[#ffe135] hover:scale-105 hover:shadow-[0_6px_20px_rgba(0,0,0,0.2)] ${isOpen ? "bg-[#ffe135] rotate-45" : ""}`}
+                    className={`${styles.btn} ${isOpen ? styles.isOpen : ""}`}
                     onClick={handleMainBtnClick}
                     aria-label={t.floatingMenu.open}
                 >
@@ -108,7 +108,7 @@ export default function FloatingMenuButton() {
                         alt={t.floatingMenu.iconAlt}
                         width={36}
                         height={36}
-                        className={`w-9 h-9 object-contain transition-transform duration-250 ${isOpen ? "-rotate-45" : ""}`}
+                        className={styles.btnIcon}
                     />
                 </button>
             </div>

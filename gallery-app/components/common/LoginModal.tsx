@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
-// import styles from "./LoginModal.module.css"; // Removed
+import styles from "./LoginModal.module.css";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
@@ -48,28 +48,27 @@ export default function LoginModal({ isOpen, onClose }: Props) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[3000] backdrop-blur-[4px]" onClick={onClose}>
-            <div className="bg-white p-10 rounded-3xl w-full max-w-[400px] flex flex-col items-center shadow-[0_10px_25px_rgba(0,0,0,0.2)] animate-[modalPop_0.3s_cubic-bezier(0.175,0.885,0.32,1.275)] relative" onClick={(e) => e.stopPropagation()}>
-                <button className="absolute top-4 right-4 w-11 h-11 border-none bg-transparent cursor-pointer text-2xl font-bold flex items-center justify-center transition-all duration-200 text-black z-[100] hover:rotate-90 hover:scale-110" onClick={onClose} aria-label="close">✕</button>
-                <h2 className="text-[32px] text-black mb-6 tracking-[1px] font-extrabold">{t.auth.title}</h2>
+        <div className={styles.overlay} onClick={onClose}>
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                <button className={styles.closeBtn} onClick={onClose} aria-label="close">✕</button>
+                <h2 className={styles.title}>{t.auth.title}</h2>
 
                 <button
-                    className="w-full h-14 rounded-xl border-none text-base font-semibold flex items-center justify-center relative cursor-pointer mb-4 transition-transform duration-100 last:mb-0 active:scale-98 bg-[#fee500] text-black/85"
+                    className={`${styles.button} ${styles.kakao}`}
                     onClick={handleKakaoLogin}
                 >
-                    <Image src="/kakao.png" alt="Kakao" width={24} height={24} className="absolute left-5 object-contain" />
-                    <span className="flex-1 text-center">{t.auth.kakao}</span>
+                    <Image src="/kakao.png" alt="Kakao" width={24} height={24} className={styles.icon} />
+                    <span className={styles.paramName}>{t.auth.kakao}</span>
                 </button>
 
                 <button
-                    className="w-full h-14 rounded-xl text-base font-semibold flex items-center justify-center relative cursor-pointer mb-4 transition-transform duration-100 last:mb-0 active:scale-98 bg-white text-black border border-[#dadce0]"
+                    className={`${styles.button} ${styles.google}`}
                     onClick={handleGoogleLogin}
                 >
-                    <Image src="/google.png" alt="Google" width={24} height={24} className="absolute left-5 object-contain" />
-                    <span className="flex-1 text-center">{t.auth.google}</span>
+                    <Image src="/google.png" alt="Google" width={24} height={24} className={styles.icon} />
+                    <span className={styles.paramName}>{t.auth.google}</span>
                 </button>
             </div>
         </div>
     );
-
 }
