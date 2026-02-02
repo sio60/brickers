@@ -398,11 +398,7 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
 
             <div className="brickGame__header">
                 <div className="brickGame__score">{score}</div>
-                {gameOver && (
-                    <button className="brickGame__restart" onClick={resetGame}>
-                        {t.miniGame?.playAgain || "Play Again"}
-                    </button>
-                )}
+
             </div>
 
             <div className="brickGame__stage">
@@ -422,6 +418,9 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
                     <div className="brickGame__overlay">
                         <div className="brickGame__overlayText">{t.miniGame?.gameOver || "Game Over!"}</div>
                         <div className="brickGame__overlayScore">{t.miniGame?.score || "Score"}: {score}</div>
+                        <button className="brickGame__restart" onClick={resetGame}>
+                            {t.miniGame?.playAgain || "Play Again"}
+                        </button>
                     </div>
                 )}
             </div>

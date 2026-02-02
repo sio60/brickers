@@ -9,7 +9,7 @@ import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 
-import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "../../api/colorVariantApi";
+
 import "./KidsStepPage.css";
 import SEO from "../../components/SEO";
 
@@ -229,18 +229,6 @@ export default function KidsStepPage() {
   const blobRef = useRef<string[]>([]);
   const modelGroupRef = useRef<THREE.Group | null>(null);
 
-
-
-
-
-  // 색상 변경 관련
-  const [isColorModalOpen, setIsColorModalOpen] = useState(false);
-  const [colorThemes, setColorThemes] = useState<ThemeInfo[]>([]);
-  const [selectedTheme, setSelectedTheme] = useState<string>("");
-  const [isApplyingColor, setIsApplyingColor] = useState(false);
-  const [colorChangedLdrUrl, setColorChangedLdrUrl] = useState<string | null>(null);
-  const [colorChangedLdrBase64, setColorChangedLdrBase64] = useState<string | null>(null);
-
   const revokeAll = (arr: string[]) => {
     arr.forEach((u) => {
       try {
@@ -248,6 +236,12 @@ export default function KidsStepPage() {
       } catch { }
     });
   };
+
+
+
+
+
+
 
   // ✅ 1) jobId로 백엔드에서 Job 정보 가져오기 (ldrUrl, thumbnailUrl)
   useEffect(() => {
@@ -328,65 +322,9 @@ export default function KidsStepPage() {
     return () => revokeAll(blobRef.current);
   }, []);
 
-  // 색상 테마 목록 로드
-  useEffect(() => {
-    if (isColorModalOpen && colorThemes.length === 0) {
-      getColorThemes()
-        .then(setColorThemes)
-        .catch((e: any) => console.error("테마 로드 실패:", e));
-    }
-  }, [isColorModalOpen]);
 
-  // 색상 변경 적용
-  const handleApplyColor = async () => {
-    if (!selectedTheme || !ldrUrl) return;
 
-    setIsApplyingColor(true);
-    try {
-      const result = await applyColorVariant(ldrUrl, selectedTheme);
 
-      if (result.ok && result.ldrData) {
-        // 이전 blob URL 정리
-        if (colorChangedLdrUrl) {
-          URL.revokeObjectURL(colorChangedLdrUrl);
-        }
-
-        // 새 blob URL 생성 및 저장
-        const newBlobUrl = base64ToBlobUrl(result.ldrData);
-        setColorChangedLdrUrl(newBlobUrl);
-        setColorChangedLdrBase64(result.ldrData);
-
-        // step blob들 재생성
-        const text = atob(result.ldrData);
-        const stepTexts = buildCumulativeStepTexts(text);
-        const blobs = stepTexts.map((t) =>
-          URL.createObjectURL(new Blob([t], { type: "text/plain" }))
-        );
-
-        revokeAll(blobRef.current);
-        blobRef.current = blobs;
-        setStepBlobUrls(blobs);
-        setStepIdx(stepTexts.length - 1); // 마지막 단계로 이동
-
-        setIsColorModalOpen(false);
-        alert(`${result.themeApplied} 테마 적용 완료! (${result.changedBricks}개 브릭 변경)`);
-      } else {
-        alert(result.message || "색상 변경 실패");
-      }
-    } catch (e: any) {
-      console.error("색상 변경 실패:", e);
-      alert(e.message || "색상 변경 중 오류가 발생했습니다.");
-    } finally {
-      setIsApplyingColor(false);
-    }
-  };
-
-  // 색상 변경된 LDR 다운로드
-  const downloadColorChangedLdr = () => {
-    if (colorChangedLdrBase64) {
-      downloadLdrFromBase64(colorChangedLdrBase64, `brickers_${selectedTheme}.ldr`);
-    }
-  };
 
   const downloadLdr = async () => {
     if (!ldrUrl) return;
@@ -594,71 +532,13 @@ export default function KidsStepPage() {
 
 
 
-          <button
-            className="kidsStep__actionBtn kidsStep__actionBtn--color"
-            onClick={() => setIsColorModalOpen(true)}
-          >
-            🎨 색상 변경
-          </button>
 
-          {colorChangedLdrBase64 && (
-            <button
-              className="kidsStep__actionBtn kidsStep__actionBtn--download"
-              onClick={downloadColorChangedLdr}
-            >
-              📥 변경된 LDR 다운로드
-            </button>
-          )}
         </div>
       )}
 
 
 
-      {/* 색상 변경 모달 */}
-      {isColorModalOpen && (
-        <div className="galleryModalOverlay" onClick={() => setIsColorModalOpen(false)}>
-          <div className="galleryModal colorModal" onClick={(e) => e.stopPropagation()}>
-            <h3 className="galleryModal__title">
-              🎨 색상 테마 선택
-            </h3>
 
-            <div className="colorModal__themes">
-              {colorThemes.length === 0 ? (
-                <div style={{ padding: "20px", textAlign: "center", color: "#888" }}>
-                  테마 로딩 중...
-                </div>
-              ) : (
-                colorThemes.map((theme) => (
-                  <button
-                    key={theme.name}
-                    className={`colorModal__themeBtn ${selectedTheme === theme.name ? "colorModal__themeBtn--selected" : ""}`}
-                    onClick={() => setSelectedTheme(theme.name)}
-                  >
-                    <span className="colorModal__themeName">{theme.name}</span>
-                    <span className="colorModal__themeDesc">{theme.description}</span>
-                  </button>
-                ))
-              )}
-            </div>
-
-            <div className="galleryModal__actions">
-              <button
-                className="galleryModal__btn galleryModal__btn--cancel"
-                onClick={() => setIsColorModalOpen(false)}
-              >
-                취소
-              </button>
-              <button
-                className="galleryModal__btn galleryModal__btn--confirm"
-                onClick={handleApplyColor}
-                disabled={!selectedTheme || isApplyingColor}
-              >
-                {isApplyingColor ? "적용 중..." : "적용하기"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
