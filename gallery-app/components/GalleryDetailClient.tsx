@@ -213,66 +213,75 @@ export default function GalleryDetailClient({ item }: Props) {
         const hasChildren = c.children && c.children.length > 0;
 
         return (
-            <div key={c.id} className="flex flex-col gap-1 w-full">
-                {/* Comment Box */}
-                <div className={`bg-white p-3 rounded-xl border border-gray-100 shadow-sm ${depth > 0 ? 'ml-4 border-l-2 border-l-blue-100' : ''}`}>
-                    <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                            <span className="font-bold text-xs text-gray-900">@{c.authorNickname}</span>
-                            {parentNickname && (
-                                <span className="text-[10px] text-blue-400 font-medium">to @{parentNickname}</span>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-gray-400">{formatDate(c.createdAt)}</span>
-                            <button
-                                onClick={() => setReplyingTo(replyingTo === c.id ? null : c.id)}
-                                className="text-[10px] font-bold text-blue-500 hover:text-blue-700"
-                            >
-                                {t.detail.reply || "답글"}
-                            </button>
-                        </div>
+            <div key={c.id} className="w-full">
+                {/* Instagram Style Row */}
+                <div className={`flex gap-3 py-3 ${depth > 0 ? 'ml-10' : ''}`}>
+                    {/* Avatar */}
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200 shadow-sm overflow-hidden">
+                        <span className="text-[10px] font-bold text-gray-500">{c.authorNickname ? c.authorNickname[0].toUpperCase() : '?'}</span>
                     </div>
 
-                    <p className="text-xs text-gray-600 leading-relaxed">
-                        {c.content}
-                    </p>
+                    {/* Content Section */}
+                    <div className="flex flex-col flex-1 min-w-0">
+                        <div className="text-[13px] leading-relaxed">
+                            <span className="font-bold mr-2 text-gray-900 leading-none">@{c.authorNickname}</span>
+                            <span className="text-gray-700 break-words">
+                                {parentNickname && depth > 0 && (
+                                    <span className="text-blue-500 font-semibold mr-1">@{parentNickname}</span>
+                                )}
+                                {c.content}
+                            </span>
+                        </div>
 
-                    {/* Reply Input */}
-                    {replyingTo === c.id && (
-                        <div className="mt-2 flex gap-2">
-                            <input
-                                className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 outline-none"
-                                placeholder={`@${c.authorNickname}님에게 답글...`}
-                                value={replyInput}
-                                onChange={e => setReplyInput(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && handleCommentSubmit(c.id)}
-                                disabled={replyLoading}
-                                autoFocus
-                            />
+                        <div className="flex items-center gap-4 mt-2 mb-1">
+                            <span className="text-[11px] text-gray-400 font-medium">{formatDate(c.createdAt)}</span>
                             <button
-                                onClick={() => handleCommentSubmit(c.id)}
-                                disabled={!replyInput.trim() || replyLoading}
-                                className="bg-blue-500 text-white px-3 rounded-lg font-bold text-[10px] hover:bg-blue-600 disabled:opacity-50"
+                                onClick={() => setReplyingTo(replyingTo === c.id ? null : c.id)}
+                                className="text-[11px] font-bold text-gray-500 hover:text-gray-900 transition-colors"
                             >
-                                {replyLoading ? '...' : '등록'}
+                                {t.detail.reply || "답글 달기"}
                             </button>
                         </div>
-                    )}
+
+                        {/* Reply Input */}
+                        {replyingTo === c.id && (
+                            <div className="mt-3 flex gap-2">
+                                <input
+                                    className="flex-1 bg-transparent border-b border-gray-100 py-1 text-xs focus:border-black outline-none transition-all"
+                                    placeholder={`@${c.authorNickname}님에게 답글...`}
+                                    value={replyInput}
+                                    onChange={e => setReplyInput(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && handleCommentSubmit(c.id)}
+                                    disabled={replyLoading}
+                                    autoFocus
+                                />
+                                <button
+                                    onClick={() => handleCommentSubmit(c.id)}
+                                    disabled={!replyInput.trim() || replyLoading}
+                                    className="text-blue-500 font-bold text-xs hover:text-blue-700 disabled:opacity-30"
+                                >
+                                    {replyLoading ? '...' : '게시'}
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                {/* Expand/Collapse Toggle & Children */}
+                {/* Sub-replies */}
                 {hasChildren && (
-                    <div className="ml-4 flex flex-col gap-1">
+                    <div className="ml-10 flex flex-col">
                         <button
                             onClick={() => toggleExpand(c.id)}
-                            className="text-[10px] text-gray-400 self-start flex items-center gap-1 hover:text-gray-600 py-1"
+                            className="flex items-center gap-3 py-1.5 group"
                         >
-                            {isExpanded ? '▼ 답글 숨기기' : `▶ 답글 ${c.children?.length}개 보기`}
+                            <div className="w-8 border-t border-gray-200 group-hover:border-gray-400 transition-all"></div>
+                            <span className="text-[11px] font-bold text-gray-400 group-hover:text-gray-600 transition-colors">
+                                {isExpanded ? '답글 숨기기' : `답글 ${c.children?.length}개 더 보기`}
+                            </span>
                         </button>
 
                         {isExpanded && (
-                            <div className="flex flex-col gap-2 border-l border-gray-50">
+                            <div className="flex flex-col">
                                 {c.children?.map(child => renderComment(child, depth + 1, c.authorNickname))}
                             </div>
                         )}
@@ -394,7 +403,7 @@ export default function GalleryDetailClient({ item }: Props) {
                 </div>
 
                 {/* 3. Right Sidebar - Detail & Comments */}
-                <div className="w-[300px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10">
+                <div className="w-[420px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10 select-none">
                     {/* Scrollable Content */}
                     <div className="flex-1 overflow-y-auto">
                         {/* User Info Header */}
@@ -477,7 +486,7 @@ export default function GalleryDetailClient({ item }: Props) {
                         </div>
 
                         {/* Comments Section */}
-                        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 min-h-[300px]">
+                        <div className="px-6 py-4 border-t border-gray-100 bg-white min-h-[300px]">
                             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
                                 {t.detail.comments} ({comments.length})
                             </h3>
