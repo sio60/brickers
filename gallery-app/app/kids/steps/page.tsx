@@ -65,6 +65,7 @@ function LdrModel({
     onLoaded,
     onError,
     customBounds,
+    fitTrigger,
 }: {
     url: string;
     overrideMainLdrUrl?: string;
@@ -73,6 +74,7 @@ function LdrModel({
     onLoaded?: (group: THREE.Group) => void;
     onError?: (e: unknown) => void;
     customBounds?: THREE.Box3 | null;
+    fitTrigger?: string;
 }) {
     // ... (loader useMemo remains same) ...
     const loader = useMemo(() => {
@@ -102,7 +104,8 @@ function LdrModel({
             }
 
             // LDraw 라이브러리 URL인 경우 경로 수정
-            if (fixed.includes("ldraw-parts-library") && fixed.endsWith(".dat") && !fixed.includes("LDConfig.ldr")) {
+            const lowerFixed = fixed.toLowerCase();
+            if (lowerFixed.includes("ldraw-parts-library") && lowerFixed.endsWith(".dat") && !lowerFixed.includes("ldconfig.ldr")) {
                 const filename = fixed.split("/").pop() || "";
                 const lowerName = filename.toLowerCase();
                 if (filename && lowerName !== filename) {
@@ -210,6 +213,7 @@ function LdrModel({
                 <primitive object={group} />
                 {boundMesh}
             </Center>
+            <FitOnceOnLoad trigger={fitTrigger ?? ""} />
         </Bounds>
     );
 }
@@ -219,7 +223,7 @@ function FitOnceOnLoad({ trigger }: { trigger: string }) {
 
     useEffect(() => {
         // Fit once when model url changes
-        bounds.refresh().fit();
+        bounds?.refresh().fit();
     }, [bounds, trigger]);
 
     return null;
@@ -298,7 +302,30 @@ function parseAndProcessSteps(ldrText: string) {
     // Y 내림차순 (큰 값 = 바닥 = 먼저 조립)
     body.sort((a, b) => a.avgY - b.avgY);
 
-    const sortedSegments = [header, ...body];
+    // Merge steps by layer (group nearby Y into one step)
+    const LAYER_EPS = 8; // LDraw units
+    const merged: { lines: string[]; avgY: number }[] = [];
+    let curLinesMerge: string[] = [];
+    let curY = Number.NEGATIVE_INFINITY;
+
+    for (const seg of body) {
+        if (!curLinesMerge.length) {
+            curLinesMerge = seg.lines.slice();
+            curY = seg.avgY;
+            continue;
+        }
+        if (seg.avgY !== -Infinity && curY !== -Infinity && Math.abs(seg.avgY - curY) <= LAYER_EPS) {
+            curLinesMerge = curLinesMerge.concat(seg.lines);
+            curY = (curY + seg.avgY) / 2;
+        } else {
+            merged.push({ lines: curLinesMerge, avgY: curY });
+            curLinesMerge = seg.lines.slice();
+            curY = seg.avgY;
+        }
+    }
+    if (curLinesMerge.length) merged.push({ lines: curLinesMerge, avgY: curY });
+
+    const sortedSegments = [header, ...merged];
 
     // 3. 누적 텍스트 생성
     const out: string[] = [];
@@ -738,9 +765,9 @@ function KidsStepPageContent() {
                                             onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }}
                                             onError={() => setLoading(false)}
                                             customBounds={modelBounds}
+                                            fitTrigger={`${ldrUrl}|${modelUrlToUse ?? ''}`}
                                         />
                                     </Center>
-                                    <FitOnceOnLoad trigger={`${ldrUrl}|${modelUrlToUse ?? ''}`} />
                                     <OrbitControls makeDefault enablePan={false} enableZoom />
                                 </Canvas>
                             </div>
@@ -805,8 +832,8 @@ function KidsStepPageContent() {
                                     <Center>
                                         {glbUrl && <Gltf src={glbUrl} />}
                                     </Center>
+                                    <FitOnceOnLoad trigger={glbUrl ?? ''} />
                                 </Bounds>
-                                <FitOnceOnLoad trigger={glbUrl ?? ''} />
                                 <OrbitControls makeDefault enablePan={false} enableZoom />
                             </Canvas>
                             {!glbUrl && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#888", fontWeight: 700 }}>3D Model not available</div>}
