@@ -140,6 +140,12 @@ frontend/complete/
 uploads/
 uploads/**
 
+# Local Development Files
+docker-compose.local.yml
+docker-compose.local.yaml
+nginx/local.conf
+.env.local
+
 # (선택) kids 폴더만 명시적으로
 # uploads/kids/
 # uploads/kids/**
