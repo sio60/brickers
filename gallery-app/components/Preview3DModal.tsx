@@ -161,7 +161,6 @@ export default function Preview3DModal({ url, onClose, buildUrl }: { url: string
                             onClick={() => router.push(buildUrl)}
                             className="bg-black text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-800 transition-colors flex items-center gap-2"
                         >
-                            <span>🧱</span>
                             Start Building
                         </button>
                     )}
