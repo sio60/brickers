@@ -29,17 +29,18 @@ export async function getColorThemes(): Promise<ThemeInfo[]> {
 
 /**
  * LDR 파일에 색상 테마 적용
+ * @param authFetch - AuthContext에서 가져온 인증된 fetch 함수
  */
-export async function applyColorVariant(ldrUrl: string, theme: string): Promise<ColorVariantResponse> {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-
-    const res = await fetch(`${API_BASE}/api/color-variant`, {
+export async function applyColorVariant(
+    ldrUrl: string,
+    theme: string,
+    authFetch: (url: string, options?: RequestInit) => Promise<Response>
+): Promise<ColorVariantResponse> {
+    const res = await authFetch(`${API_BASE}/api/color-variant`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        credentials: 'include',
         body: JSON.stringify({ ldrUrl, theme }),
     });
 
