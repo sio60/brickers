@@ -8,6 +8,7 @@ import styles from "./MyPage.module.css";
 import { getMyOverview, getMyProfile, retryJob, updateMyProfile, ApiError } from "@/lib/api/myApi";
 import type { MyOverview, MyProfile, MyJob } from "@/lib/api/myApi";
 import KidsLdrPreview from "@/components/kids/KidsLdrPreview";
+import BackgroundBricks from "@/components/BackgroundBricks";
 import UpgradeModal from "@/components/UpgradeModal";
 
 // SVG Icons
@@ -335,9 +336,6 @@ export default function MyPage() {
                                             alt="Profile"
                                             className={styles.mypage__avatar}
                                         />
-                                        <div className={styles.mypage__avatarUpload}>
-                                            <Icons.Camera />
-                                        </div>
                                     </div>
                                     <div className={styles.mypage__profileInfo}>
                                         <div className={styles.mypage__nameRow}>
@@ -352,7 +350,7 @@ export default function MyPage() {
                                                     style={{ width: 'auto', display: 'inline-block', fontSize: '24px', fontWeight: 'bold', padding: '4px 8px' }}
                                                     value={editNickname}
                                                     onChange={(e) => setEditNickname(e.target.value)}
-                                                    placeholder="Nickname"
+                                                    placeholder={t.profile.nickname}
                                                 />
                                             )}
                                         </div>
@@ -367,7 +365,7 @@ export default function MyPage() {
                                                 className={styles.mypage__formTextarea}
                                                 value={editBio}
                                                 onChange={(e) => setEditBio(e.target.value)}
-                                                placeholder="Bio"
+                                                placeholder={t.mypage.bioPlaceholder}
                                             />
                                         )}
 
@@ -449,7 +447,7 @@ export default function MyPage() {
                                             </div>
                                         </div>
                                         <div className={styles.mypage__jobInfo}>
-                                            <div className={styles.mypage__jobTitle} style={{ fontSize: '14px' }}>{job.title || "Untitled"}</div>
+                                            <div className={styles.mypage__jobTitle}>{job.title || "Untitled"}</div>
                                             <div className={styles.mypage__jobDate}>{formatDate(job.createdAt)}</div>
                                         </div>
                                     </div>
@@ -612,7 +610,7 @@ export default function MyPage() {
                     <div className={styles.mypage__section}>
                         <h2 className={styles.mypage__sectionTitle}>Pages</h2>
                         <div className={styles.mypage__card}>
-                            <p>Preparing content for {activeMenu}...</p>
+                            <p>{t.mypage.preparing}</p>
                         </div>
                     </div>
                 );
@@ -621,9 +619,10 @@ export default function MyPage() {
 
     return (
         <div className={`${styles.mypage} ${styles['lang-' + language]}`}>
+            <BackgroundBricks />
             <div className={styles.mypage__container}>
                 <div className={styles.mypage__layout}>
-                    <button className={styles.mypage__exitBtn} onClick={() => router.push("/")}>
+                    <button className={styles.mypage__exitBtn} onClick={() => router.back()}>
                         <Icons.X />
                     </button>
 
@@ -680,12 +679,12 @@ export default function MyPage() {
                 <div className={styles.mypage__modalOverlay} onClick={() => setMenuJob(null)}>
                     <div className={styles.mypage__menuModal} onClick={e => e.stopPropagation()}>
                         <button
-                            className={styles.mypage__closeBtn}
+                            className={`${styles.mypage__closeBtn} ${styles.dark}`}
                             onClick={() => setMenuJob(null)}
                         >
                             ✕
                         </button>
-                        <div className={styles.mypage__menuHeader}>
+                        <div className={styles.mypage__menuHeader} style={{ paddingRight: '60px' }}>
                             <img
                                 src={menuJob.sourceImageUrl || "/placeholder.png"}
                                 alt={menuJob.title}
@@ -703,7 +702,7 @@ export default function MyPage() {
                                 disabled={!menuJob.sourceImageUrl}
                             >
                                 <Icons.Search className={styles.mypage__menuIcon2} />
-                                <span>{t.jobs.menu?.previewImage || '이미지 원본 보기'}</span>
+                                <span>{t.jobs.menu?.previewImage}</span>
                             </button>
                             <button
                                 className={`${styles.mypage__menuItem2} ${styles.primary}`}
@@ -711,7 +710,7 @@ export default function MyPage() {
                                 disabled={!menuJob.ldrUrl}
                             >
                                 <Icons.Layers className={styles.mypage__menuIcon2} />
-                                <span>{t.jobs.menu?.viewBlueprint || '조립 설명서 보기'}</span>
+                                <span>{t.jobs.menu?.viewBlueprint}</span>
                             </button>
                             <div className={styles.mypage__menuDivider} />
                             <button
@@ -720,7 +719,7 @@ export default function MyPage() {
                                 disabled={!menuJob.glbUrl}
                             >
                                 <Icons.DownloadImage className={styles.mypage__menuIcon2} />
-                                <span>{t.jobs.menu?.sourceImage || '원본 이미지 다운'}</span>
+                                <span>{t.jobs.menu?.glbFile}</span>
                             </button>
                             <button
                                 className={styles.mypage__menuItem2}
@@ -728,7 +727,7 @@ export default function MyPage() {
                                 disabled={!menuJob.ldrUrl}
                             >
                                 <Icons.DownloadFile className={styles.mypage__menuIcon2} />
-                                <span>{t.jobs.menu?.ldrFile || 'LDR 파일 다운'}</span>
+                                <span>{t.jobs.menu?.ldrFile}</span>
                             </button>
                         </div>
                     </div>
@@ -757,8 +756,8 @@ export default function MyPage() {
             {selectedJob && (
                 <div className={styles.mypage__modalOverlay}>
                     <div className={styles.mypage__modalContent}>
-                        <button className={styles.mypage__closeBtn} onClick={() => setSelectedJob(null)}>
-                            <Icons.X />
+                        <button className={`${styles.mypage__closeBtn} ${styles.dark}`} onClick={() => setSelectedJob(null)}>
+                            ✕
                         </button>
                         <div className={styles.mypage__viewerContainer}>
                             {selectedJob.ldrUrl ? (

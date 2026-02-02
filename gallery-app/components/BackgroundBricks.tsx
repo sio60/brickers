@@ -129,8 +129,10 @@ function Brick({
             // floating
             pos.add(vel);
 
-            rot.x += angVel.x + delta * 0.2;
-            rot.y += angVel.y + delta * 0.3;
+            // Only rotate based on angular velocity (no auto-spin)
+            rot.x += angVel.x;
+            rot.y += angVel.y;
+            rot.z += angVel.z;
 
             vel.multiplyScalar(FRICTION);
             angVel.multiplyScalar(FRICTION);
@@ -214,7 +216,7 @@ function Background3DContent({
 }: {
     entryDirection?: "top" | "sides" | "float";
 }) {
-    const brickCount = 30; // Slightly reduced for performance
+    const brickCount = 40; // Matched with Admin's Background3D
     const shapes: ShapeType[] = ["standard", "long", "cylinder", "circle"];
     const randomShape = () => shapes[Math.floor(Math.random() * shapes.length)];
 
@@ -257,15 +259,12 @@ export default function BackgroundBricks() {
                 position: "fixed",
                 inset: 0,
                 zIndex: 0, // Behind content but visible
-                background: "#fdfdfd", // Light background matching gallery
+                background: "#fff", // White matching admin
                 overflow: "hidden",
                 pointerEvents: "auto", // Allow hovering over bricks
             }}
         >
-            <Background3DDynamic entryDirection="float" />
-
-            {/* Overlay to ensure text readability if needed */}
-            <div className="absolute inset-0 bg-white/40 pointer-events-none" />
+            <Background3DDynamic entryDirection="top" />
         </div>
     );
 }

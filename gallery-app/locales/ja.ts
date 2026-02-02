@@ -18,6 +18,12 @@ export const ja = {
             authorLabel: "作成者:",
             moreWorks: "もっと作品を見たいですか？",
             goToGallery: "ギャラリーへ"
+        },
+        galleryList: {
+            workspace: "ワークスペース",
+            allCreations: "全ギャラリー",
+            myBookmarks: "マイブックマーク",
+            gallery: "ギャラリー"
         }
     },
     floatingMenu: {
@@ -104,6 +110,7 @@ export const ja = {
         },
         noGlbFile: "GLBファイルがありません。",
         noLdrFile: "LDRファイルがありません。",
+        noEnhancedImage: "改善された画像がありません。",
         retryFail: "再試行に失敗しました。",
         modalError: "失敗した作業です：",
         modalPending: "現在生成中か、3Dモデルの準備ができていません。",
@@ -234,7 +241,14 @@ export const ja = {
                 author: "作成者",
                 date: "修正日",
                 views: "閲覧数"
-            }
+            },
+            viewModes: "表示モード",
+            tabBrick: "ブリック3D",
+            tabModeling: "3Dモデリング",
+            tabOriginal: "オリジナル画像",
+            originalModel: "AI 3Dモデル",
+            previewTitle: "ブリックプレビュー",
+            startAssembly: "組み立て開始"
         }
     },
     header: {
@@ -307,7 +321,13 @@ export const ja = {
             inProgress: "機能開発中"
         },
         error: "エラーが発生しました。",
-        failed: "処理に失敗しました。"
+        failed: "処理に失敗しました。",
+        label: {
+            target: "対象",
+            reporter: "報告者",
+            order: "注文番号",
+            user: "ユーザー"
+        }
     },
     mypage: {
         stats: {
@@ -322,7 +342,8 @@ export const ja = {
         payment: {
             date: "決済日",
             nextDate: "次回決済日"
-        }
+        },
+        preparing: "コンテンツ準備中です..."
     },
     common: {
         loading: "読み込み中...",
@@ -341,7 +362,7 @@ export const ja = {
     },
     // gallery specific (from original gallery-app)
     detail: {
-        back: "← ギャラリーに戻る",
+        back: "ギャラリーに戻る",
         description: "作品説明",
         noDescription: "説明がありません。",
         views: "閲覧",

@@ -18,6 +18,12 @@ export const ko = {
             authorLabel: "생성한 사람:",
             moreWorks: "더 많은 작품이 궁금하신가요?",
             goToGallery: "갤러리 보러가기"
+        },
+        galleryList: {
+            workspace: "워크스페이스",
+            allCreations: "전체 갤러리",
+            myBookmarks: "내 북마크",
+            gallery: "갤러리"
         }
     },
     floatingMenu: {
@@ -99,11 +105,13 @@ export const ko = {
         menu: {
             previewImage: "이미지 원본 보기",
             viewBlueprint: "조립 설명서 보기",
+            sourceImage: "원본 이미지 다운로드",
             glbFile: "모델링 파일 다운(glb)",
             ldrFile: "도면 파일 다운(ldr)"
         },
         noGlbFile: "GLB 파일이 없습니다.",
         noLdrFile: "LDR 파일이 없습니다.",
+        noEnhancedImage: "개선 이미지가 없습니다.",
         retryFail: "작업 재시도에 실패했습니다.",
         modalError: "실패한 작업입니다: ",
         modalPending: "아직 생성 중이거나 3D 모델이 준비되지 않았습니다.",
@@ -234,7 +242,14 @@ export const ko = {
                 author: "작성자",
                 date: "수정한 날짜",
                 views: "조회수"
-            }
+            },
+            viewModes: "보기 모드",
+            tabBrick: "브릭 3D",
+            tabModeling: "3D 모델링",
+            tabOriginal: "원본 이미지",
+            originalModel: "AI 3D 모델",
+            previewTitle: "브릭 미리보기",
+            startAssembly: "조립 시작하기"
         }
     },
     header: {
@@ -324,7 +339,13 @@ export const ko = {
             inProgress: "기능 구현 중"
         },
         error: "오류가 발생했습니다.",
-        failed: "처리에 실패했습니다."
+        failed: "처리에 실패했습니다.",
+        label: {
+            target: "대상",
+            reporter: "신고자",
+            order: "주문 번호",
+            user: "사용자"
+        }
     },
     mypage: {
         stats: {
@@ -339,16 +360,27 @@ export const ko = {
         payment: {
             date: "결제일",
             nextDate: "다음 결제일"
-        }
+        },
+        preparing: "콘텐츠 준비 중입니다..."
     },
     // gallery 전용 (기존 gallery-app)
     detail: {
-        back: "← 갤러리로 돌아가기",
+        back: "갤러리로 돌아가기",
         description: "작품 설명",
         noDescription: "설명이 없습니다.",
         views: "조회",
         likes: "좋아요",
-        view3d: "3D로 보기 & 만들기"
+        view3d: "3D로 보기 & 만들기",
+        save: "저장",
+        share: "공유",
+        creator: "크리에이터",
+        comments: "댓글",
+        noComments: "댓글이 없습니다.",
+        placeholderComment: "댓글을 입력하세요...",
+        loginToComment: "로그인 후 댓글을 남겨보세요",
+        post: "등록",
+        noGlb: "3D 모델 파일이 없습니다.",
+        noImg: "원본 이미지가 없습니다."
     },
     my: {
         title: "내 갤러리",

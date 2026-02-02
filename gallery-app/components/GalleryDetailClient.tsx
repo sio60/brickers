@@ -1,14 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { GalleryItem } from '@/types/gallery';
-import Link from 'next/link';
+import Image from 'next/image';
+import Viewer3D from './Viewer3D';
+import { Canvas } from "@react-three/fiber";
+import { Bounds, Center, Gltf, Environment, OrbitControls } from "@react-three/drei";
 
 type Comment = {
     id: string;
     authorNickname: string;
-    authorProfileImage?: string;
     content: string;
     createdAt: string;
 };
@@ -18,28 +22,28 @@ type Props = {
 };
 
 export default function GalleryDetailClient({ item }: Props) {
+    const { t } = useLanguage();
+    const router = useRouter();
     const { isAuthenticated, authFetch } = useAuth();
-    const [likeCount, setLikeCount] = useState(item.likeCount || 0);
-    const [viewCount, setViewCount] = useState(item.viewCount || 0);
-    const [isLiked, setIsLiked] = useState(item.isBookmarked || false);
 
+    // Interaction State
+    const [likeCount, setLikeCount] = useState(item.likeCount || 0);
+    const [isLiked, setIsLiked] = useState(item.myReaction === 'LIKE');
+    const [isBookmarked, setIsBookmarked] = useState(item.isBookmarked || false);
+
+    // Comments State
     const [comments, setComments] = useState<Comment[]>([]);
     const [commentInput, setCommentInput] = useState('');
     const [commentLoading, setCommentLoading] = useState(false);
 
-    useEffect(() => {
-        const incrementView = async () => {
-            try {
-                const res = await fetch(`/api/gallery/${item.id}/view`, { method: 'POST' });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.viewCount !== undefined) setViewCount(data.viewCount);
-                }
-            } catch (error) {
-                console.error('Failed to increment view count:', error);
-            }
-        };
+    // View State
+    const [activeTab, setActiveTab] = useState<'LDR' | 'GLB' | 'IMG'>('IMG');
 
+    useEffect(() => {
+        // Increment view count
+        fetch(`/api/gallery/${item.id}/view`, { method: 'POST' }).catch(console.error);
+
+        // Function to fetch comments
         const fetchComments = async () => {
             try {
                 const res = await fetch(`/api/gallery/${item.id}/comments?page=0&size=50`);
@@ -47,45 +51,64 @@ export default function GalleryDetailClient({ item }: Props) {
                     const data = await res.json();
                     setComments(data.content || []);
                 }
-            } catch (error) {
-                console.error('Failed to fetch comments:', error);
-            }
+            } catch (error) { console.error("[Comments] Fetch error:", error); }
         };
 
-        if (item.id) {
-            incrementView();
-            fetchComments();
-        }
-    }, [item.id]);
+        // Initial fetch
+        fetchComments();
+
+        // Polling every 10 seconds
+        const pollInterval = setInterval(fetchComments, 10000);
+
+        // Fetch detail for latest like state
+        const fetchDetail = async () => {
+            try {
+                const res = await authFetch(`/api/gallery/${item.id}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.likeCount !== undefined) setLikeCount(data.likeCount);
+                    if (data.myReaction !== undefined) setIsLiked(data.myReaction === 'LIKE');
+                    if (data.bookmarked !== undefined) setIsBookmarked(data.bookmarked);
+                }
+            } catch (error) { console.error(error); }
+        };
+        fetchDetail();
+
+        return () => clearInterval(pollInterval);
+    }, [item.id, authFetch]);
 
     const handleLikeToggle = async () => {
-        if (!isAuthenticated) {
-            alert('로그인이 필요합니다.');
-            return;
-        }
-
+        if (!isAuthenticated) return alert('로그인이 필요합니다.');
         try {
-            const res = await authFetch(`/api/gallery/${item.id}/bookmark`, {
+            const res = await authFetch(`/api/gallery/${item.id}/reaction`, {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'LIKE' }),
             });
-
             if (res.ok) {
-                const newState = !isLiked;
-                setIsLiked(newState);
-                setLikeCount(prev => newState ? prev + 1 : prev - 1);
+                const data = await res.json();
+                const newLiked = data.currentReaction === 'LIKE';
+                setIsLiked(newLiked);
+                if (data.likeCount !== undefined) setLikeCount(data.likeCount);
+                else setLikeCount(prev => newLiked ? prev + 1 : prev - 1);
             }
-        } catch (error) {
-            console.error('Failed to toggle like:', error);
-        }
+        } catch (error) { console.error(error); }
+    };
+
+    const handleBookmarkToggle = async () => {
+        if (!isAuthenticated) return alert('로그인이 필요합니다.');
+        try {
+            const res = await authFetch(`/api/gallery/${item.id}/bookmark`, { method: 'POST' });
+            if (res.ok) {
+                const data = await res.json();
+                setIsBookmarked(data.bookmarked !== undefined ? data.bookmarked : !isBookmarked);
+            }
+        } catch (error) { console.error(error); }
     };
 
     const handleCommentSubmit = async () => {
-        if (!isAuthenticated) {
-            alert('로그인이 필요합니다.');
-            return;
-        }
+        if (!isAuthenticated) return alert('로그인이 필요합니다.');
         if (!commentInput.trim()) return;
-
         setCommentLoading(true);
         try {
             const res = await authFetch(`/api/gallery/${item.id}/comments`, {
@@ -93,167 +116,239 @@ export default function GalleryDetailClient({ item }: Props) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content: commentInput }),
             });
-
             if (res.ok) {
                 const newComment = await res.json();
                 setComments(prev => [newComment, ...prev]);
                 setCommentInput('');
             }
-        } catch (error) {
-            console.error('Failed to post comment:', error);
-        } finally {
-            setCommentLoading(false);
-        }
+        } catch (error) { console.error(error); }
+        finally { setCommentLoading(false); }
     };
 
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
-        const month = date.getMonth() + 1;
-        const day = date.getDate();
-        const hour = date.getHours();
-        const min = date.getMinutes().toString().padStart(2, '0');
-        return `${month}/${day} ${hour}:${min}`;
+        return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
     };
 
     return (
-        <div className="p-6 md:p-10">
-            {/* Title & Author Section */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
-                <div className="flex-1">
-                    <h1 className="text-3xl md:text-4xl font-black text-black tracking-tight mb-2">
-                        {item.title}
-                    </h1>
-                    <p className="text-gray-400 font-medium">
-                        Created by <span className="text-black font-bold">@{item.authorNickname || '익명'}</span>
-                    </p>
-                </div>
+        <div className="gallery-layout w-full max-w-[1200px] mx-auto my-6 flex h-[calc(100vh-160px)] gap-3 px-4 relative z-50">
+            {/* 1. Left Sidebar - View Modes */}
+            <div className="w-64 bg-[#1a1a1a] text-white rounded-3xl overflow-hidden flex flex-col py-6 shrink-0 relative z-20 shadow-2xl">
+                <h2 className="text-xl font-bold mb-6 px-8 tracking-wider">BRICKERS</h2>
 
-                {/* Action Button - Links to 3D Viewer */}
-                <Link
-                    href={`/kids/viewer?url=${encodeURIComponent(item.ldrUrl || '')}&isPreset=true&title=${encodeURIComponent(item.title)}`}
-                    className="w-full lg:w-auto bg-black text-white font-bold text-lg py-4 px-8 rounded-2xl hover:bg-gray-800 transition-all active:scale-95 shadow-xl flex items-center justify-center gap-3 group"
-                >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-hover:rotate-12 transition-transform">
-                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                        <line x1="12" y1="22.08" x2="12" y2="12" />
-                    </svg>
-                    <span>3D로 보기</span>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12h14m-7-7 7 7-7 7" />
-                    </svg>
-                </Link>
-            </div>
-
-            {/* Stats Row */}
-            <div className="flex flex-wrap items-center gap-6 py-6 border-y border-gray-100">
-                {/* Views */}
-                <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-600">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z" />
-                            <circle cx="12" cy="12" r="3" />
-                        </svg>
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">조회수</span>
-                        <span className="text-xl font-black text-black">{viewCount}</span>
-                    </div>
-                </div>
-
-                {/* Likes */}
-                <button
-                    onClick={handleLikeToggle}
-                    className="flex items-center gap-3 group transition-all"
-                >
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 ${isLiked ? 'bg-red-500 text-white shadow-lg shadow-red-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                        <svg
-                            width="22"
-                            height="22"
-                            viewBox="0 0 24 24"
-                            fill={isLiked ? "currentColor" : "none"}
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            className={`transition-transform duration-300 ${isLiked ? 'scale-110' : 'group-hover:scale-110'}`}
-                        >
-                            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.505 4.045 3 5.5l7 7Z" />
-                        </svg>
-                    </div>
-                    <div className="flex flex-col items-start">
-                        <span className={`text-xs font-bold uppercase tracking-wider transition-colors ${isLiked ? 'text-red-500' : 'text-gray-400'}`}>좋아요</span>
-                        <span className="text-xl font-black text-black">{likeCount}</span>
-                    </div>
-                </button>
-
-                {/* Comments Count */}
-                <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-600">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                        </svg>
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">댓글</span>
-                        <span className="text-xl font-black text-black">{comments.length}</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Comments Section */}
-            <div className="mt-8">
-                <h2 className="text-xl font-black text-black mb-6 flex items-center gap-2">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
-                    댓글
-                </h2>
-
-                {/* Comment Input */}
-                <div className="flex gap-3 mb-6">
-                    <input
-                        type="text"
-                        value={commentInput}
-                        onChange={(e) => setCommentInput(e.target.value)}
-                        placeholder={isAuthenticated ? "댓글을 입력하세요..." : "로그인 후 댓글을 입력해주세요"}
-                        disabled={!isAuthenticated}
-                        className="flex-1 px-5 py-4 bg-gray-100 rounded-2xl font-medium text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50 transition-all"
-                        onKeyDown={(e) => e.key === 'Enter' && handleCommentSubmit()}
-                    />
+                <div className="flex flex-col gap-1 flex-1">
                     <button
-                        onClick={handleCommentSubmit}
-                        disabled={!isAuthenticated || commentLoading || !commentInput.trim()}
-                        className="px-6 py-4 bg-black text-white font-bold rounded-2xl hover:bg-gray-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
+                        onClick={() => setActiveTab('IMG')}
+                        className={`text-left px-8 py-4 transition-all font-medium flex items-center gap-3 ${activeTab === 'IMG'
+                            ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/10'
+                            : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
                     >
-                        {commentLoading ? (
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : '등록'}
+                        {t.kids.steps.tabOriginal}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('LDR')}
+                        className={`text-left px-8 py-4 transition-all font-medium flex items-center gap-3 ${activeTab === 'LDR'
+                            ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/10'
+                            : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
+                    >
+                        {t.kids.steps.tabBrick}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('GLB')}
+                        className={`text-left px-8 py-4 transition-all font-medium flex items-center gap-3 ${activeTab === 'GLB'
+                            ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/10'
+                            : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
+                    >
+                        {t.kids.steps.tabModeling}
                     </button>
                 </div>
 
-                {/* Comment List */}
-                <div className="flex flex-col gap-3">
-                    {comments.length === 0 ? (
-                        <div className="text-center py-12 bg-gray-50 rounded-2xl">
-                            <div className="text-4xl mb-3">💬</div>
-                            <p className="font-bold text-gray-500">아직 댓글이 없습니다</p>
-                            <p className="text-sm text-gray-400">첫 번째 댓글을 남겨보세요!</p>
+                {/* Back Button (Moved to bottom) */}
+                <button
+                    onClick={() => router.back()}
+                    className="mt-auto bg-white/10 text-white rounded-lg px-4 py-3 mx-6 text-sm font-semibold hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
+                >
+                    ← {t.kids.steps.back}
+                </button>
+            </div>
+
+            {/* Content Wrapper (Canvas + Right Sidebar) */}
+            <div className="flex-1 bg-white rounded-3xl overflow-hidden flex shadow-sm border border-gray-100">
+                {/* 2. Main Content Area - Canvas */}
+                <div className="flex-1 relative bg-gray-50 flex flex-col overflow-hidden">
+                    {/* View Title Bar */}
+                    <div className="h-16 bg-white border-b border-gray-200 flex items-center px-6 shrink-0 justify-between">
+                        <div className="text-lg font-extrabold text-gray-900">
+                            {activeTab === 'LDR' && t.kids.steps.previewTitle}
+                            {activeTab === 'GLB' && t.kids.steps.originalModel}
+                            {activeTab === 'IMG' && t.kids.steps.tabOriginal}
                         </div>
-                    ) : (
-                        comments.map((comment) => (
-                            <div key={comment.id} className="flex gap-3 p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors">
-                                <div className="w-10 h-10 bg-gradient-to-br from-gray-700 to-black rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                                    {comment.authorNickname?.charAt(0)?.toUpperCase() || '?'}
+                    </div>
+
+                    {/* Canvas Area */}
+                    <div className="flex-1 relative bg-[#f0f0f0]">
+                        {activeTab === 'LDR' && (
+                            item.ldrUrl ? <Viewer3D url={item.ldrUrl} /> : (
+                                <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
+                                    LDR Model Not Available
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="font-bold text-black text-sm">{comment.authorNickname || '익명'}</span>
-                                        <span className="text-xs text-gray-400">{formatDate(comment.createdAt)}</span>
+                            )
+                        )}
+
+                        {activeTab === 'GLB' && (
+                            item.glbUrl ? (
+                                <div className="absolute inset-0">
+                                    <Canvas camera={{ position: [5, 5, 5], fov: 50 }} dpr={[1, 2]}>
+                                        <ambientLight intensity={0.8} />
+                                        <directionalLight position={[5, 10, 5]} intensity={1.5} />
+                                        <Environment preset="city" />
+                                        <Bounds fit clip observe margin={1.2}>
+                                            <Center>
+                                                <Gltf src={item.glbUrl} />
+                                            </Center>
+                                        </Bounds>
+                                        <OrbitControls makeDefault enablePan={false} enableZoom />
+                                    </Canvas>
+                                </div>
+                            ) : (
+                                <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
+                                    {t.detail.noGlb}
+                                </div>
+                            )
+                        )}
+
+                        {activeTab === 'IMG' && (
+                            item.sourceImageUrl ? (
+                                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 p-0">
+                                    <div className="relative w-full h-full max-w-full max-h-full">
+                                        <Image
+                                            src={item.sourceImageUrl}
+                                            alt="Original Source"
+                                            fill
+                                            className="object-contain" // Maintain aspect ratio
+                                        />
                                     </div>
-                                    <p className="text-gray-700 text-sm break-words">{comment.content}</p>
                                 </div>
+                            ) : (
+                                <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
+                                    {t.detail.noImg}
+                                </div>
+                            )
+                        )}
+                    </div>
+                </div>
+
+                {/* 3. Right Sidebar - Detail & Comments */}
+                <div className="w-[300px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10">
+                    {/* Scrollable Content */}
+                    <div className="flex-1 overflow-y-auto">
+                        {/* User Info Header */}
+                        <div className="p-6 border-b border-gray-100 flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center font-bold text-blue-600 text-sm">
+                                {item.authorNickname ? item.authorNickname[0].toUpperCase() : '?'}
                             </div>
-                        ))
-                    )}
+                            <div className="flex flex-col">
+                                <span className="font-bold text-sm text-gray-900">@{item.authorNickname || t.common.anonymous}</span>
+                                <span className="text-[10px] text-gray-500 font-semibold tracking-wide">{t.detail.creator}</span>
+                            </div>
+                        </div>
+
+                        {/* Title & Actions */}
+                        <div className="p-6">
+                            <h1 className="text-2xl font-black text-gray-900 leading-tight mb-6">{item.title}</h1>
+
+                            <div className="flex items-center gap-6">
+                                <button
+                                    onClick={handleLikeToggle}
+                                    className={`flex flex-col items-center gap-1 group transition-all ${isLiked ? 'scale-110' : 'hover:scale-105'}`}
+                                >
+                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm border transition-all ${isLiked ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200 group-hover:border-gray-300'}`}>
+                                        <Image
+                                            src="/icons/like.png"
+                                            alt="Like"
+                                            width={24}
+                                            height={24}
+                                            style={isLiked ? { filter: 'invert(48%) sepia(50%) saturate(2243%) hue-rotate(195deg) brightness(101%) contrast(93%)' } : { opacity: 0.6 }}
+                                        />
+                                    </div>
+                                    <span className={`text-xs font-bold ${isLiked ? 'text-blue-500' : 'text-gray-400'}`}>{likeCount}</span>
+                                </button>
+
+                                <button
+                                    onClick={handleBookmarkToggle}
+                                    className={`flex flex-col items-center gap-1 group transition-all ${isBookmarked ? 'scale-110' : 'hover:scale-105'}`}
+                                >
+                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm border transition-all ${isBookmarked ? 'bg-yellow-50 border-yellow-200' : 'bg-white border-gray-200 group-hover:border-gray-300'}`}>
+                                        <Image
+                                            src="/icons/bookmark.png"
+                                            alt="Bookmark"
+                                            width={24}
+                                            height={24}
+                                            style={isBookmarked ? { filter: 'invert(80%) sepia(55%) saturate(2000%) hue-rotate(5deg) brightness(100%) contrast(101%)' } : { opacity: 0.6 }}
+                                        />
+                                    </div>
+                                    <span className={`text-xs font-bold ${isBookmarked ? 'text-yellow-500' : 'text-gray-400'}`}>{t.detail.save}</span>
+                                </button>
+
+                                <button
+                                    onClick={() => alert('공유 기능 준비 중')}
+                                    className="flex flex-col items-center gap-1 group hover:scale-105 transition-all ml-auto"
+                                >
+                                    <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm group-hover:border-gray-300">
+                                        <Image src="/icons/share.png" alt="Share" width={22} height={22} className="opacity-60" />
+                                    </div>
+                                    <span className="text-xs font-bold text-gray-400">{t.detail.share}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Comments Section */}
+                        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 min-h-[300px]">
+                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
+                                {t.detail.comments} ({comments.length})
+                            </h3>
+
+                            <div className="flex flex-col gap-3">
+                                {comments.length === 0 ? (
+                                    <div className="text-center py-10 text-gray-400">
+                                        <p className="text-sm">{t.detail.noComments}</p>
+                                    </div>
+                                ) : comments.map(c => (
+                                    <div key={c.id} className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="font-bold text-xs text-gray-900">@{c.authorNickname}</span>
+                                            <span className="text-[10px] text-gray-400">{formatDate(c.createdAt)}</span>
+                                        </div>
+                                        <p className="text-xs text-gray-600 leading-relaxed">{c.content}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Comment Input */}
+                    <div className="p-4 border-t border-gray-200 bg-white">
+                        <div className="flex gap-2">
+                            <input
+                                className="flex-1 bg-gray-100 border-none rounded-xl px-4 py-3 text-xs font-medium focus:ring-2 focus:ring-black/5 outline-none transition-all placeholder:text-gray-400"
+                                placeholder={isAuthenticated ? t.detail.placeholderComment : t.detail.loginToComment}
+                                value={commentInput}
+                                onChange={e => setCommentInput(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleCommentSubmit()}
+                                disabled={!isAuthenticated || commentLoading}
+                            />
+                            <button
+                                onClick={handleCommentSubmit}
+                                disabled={!isAuthenticated || !commentInput.trim() || commentLoading}
+                                className="bg-black text-white px-4 rounded-xl font-bold text-[10px] hover:bg-gray-800 disabled:opacity-30 transition-all uppercase"
+                            >
+                                {t.detail.post}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

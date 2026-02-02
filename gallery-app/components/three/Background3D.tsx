@@ -19,6 +19,7 @@ const IMPULSE_STRENGTH = 0.15;
 const GRAVITY = 0.015;
 const FLOOR_Y = -8;
 const BOUNCE_DAMPING = 0.6;
+const FLOAT_FORCE = 0.002;
 
 type ShapeType = "standard" | "long" | "cylinder" | "circle";
 
@@ -29,6 +30,7 @@ type BrickProps = {
     scale: number;
     shape: ShapeType;
     entryDirection?: "top" | "sides" | "float";
+    id?: number;
 };
 
 type BrickSeed = Omit<BrickProps, "entryDirection"> & { id: number };
@@ -48,6 +50,7 @@ function Brick({
     scale,
     shape,
     entryDirection = "top",
+    id,
 }: BrickProps) {
     const meshRef = useRef<THREE.Mesh>(null);
 
@@ -89,10 +92,11 @@ function Brick({
         new THREE.Vector3(randomRange(-0.1, 0.1), randomRange(-0.1, 0.1), randomRange(-0.1, 0.1))
     );
 
-    // If float mode, start floating immediately
-    const isFalling = useRef(!isFloat);
+    // Physics State
+    const isSettled = useRef(isFloat);
+    const floatOffset = useRef(randomRange(0, Math.PI * 2)); // Random phase for sine wave
 
-    useFrame((_, delta) => {
+    useFrame((state, delta) => {
         if (!meshRef.current) return;
 
         const pos = position.current;
@@ -100,62 +104,98 @@ function Brick({
         const rot = meshRef.current.rotation;
         const angVel = angularVelocity.current;
 
-        if (isFalling.current) {
+        if (!isSettled.current) {
+            // FALLING STATE
             vel.y -= GRAVITY; // gravity
             pos.add(vel); // move
-
-            // rotate while falling
-            rot.x += angVel.x;
-            rot.y += angVel.y;
-            rot.z += angVel.z;
 
             // floor collision
             if (pos.y < FLOOR_Y) {
                 pos.y = FLOOR_Y;
                 vel.y = -vel.y * BOUNCE_DAMPING;
-
                 vel.x += randomRange(-0.05, 0.05);
                 vel.z += randomRange(-0.05, 0.05);
 
                 angVel.x = randomRange(-0.2, 0.2);
                 angVel.z = randomRange(-0.2, 0.2);
 
+                // If bounce is small enough, switch to Settled/Floating state
                 if (Math.abs(vel.y) < 0.1 && Math.abs(vel.x) < 0.1) {
-                    isFalling.current = false;
-                    vel.set(randomRange(-0.02, 0.02), randomRange(0.01, 0.05), randomRange(-0.02, 0.02));
+                    isSettled.current = true;
+                    // Reset heavy downward velocity, keep some random drift for float start
+                    vel.set(randomRange(-0.02, 0.02), randomRange(0.01, 0.03), randomRange(-0.02, 0.02));
+                    angVel.set(randomRange(-0.01, 0.01), randomRange(-0.01, 0.01), randomRange(-0.01, 0.01));
                 }
             }
         } else {
-            // floating
+            // FLOATING / ZERO-GRAVITY STATE
+
+            // 1. Move by velocity (drifting)
             pos.add(vel);
 
-            rot.x += angVel.x + delta * 0.2;
-            rot.y += angVel.y + delta * 0.3;
-
+            // 2. Apply Drag (Friction) to slow down impulses
             vel.multiplyScalar(FRICTION);
-            angVel.multiplyScalar(FRICTION);
 
-            // bounds
-            if (pos.y > 15 || pos.y < -15) vel.y *= -1;
-            if (pos.x > 25 || pos.x < -25) vel.x *= -1;
-            if (pos.z > 5 || pos.z < -30) vel.z *= -1;
+            // 3. Add Sine Wave Idle Motion (Ups and Downs)
+            // We add this directly to velocity or position. 
+            // Adding small force to velocity creates smoother drift.
+            const time = state.clock.elapsedTime;
+            vel.y += Math.sin(time + floatOffset.current) * 0.0005;
+            vel.x += Math.cos(time * 0.5 + floatOffset.current) * 0.0002;
+
+            // 4. Rotate slowly
+            rot.x += angVel.x;
+            rot.y += angVel.y;
+            rot.z += angVel.z;
+            angVel.multiplyScalar(0.99); // Slow down rotation over time
+
+            // 5. Keep inside Bounds (Bounce off invisible walls)
+            // X bounds
+            if (pos.x > 25 || pos.x < -25) {
+                vel.x = -vel.x * 0.8;
+                pos.x = Math.max(-25, Math.min(25, pos.x));
+            }
+            // Y bounds (Ceiling and Floor for zero-g)
+            if (pos.y > 15 || pos.y < FLOOR_Y) {
+                vel.y = -vel.y * 0.8;
+                pos.y = Math.max(FLOOR_Y, Math.min(15, pos.y));
+            }
+            // Z bounds
+            if (pos.z > 0 || pos.z < -20) {
+                vel.z = -vel.z * 0.8;
+                pos.z = Math.max(-20, Math.min(0, pos.z));
+            }
+        }
+
+        // Apply visual rotation from physics + falling
+        if (!isSettled.current) {
+            rot.x += angVel.x;
+            rot.y += angVel.y;
+            rot.z += angVel.z;
         }
 
         meshRef.current.position.copy(pos);
     });
 
     const onHover = () => {
-        velocity.current.set(
+        // Apply impulse
+        velocity.current.add(new THREE.Vector3(
             randomRange(-IMPULSE_STRENGTH, IMPULSE_STRENGTH),
-            randomRange(IMPULSE_STRENGTH * 0.5, IMPULSE_STRENGTH),
+            randomRange(IMPULSE_STRENGTH * 0.5, IMPULSE_STRENGTH), // Slight upward bias
             randomRange(-IMPULSE_STRENGTH, IMPULSE_STRENGTH)
-        );
-        angularVelocity.current.set(
+        ));
+
+        // Add rotation impulse
+        angularVelocity.current.add(new THREE.Vector3(
             randomRange(-0.1, 0.1),
             randomRange(-0.1, 0.1),
             randomRange(-0.1, 0.1)
-        );
-        isFalling.current = false;
+        ));
+
+        // If it was still falling, force settle to start floating? 
+        // Or let it keep falling? Let's just let physics handle it. 
+        // If falling, the heavy gravity will overcome this impulse mostly.
+        // If floating, this will cause it to fly around.
     };
 
     const renderGeometry = () => {
@@ -246,7 +286,7 @@ export default function Background3D({
                 <directionalLight position={[-5, 5, 5]} intensity={1} />
 
                 {bricks.map(({ id, ...props }) => (
-                    <Brick key={id} {...props} entryDirection={entryDirection} />
+                    <Brick key={id} id={id} {...props} entryDirection={entryDirection} />
                 ))}
 
                 <Environment preset="city" />

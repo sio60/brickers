@@ -8,7 +8,10 @@ export type GalleryItem = {
     likeCount?: number;
     viewCount?: number;
     isBookmarked?: boolean;
+    myReaction?: 'LIKE' | 'DISLIKE' | null;
     ldrUrl?: string;
+    glbUrl?: string;
+    sourceImageUrl?: string;
 };
 
 export type PageResponse<T> = {

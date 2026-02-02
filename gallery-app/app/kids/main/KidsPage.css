@@ -68,6 +68,30 @@
     transition: all 0.3s ease;
 }
 
+.actionBtns {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.dlBtn {
+    background: #fff;
+    color: #000;
+    font-family: 'KblJumpCondensed', sans-serif;
+    font-size: 16px;
+    padding: 10px 24px;
+    border-radius: 50px;
+    border: 2px solid #000;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: bold;
+}
+
+.dlBtn:hover {
+    background: #eee;
+    transform: scale(1.05);
+}
+
 .nextBtn:hover {
     background: #333;
     transform: scale(1.05);
@@ -96,4 +120,16 @@
     font-size: 16px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }

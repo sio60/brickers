@@ -6,16 +6,22 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { AuthProvider } from "./pages/Auth/AuthContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import { ToastProvider } from "./contexts/ToastContext";
+import { JobProvider } from "./contexts/JobContext";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <LanguageProvider>
-        <AuthProvider>
-          <HelmetProvider>
-            <App />
-          </HelmetProvider>
-        </AuthProvider>
+        <ToastProvider>
+          <JobProvider>
+            <AuthProvider>
+              <HelmetProvider>
+                <App />
+              </HelmetProvider>
+            </AuthProvider>
+          </JobProvider>
+        </ToastProvider>
       </LanguageProvider>
     </BrowserRouter>
   </React.StrictMode>

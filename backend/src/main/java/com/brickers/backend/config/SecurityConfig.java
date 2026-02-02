@@ -79,6 +79,7 @@ public class SecurityConfig {
                                                 // "/api/auth/logout")
                                                 // .permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+                                                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                                                 .requestMatchers("/api/auth/refresh", "/api/auth/logout").permitAll()
                                                 // 토큰 상태 확인 (공개 - 토큰 없어도 확인 가능)
                                                 .requestMatchers(HttpMethod.GET, "/api/auth/status").permitAll()
@@ -123,18 +124,19 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.PATCH, "/api/gallery/*").authenticated()
                                                 .requestMatchers(HttpMethod.DELETE, "/api/gallery/*").authenticated()
 
-                                                // ✅ 공개 갤러리 조회/검색/상세는 공개
+                                                // ✅ 공개 갤러리 조회/검색/상세/댓글은 공개
                                                 .requestMatchers(HttpMethod.GET, "/api/gallery", "/api/gallery/search",
-                                                                "/api/gallery/*")
+                                                                "/api/gallery/*", "/api/gallery/*/comments")
                                                 .permitAll()
 
-                                                // ✅ Upload API (인증 필요)
-                                                .requestMatchers(HttpMethod.POST, "/api/uploads/**").authenticated()
+                                                // ✅ Upload API (테스트용 공개)
+                                                .requestMatchers(HttpMethod.POST, "/api/uploads/**").permitAll()
 
                                                 // ✅ 업로드된 파일 서빙 및 AI 생성 결과물 공개 (로컬 프록시 포함)
                                                 .requestMatchers(HttpMethod.GET, "/api/uploads/**", "/uploads/**")
                                                 .permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/api/generated/**").permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/proxy-image").permitAll()
 
                                                 // -------------------------------
                                                 // ✅ Report API (신고)

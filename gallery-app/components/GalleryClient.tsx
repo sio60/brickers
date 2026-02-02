@@ -22,6 +22,7 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
     const router = useRouter();
     const [items, setItems] = useState<GalleryItem[]>(initialItems);
     const [category, setCategory] = useState('all');
+    const [sort, setSort] = useState('latest');
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(initialTotalPages);
     const [totalElements, setTotalElements] = useState(initialTotalElements);
@@ -32,13 +33,14 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
 
         setLoading(true);
         try {
-            const endpoint = category === 'bookmarks' ? '/api/gallery/bookmarks' : '/api/gallery';
-            const res = await fetch(`${endpoint}?page=${targetPage}&size=24&sort=latest`);
+            const endpoint = category === 'bookmarks' ? '/api/gallery/bookmarks/my' : '/api/gallery';
+            const res = await fetch(`${endpoint}?page=${targetPage}&size=24&sort=${sort}`);
             if (res.ok) {
                 const data = await res.json();
                 const content = (data.content || []).map((item: any) => ({
                     ...item,
-                    isBookmarked: item.bookmarked || (category === 'bookmarks')
+                    isBookmarked: item.bookmarked || (category === 'bookmarks'),
+                    myReaction: item.myReaction
                 }));
                 setItems(content);
                 setPage(targetPage);
@@ -65,13 +67,14 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
         setPage(0);
 
         try {
-            const endpoint = newCategory === 'bookmarks' ? '/api/gallery/bookmarks' : '/api/gallery';
-            const res = await fetch(`${endpoint}?page=0&size=24&sort=latest`);
+            const endpoint = newCategory === 'bookmarks' ? '/api/gallery/bookmarks/my' : '/api/gallery';
+            const res = await fetch(`${endpoint}?page=0&size=24&sort=${sort}`);
             if (res.ok) {
                 const data = await res.json();
                 const content = (data.content || []).map((item: any) => ({
                     ...item,
-                    isBookmarked: item.bookmarked || (newCategory === 'bookmarks')
+                    isBookmarked: item.bookmarked || (newCategory === 'bookmarks'),
+                    myReaction: item.myReaction
                 }));
                 setItems(content);
                 setTotalPages(data.totalPages);
@@ -96,35 +99,64 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
         }
     };
 
-    const handleBookmarkToggle = async (id: string, currentState: boolean) => {
+    const handleSortChange = async (newSort: string) => {
+        if (newSort === sort) return;
+
+        setSort(newSort);
+        setLoading(true);
+        setPage(0);
+
+        try {
+            const endpoint = category === 'bookmarks' ? '/api/gallery/bookmarks/my' : '/api/gallery';
+            const res = await fetch(`${endpoint}?page=0&size=24&sort=${newSort}`);
+            if (res.ok) {
+                const data = await res.json();
+                const content = (data.content || []).map((item: any) => ({
+                    ...item,
+                    isBookmarked: item.bookmarked || (category === 'bookmarks'),
+                    myReaction: item.myReaction
+                }));
+                setItems(content);
+                setTotalPages(data.totalPages);
+                setTotalElements(data.totalElements);
+            }
+        } catch (error) {
+            console.error('Sort change failed:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleLikeToggle = async (id: string, currentState: boolean) => {
         if (!isAuthenticated) {
             router.push('?login=true');
             return;
         }
 
         try {
-            const res = await authFetch(`/api/gallery/${id}/bookmark`, {
+            const res = await authFetch(`/api/gallery/${id}/reaction`, {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'LIKE' }),
             });
 
             if (res.ok) {
-                // Update local state
-                if (category === 'bookmarks' && currentState) {
-                    // Remove from list if we are in bookmarks category and untoggling
-                    setItems(prev => prev.filter(item => item.id !== id));
-                    setTotalElements(prev => prev - 1);
-                } else {
-                    setItems(prev =>
-                        prev.map(item =>
-                            item.id === id
-                                ? { ...item, isBookmarked: !currentState }
-                                : item
-                        )
-                    );
-                }
+                const data = await res.json();
+                // data typically contains the new state or the updated reaction count
+                setItems(prev =>
+                    prev.map(item =>
+                        item.id === id
+                            ? {
+                                ...item,
+                                myReaction: data.currentReaction === 'LIKE' ? 'LIKE' : null,
+                                likeCount: data.likeCount !== undefined ? data.likeCount : (data.currentReaction === 'LIKE' ? (item.likeCount || 0) + 1 : (item.likeCount || 0) - 1)
+                            }
+                            : item
+                    )
+                );
             }
         } catch (error) {
-            console.error('Bookmark toggle failed:', error);
+            console.error('Like toggle failed:', error);
         }
     };
 
@@ -140,11 +172,23 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
             activeCategory={category}
             onCategoryChange={handleCategoryChange}
             rightAction={
-                <div className="flex items-center bg-gray-100 rounded-xl p-1">
-                    <button className="px-4 py-2 text-sm font-bold bg-white text-black shadow-sm rounded-lg">
+                <div className="flex items-center gap-1 bg-gray-100 rounded-full p-1 border border-gray-200">
+                    <button
+                        onClick={() => handleSortChange('latest')}
+                        className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${sort === 'latest'
+                            ? 'bg-white text-blue-600 shadow-sm'
+                            : 'text-gray-400 hover:text-gray-600'
+                            }`}
+                    >
                         {t.main.sortLatest}
                     </button>
-                    <button className="px-4 py-2 text-sm font-bold text-gray-500 hover:text-black transition-colors">
+                    <button
+                        onClick={() => handleSortChange('popular')}
+                        className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${sort === 'popular'
+                            ? 'bg-white text-blue-600 shadow-sm'
+                            : 'text-gray-400 hover:text-gray-600'
+                            }`}
+                    >
                         {t.main.sortPopular}
                     </button>
                 </div>
@@ -168,7 +212,7 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
                 <GalleryGrid
                     items={items}
                     isLoggedIn={isAuthenticated}
-                    onBookmarkToggle={handleBookmarkToggle}
+                    onLikeToggle={handleLikeToggle}
                     onLoginRequired={handleLoginRequired}
                 />
             )}

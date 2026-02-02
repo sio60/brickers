@@ -21,29 +21,46 @@ type GalleryDetail = {
     likeCount: number;
     viewCount: number;
     tags: string[];
-    ldrUrl?: string; // Added for linking to viewer
+    ldrUrl?: string;
+    glbUrl?: string; // Original GLB model URL
 }
 
 // Helpers
 function extractId(slug: string) {
-    const parts = slug.split('-');
-    return parts[parts.length - 1];
+    if (!slug) return '';
+    try {
+        const decodedSlug = decodeURIComponent(slug);
+        const parts = decodedSlug.split('-');
+        return parts[parts.length - 1];
+    } catch (e) {
+        // Fallback for non-encoded or poorly encoded slugs
+        const parts = slug.split('-');
+        return parts[parts.length - 1];
+    }
 }
 
 async function getGalleryDetail(id: string): Promise<GalleryDetail | null> {
+    if (!id) return null;
     try {
         const apiBase = process.env.API_BASE || 'http://backend:8080';
+        console.log(`[SSR] Fetching gallery detail for ID: ${id} from ${apiBase}`);
+
         const res = await fetch(`${apiBase}/api/gallery/${id}`, {
-            next: { revalidate: 60 }
+            next: { revalidate: 60 },
+            headers: {
+                'Accept': 'application/json',
+            }
         });
+
         if (!res.ok) {
-            console.error('Failed to fetch gallery detail:', res.status);
+            const errorText = await res.text().catch(() => 'No error body');
+            console.error(`[SSR] API Error (${res.status}):`, errorText);
             return null;
         }
-        return res.json();
+
+        return await res.json();
     } catch (error) {
-        // Build time에는 backend가 없으므로 null 반환
-        console.error('Gallery detail fetch error (likely build time):', error);
+        console.error('[SSR] Gallery detail fetch unexpected error:', error);
         return null;
     }
 }
@@ -151,38 +168,9 @@ export default async function GalleryDetailPage({ params }: Props) {
             />
             <div className="relative z-10 px-4 py-6">
                 <div className="max-w-4xl mx-auto">
-                    <div className="mb-6">
-                        <Link
-                            href="/gallery"
-                            className="inline-flex items-center gap-2 text-gray-500 hover:text-black font-medium transition-colors"
-                        >
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M19 12H5m7-7-7 7 7 7" />
-                            </svg>
-                            갤러리로 돌아가기
-                        </Link>
-                    </div>
 
-                    <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
-                        {/* Main Image */}
-                        <div className="relative aspect-video bg-gray-50">
-                            {item.thumbnailUrl ? (
-                                <Image
-                                    src={item.thumbnailUrl}
-                                    alt={item.title}
-                                    fill
-                                    className="object-contain"
-                                    priority
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                    No Image
-                                </div>
-                            )}
-                        </div>
 
-                        <GalleryDetailClient item={item} />
-                    </div>
+                    <GalleryDetailClient item={item} />
                 </div>
             </div>
         </>
