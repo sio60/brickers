@@ -29,7 +29,7 @@ export default function GalleryDetailClient({ item }: Props) {
     // Interaction State
     const [likeCount, setLikeCount] = useState(item.likeCount || 0);
     const [isLiked, setIsLiked] = useState(item.myReaction === 'LIKE');
-    const [isBookmarked, setIsBookmarked] = useState(item.isBookmarked || false);
+    const [isBookmarked, setIsBookmarked] = useState(item.bookmarked || false);
 
     // Comments State
     const [comments, setComments] = useState<Comment[]>([]);

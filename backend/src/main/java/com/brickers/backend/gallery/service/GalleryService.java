@@ -64,32 +64,35 @@ public class GalleryService {
     }
 
     /** 공개 게시글 목록: PUBLIC + deleted=false를 최신순(createdAt DESC)으로 페이징 조회한다. */
-    public Page<GalleryResponse> listPublic(int page, int size, String sort) {
+    public Page<GalleryResponse> listPublic(int page, int size, String sort, Authentication authOrNull) {
         Pageable pageable = pageReq(page, size, sort);
 
         Page<GalleryPostEntity> result = galleryPostRepository.findByDeletedFalseAndVisibility(Visibility.PUBLIC,
                 pageable);
 
-        return result.map(this::toResponse);
+        String userId = currentUserService.getUserIdOrNull(authOrNull);
+        return result.map(p -> this.toResponseWithUserState(p, userId));
     }
 
     /** 공개 게시글 검색: q(제목/내용) 또는 tag로 PUBLIC + deleted=false를 페이징 조회한다. */
-    public Page<GalleryResponse> searchPublic(String q, String tag, int page, int size, String sort) {
+    public Page<GalleryResponse> searchPublic(String q, String tag, int page, int size, String sort,
+            Authentication authOrNull) {
         Pageable pageable = pageReq(page, size, sort);
+        String userId = currentUserService.getUserIdOrNull(authOrNull);
 
         if (q != null && !q.trim().isEmpty()) {
             Page<GalleryPostEntity> result = galleryPostRepository.searchByTitleOrContent(Visibility.PUBLIC, q.trim(),
                     pageable);
-            return result.map(this::toResponse);
+            return result.map(p -> this.toResponseWithUserState(p, userId));
         }
 
         if (tag != null && !tag.trim().isEmpty()) {
             Page<GalleryPostEntity> result = galleryPostRepository.findByDeletedFalseAndVisibilityAndTagsContaining(
                     Visibility.PUBLIC, tag.trim(), pageable);
-            return result.map(this::toResponse);
+            return result.map(p -> this.toResponseWithUserState(p, userId));
         }
 
-        return listPublic(page, size, sort);
+        return listPublic(page, size, sort, authOrNull);
     }
 
     private PageRequest pageReq(int page, int size, String sort) {

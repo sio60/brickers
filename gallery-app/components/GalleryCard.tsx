@@ -48,7 +48,7 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
             return;
         }
 
-        const isCurrentlyBookmarked = !!item.isBookmarked;
+        const isCurrentlyBookmarked = !!item.bookmarked;
         onBookmarkToggle?.(item.id, isCurrentlyBookmarked);
     };
 
@@ -104,14 +104,14 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
                             {onBookmarkToggle && (
                                 <button
                                     onClick={handleBookmarkClick}
-                                    className={`flex items-center justify-center w-8 h-8 rounded-xl border-2 border-black transition-all ${item.isBookmarked
+                                    className={`flex items-center justify-center w-8 h-8 rounded-xl border-2 border-black transition-all ${item.bookmarked
                                         ? 'bg-[#ffe135] text-black shadow-[2px_2px_0px_#000]'
                                         : 'bg-white text-black hover:bg-gray-50'
                                         }`}
-                                    aria-label={item.isBookmarked ? '북마크 취소' : '북마크 추가'}
+                                    aria-label={item.bookmarked ? '북마크 취소' : '북마크 추가'}
                                 >
                                     <svg
-                                        className={`w-4 h-4 ${item.isBookmarked ? 'fill-black' : 'fill-none'}`}
+                                        className={`w-4 h-4 ${item.bookmarked ? 'fill-black' : 'fill-none'}`}
                                         stroke="currentColor"
                                         strokeWidth="2.5"
                                         viewBox="0 0 24 24"

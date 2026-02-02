@@ -39,7 +39,6 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
                 const data = await res.json();
                 const content = (data.content || []).map((item: any) => ({
                     ...item,
-                    isBookmarked: item.bookmarked || (category === 'bookmarks'),
                     myReaction: item.myReaction
                 }));
                 setItems(content);
@@ -73,7 +72,6 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
                 const data = await res.json();
                 const content = (data.content || []).map((item: any) => ({
                     ...item,
-                    isBookmarked: item.bookmarked || (newCategory === 'bookmarks'),
                     myReaction: item.myReaction
                 }));
                 setItems(content);
@@ -82,7 +80,7 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
             } else {
                 // If endpoint not found or error, fallback to local filter if it's bookmarks
                 if (newCategory === 'bookmarks') {
-                    const bookmarkedOnly = initialItems.filter(i => i.isBookmarked);
+                    const bookmarkedOnly = initialItems.filter(i => i.bookmarked);
                     setItems(bookmarkedOnly);
                     setTotalPages(1);
                     setTotalElements(bookmarkedOnly.length);
@@ -113,7 +111,6 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
                 const data = await res.json();
                 const content = (data.content || []).map((item: any) => ({
                     ...item,
-                    isBookmarked: item.bookmarked || (category === 'bookmarks'),
                     myReaction: item.myReaction
                 }));
                 setItems(content);
@@ -147,8 +144,8 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
                         item.id === id
                             ? {
                                 ...item,
-                                myReaction: data.currentReaction === 'LIKE' ? 'LIKE' : null,
-                                likeCount: data.likeCount !== undefined ? data.likeCount : (data.currentReaction === 'LIKE' ? (item.likeCount || 0) + 1 : (item.likeCount || 0) - 1)
+                                myReaction: data.myReaction === 'LIKE' ? 'LIKE' : null,
+                                likeCount: data.likeCount !== undefined ? data.likeCount : (data.myReaction === 'LIKE' ? (item.likeCount || 0) + 1 : (item.likeCount || 0) - 1)
                             }
                             : item
                     )
@@ -175,7 +172,7 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
                 setItems(prev =>
                     prev.map(item =>
                         item.id === id
-                            ? { ...item, isBookmarked: data.bookmarked }
+                            ? { ...item, bookmarked: data.bookmarked }
                             : item
                     )
                 );

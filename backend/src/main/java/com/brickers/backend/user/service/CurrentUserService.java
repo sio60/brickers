@@ -36,4 +36,12 @@ public class CurrentUserService {
 
         return user;
     }
+
+    /** 로그인 여부에 따라 ID를 반환하거나 null을 반환한다. */
+    public String getUserIdOrNull(Authentication auth) {
+        if (auth == null || auth.getPrincipal() == null || "anonymousUser".equals(auth.getPrincipal())) {
+            return null;
+        }
+        return String.valueOf(auth.getPrincipal());
+    }
 }
