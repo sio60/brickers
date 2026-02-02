@@ -14,16 +14,17 @@ type Props = {
     onLoginRequired?: () => void;
 };
 
-// Check if URL is valid (starts with http/https or is a valid S3 URL)
+// Check if URL is valid (starts with http/https, is a blob, or is a relative path)
 function isValidImageUrl(url?: string): boolean {
     if (!url) return false;
-    return url.startsWith('http://') || url.startsWith('https://');
+    return url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/') || url.startsWith('blob:');
 }
 
 export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmarkToggle, onLoginRequired }: Props) {
     const safeTitle = item.title.replace(/\s+/g, '-').replace(/[^\w\-\uAC00-\uD7A3]/g, '');
     const slug = `${safeTitle}-${item.id}`;
-    const hasValidImage = isValidImageUrl(item.thumbnailUrl);
+    const displayImageUrl = item.sourceImageUrl || item.thumbnailUrl;
+    const hasValidImage = isValidImageUrl(displayImageUrl);
 
     const handleLikeClick = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -64,11 +65,11 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
         <Link href={`/gallery/${slug}`} className="block group">
             <div className="gallery-card bg-white rounded-3xl overflow-hidden border-2 border-black hover:shadow-xl transition-all duration-300">
                 {/* Thumbnail Area */}
-                <div className="relative aspect-square bg-[#f9f9f9] overflow-hidden border-b border-gray-100">
+                <div className="relative aspect-square bg-[#f9f9f9] overflow-hidden border-b-2 border-black">
                     {hasValidImage ? (
                         <div className="w-full h-full p-2.5">
                             <img
-                                src={item.thumbnailUrl}
+                                src={displayImageUrl}
                                 alt={item.title}
                                 className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
                             />
@@ -148,7 +149,7 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
                                     <path
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
-                                        d="M14 9l-1.154-4.832A2.212 2.212 0 0010.697 2.5a2.212 2.212 0 00-2.149 2.149v4.351H5.432a2.33 2.33 0 00-2.332 2.332c0 .942.553 1.758 1.354 2.138-.113.385-.175.792-.175 1.213 0 .762.2 1.478.553 2.1-.2.433-.314.914-.314 1.424 0 .866.326 1.656.862 2.253.536.597 1.272.96 2.088.96h7.5c2.209 0 4-1.791 4-4v-5c0-1.105-.895-2-2-2h-3z"
+                                        d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
                                     />
                                 </svg>
                                 <span className="text-[10px] font-black leading-none">
