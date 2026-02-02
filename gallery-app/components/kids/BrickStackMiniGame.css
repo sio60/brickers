@@ -18,9 +18,25 @@
 }
 
 .brickGame__score {
-    font-size: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1;
+}
+
+.brickGame__scoreValue {
+    font-size: 36px;
     font-weight: 900;
-    color: #1f2937;
+    color: #1a1a1a;
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.05);
+}
+
+.brickGame__scoreLabel {
+    font-size: 10px;
+    font-weight: 800;
+    color: #999;
+    letter-spacing: 0.1em;
+    margin-top: -2px;
 }
 
 .brickGame__restart {
