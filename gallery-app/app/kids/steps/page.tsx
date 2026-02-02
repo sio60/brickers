@@ -599,12 +599,20 @@ function KidsStepPageContent() {
                             </button>
 
                             {colorChangedLdrBase64 && (
-                                <button
-                                    onClick={restoreOriginalColor}
-                                    className="w-full text-left p-[10px_16px] rounded-2xl bg-transparent text-[#888] font-[800] border-2 border-transparent cursor-pointer transition-all duration-200 text-[0.85rem] flex items-center gap-1.5 hover:text-black"
-                                >
-                                    ↺ 원본으로 되돌리기
-                                </button>
+                                <>
+                                    <button
+                                        onClick={downloadColorChangedLdr}
+                                        className="w-full text-left p-[14px_16px] rounded-2xl bg-[#4CAF50] text-white font-[800] border-2 border-black cursor-pointer transition-all duration-200 hover:bg-[#45a049] hover:-translate-y-[2px] hover:shadow-[0_4px_0_rgba(0,0,0,0.1)]"
+                                    >
+                                        ⬇ 변경된 LDR 다운로드
+                                    </button>
+                                    <button
+                                        onClick={restoreOriginalColor}
+                                        className="w-full text-left p-[10px_16px] rounded-2xl bg-transparent text-[#888] font-[800] border-2 border-transparent cursor-pointer transition-all duration-200 text-[0.85rem] flex items-center gap-1.5 hover:text-black"
+                                    >
+                                        ↺ 원본으로 되돌리기
+                                    </button>
+                                </>
                             )}
                         </div>
 
@@ -738,7 +746,7 @@ function KidsStepPageContent() {
                     <div className="bg-white border-[3px] border-black rounded-[20px] p-8 w-[min(400px,90vw)] flex flex-col gap-5 shadow-[0_20px_40px_rgba(0,0,0,0.2)] relative" onClick={(e) => e.stopPropagation()}>
                         <button className="absolute top-4 right-4 w-11 h-11 border-none bg-transparent cursor-pointer text-[24px] font-bold flex items-center justify-center transition-all duration-100 ease-[cubic-bezier(0.4,0,0.2,1)] text-black z-[100] hover:rotate-90 hover:scale-110" onClick={() => setIsColorModalOpen(false)} aria-label="close">✕</button>
                         <h3 className="font-['KblJumpCondensed',sans-serif] text-[32px] m-0 text-center">
-                            🎨 {t.kids.steps.colorThemeTitle || "색상 테마 선택"}
+                            {t.kids.steps.colorThemeTitle || "색상 테마 선택"}
                         </h3>
 
                         <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
@@ -750,11 +758,11 @@ function KidsStepPageContent() {
                                 colorThemes.map((theme: ThemeInfo) => (
                                     <button
                                         key={theme.name}
-                                        className={`flex flex-col items-start p-[14px_16px] rounded-xl border-2 transition-all duration-200 text-left bg-white cursor-pointer ${selectedTheme === theme.name ? "border-black bg-black text-white" : "border-[#e0e0e0] hover:border-black hover:bg-[#f9f9f9]"}`}
+                                        className={`flex flex-col items-start p-[14px_16px] rounded-xl border-2 transition-all duration-200 text-left cursor-pointer bg-white ${selectedTheme === theme.name ? "border-black" : "border-[#e0e0e0] hover:border-black"}`}
                                         onClick={() => setSelectedTheme(theme.name)}
                                     >
-                                        <span className={`text-[15px] font-[800] ${selectedTheme === theme.name ? "text-white" : "text-black"}`}>{theme.name}</span>
-                                        <span className={`text-[12px] mt-0.5 ${selectedTheme === theme.name ? "text-[#ccc]" : "text-[#888]"}`}>{theme.description}</span>
+                                        <span className={`text-[15px] font-[800] ${selectedTheme === theme.name ? "text-[#ffe135]" : "text-black"}`}>{theme.name}</span>
+                                        <span className={`text-[12px] mt-0.5 ${selectedTheme === theme.name ? "text-[#333]" : "text-[#888]"}`}>{theme.description}</span>
                                     </button>
                                 ))
                             )}
