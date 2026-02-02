@@ -19,7 +19,7 @@ public class ColorVariantService {
 
     private final WebClient.Builder webClientBuilder;
 
-    @Value("${app.ai-server-url:http://localhost:8000}")
+    @Value("${ai.server.url:http://localhost:8000}")
     private String aiServerUrl;
 
     /**
