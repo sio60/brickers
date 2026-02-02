@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import styles from "./BrickBotModal.module.css";
+// import styles from "./BrickBotModal.module.css"; // Removed
 
 interface BrickBotModalProps {
     isOpen: boolean;
@@ -442,38 +442,38 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
     if (!isOpen) return null;
 
     return (
-        <div className={styles.overlay} onClick={onClose}>
-            <div className={styles.container} onClick={(e) => e.stopPropagation()}>
+        <div className="fixed top-0 left-0 w-screen h-screen bg-transparent flex justify-end items-end pr-6 pb-[100px] z-[9999] pointer-events-none" onClick={onClose}>
+            <div className="w-[380px] h-[600px] bg-white border-2 border-black rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden pointer-events-auto animate-[slideUp_0.3s_cubic-bezier(0.4,0,0.2,1)] sm:w-full sm:h-full sm:rounded-none" onClick={(e) => e.stopPropagation()}>
                 {/* 헤더 */}
-                <div className={styles.header}>
-                    <div className={styles.profile}>
-                        <span className={styles.name}>
+                <div className="h-[60px] bg-white flex items-center justify-between px-5 border-b-2 border-[#f0f0f0]">
+                    <div className="flex items-center gap-2.5">
+                        <span className="font-bold text-[18px] text-black">
                             {tChat.header} {mode !== "CHAT" && ` - ${mode === "INQUIRY" ? tChat.suggestions.inquiry : mode === "REPORT" ? tChat.suggestions.report : tChat.suggestions.refund}`}
                         </span>
                     </div>
-                    <button className={styles.close} onClick={onClose}>×</button>
+                    <button className="bg-none border-none text-[24px] text-black cursor-pointer transition-transform duration-300 flex items-center justify-center w-10 h-10 hover:rotate-90" onClick={onClose}>×</button>
                 </div>
 
                 {/* 컨텐츠 */}
                 {mode === "CHAT" ? (
                     <>
-                        <div className={styles.messages}>
+                        <div className="flex-1 p-5 overflow-y-auto flex flex-col gap-4 bg-white">
                             {messages.map((msg, idx) => (
-                                <div key={idx} className={`${styles.msgGroup} ${msg.role === "user" ? styles.user : styles.bot}`}>
-                                    <div className={`${styles.msgRow} ${msg.role === "user" ? styles.userRow : styles.botRow}`}>
+                                <div key={idx} className={`flex flex-col gap-1.5 w-full ${msg.role === "user" ? "items-end" : "items-start"}`}>
+                                    <div className={`flex items-start gap-2.5 max-w-[85%] ${msg.role === "user" ? "self-end flex-row-reverse" : "self-start"}`}>
                                         {msg.role === "bot" && (
-                                            <Image src="/chatbot.png" alt="Bot" width={36} height={36} className={styles.msgAvatar} />
+                                            <Image src="/chatbot.png" alt="Bot" width={36} height={36} className="w-9 h-9 rounded object-contain bg-transparent border-none shrink-0 mt-0.5" />
                                         )}
-                                        <div className={`${styles.bubble} ${msg.role === "user" ? styles.userBubble : styles.botBubble}`}>
+                                        <div className={`px-3.5 py-2.5 rounded-xl text-sm leading-relaxed break-words relative ${msg.role === "user" ? "bg-black text-white rounded-tr-sm" : "bg-white text-black border-2 border-black rounded-tl-sm"}`}>
                                             {msg.content}
                                         </div>
                                     </div>
                                     {msg.role === "bot" && msg.actions && msg.actions.length > 0 && (
-                                        <div className={styles.actionContainer}>
+                                        <div className="ml-[50px] -mt-1">
                                             {msg.actions.map((act, actIdx) => (
                                                 <button
                                                     key={actIdx}
-                                                    className={styles.actionBtn}
+                                                    className="bg-[#f0f4f8] border border-[#d1d9e6] rounded-xl px-4 py-2 text-[13px] font-bold text-[#333] cursor-pointer transition-all duration-200 shadow-sm hover:bg-[#e2e8f0] hover:-translate-y-px hover:shadow"
                                                     onClick={() => handleActionClick(act)}
                                                 >
                                                     {act === "create" && tChat.actions.create}
@@ -486,10 +486,12 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                                 </div>
                             ))}
                             {isLoading && (
-                                <div className={`${styles.msgRow} ${styles.botRow}`}>
-                                    <Image src="/chatbot.png" alt="Bot" width={36} height={36} className={styles.msgAvatar} />
-                                    <div className={`${styles.bubble} ${styles.botBubble} ${styles.typing}`}>
-                                        <span>.</span><span>.</span><span>.</span>
+                                <div className="flex items-start gap-2.5 max-w-[85%] self-start">
+                                    <Image src="/chatbot.png" alt="Bot" width={36} height={36} className="w-9 h-9 rounded object-contain bg-transparent border-none shrink-0 mt-0.5" />
+                                    <div className="px-3.5 py-2.5 rounded-xl text-sm leading-relaxed break-words relative bg-white text-black border-2 border-black rounded-tl-sm flex gap-1 items-center p-3.5">
+                                        <span className="w-1 h-1 bg-[#888] rounded-full animate-[bounce_1.4s_infinite_ease-in-out_both] delay-[-0.32s]"></span>
+                                        <span className="w-1 h-1 bg-[#888] rounded-full animate-[bounce_1.4s_infinite_ease-in-out_both] delay-[-0.16s]"></span>
+                                        <span className="w-1 h-1 bg-[#888] rounded-full animate-[bounce_1.4s_infinite_ease-in-out_both]"></span>
                                     </div>
                                 </div>
                             )}
@@ -497,21 +499,21 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                         </div>
 
                         {/* 예시 질문 토글 */}
-                        <div className={styles.suggestionsWrapper}>
+                        <div className="border-t border-[#eee] bg-white flex flex-col">
                             <button
-                                className={styles.suggestionsToggle}
+                                className="flex justify-between items-center w-full px-4 py-3 bg-none border-none text-[13px] font-semibold text-[#555] cursor-pointer transition-colors hover:bg-[#f9f9f9]"
                                 onClick={() => setShowSuggestions(!showSuggestions)}
                             >
                                 <span>{messages.length > 1 ? tChat.toggleSuggestionsAfter : tChat.toggleSuggestions}</span>
-                                <span className={`${styles.toggleArrow} ${showSuggestions ? styles.open : ''}`}>▲</span>
+                                <span className={`inline-block transition-transform duration-300 text-[10px] ${showSuggestions ? "rotate-180" : ''}`}>▲</span>
                             </button>
                             {showSuggestions && (
-                                <div className={styles.suggestions}>
-                                    <div className={styles.suggestionsList}>
+                                <div className="px-4 pb-4 bg-white animate-[slideDown_0.3s_ease-out]">
+                                    <div className="flex flex-wrap gap-2">
                                         {suggestedQuestions.map((q, idx) => (
                                             <button
                                                 key={idx}
-                                                className={styles.suggestionBtn}
+                                                className="bg-white border border-[#ddd] rounded-2xl px-3 py-1.5 text-xs text-[#444] cursor-pointer transition-all duration-200 whitespace-nowrap shadow-sm hover:bg-[#f0f0f0] hover:border-[#ccc] hover:-translate-y-px hover:text-black"
                                                 onClick={() => handleSuggestionClick(q)}
                                             >
                                                 {q}
@@ -522,41 +524,41 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                             )}
                         </div>
 
-                        <div className={styles.inputArea}>
+                        <div className="bg-white p-2.5 flex gap-2 border-t border-[#eee]">
                             <textarea
-                                className={styles.input}
+                                className="flex-1 border-none bg-[#f2f2f2] rounded-[18px] px-3.5 py-2.5 text-sm resize-none outline-none"
                                 placeholder={tChat.placeholder}
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
                                 rows={1}
                             />
-                            <button className={styles.sendBtn} onClick={handleSend} disabled={!input.trim() || isLoading}>
+                            <button className="bg-black border-none rounded-[18px] px-4 font-semibold text-white cursor-pointer transition-colors disabled:bg-[#eee] disabled:text-[#aaa] disabled:cursor-not-allowed" onClick={handleSend} disabled={!input.trim() || isLoading}>
                                 {tChat.send}
                             </button>
                         </div>
                     </>
                 ) : (
                     /* 폼 모드 */
-                    <div className={styles.formContainer}>
+                    <div className="p-5 flex flex-col h-full overflow-y-auto">
                         {mode === "INQUIRY" && (
                             <>
-                                <h3 className={styles.formTitle}>{tChat.inquiry.modeTitle}</h3>
+                                <h3 className="text-lg mb-4 font-bold">{tChat.inquiry.modeTitle}</h3>
                                 <input
-                                    className={styles.formInput}
+                                    className="p-3 border border-[#ddd] rounded-lg mb-2.5 text-sm"
                                     placeholder={tChat.inquiry.titlePlace}
                                     value={formTitle}
                                     onChange={(e) => setFormTitle(e.target.value)}
                                 />
                                 <textarea
-                                    className={styles.formTextarea}
+                                    className="p-3 border border-[#ddd] rounded-lg mb-5 min-h-[150px] resize-none text-sm"
                                     placeholder={tChat.inquiry.contentPlace}
                                     value={formContent}
                                     onChange={(e) => setFormContent(e.target.value)}
                                 />
-                                <div className={styles.formActions}>
-                                    <button onClick={() => setMode("CHAT")} className={styles.cancelBtn}>{tChat.cancel}</button>
-                                    <button onClick={submitInquiry} disabled={isSubmitting} className={styles.submitBtn}>
+                                <div className="flex gap-2.5 mt-auto">
+                                    <button onClick={() => setMode("CHAT")} className="flex-1 p-3 rounded-lg border border-[#ddd] bg-white cursor-pointer text-sm">{tChat.cancel}</button>
+                                    <button onClick={submitInquiry} disabled={isSubmitting} className="flex-[2] p-3 rounded-lg border-none bg-black text-white cursor-pointer text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
                                         {isSubmitting ? "..." : tChat.inquiry.btn}
                                     </button>
                                 </div>
@@ -565,13 +567,13 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
 
                         {mode === "REPORT" && (
                             <>
-                                <h3 className={styles.formTitle}>{tChat.report.modeTitle}</h3>
-                                <div className={styles.formField}>
-                                    <label className={styles.formLabel}>{tChat.report.reasonLabel}</label>
+                                <h3 className="text-lg mb-4 font-bold">{tChat.report.modeTitle}</h3>
+                                <div className="mb-2.5">
+                                    <label className="text-[13px] text-[#666] block mb-1">{tChat.report.reasonLabel}</label>
                                     <select
                                         value={reportReason}
                                         onChange={(e) => setReportReason(e.target.value)}
-                                        className={styles.formSelect}
+                                        className="w-full p-3 border border-[#ddd] rounded-lg text-sm"
                                     >
                                         <option value="SPAM">{tChat.report.reasons.SPAM}</option>
                                         <option value="INAPPROPRIATE">{tChat.report.reasons.INAPPROPRIATE}</option>
@@ -581,14 +583,14 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                                     </select>
                                 </div>
                                 <textarea
-                                    className={styles.formTextarea}
+                                    className="p-3 border border-[#ddd] rounded-lg mb-5 min-h-[150px] resize-none text-sm"
                                     placeholder={tChat.report.contentPlace}
                                     value={formContent}
                                     onChange={(e) => setFormContent(e.target.value)}
                                 />
-                                <div className={styles.formActions}>
-                                    <button onClick={() => setMode("CHAT")} className={styles.cancelBtn}>{tChat.cancel}</button>
-                                    <button onClick={submitReport} disabled={isSubmitting} className={styles.reportBtn}>
+                                <div className="flex gap-2.5 mt-auto">
+                                    <button onClick={() => setMode("CHAT")} className="flex-1 p-3 rounded-lg border border-[#ddd] bg-white cursor-pointer text-sm">{tChat.cancel}</button>
+                                    <button onClick={submitReport} disabled={isSubmitting} className="flex-[2] p-3 rounded-lg border-none bg-red-600 text-white cursor-pointer text-sm font-semibold disabled:opacity-70">
                                         {isSubmitting ? "..." : tChat.report.btn}
                                     </button>
                                 </div>
@@ -597,30 +599,30 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
 
                         {mode === "REFUND" && (
                             <>
-                                <h3 className={styles.formTitle}>{tChat.refund.modeTitle}</h3>
-                                <p className={styles.formDesc}>{tChat.refund.desc}</p>
-                                <div className={styles.refundList}>
+                                <h3 className="text-lg mb-4 font-bold">{tChat.refund.modeTitle}</h3>
+                                <p className="text-[13px] text-[#666] mb-3">{tChat.refund.desc}</p>
+                                <div className="flex-1 overflow-y-auto border border-[#eee] rounded-lg mb-5">
                                     {refundList.length === 0 ? (
-                                        <div className={styles.refundEmpty}>{tChat.refund.empty}</div>
+                                        <div className="p-5 text-center text-[#999]">{tChat.refund.empty}</div>
                                     ) : (
                                         refundList.map((item) => (
                                             <div
                                                 key={item.orderId}
                                                 onClick={() => setSelectedOrderId(item.orderId)}
-                                                className={`${styles.refundItem} ${selectedOrderId === item.orderId ? styles.selected : ''}`}
+                                                className={`p-3 border-b border-[#eee] bg-white cursor-pointer flex justify-between items-center ${selectedOrderId === item.orderId ? "bg-[#f0f8ff]" : ''}`}
                                             >
                                                 <div>
-                                                    <div className={styles.refundItemName}>{item.itemName}</div>
-                                                    <div className={styles.refundItemMeta}>{item.orderedAt?.split("T")[0]} • {item.amount}원</div>
+                                                    <div className="font-bold text-sm">{item.itemName}</div>
+                                                    <div className="text-xs text-[#888]">{item.orderedAt?.split("T")[0]} • {item.amount}원</div>
                                                 </div>
-                                                {selectedOrderId === item.orderId && <div className={styles.refundCheck}>✔</div>}
+                                                {selectedOrderId === item.orderId && <div className="text-[#007bff] font-bold">✔</div>}
                                             </div>
                                         ))
                                     )}
                                 </div>
-                                <div className={styles.formActions}>
-                                    <button onClick={() => setMode("CHAT")} className={styles.cancelBtn}>{tChat.cancel}</button>
-                                    <button onClick={submitRefund} disabled={isSubmitting || !selectedOrderId} className={styles.submitBtn}>
+                                <div className="flex gap-2.5 mt-auto">
+                                    <button onClick={() => setMode("CHAT")} className="flex-1 p-3 rounded-lg border border-[#ddd] bg-white cursor-pointer text-sm">{tChat.cancel}</button>
+                                    <button onClick={submitRefund} disabled={isSubmitting || !selectedOrderId} className="flex-[2] p-3 rounded-lg border-none bg-black text-white cursor-pointer text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
                                         {isSubmitting ? "..." : tChat.refund.btn}
                                     </button>
                                 </div>
