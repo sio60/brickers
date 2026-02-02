@@ -177,13 +177,20 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
 
             if (res.ok) {
                 const data = await res.json();
-                setItems(prev =>
-                    prev.map(item =>
-                        item.id === id
-                            ? { ...item, bookmarked: data.bookmarked }
-                            : item
-                    )
-                );
+
+                // If we are in the 'bookmarks' category and unbookmarking, remove from list
+                if (category === 'bookmarks' && !data.bookmarked) {
+                    setItems(prev => prev.filter(item => item.id !== id));
+                    setTotalElements(prev => prev - 1);
+                } else {
+                    setItems(prev =>
+                        prev.map(item =>
+                            item.id === id
+                                ? { ...item, bookmarked: data.bookmarked }
+                                : item
+                        )
+                    );
+                }
             }
         } catch (error) {
             console.error('Bookmark toggle failed:', error);
