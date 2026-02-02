@@ -17,6 +17,9 @@ COPY . .
 # Next.js collects completely anonymous telemetry data about general usage.
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Docker 환경에서 backend 컨테이너로 프록시
+ENV API_BASE=http://backend:8080
+
 RUN npm run build
 
 # Production image, copy all the files and run next
