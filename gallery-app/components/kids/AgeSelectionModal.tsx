@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import KidsModelSelectModal from "./KidsModelSelectModal";
-// import styles from "./AgeSelectionModal.module.css"; // Removed
+import styles from "./AgeSelectionModal.module.css";
 
 type AgeGroup = "4-5" | "6-7" | "8-10" | null;
 
@@ -62,31 +62,31 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
     return (
         <>
             {isOpen && (
-                <div className="fixed inset-0 bg-black/40 backdrop-blur-[8px] flex items-center justify-center z-[2000] animate-[fadeIn_0.3s_ease]" onClick={onClose}>
-                    <div className="bg-white p-10 rounded-[40px] w-[90%] max-w-[800px] relative shadow-[0_20px_40px_rgba(0,0,0,0.2)] border-[3px] border-black text-center" onClick={(e) => e.stopPropagation()}>
-                        <button className="absolute top-4 right-4 w-11 h-11 border-none bg-transparent cursor-pointer text-[24px] font-bold flex items-center justify-center transition-all duration-200 text-black hover:rotate-90 hover:scale-110" onClick={onClose}>✕</button>
-                        <h1 className="text-[48px] font-black mb-10 text-black uppercase sm:text-[32px]">{t.kids.title}</h1>
+                <div className={styles.overlay} onClick={onClose}>
+                    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                        <button className={styles.closeBtn} onClick={onClose}>✕</button>
+                        <h1 className={styles.title}>{t.kids.title}</h1>
 
-                        <div className="flex justify-center gap-[30px] sm:flex-col sm:items-center">
+                        <div className={styles.buttons}>
                             <button
-                                className={`bg-white border-[3px] border-black rounded-[32px] p-6 w-[200px] h-[240px] cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex flex-col items-center justify-center gap-4 hover:-translate-y-1 hover:bg-[#ffe135] hover:shadow-none hover:border-black active:bg-[#ffe135] active:text-black active:translate-y-[2px] active:shadow-none active:border-black sm:w-full sm:flex-row sm:p-[16px_24px] ${selectedAge === "4-5" ? "bg-[#ffe135] text-black translate-y-[2px] shadow-none border-black" : ""}`}
+                                className={`${styles.ageBtn} ${selectedAge === "4-5" ? styles.active : ""}`}
                                 onClick={() => handleSelect("4-5")}
                             >
-                                <div className="text-[64px] font-black text-black">{t.kids.level.replace("{lv}", "1")}</div>
+                                <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "1")}</div>
                             </button>
 
                             <button
-                                className={`bg-white border-[3px] border-black rounded-[32px] p-6 w-[200px] h-[240px] cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex flex-col items-center justify-center gap-4 hover:-translate-y-1 hover:bg-[#ffe135] hover:shadow-none hover:border-black active:bg-[#ffe135] active:text-black active:translate-y-[2px] active:shadow-none active:border-black sm:w-full sm:flex-row sm:p-[16px_24px] ${selectedAge === "6-7" ? "bg-[#ffe135] text-black translate-y-[2px] shadow-none border-black" : ""}`}
+                                className={`${styles.ageBtn} ${selectedAge === "6-7" ? styles.active : ""}`}
                                 onClick={() => handleSelect("6-7")}
                             >
-                                <div className="text-[64px] font-black text-black">{t.kids.level.replace("{lv}", "2")}</div>
+                                <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "2")}</div>
                             </button>
 
                             <button
-                                className={`bg-white border-[3px] border-black rounded-[32px] p-6 w-[200px] h-[240px] cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex flex-col items-center justify-center gap-4 hover:-translate-y-1 hover:bg-[#ffe135] hover:shadow-none hover:border-black active:bg-[#ffe135] active:text-black active:translate-y-[2px] active:shadow-none active:border-black sm:w-full sm:flex-row sm:p-[16px_24px] ${selectedAge === "8-10" ? "bg-[#ffe135] text-black translate-y-[2px] shadow-none border-black" : ""}`}
+                                className={`${styles.ageBtn} ${selectedAge === "8-10" ? styles.active : ""}`}
                                 onClick={() => handleSelect("8-10")}
                             >
-                                <div className="text-[64px] font-black text-black">{t.kids.level.replace("{lv}", "3")}</div>
+                                <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "3")}</div>
                             </button>
                         </div>
                     </div>

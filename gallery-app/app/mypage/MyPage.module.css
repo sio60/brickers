@@ -1,0 +1,1103 @@
+.mypage {
+    min-height: 100vh;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    background: transparent;
+}
+
+/* ... (skipping to exitBtn) ... */
+
+.mypage__exitBtn {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #999;
+    transition: all 0.2s;
+    z-index: 50;
+    /* Add z-index to ensure visibility */
+}
+
+/* 언어별 폰트 설정 */
+.mypage.lang-ko {
+    font-family: 'Cafe24Surround', sans-serif;
+}
+
+.mypage.lang-ja {
+    font-family: "Jua", sans-serif;
+}
+
+/* 메인 컨테이너 */
+.mypage__container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding-top: 60px;
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    height: 85vh;
+}
+
+.mypage__layout {
+    display: flex;
+    gap: 0;
+    background: #fff;
+    border: 3px solid #000;
+    border-radius: 32px;
+    overflow: hidden;
+    height: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+/* ─── 사이드바 ─── */
+.mypage__sidebar {
+    width: 260px;
+    background: #fdfdfd;
+    border-right: 2px solid #eee;
+    padding: 32px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    /* 그룹 간 간격 */
+    flex-shrink: 0;
+}
+
+/* 메뉴 그룹 */
+.mypage__menuGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    /* 아이템 간 간격 */
+    position: relative;
+}
+
+/* 구분선 (점선) */
+.mypage__menuGroup:not(:last-child)::after {
+    content: "";
+    display: block;
+    height: 1px;
+    border-bottom: 2px dashed #e5e7eb;
+    margin-top: 24px;
+    margin-bottom: 8px;
+}
+
+/* 메뉴 아이템 */
+.mypage__menuItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 700;
+    color: #4b5563;
+    text-align: left;
+    border-radius: 12px;
+    transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+    position: relative;
+}
+
+.mypage__menuItem:hover {
+    background: #f3f4f6;
+    color: #111;
+}
+
+/* 활성 메뉴 아이템 */
+.mypage__menuItem.active {
+    background: #FFD600;
+    /* LEGO Yellow */
+    color: #000;
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(255, 214, 0, 0.3);
+}
+
+/* 활성 메뉴 우측 점 포인트 */
+.mypage__menuItem.active::after {
+    content: "";
+    position: absolute;
+    right: 16px;
+    width: 6px;
+    height: 6px;
+    background: #000;
+    border-radius: 50%;
+}
+
+.mypage__menuIcon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* 회원탈퇴 버튼 (사이드바 하단) */
+.mypage__deleteLink {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    color: #ef4444;
+    /* Red */
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    transition: all 0.2s;
+}
+
+.mypage__deleteLink:hover {
+    text-decoration: underline;
+    opacity: 0.8;
+}
+
+/* ─── 컨텐츠 영역 ─── */
+.mypage__content {
+    flex: 1;
+    padding: 40px 60px;
+    overflow-y: auto;
+    background: #fff;
+    position: relative;
+}
+
+/* 섹션 타이틀 */
+.mypage__sectionTitle {
+    font-size: 32px;
+    font-weight: 900;
+    color: #111;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* 타이틀 앞 파란색 바 장식 */
+.mypage__sectionTitle::before {
+    content: "";
+    display: block;
+    width: 8px;
+    height: 32px;
+    background: #3b82f6;
+    /* Blue */
+    border-radius: 4px;
+}
+
+.mypage__loading,
+.mypage__error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #666;
+    gap: 16px;
+}
+
+/* ─── 프로필 대시보드 ─── */
+.mypage__profileDashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 프로필 카드 (상단) */
+.mypage__profileCard {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    padding: 40px;
+    background: #f8f9fa;
+    /* 연회색 배경 */
+    border-radius: 32px;
+    border: 1px solid #eee;
+    /* 아주 연한 테두리 */
+}
+
+.mypage__avatarArea {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    flex-shrink: 0;
+}
+
+.mypage__avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 24px;
+    /* 약간 둥근 사각형 */
+    object-fit: cover;
+    border: 3px solid #000;
+    /* 굵은 테두리 */
+    background: #fff;
+    box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.1);
+    /* 그림자 */
+}
+
+/* 카메라 아이콘 (업로드 버튼) */
+.mypage__avatarUpload {
+    position: absolute;
+    bottom: -10px;
+    right: -10px;
+    width: 44px;
+    height: 44px;
+    background: #3b82f6;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s;
+}
+
+.mypage__avatarUpload:hover {
+    transform: scale(1.1);
+}
+
+/* 프로필 텍스트 정보 */
+.mypage__profileInfo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.mypage__nameRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mypage__nickname {
+    font-size: 32px;
+    font-weight: 900;
+    color: #111;
+    margin: 0;
+}
+
+.mypage__roleBadge {
+    padding: 6px 14px;
+    background: #FFD600;
+    color: #000;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.mypage__email {
+    font-size: 16px;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* 자기소개 박스 */
+.mypage__bioBox {
+    padding: 16px 20px;
+    background: #fff;
+    border: 2px dashed #e5e7eb;
+    border-radius: 12px;
+    color: #4b5563;
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 60px;
+}
+
+/* 프로필 수정 버튼 (초록색) */
+.mypage__editBtn {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: #22c55e;
+    /* Green */
+    color: #fff;
+    border: none;
+    border-radius: 99px;
+    /* Pill shape */
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 0 #15803d;
+    /* 3D effect */
+    margin-top: 8px;
+}
+
+.mypage__editBtn:hover {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #15803d;
+}
+
+.mypage__editBtn:active {
+    transform: translateY(4px);
+    box-shadow: none;
+}
+
+/* ─── 통계 그리드 ─── */
+.mypage__statsGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.mypage__statCard {
+    background: #fff;
+    border: 2px solid #eee;
+    border-radius: 24px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s ease;
+}
+
+.mypage__statCard:hover {
+    transform: translateY(-5px);
+    border-color: #000;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+
+}
+
+.stat__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.stat__label {
+    font-size: 15px;
+    font-weight: 700;
+    color: #6b7280;
+}
+
+.stat__iconCircle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+}
+
+.stat__value {
+    font-size: 42px;
+    font-weight: 900;
+    color: #111;
+}
+
+/* ─── 공통 스타일 (버튼, 카드 등) ─── */
+.mypage__btn3d {
+    padding: 12px 24px;
+    border: 2px solid #000;
+    border-radius: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    background: #fff;
+    color: #000;
+    box-shadow: 4px 4px 0 #000;
+    transition: all 0.15s;
+}
+
+.mypage__btn3d:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 #000;
+}
+
+.mypage__btn3d:active {
+    transform: translate(4px, 4px);
+    box-shadow: none;
+}
+
+.mypage__card {
+    background: #fff;
+    border: 2px solid #e5e7eb;
+    border-radius: 20px;
+    padding: 24px;
+}
+
+/* ─── 작업 리스트 ─── */
+.mypage__jobs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 24px;
+}
+
+.mypage__job {
+    background: #fff;
+    border: 2px solid #e5e7eb;
+    border-radius: 20px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mypage__job:hover {
+    border-color: #000;
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* ─── 문의/신고 카드 ─── */
+.mypage__inquiryCard {
+    background: #fff;
+    border: 2px solid #e5e7eb;
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 20px;
+    transition: border-color 0.2s;
+}
+
+.mypage__inquiryCard:hover {
+    border-color: #aaa;
+}
+
+/* ─── 나가기 버튼 ─── */
+.mypage__exitBtn {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #000;
+    z-index: 50;
+}
+
+.mypage__exitBtn:hover {
+    color: #000;
+    transform: rotate(90deg) scale(1.1);
+}
+
+/* ─── 하단 브릭 장식 (가상요소 아님, 별도 div) ─── */
+.mypage__decorations {
+    position: absolute;
+    bottom: -20px;
+    right: 40px;
+    display: flex;
+    gap: 4px;
+    z-index: 20;
+}
+
+.mypage__decorationsBrick {
+    width: 60px;
+    height: 30px;
+    border-radius: 4px 4px 0 0;
+    border: 3px solid #000;
+    border-bottom: none;
+    position: relative;
+    background: #fff;
+}
+
+.mypage__decorationsBrick::after {
+    /* 스터드 */
+    content: "";
+    position: absolute;
+    top: -8px;
+    left: 8px;
+    width: 12px;
+    height: 6px;
+    background: inherit;
+    border: 3px solid #000;
+    border-bottom: none;
+    border-radius: 2px 2px 0 0;
+    box-shadow: 26px 0 0 -3px inherit, 26px 0 0 0 #000;
+    /* 두번째 스터드 */
+}
+
+/* 반응형 */
+@media (max-width: 900px) {
+    .mypage__container {
+        height: auto;
+        min-height: 90vh;
+        margin: 20px;
+    }
+
+    .mypage__layout {
+        flex-direction: column;
+        border-radius: 20px;
+    }
+
+    .mypage__sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 2px solid #eee;
+        padding: 20px;
+        gap: 20px;
+    }
+
+    .mypage__menuGroup {
+        flex-direction: row;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .mypage__menuGroup::after {
+        display: none;
+    }
+
+    .mypage__deleteLink {
+        margin-left: auto;
+    }
+}
+
+/* 프로필 수정 폼 스타일 */
+.mypage__formInput,
+.mypage__formTextarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 16px;
+    font-family: inherit;
+    background: #fff;
+    resize: none;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+}
+
+.mypage__formInput:focus,
+.mypage__formTextarea:focus {
+    outline: none;
+    border-color: #000;
+    background: #fff;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+.mypage__editActions {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.mypage__cancelBtn {
+    padding: 10px 20px;
+    border: 2px solid #e5e7eb;
+    background: #fff;
+    border-radius: 99px;
+    font-weight: 700;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.2s;
+}
+
+.mypage__cancelBtn:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    color: #111;
+}
+
+.mypage__saveBtn {
+    padding: 10px 20px;
+    background: #000;
+    color: #fff;
+    border: 2px solid #000;
+    border-radius: 99px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+    transition: all 0.2s;
+}
+
+.mypage__saveBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.2);
+}
+
+.mypage__saveBtn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Report UI Redesign */
+.report__statusBadge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.report__statusBadge.resolved {
+    background: #000;
+    color: #fff;
+}
+
+.report__statusBadge.pending {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    color: #333;
+}
+
+.report__type {
+    font-size: 16px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.report__reason {
+    font-size: 24px;
+    font-weight: 800;
+    color: #111;
+    margin-bottom: 8px;
+    display: block;
+    line-height: 1.2;
+}
+
+.report__description {
+    font-size: 16px;
+    color: #444;
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+.report__dataId {
+    font-size: 13px;
+    color: #999;
+}
+
+/* ─── 모달 닫기 버튼 (통합 스타일) ─── */
+.mypage__closeBtn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #000;
+    z-index: 100;
+}
+
+.mypage__closeBtn:hover {
+    transform: rotate(90deg) scale(1.1);
+}
+
+.report__adminAnswerBox {
+    margin-top: 16px;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    position: relative;
+}
+
+.report__adminTitleBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.report__resolutionNote {
+    font-size: 15px;
+    color: #333;
+    line-height: 1.5;
+}
+
+.report__resolvedDate {
+    display: block;
+    text-align: right;
+    font-size: 12px;
+    color: #999;
+    margin-top: 8px;
+}
+
+/* Inquiry UI Redesign */
+.inquiry__statusBadge {
+    display: inline-block;
+    padding: 6px 12px;
+    border: 1px solid #111;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #111;
+    background: #fff;
+    margin-bottom: 12px;
+}
+
+.inquiry__statusBadge.answered {
+    background: #111;
+    color: #fff;
+}
+
+.inquiry__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.inquiry__title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #111;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.report__id-info {
+    font-size: 11px;
+    color: #ccc;
+    font-weight: 500;
+    align-self: flex-start;
+}
+
+
+/* 작업 메뉴 모달 오버레이 */
+.mypage__modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1500;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.2s ease;
+}
+
+
+/* 작업 메뉴 모달 */
+.mypage__menuModal {
+    position: relative;
+    width: 90%;
+    max-width: 400px;
+    background: #fff;
+    border-radius: 32px;
+    border: 3px solid #000;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mypage__menuHeader {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 24px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.mypage__menuThumb {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 2px solid #000;
+}
+
+.mypage__menuInfo {
+    flex: 1;
+}
+
+.mypage__menuTitle {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: #000;
+}
+
+.mypage__menuDate {
+    font-size: 13px;
+    color: #888;
+}
+
+.mypage__menuList {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 8px;
+}
+
+.mypage__menuItem2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: #f8f9fa;
+    border: 1px solid #eee;
+    border-radius: 16px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.mypage__menuItem2:hover:not(:disabled) {
+    background: #000;
+    color: #fff;
+    transform: translateX(4px);
+}
+
+.mypage__menuItem2:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.mypage__menuItem2.primary {
+    background: #FFD600;
+    border: 2px solid #000;
+    box-shadow: 0 4px 0 #000;
+}
+
+.mypage__menuItem2.primary:hover:not(:disabled) {
+    background: #FFD600;
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #000;
+}
+
+.mypage__menuIcon2 {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mypage__menuDivider {
+    height: 1px;
+    background: #eee;
+    margin: 8px 0;
+}
+
+/* 이미지 원본 보기 모달 */
+.mypage__imagePreviewOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: zoom-out;
+    animation: fadeIn 0.2s ease;
+}
+
+.mypage__imagePreviewClose {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: transparent;
+    color: #fff;
+    border: none;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mypage__imagePreviewClose:hover {
+    transform: rotate(90deg) scale(1.1);
+}
+
+.mypage__imagePreviewImg {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    cursor: default;
+}
+
+.inquiry__date {
+    font-size: 14px;
+    color: #999;
+
+}
+
+/* 3D 뷰어 모달 */
+.mypage__modalContent {
+    position: relative;
+    width: 90vw;
+    max-width: 900px;
+    height: 80vh;
+    background: #fff;
+    border-radius: 24px;
+    border: 3px solid #000;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+
+.mypage__viewerContainer {
+    width: 100%;
+    height: 100%;
+    background: #f8f9fa;
+}
+
+.mypage__closeBtn.white {
+    color: #fff;
+}
+
+.mypage__closeBtn.dark {
+    color: #000;
+}
+
+/* ─── 작업 카드 상세 스타일 ─── */
+.mypage__jobThumbData {
+    position: relative;
+    width: 100%;
+    padding-top: 100%;
+    /* 1:1 Aspect Ratio */
+    background: #f9f9f9;
+    border-bottom: 1px solid #eee;
+    overflow: hidden;
+}
+
+.mypage__jobThumb {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 10px;
+    transition: transform 0.3s ease;
+}
+
+.mypage__job:hover .mypage__jobThumb {
+    transform: scale(1.05);
+}
+
+.mypage__jobOverlay {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 2;
+}
+
+.mypage__jobStatus {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border: 1.5px solid #000;
+}
+
+/* Status Colors */
+.mypage__jobStatus.pending {
+    background: #fff;
+    color: #000;
+}
+
+.mypage__jobStatus.running {
+    background: #3b82f6;
+    color: #fff;
+}
+
+.mypage__jobStatus.completed {
+    background: #22c55e;
+    color: #fff;
+}
+
+.mypage__jobStatus.failed {
+    background: #ef4444;
+    color: #fff;
+}
+
+.mypage__jobStatus.paused {
+    background: #f59e0b;
+    color: #fff;
+}
+
+.mypage__jobInfo {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mypage__jobTitle {
+    font-size: 15px !important;
+    font-weight: 800;
+    color: #111;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mypage__jobDate {
+    font-size: 12px;
+    color: #999;
+    font-weight: 500;
+}

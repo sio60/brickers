@@ -8,7 +8,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import LoginModal from './common/LoginModal';
 import UpgradeModal from './UpgradeModal';
-// import './Header.css'; // Removed
+import './Header.css';
 
 function HeaderContent() {
     const { t } = useLanguage();
@@ -37,7 +37,7 @@ function HeaderContent() {
 
     return (
         <>
-            <header className="fixed top-0 left-0 w-full h-[72px] shrink-0 flex items-center justify-center px-5 bg-white border-b border-[#e0e0e0] z-50">
+            <header className="header">
                 {/* Logo - Centered */}
                 <Link href="/" className="cursor-pointer">
                     <Image
@@ -45,7 +45,7 @@ function HeaderContent() {
                         alt="BRICKERS"
                         width={160}
                         height={48}
-                        className="h-[48px] w-auto object-contain cursor-pointer"
+                        className="header__logo"
                         priority
                     />
                 </Link>
@@ -53,25 +53,25 @@ function HeaderContent() {
                 {/* Actions - Positioned absolute right */}
                 {/* Hide buttons on auth success/logout pages */}
                 {!pathname.includes('/auth/') ? (
-                    <div className="absolute right-6 top-1/2 -translate-y-1/2 flex gap-3">
-                        <Link href="/gallery" className="bg-white text-black border-2 border-black rounded-lg px-4 py-1.5 text-[16px] font-bold tracking-wider cursor-pointer transition duration-200 ease-in-out no-underline flex items-center justify-center hover:bg-black hover:text-white">
+                    <div className="header__actions">
+                        <Link href="/gallery" className="header__btn">
                             {t.header.gallery}
                         </Link>
                         {!isLoading ? (
                             isAuthenticated ? (
                                 <>
                                     {!isPro && (
-                                        <button className="bg-white text-black border-2 border-black rounded-lg px-4 py-1.5 text-[16px] font-bold tracking-wider cursor-pointer transition duration-200 ease-in-out no-underline flex items-center justify-center hover:bg-black hover:text-white" onClick={() => setIsUpgradeModalOpen(true)}>
+                                        <button className="header__btn" onClick={() => setIsUpgradeModalOpen(true)}>
                                             {t.header.upgrade}
                                         </button>
                                     )}
-                                    <button onClick={handleLogout} className="bg-white text-black border-2 border-black rounded-lg px-4 py-1.5 text-[16px] font-bold tracking-wider cursor-pointer transition duration-200 ease-in-out no-underline flex items-center justify-center hover:bg-black hover:text-white">
+                                    <button onClick={handleLogout} className="header__btn">
                                         {t.header.logout}
 
                                     </button>
                                 </>
                             ) : (
-                                <button onClick={() => setIsLoginModalOpen(true)} className="bg-white text-black border-2 border-black rounded-lg px-4 py-1.5 text-[16px] font-bold tracking-wider cursor-pointer transition duration-200 ease-in-out no-underline flex items-center justify-center hover:bg-black hover:text-white">
+                                <button onClick={() => setIsLoginModalOpen(true)} className="header__btn">
                                     {t.header.login}
                                 </button>
                             )
@@ -95,7 +95,7 @@ function HeaderContent() {
 
 export default function Header() {
     return (
-        <Suspense fallback={<header className="fixed top-0 left-0 w-full h-[72px] shrink-0 flex items-center justify-center px-5 bg-white border-b border-[#e0e0e0] z-50"><div className="absolute right-6 top-1/2 -translate-y-1/2 flex gap-3" /></header>}>
+        <Suspense fallback={<header className="header"><div className="header__actions" /></header>}>
             <HeaderContent />
         </Suspense>
     );
