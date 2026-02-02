@@ -36,6 +36,9 @@ export default function GalleryDetailClient({ item }: Props) {
     const [commentInput, setCommentInput] = useState('');
     const [commentLoading, setCommentLoading] = useState(false);
 
+    // Toast State
+    const [showToast, setShowToast] = useState(false);
+
     // View State
     const [activeTab, setActiveTab] = useState<'LDR' | 'GLB' | 'IMG'>('IMG');
 
@@ -138,6 +141,17 @@ export default function GalleryDetailClient({ item }: Props) {
             }
         } catch (error) { console.error(error); }
         finally { setCommentLoading(false); }
+    };
+
+    const handleShare = async () => {
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy: ', err);
+            alert('URL 복사에 실패했습니다.');
+        }
     };
 
     const formatDate = (dateStr: string) => {
@@ -321,13 +335,20 @@ export default function GalleryDetailClient({ item }: Props) {
                                 </button>
 
                                 <button
-                                    onClick={() => alert('공유 기능 준비 중')}
-                                    className="flex flex-col items-center gap-1 group transition-all ml-auto"
+                                    onClick={handleShare}
+                                    className="flex flex-col items-center gap-1 group transition-all ml-auto relative"
                                 >
                                     <div className="flex items-center justify-center transition-all">
                                         <Image src="/icons/share.png" alt="Share" width={22} height={22} className="opacity-60" />
                                     </div>
                                     <span className="text-xs font-bold text-gray-400">{t.detail.share}</span>
+
+                                    {/* Toast Notification */}
+                                    {showToast && (
+                                        <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg whitespace-nowrap z-50 animate-fade-in-up">
+                                            URL이 복사되었습니다
+                                        </div>
+                                    )}
                                 </button>
                             </div>
                         </div>
