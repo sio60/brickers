@@ -11,13 +11,13 @@
 .kidsStep__card {
     position: relative;
     width: 100%;
-    max-width: 800px;
-    aspect-ratio: 16 / 9;
+    max-width: 900px;
+    height: 70vh;
     background: #ffffff;
     border: 3px solid #000;
-    border-radius: 24px;
+    border-radius: 40px;
     overflow: hidden;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 768px) {
@@ -191,51 +191,41 @@
 
 /* Navigation Buttons */
 .kidsStep__navBtn {
-    padding: 16px 24px;
-    border-radius: 16px;
-    border: 2px solid #ddd;
+    padding: 14px 28px;
+    border-radius: 999px;
+    border: 2px solid #000;
     background: #fff;
     cursor: pointer;
     font-weight: 800;
-    font-size: 1.05rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    font-size: 1rem;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     color: #000;
     display: flex;
     align-items: center;
     gap: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .kidsStep__navBtn:hover:not(:disabled) {
+    background: #f0f0f0;
     transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-    background: #f8f8f8;
-}
-
-.kidsStep__navBtn:active:not(:disabled) {
-    transform: translateY(0);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 .kidsStep__navBtn:disabled {
     cursor: not-allowed;
-    opacity: 0.5;
-    background: #f0f0f0;
-    border-color: #ddd;
+    opacity: 0.3;
 }
 
 .kidsStep__navBtn--next {
-    padding: 16px 40px;
-    border: none;
     background: #000;
     color: #fff;
-    font-size: 1.15rem;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    padding: 14px 44px;
 }
 
 .kidsStep__navBtn--next:hover:not(:disabled) {
-    background: #222;
-    transform: scale(1.03) translateY(-2px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
+    background: #333;
+    color: #fff;
 }
 
 /* Sidebar Registration Input */
@@ -306,4 +296,27 @@
 
 .kidsStep__startNavBtn:active {
     transform: scale(0.98) translateY(0);
+}
+
+.modalCloseBtn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #000;
+    z-index: 100;
+}
+
+.modalCloseBtn:hover {
+    transform: rotate(90deg) scale(1.1);
 }

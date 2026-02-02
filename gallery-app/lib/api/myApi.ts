@@ -145,6 +145,8 @@ export interface GalleryCreateRequest {
     tags?: string[];
     thumbnailUrl?: string;
     ldrUrl?: string;
+    sourceImageUrl?: string;
+    glbUrl?: string;
     visibility?: 'PUBLIC' | 'PRIVATE';
 }
 
@@ -184,6 +186,8 @@ export interface GalleryItem {
     tags: string[];
     thumbnailUrl: string;
     ldrUrl?: string;
+    sourceImageUrl?: string;
+    glbUrl?: string;
     visibility: 'PUBLIC' | 'PRIVATE';
     createdAt: string;
     updatedAt: string;

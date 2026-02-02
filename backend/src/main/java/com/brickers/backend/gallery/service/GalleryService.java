@@ -47,6 +47,8 @@ public class GalleryService {
                 .tags(req.getTags())
                 .thumbnailUrl(normalizeUrlOrNull(req.getThumbnailUrl()))
                 .ldrUrl(normalizeUrlOrNull(req.getLdrUrl()))
+                .sourceImageUrl(normalizeUrlOrNull(req.getSourceImageUrl()))
+                .glbUrl(normalizeUrlOrNull(req.getGlbUrl()))
                 .visibility(req.getVisibility() == null ? Visibility.PUBLIC : req.getVisibility())
                 .deleted(false)
                 .createdAt(now)
@@ -158,6 +160,12 @@ public class GalleryService {
             post.setTags(req.getTags());
         if (req.getThumbnailUrl() != null)
             post.setThumbnailUrl(normalizeUrlOrNull(req.getThumbnailUrl()));
+        if (req.getLdrUrl() != null)
+            post.setLdrUrl(normalizeUrlOrNull(req.getLdrUrl()));
+        if (req.getSourceImageUrl() != null)
+            post.setSourceImageUrl(normalizeUrlOrNull(req.getSourceImageUrl()));
+        if (req.getGlbUrl() != null)
+            post.setGlbUrl(normalizeUrlOrNull(req.getGlbUrl()));
         if (req.getVisibility() != null)
             post.setVisibility(req.getVisibility());
 
@@ -256,6 +264,8 @@ public class GalleryService {
                 .tags(post.getTags())
                 .thumbnailUrl(post.getThumbnailUrl())
                 .ldrUrl(post.getLdrUrl())
+                .sourceImageUrl(post.getSourceImageUrl())
+                .glbUrl(post.getGlbUrl())
                 .visibility(post.getVisibility())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())

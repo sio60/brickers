@@ -349,6 +349,29 @@
     white-space: nowrap;
 }
 
+.modalCloseBtn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #000;
+    z-index: 100;
+}
+
+.modalCloseBtn:hover {
+    transform: rotate(90deg) scale(1.1);
+}
+
 .dropdownMenu button:last-child {
     border-bottom: none;
 }
