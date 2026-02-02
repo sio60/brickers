@@ -66,7 +66,7 @@ export default function CarouselGallery({ items = [], loading = false }: Carouse
 
             opacity: Math.abs(normalizedAngle) > 100 ? 0 : 1, // Hide cards that are completely behind
             zIndex: 100 - Math.abs(Math.round(normalizedAngle)), // Simple z-sorting
-            pointerEvents: Math.abs(normalizedAngle) < 20 ? 'auto' : 'none', // Allow clicks mostly on front cards
+            pointerEvents: Math.abs(normalizedAngle) < 90 ? 'auto' : 'none', // Allow clicks on all visible cards
             transition: 'all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)',
         } as React.CSSProperties;
     };
@@ -94,8 +94,18 @@ export default function CarouselGallery({ items = [], loading = false }: Carouse
         if ('isPlaceholder' in item && item.isPlaceholder) {
             return;
         }
-        // Navigate to Gallery Detail page
-        router.push(`/gallery/${item.id}`);
+
+        // 중앙 카드가 아니면 해당 카드로 이동만 시킴 (선택 사항: 이동 후 클릭 시 상세 페이지로?)
+        // 유저의 요청은 "클릭 가능하게 해줘" 이므로 바로 상세 페이지로 보내겠습니다.
+        if (index !== activeIndex) {
+            setActiveIndex(index);
+        }
+
+        // Navigate to Gallery Detail page with slug
+        const galleryItem = item as GalleryItem;
+        const safeTitle = galleryItem.title.replace(/\s+/g, '-').replace(/[^\w\-\uAC00-\uD7A3]/g, '');
+        const slug = `${safeTitle}-${galleryItem.id}`;
+        router.push(`/gallery/${slug}`);
     };
 
     return (
@@ -130,11 +140,11 @@ export default function CarouselGallery({ items = [], loading = false }: Carouse
                     return (
                         <div
                             key={item.id}
-                            className={`absolute w-[260px] h-[360px] bg-white rounded-[20px] border-[1.5px] border-black/10 shadow-[0_4px_12px_rgba(0,0,0,0.06),0_12px_28px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden transition-all duration-400 cursor-pointer select-none preserve-3d md:w-[220px] md:h-[320px] hover:border-black/20 hover:shadow-[0_6px_16px_rgba(0,0,0,0.1),0_16px_36px_rgba(0,0,0,0.14)] ${index === activeIndex ? 'border-black/15 shadow-[0_8px_24px_rgba(0,0,0,0.12),0_24px_48px_rgba(0,0,0,0.16)]' : ''} ${isPlaceholder ? 'cursor-default' : ''}`}
+                            className={`absolute w-[260px] h-[360px] bg-white rounded-[20px] border-2 border-black shadow-[0_4px_12px_rgba(0,0,0,0.06),0_12px_28px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden transition-all duration-400 cursor-pointer select-none preserve-3d md:w-[220px] md:h-[320px] hover:shadow-[0_6px_16px_rgba(0,0,0,0.1),0_16px_36px_rgba(0,0,0,0.14)] ${index === activeIndex ? 'shadow-[0_8px_24px_rgba(0,0,0,0.12),0_24px_48px_rgba(0,0,0,0.16)]' : ''} ${isPlaceholder ? 'cursor-default' : ''}`}
                             style={getCardStyle(index)}
                             onClick={() => handleCardClick(index, item)}
                         >
-                            <div className="flex-1 flex items-center justify-center p-4 border-b-2 border-black/8 relative bg-gradient-to-b from-[#fafafa] to-[#f0f0f0]">
+                            <div className="flex-1 flex items-center justify-center p-4 border-b-2 border-black relative bg-gradient-to-b from-[#fafafa] to-[#f0f0f0]">
                                 {isPlaceholder ? (
                                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#f5f5f5] to-[#e8e8e8] animate-pulse">
                                         <svg className="w-[60px] h-[60px] text-[#ccc]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -144,9 +154,9 @@ export default function CarouselGallery({ items = [], loading = false }: Carouse
                                             <rect x="14" y="14" width="7" height="7" rx="1" />
                                         </svg>
                                     </div>
-                                ) : item.thumbnailUrl ? (
+                                ) : (!isPlaceholder && ((item as GalleryItem).sourceImageUrl || (item as GalleryItem).thumbnailUrl)) ? (
                                     <Image
-                                        src={item.thumbnailUrl}
+                                        src={(item as GalleryItem).sourceImageUrl || (item as GalleryItem).thumbnailUrl}
                                         alt={item.title}
                                         fill
                                         style={{ objectFit: 'cover' }}
