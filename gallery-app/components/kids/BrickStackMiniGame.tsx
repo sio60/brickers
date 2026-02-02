@@ -14,7 +14,7 @@ const INITIAL_BRICK_WIDTH = 2.5;  // Initial brick width
 const MOVE_SPEED = 3.5;      // Movement speed
 const FALL_SPEED = 12;       // Falling speed
 const FLOOR_Y = -3;          // Floor Y position
-
+ 
 type Brick = {
     id: string;
     x: number;
