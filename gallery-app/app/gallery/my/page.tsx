@@ -97,7 +97,7 @@ export default function MyGalleryPage() {
                     title: b.title,
                     thumbnailUrl: b.thumbnailUrl,
                     createdAt: b.postCreatedAt,
-                    isBookmarked: true,
+                    bookmarked: true,
                 }));
 
                 if (pageNum === 0) {
@@ -141,7 +141,7 @@ export default function MyGalleryPage() {
                 // Update my items
                 setMyItems(prev =>
                     prev.map(item =>
-                        item.id === id ? { ...item, isBookmarked: !currentState } : item
+                        item.id === id ? { ...item, bookmarked: !currentState } : item
                     )
                 );
 
