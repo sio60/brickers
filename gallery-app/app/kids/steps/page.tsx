@@ -483,6 +483,27 @@ function KidsStepPageContent() {
                         </button>
                     </div>
 
+                    {/* 색상 변경 버튼 */}
+                    <div style={{ marginTop: 16 }}>
+                        <button
+                            onClick={() => setIsColorModalOpen(true)}
+                            style={{
+                                width: "100%",
+                                textAlign: "left",
+                                padding: "14px 16px",
+                                borderRadius: 16,
+                                background: "#3b82f6",
+                                color: "#fff",
+                                fontWeight: 800,
+                                border: "2px solid #000",
+                                cursor: "pointer",
+                                transition: "all 0.2s"
+                            }}
+                        >
+                            색상 변경
+                        </button>
+                    </div>
+
                     <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
                         <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800, textTransform: "uppercase" }}>
                             {t.kids.steps.registerGallery}
