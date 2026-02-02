@@ -12,7 +12,7 @@ const BRICK_HEIGHT = 0.4;    // 브릭 높이
 const INITIAL_BRICK_WIDTH = 2.5;  // 초기 브릭 너비
 const MOVE_SPEED = 3.5;      // 좌우 이동 속도
 const FALL_SPEED = 12;       // 낙하 속도
-const SPAWN_Y = 3;           // 스폰 높이
+const INITIAL_SPAWN_Y = 3;   // 초기 스폰 높이
 const FLOOR_Y = -3;          // 바닥 Y 위치 (화면 하단으로 더 내림)
 
 type Brick = {
@@ -122,7 +122,7 @@ function Scene({
         } else {
             // 낙하
             const targetY = a.targetY;
-            const currentY = activeMesh.current?.position.y ?? SPAWN_Y;
+            const currentY = activeMesh.current?.position.y ?? INITIAL_SPAWN_Y;
             const newY = currentY - FALL_SPEED * dt;
 
             if (newY <= targetY) {
@@ -137,7 +137,8 @@ function Scene({
 
         // 메쉬 위치 업데이트
         if (activeMesh.current && !a.falling) {
-            activeMesh.current.position.set(a.x, SPAWN_Y, 0);
+            const currentSpawnY = bricks.length === 0 ? INITIAL_SPAWN_Y : bricks[bricks.length - 1].y + 3;
+            activeMesh.current.position.set(a.x, currentSpawnY, 0);
         }
     });
 
@@ -145,7 +146,7 @@ function Scene({
         <>
             {/* 조명 */}
             <ambientLight intensity={0.6} />
-            <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
+            <pointLight position={[10, 10, 10]} intensity={1} castShadow />
             <directionalLight position={[-3, 5, -3]} intensity={0.3} />
 
             {/* 바닥 - 화면 하단에 보이도록 */}
@@ -175,16 +176,16 @@ function Scene({
                 args={[activeRef.current.width - 0.05, BRICK_HEIGHT - 0.05, 1]}
                 radius={0.1}
                 smoothness={4}
-                position={[activeRef.current.x, SPAWN_Y, 0]}
+                position={[activeRef.current.x, bricks.length === 0 ? INITIAL_SPAWN_Y : bricks[bricks.length - 1].y + 3, 0]}
                 castShadow
                 receiveShadow
             >
                 <meshStandardMaterial color={currentColor} />
             </RoundedBox>
 
-            {/* 클릭 영역 */}
-            <mesh position={[0, 3, 0]} onPointerDown={onDrop}>
-                <boxGeometry args={[BOARD_WIDTH + 2, 8, 4]} />
+            {/* 클릭 영역 - 카메라를 따라 이동 */}
+            <mesh position={[0, bricks.length * BRICK_HEIGHT + FLOOR_Y + 3, 0]} onPointerDown={onDrop}>
+                <boxGeometry args={[BOARD_WIDTH + 4, 15, 4]} />
                 <meshBasicMaterial transparent opacity={0} />
             </mesh>
         </>
@@ -210,6 +211,23 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
         falling: false,
         targetY: FLOOR_Y + BRICK_HEIGHT / 2,  // 바닥 위에서 시작
     });
+
+    // 카메라 추적용 상수
+    const CAMERA_OFFSET_Y = 3.5;
+    const CAMERA_LERP_SPEED = 0.1;
+
+    function CameraFollow({ stackHeight }: { stackHeight: number }) {
+        useFrame((state) => {
+            const targetY = Math.max(0, stackHeight + FLOOR_Y + CAMERA_OFFSET_Y);
+            state.camera.position.y = THREE.MathUtils.lerp(
+                state.camera.position.y,
+                targetY,
+                CAMERA_LERP_SPEED
+            );
+            state.camera.lookAt(0, targetY - 1, 0);
+        });
+        return null;
+    }
 
     // 게임 리셋
     const resetGame = useCallback(() => {
@@ -374,13 +392,7 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
         }, 350);
     }, [bricks, gameOver, currentColor]);
 
-    const camera = useMemo(() => {
-        // 카메라: 브릭이 쌓일수록 Y축을 따라 올라가도록 수식 개선
-        const stackHeight = bricks.length * BRICK_HEIGHT;
-        // 초기 높이 1에서 시작하여 stackHeight의 80%만큼 따라 올라감 (적당한 뷰포트 유지)
-        const camY = Math.max(1, stackHeight * 0.8 + 1);
-        return { position: [0, camY, 9] as [number, number, number], fov: 50 };
-    }, [bricks.length]);
+    const stackHeight = bricks.length * BRICK_HEIGHT;
 
     return (
         <div className="brickGame">
@@ -398,12 +410,15 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
             )}
 
             <div className="brickGame__header">
-                <div className="brickGame__score">{score}</div>
-
+                <div className="brickGame__score">
+                    <span className="brickGame__scoreValue">{score}</span>
+                    <span className="brickGame__scoreLabel">BRICKS</span>
+                </div>
             </div>
 
             <div className="brickGame__stage">
-                <Canvas shadows camera={camera}>
+                <Canvas shadows camera={{ position: [0, 1, 9], fov: 50 }}>
+                    <CameraFollow stackHeight={stackHeight} />
                     <Scene
                         bricks={bricks}
                         activeRef={activeRef}

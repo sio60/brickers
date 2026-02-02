@@ -76,11 +76,6 @@ function KidsPageContent() {
     const [selectedTheme, setSelectedTheme] = useState<string>("");
     const [isApplyingColor, setIsApplyingColor] = useState(false);
 
-    // 갤러리 등록 관련
-    const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
-    const [galleryTitle, setGalleryTitle] = useState("");
-    const [isRegistering, setIsRegistering] = useState(false);
-
     // 다운로드 드롭다운 상태
     const [isDownloadOpen, setIsDownloadOpen] = useState(false);
 
@@ -351,37 +346,6 @@ function KidsPageContent() {
             setIsApplyingColor(false);
         }
     };
-
-    // 갤러리 등록 핸들러
-    const handleRegisterGallery = async () => {
-        if (!galleryTitle.trim()) {
-            alert(t.kids.steps.galleryModal.placeholder || "제목을 입력해주세요.");
-            return;
-        }
-        if (!ldrUrl) return;
-
-        setIsRegistering(true);
-        try {
-            await registerToGallery({
-                title: galleryTitle,
-                content: "Made with Brickers Kids",
-                tags: ["Kids", "Lego", "AI"],
-                ldrUrl: ldrUrl,
-                sourceImageUrl: jobThumbnailUrl || undefined,
-                glbUrl: glbUrl || undefined,
-                visibility: "PUBLIC",
-            });
-            alert(t.kids.steps.galleryModal.success || "갤러리에 등록되었습니다!");
-            setIsGalleryModalOpen(false);
-            setGalleryTitle("");
-        } catch (e: any) {
-            console.error("Gallery registration failed:", e);
-            alert(t.kids.steps.galleryModal.fail || "등록에 실패했습니다.");
-        } finally {
-            setIsRegistering(false);
-        }
-    };
-
     if (!isFileLoaded) {
         return <div className="page">Loading...</div>;
     }
@@ -437,10 +401,6 @@ function KidsPageContent() {
 
                             <button className="dlBtn colorBtn" onClick={openColorModal}>
                                 색상 변경
-                            </button>
-
-                            <button className="dlBtn galleryBtn" onClick={() => setIsGalleryModalOpen(true)}>
-                                갤러리 등록
                             </button>
                         </div>
                     </>
@@ -498,40 +458,6 @@ function KidsPageContent() {
                                     disabled={!selectedTheme || isApplyingColor}
                                 >
                                     {isApplyingColor ? "적용 중..." : "적용하기"}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* 갤러리 등록 모달 */}
-                {isGalleryModalOpen && (
-                    <div className="colorModalOverlay" onClick={() => setIsGalleryModalOpen(false)}>
-                        <div className="colorModal" onClick={(e) => e.stopPropagation()}>
-                            <button className="modalCloseBtn" onClick={() => setIsGalleryModalOpen(false)} aria-label="close">✕</button>
-                            <h3 className="colorModal__title">갤러리에 등록하기</h3>
-                            <div style={{ marginBottom: '24px' }}>
-                                <input
-                                    type="text"
-                                    className="galleryInput"
-                                    placeholder={t.kids.steps.galleryModal?.placeholder || "제목을 입력해주세요"}
-                                    value={galleryTitle}
-                                    onChange={(e) => setGalleryTitle(e.target.value)}
-                                />
-                            </div>
-                            <div className="colorModal__actions">
-                                <button
-                                    className="colorModal__btn colorModal__btn--cancel"
-                                    onClick={() => setIsGalleryModalOpen(false)}
-                                >
-                                    취소
-                                </button>
-                                <button
-                                    className="colorModal__btn colorModal__btn--confirm"
-                                    onClick={handleRegisterGallery}
-                                    disabled={!galleryTitle.trim() || isRegistering}
-                                >
-                                    {isRegistering ? "등록 중..." : "등록하기"}
                                 </button>
                             </div>
                         </div>

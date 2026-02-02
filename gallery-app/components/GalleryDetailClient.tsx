@@ -426,14 +426,6 @@ export default function GalleryDetailClient({ item }: Props) {
                         )}
                     </div>
 
-                    <div className="p-4 border-t border-gray-50 bg-gray-50/20">
-                        <button
-                            onClick={() => router.push('/gallery')}
-                            className="w-full py-3 rounded-xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all"
-                        >
-                            {t.kids.steps.back}
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
