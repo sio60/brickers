@@ -23,6 +23,9 @@ public class GalleryCommentEntity {
     @Indexed
     private String authorId;
 
+    @Indexed
+    private String parentId; // For nested comments
+
     private String authorNickname;
     private String authorProfileImage;
 

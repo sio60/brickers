@@ -308,6 +308,7 @@ function KidsStepPageContent() {
     const urlParam = searchParams.get("url") || "";
 
     const [ldrUrl, setLdrUrl] = useState<string>(urlParam);
+    const [originalLdrUrl] = useState<string>(urlParam); // 원본 URL 보존
     const [loading, setLoading] = useState(true);
     const [stepIdx, setStepIdx] = useState(0);
     const [stepBlobUrls, setStepBlobUrls] = useState<string[]>([]);
@@ -384,6 +385,35 @@ function KidsStepPageContent() {
             alert(e.message || "색상 변경 중 오류가 발생했습니다.");
         } finally {
             setIsApplyingColor(false);
+        }
+    };
+
+    // 원본 색상 복원
+    const restoreOriginalColor = async () => {
+        if (!originalLdrUrl) return;
+        setLoading(true);
+        try {
+            const res = await fetch(originalLdrUrl);
+            if (!res.ok) throw new Error(`LDR fetch failed: ${res.status}`);
+            const text = await res.text();
+
+            // 정렬 및 Bounds 계산 적용
+            const { stepTexts, bounds } = parseAndProcessSteps(text);
+            setModelBounds(bounds);
+
+            const blobs = stepTexts.map((t) =>
+                URL.createObjectURL(new Blob([t], { type: "text/plain" }))
+            );
+            revokeAll(blobRef.current);
+            blobRef.current = blobs;
+            setStepBlobUrls(blobs);
+            setColorChangedLdrBase64(null);
+            setSelectedTheme("");
+            setStepIdx(stepTexts.length - 1);
+        } catch (e) {
+            console.error("원본 복원 실패:", e);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -604,14 +634,40 @@ function KidsStepPageContent() {
                             </button>
                         </div>
 
-                        {/* 색상 변경 버튼 */}
-                        <div style={{ marginTop: 16 }}>
+                        {/* 색상 변경 버튼 & 초기화 버튼 */}
+                        <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
                             <button
                                 onClick={() => setIsColorModalOpen(true)}
                                 className="kidsStep__colorBtn"
                             >
                                 색상 변경
                             </button>
+
+                            {colorChangedLdrBase64 && (
+                                <button
+                                    onClick={restoreOriginalColor}
+                                    style={{
+                                        width: "100%",
+                                        textAlign: "left",
+                                        padding: "10px 16px",
+                                        borderRadius: 16,
+                                        background: "transparent",
+                                        color: "#888",
+                                        fontWeight: 800,
+                                        border: "2px solid transparent",
+                                        cursor: "pointer",
+                                        transition: "all 0.2s",
+                                        fontSize: "0.85rem",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 6
+                                    }}
+                                    onMouseOver={(e) => e.currentTarget.style.color = "#000"}
+                                    onMouseOut={(e) => e.currentTarget.style.color = "#888"}
+                                >
+                                    ↺ 원본으로 되돌리기
+                                </button>
+                            )}
                         </div>
 
                         <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
