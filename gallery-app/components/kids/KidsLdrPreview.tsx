@@ -1,9 +1,10 @@
 'use client';
 
 import { Canvas } from "@react-three/fiber";
-import { Bounds, OrbitControls } from "@react-three/drei";
+import { Bounds, OrbitControls, Center } from "@react-three/drei";
 import * as THREE from "three";
 import { useEffect, useMemo, useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
@@ -35,10 +36,11 @@ function LdrModel({
     ldconfigUrl = `${CDN_BASE}LDConfig.ldr`,
     stepMode = false,
     currentStep = 1,
+    isPreview = false,
     onStepCountChange,
     onLoaded,
     onError,
-}: Props & { currentStep?: number; onStepCountChange?: (count: number) => void }) {
+}: Props & { currentStep?: number; isPreview?: boolean; onStepCountChange?: (count: number) => void }) {
     const loader = useMemo(() => {
         THREE.Cache.enabled = true;
 
@@ -121,21 +123,6 @@ function LdrModel({
                 g.rotation.x = Math.PI;
 
                 // 층(Layer) 정보 계산: Y 좌표(높이) 기준
-                const yCoords = new Set<number>();
-                g.traverse((obj) => {
-                    if (obj.type === 'Group' && obj.userData.isPart) {
-                        yCoords.add(Math.round(obj.position.y * 10) / 10);
-                    } else if (obj.type === 'Mesh' && !obj.userData.isLine) {
-                        // 파트가 아닌 개별 메쉬인 경우 (직접적인 자식 등)
-                        let p = obj.parent;
-                        while (p && p !== g && !p.userData.isPart) p = p.parent;
-                        if (p === g || !p) {
-                            yCoords.add(Math.round(obj.position.y * 10) / 10);
-                        }
-                    }
-                });
-
-                // 자식들을 직접 순회하여 레이어 계산 (LDrawLoader 구조 고려)
                 const layerSet = new Set<number>();
                 g.children.forEach(child => {
                     layerSet.add(Math.round(child.position.y * 10) / 10);
@@ -165,6 +152,14 @@ function LdrModel({
     useEffect(() => {
         if (!group || !stepMode) return;
 
+        if (isPreview) {
+            // 프리뷰 모드일 때는 모든 파트 보임
+            group.children.forEach((child) => {
+                child.visible = true;
+            });
+            return;
+        }
+
         const layerSet = new Set<number>();
         group.children.forEach(child => {
             layerSet.add(Math.round(child.position.y * 10) / 10);
@@ -176,22 +171,26 @@ function LdrModel({
             const childY = Math.round(child.position.y * 10) / 10;
             child.visible = childY <= currentLayerY;
         });
-    }, [group, currentStep, stepMode]);
+    }, [group, currentStep, stepMode, isPreview]);
 
     if (!group) return null;
 
     return (
         <Bounds fit clip observe margin={0.8}>
-            <primitive object={group} />
+            <Center>
+                <primitive object={group} />
+            </Center>
         </Bounds>
     );
 }
 
 export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, stepMode = false }: Props) {
+    const { t } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [errorMSG, setErrorMSG] = useState<string | null>(null);
     const [currentStep, setCurrentStep] = useState(1);
     const [totalSteps, setTotalSteps] = useState(1);
+    const [isPreview, setIsPreview] = useState(true);
 
     const handleNext = () => {
         if (currentStep < totalSteps) {
@@ -203,6 +202,11 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, ste
         if (currentStep > 1) {
             setCurrentStep(currentStep - 1);
         }
+    };
+
+    const startAssembly = () => {
+        setIsPreview(false);
+        setCurrentStep(1);
     };
 
     return (
@@ -243,63 +247,108 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, ste
             )}
 
             {stepMode && !loading && !errorMSG && (
-                <div style={{
-                    position: "absolute",
-                    bottom: "20px",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    zIndex: 20,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "16px",
-                    background: "rgba(255,255,255,0.9)",
-                    padding: "12px 24px",
-                    borderRadius: "50px",
-                    boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-                    border: "2px solid #000"
-                }}>
-                    <button
-                        onClick={handlePrev}
-                        disabled={currentStep === 1}
-                        style={{
-                            background: currentStep === 1 ? "#e0e0e0" : "#fff",
-                            color: currentStep === 1 ? "#999" : "#000",
-                            border: "2px solid #000",
-                            padding: "10px 20px",
-                            borderRadius: "25px",
-                            fontSize: "14px",
-                            fontWeight: "bold",
-                            cursor: currentStep === 1 ? "not-allowed" : "pointer",
-                            opacity: currentStep === 1 ? 0.6 : 1,
-                            minWidth: "100px"
-                        }}
-                    >
-                        ← PREV
-                    </button>
+                <>
+                    {isPreview ? (
+                        <div style={{
+                            position: "absolute",
+                            bottom: "40px",
+                            left: "50%",
+                            transform: "translateX(-50%)",
+                            zIndex: 20,
+                        }}>
+                            <button
+                                onClick={startAssembly}
+                                style={{
+                                    background: "#ffe135",
+                                    color: "#000",
+                                    border: "3px solid #000",
+                                    padding: "16px 40px",
+                                    borderRadius: "50px",
+                                    fontSize: "1.2rem",
+                                    fontWeight: "900",
+                                    cursor: "pointer",
+                                    boxShadow: "0 8px 0px rgba(0,0,0,0.15)",
+                                    transition: "all 0.2s"
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = "translateY(-2px)";
+                                    e.currentTarget.style.boxShadow = "0 10px 0px rgba(0,0,0,0.15)";
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = "translateY(0)";
+                                    e.currentTarget.style.boxShadow = "0 8px 0px rgba(0,0,0,0.15)";
+                                }}
+                                onMouseDown={(e) => {
+                                    e.currentTarget.style.transform = "translateY(2px)";
+                                    e.currentTarget.style.boxShadow = "0 4px 0px rgba(0,0,0,0.15)";
+                                }}
+                                onMouseUp={(e) => {
+                                    e.currentTarget.style.transform = "translateY(-2px)";
+                                }}
+                            >
+                                {t.kids?.steps?.startAssembly || "조립 시작하기"}
+                            </button>
+                        </div>
+                    ) : (
+                        <div style={{
+                            position: "absolute",
+                            bottom: "20px",
+                            left: "50%",
+                            transform: "translateX(-50%)",
+                            zIndex: 20,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "16px",
+                            background: "rgba(255,255,255,0.9)",
+                            padding: "12px 24px",
+                            borderRadius: "50px",
+                            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+                            border: "2px solid #000"
+                        }}>
+                            <button
+                                onClick={handlePrev}
+                                disabled={currentStep === 1}
+                                style={{
+                                    background: currentStep === 1 ? "#e0e0e0" : "#fff",
+                                    color: currentStep === 1 ? "#999" : "#000",
+                                    border: "2px solid #000",
+                                    padding: "10px 20px",
+                                    borderRadius: "25px",
+                                    fontSize: "14px",
+                                    fontWeight: "bold",
+                                    cursor: currentStep === 1 ? "not-allowed" : "pointer",
+                                    opacity: currentStep === 1 ? 0.6 : 1,
+                                    minWidth: "100px"
+                                }}
+                            >
+                                ← PREV
+                            </button>
 
-                    <div style={{ fontSize: "16px", fontWeight: "800", minWidth: "100px", textAlign: "center" }}>
-                        Step {currentStep} <span style={{ color: "#888", fontWeight: "normal" }}>/ {totalSteps}</span>
-                    </div>
+                            <div style={{ fontSize: "16px", fontWeight: "800", minWidth: "100px", textAlign: "center" }}>
+                                Step {currentStep} <span style={{ color: "#888", fontWeight: "normal" }}>/ {totalSteps}</span>
+                            </div>
 
-                    <button
-                        onClick={handleNext}
-                        disabled={currentStep >= totalSteps}
-                        style={{
-                            background: currentStep >= totalSteps ? "#e0e0e0" : "#000",
-                            color: currentStep >= totalSteps ? "#999" : "#fff",
-                            border: "2px solid #000",
-                            padding: "10px 20px",
-                            borderRadius: "25px",
-                            fontSize: "14px",
-                            fontWeight: "bold",
-                            cursor: currentStep >= totalSteps ? "not-allowed" : "pointer",
-                            opacity: currentStep >= totalSteps ? 0.6 : 1,
-                            minWidth: "100px"
-                        }}
-                    >
-                        NEXT →
-                    </button>
-                </div>
+                            <button
+                                onClick={handleNext}
+                                disabled={currentStep >= totalSteps}
+                                style={{
+                                    background: currentStep >= totalSteps ? "#e0e0e0" : "#000",
+                                    color: currentStep >= totalSteps ? "#999" : "#fff",
+                                    border: "2px solid #000",
+                                    padding: "10px 20px",
+                                    borderRadius: "25px",
+                                    fontSize: "14px",
+                                    fontWeight: "bold",
+                                    cursor: currentStep >= totalSteps ? "not-allowed" : "pointer",
+                                    opacity: currentStep >= totalSteps ? 0.6 : 1,
+                                    minWidth: "100px"
+                                }}
+                            >
+                                NEXT →
+                            </button>
+                        </div>
+                    )}
+                </>
             )}
 
             <Canvas
@@ -317,6 +366,7 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, ste
                     ldconfigUrl={ldconfigUrl}
                     stepMode={stepMode}
                     currentStep={currentStep}
+                    isPreview={isPreview}
                     onStepCountChange={setTotalSteps}
                     onLoaded={() => setLoading(false)}
                     onError={(e) => {
