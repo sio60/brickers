@@ -87,10 +87,9 @@ export default function GalleryDetailClient({ item }: Props) {
             });
             if (res.ok) {
                 const data = await res.json();
-                const newLiked = data.currentReaction === 'LIKE';
+                const newLiked = data.myReaction === 'LIKE';
                 setIsLiked(newLiked);
-                if (data.likeCount !== undefined) setLikeCount(data.likeCount);
-                else setLikeCount(prev => newLiked ? prev + 1 : prev - 1);
+                setLikeCount(data.likeCount);
             }
         } catch (error) { console.error(error); }
     };
