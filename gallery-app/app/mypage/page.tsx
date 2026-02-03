@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import styles from "./MyPage.module.css";
-import { getMyOverview, getMyProfile, retryJob, updateMyProfile, ApiError } from "@/lib/api/myApi";
+import { getMyOverview, getMyProfile, getMyJobs, retryJob, updateMyProfile, ApiError } from "@/lib/api/myApi";
 import type { MyOverview, MyProfile, MyJob } from "@/lib/api/myApi";
 import KidsLdrPreview from "@/components/kids/KidsLdrPreview";
 import BackgroundBricks from "@/components/BackgroundBricks";
@@ -49,6 +49,13 @@ export default function MyPage() {
     const [activeMenu, setActiveMenu] = useState<MenuItem>("profile");
     const [retrying, setRetrying] = useState<string | null>(null);
 
+    const [jobsList, setJobsList] = useState<MyJob[]>([]);
+    const [jobsPage, setJobsPage] = useState(0);
+    const [jobsTotalPages, setJobsTotalPages] = useState(1);
+    const [jobsLoading, setJobsLoading] = useState(false);
+    const [jobSort, setJobSort] = useState<'latest' | 'oldest'>('latest');
+    const jobsSentinelRef = useRef<HTMLDivElement | null>(null);
+
     // 문의/신고 내역 상태
     const [inquiries, setInquiries] = useState<any[]>([]);
     const [reports, setReports] = useState<any[]>([]);
@@ -81,6 +88,27 @@ export default function MyPage() {
     const [isApplyingColor, setIsApplyingColor] = useState(false);
     const [colorChangedLdrBase64, setColorChangedLdrBase64] = useState<string | null>(null);
 
+
+    const loadJobsPage = async (page: number, replace = false) => {
+        try {
+            setJobsLoading(true);
+            const res = await getMyJobs(page, 12);
+            setJobsTotalPages(res.totalPages || 1);
+            setJobsPage(page);
+            setJobsList((prev) => replace ? res.content : prev.concat(res.content));
+        } catch (err) {
+            console.error('[MyPage] Failed to load jobs:', err);
+        } finally {
+            setJobsLoading(false);
+        }
+    };
+
+    const resetAndLoadJobs = () => {
+        setJobsList([]);
+        setJobsPage(0);
+        setJobsTotalPages(1);
+        loadJobsPage(0, true);
+    };
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
             router.replace("/?login=true");
@@ -107,6 +135,28 @@ export default function MyPage() {
                 });
         }
     }, [language, isAuthenticated, isLoading, router]);
+
+    useEffect(() => {
+        if (activeMenu !== 'jobs') return;
+        resetAndLoadJobs();
+    }, [activeMenu, jobSort]);
+
+    useEffect(() => {
+        if (activeMenu !== 'jobs') return;
+        const sentinel = jobsSentinelRef.current;
+        if (!sentinel) return;
+
+        const observer = new IntersectionObserver((entries) => {
+            const entry = entries[0];
+            if (!entry.isIntersecting) return;
+            if (jobsLoading) return;
+            if (jobsPage + 1 >= jobsTotalPages) return;
+            loadJobsPage(jobsPage + 1);
+        }, { root: null, rootMargin: '200px', threshold: 0.1 });
+
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [activeMenu, jobsPage, jobsTotalPages, jobsLoading]);
 
     // 수정 모드 진입 시 현재 값으로 초기화
     const startEditing = () => {
@@ -479,31 +529,57 @@ export default function MyPage() {
             case "jobs":
                 return (
                     <div className={styles.mypage__section}>
-                        <h2 className={styles.mypage__sectionTitle}>{t.jobs.title}</h2>
-                        {data?.jobs.recent && data.jobs.recent.length > 0 ? (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                            <h2 className={styles.mypage__sectionTitle}>{t.jobs.title}</h2>
+                            <select
+                                value={jobSort}
+                                onChange={(e) => setJobSort(e.target.value as 'latest' | 'oldest')}
+                                style={{
+                                    padding: '8px 12px',
+                                    borderRadius: 10,
+                                    border: '2px solid #000',
+                                    fontWeight: 700,
+                                    background: '#fff',
+                                }}
+                            >
+                                <option value="latest">최신순</option>
+                                <option value="oldest">오래된순</option>
+                            </select>
+                        </div>
+                        {jobsList.length > 0 ? (
                             <div className={styles.mypage__jobs}>
-                                {data.jobs.recent.map((job) => (
-                                    <div
-                                        key={job.id}
-                                        className={styles.mypage__job}
-                                        onClick={() => handleJobClick(job)}
-                                    >
-                                        <div className={styles.mypage__jobThumbData}>
-                                            <img src={job.sourceImageUrl || "/placeholder.png"} alt={job.title} className={styles.mypage__jobThumb} />
-                                            <div className={styles.mypage__jobOverlay}>
-                                                <span className={`${styles.mypage__jobStatus} ${styles[getStatusClass(job.status)]}`}>
-                                                    {getStatusLabel(job.status)}
-                                                </span>
+                                {[...jobsList]
+                                    .sort((a, b) => jobSort === 'latest'
+                                        ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                                        : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+                                    .map((job) => (
+                                        <div
+                                            key={job.id}
+                                            className={styles.mypage__job}
+                                            onClick={() => handleJobClick(job)}
+                                        >
+                                            <div className={styles.mypage__jobThumbData}>
+                                                <img src={job.sourceImageUrl || "/placeholder.png"} alt={job.title} className={styles.mypage__jobThumb} />
+                                                <div className={styles.mypage__jobOverlay}>
+                                                    <span className={`${styles.mypage__jobStatus} ${styles[getStatusClass(job.status)]}`}>
+                                                        {getStatusLabel(job.status)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className={styles.mypage__jobInfo}>
+                                                <div className={styles.mypage__jobTitle}>{job.title || "Untitled"}</div>
+                                                <div className={styles.mypage__jobDate}>{formatDate(job.createdAt)}</div>
                                             </div>
                                         </div>
-                                        <div className={styles.mypage__jobInfo}>
-                                            <div className={styles.mypage__jobTitle}>{job.title || "Untitled"}</div>
-                                            <div className={styles.mypage__jobDate}>{formatDate(job.createdAt)}</div>
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                <div ref={jobsSentinelRef} style={{ height: 1 }} />
                             </div>
-                        ) : <p className={styles.mypage__empty}>{t.jobs.empty}</p>}
+                        ) : (
+                            <p className={styles.mypage__empty}>{t.jobs.empty}</p>
+                        )}
+                        {jobsLoading && (
+                            <div style={{ marginTop: 16, fontWeight: 700 }}>{t.common.loading}...</div>
+                        )}
                     </div>
                 );
 
