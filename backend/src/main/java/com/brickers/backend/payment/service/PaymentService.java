@@ -101,7 +101,11 @@ public class PaymentService {
             throw new IllegalStateException("취소 가능한 상태가 아닙니다.");
         }
 
-        order.markCanceled("사용자 요청 취소");
+        if (order.getStatus() == PaymentStatus.COMPLETED) {
+            order.markRefunded("User refund requested");
+        } else {
+            order.markCanceled("User cancel requested");
+        }
         orderRepository.save(order);
     }
 
