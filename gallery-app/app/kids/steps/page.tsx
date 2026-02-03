@@ -264,7 +264,7 @@ function PDFRig({
             const timer = setTimeout(() => {
                 gl.render(scene, camera);
                 onReadyToCapture();
-            }, 150);
+            }, 300); // 150ms -> 300ms for safety
             return () => clearTimeout(timer);
         }
     }, [active, viewIndex, camera, gl, scene, onReadyToCapture]);
@@ -458,10 +458,21 @@ function KidsStepPageContent() {
     const handlePdfCapture = () => {
         // Called by PDFRig when camera is ready
         // We capture the canvas
-        const canvas = document.querySelector('canvas');
+        // Instead of querySelector, we should find the canvas within the specific container or use a specific ID if possible.
+        // But since we are inside a component, querySelector might pick up background canvas.
+        // Let's rely on the fact that PDFRig is inside the MAIN canvas.
+        // We can pass the canvas reference from PDFRig? Or just try to pick the last canvas?
+
+        // Better: Use a specific class for the main canvas
+        const canvas = document.querySelector('.kids-main-canvas canvas') as HTMLCanvasElement;
+
         if (canvas) {
-            const data = canvas.toDataURL("image/png");
-            setPdfImages(prev => [...prev, data]);
+            try {
+                const data = canvas.toDataURL("image/png");
+                setPdfImages(prev => [...prev, data]);
+            } catch (e) {
+                console.error("Canvas capture failed", e);
+            }
 
             // Next View or Next Step
             if (pdfViewIdx < 2) {
@@ -475,9 +486,19 @@ function KidsStepPageContent() {
                     setPdfModelLoaded(false); // Wait for new model load
                 } else {
                     // All steps done!
-                    finishPdfGeneration([...pdfImages, data]);
+                    // Wait a bit to ensure last state update processed
+                    setTimeout(() => {
+                        const currentData = canvas.toDataURL("image/png"); // Capture last again to be sure?
+                        // Check if we missed the last one in the logic above?
+                        // actually handlePdfCapture adds to state.
+                        // The logic "finishPdfGeneration([...pdfImages, data])" in previous code was correct.
+                        // But we just updated state. We should pass the data directly to finish logic.
+                        finishPdfGeneration([...pdfImages, currentData]);
+                    }, 100);
                 }
             }
+        } else {
+            console.error("Canvas parsing failed: Canvas not found");
         }
     };
 
@@ -879,7 +900,7 @@ function KidsStepPageContent() {
 
 
                 {/* Main 3D Card Area */}
-                <div className="kidsStep__card">
+                <div className="kidsStep__card kids-main-canvas">
                     {(loading || isPdfGenerating) && (
                         <div style={{
                             position: "absolute", inset: 0, zIndex: 20,
@@ -905,7 +926,11 @@ function KidsStepPageContent() {
                     {activeTab === 'LDR' ? (
                         <>
                             <div style={{ position: "absolute", inset: 0 }}>
-                                <Canvas camera={{ position: [200, -200, 200], fov: 45 }} dpr={[1, 2]}>
+                                <Canvas
+                                    camera={{ position: [200, -200, 200], fov: 45 }}
+                                    dpr={[1, 2]}
+                                    gl={{ preserveDrawingBuffer: true }}
+                                >
                                     <ambientLight intensity={0.9} />
                                     <directionalLight position={[3, 5, 2]} intensity={1} />
                                     <Center>
