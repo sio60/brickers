@@ -10,7 +10,6 @@ import type { MyOverview, MyProfile, MyJob } from "@/lib/api/myApi";
 import KidsLdrPreview from "@/components/kids/KidsLdrPreview";
 import BackgroundBricks from "@/components/BackgroundBricks";
 import UpgradeModal from "@/components/UpgradeModal";
-import { getColorThemes, applyColorVariant, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
 
 // SVG Icons
 const Icons = {
@@ -82,9 +81,9 @@ export default function MyPage() {
     // 업그레이드 모달 상태
     const [showUpgrade, setShowUpgrade] = useState(false);
 
-    // 색상 변경 관련 상태
+    // 색상 변경 관련 상태 (현재 마이페이지에서는 비활성화, 나중에 사용 가능)
     const [isColorModalOpen, setIsColorModalOpen] = useState(false);
-    const [colorThemes, setColorThemes] = useState<ThemeInfo[]>([]);
+    const [colorThemes, setColorThemes] = useState<any[]>([]);
     const [selectedTheme, setSelectedTheme] = useState<string>("");
     const [isApplyingColor, setIsApplyingColor] = useState(false);
     const [colorChangedLdrBase64, setColorChangedLdrBase64] = useState<string | null>(null);
@@ -316,46 +315,19 @@ export default function MyPage() {
         { id: "delete" as MenuItem, label: t.menu.delete },
     ];
 
-    // 색상 변경 관련 함수
+    // 색상 변경 관련 함수 (현재 마이페이지에서는 비활성화, 나중에 사용 가능)
     const openColorModal = async () => {
         setMenuJob(null);
         setIsColorModalOpen(true);
-        if (colorThemes.length === 0) {
-            try {
-                const themes = await getColorThemes();
-                setColorThemes(themes);
-            } catch (e) {
-                console.error("테마 로드 실패:", e);
-            }
-        }
+        // 테마 로드 로직 (필요 시 colorVariantApi import 후 사용)
     };
 
     const handleApplyColor = async () => {
-        if (!selectedTheme || !menuJob?.ldrUrl) return;
-
-        setIsApplyingColor(true);
-        try {
-            const result = await applyColorVariant(menuJob.ldrUrl, selectedTheme, authFetch);
-
-            if (result.ok && result.ldrData) {
-                setColorChangedLdrBase64(result.ldrData);
-                setIsColorModalOpen(false);
-                alert(`${result.themeApplied} 테마 적용 완료! (${result.changedBricks}개 브릭 변경)\n다운로드 버튼을 눌러 저장하세요.`);
-            } else {
-                alert(result.message || "색상 변경 실패");
-            }
-        } catch (e: any) {
-            console.error("색상 변경 실패:", e);
-            alert(e.message || "색상 변경 중 오류가 발생했습니다.");
-        } finally {
-            setIsApplyingColor(false);
-        }
+        // 색상 적용 로직 (필요 시 구현)
     };
 
     const downloadColorChangedLdr = () => {
-        if (colorChangedLdrBase64) {
-            downloadLdrFromBase64(colorChangedLdrBase64, `brickers_${selectedTheme}.ldr`);
-        }
+        // LDR 다운로드 로직 (필요 시 구현)
     };
 
     // 실시간 업데이트 (Polling) 및 문의 내역 로드
@@ -862,6 +834,7 @@ export default function MyPage() {
                                 <Icons.DownloadFile className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.ldrFile}</span>
                             </button>
+                            {/* 색상 변경 버튼 - 마이페이지에서는 숨김 (나중에 활성화 가능)
                             <div className="h-px bg-[#eee] my-2" />
                             <button
                                 className="flex items-center gap-3 p-[16px_20px] bg-[#f8f9fa] border border-[#eee] rounded-2xl text-[15px] font-bold text-[#333] cursor-pointer transition-all duration-200 text-left hover:bg-black hover:text-white hover:translate-x-1 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -871,6 +844,7 @@ export default function MyPage() {
                                 <Icons.Edit className="w-5 h-5 flex items-center justify-center" />
                                 <span>색상 변경</span>
                             </button>
+                            */}
                         </div>
                     </div>
                 </div>
@@ -946,7 +920,6 @@ export default function MyPage() {
                 </div>
             )}
 
-
             {/* 색상 변경 모달 */}
             {isColorModalOpen && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-[4px] grid place-items-center z-[2000]" onClick={() => setIsColorModalOpen(false)}>
@@ -958,7 +931,7 @@ export default function MyPage() {
                             {colorThemes.length === 0 ? (
                                 <div className="p-5 text-center text-[#888]">테마 로딩 중...</div>
                             ) : (
-                                colorThemes.map((theme: ThemeInfo) => (
+                                colorThemes.map((theme: any) => (
                                     <button
                                         key={theme.name}
                                         className={`flex flex-col items-start p-[14px_16px] rounded-xl border-2 transition-all duration-200 text-left cursor-pointer bg-white ${selectedTheme === theme.name ? "border-black" : "border-[#e0e0e0] hover:border-black"}`}
@@ -990,7 +963,8 @@ export default function MyPage() {
                 </div>
             )}
 
-            {/* 색상 변경된 LDR 다운로드 모달 */}
+
+            {/* 색상 변경된 LDR 다운로드 모달 - 마이페이지에서는 숨김 (나중에 활성화 가능)
             {colorChangedLdrBase64 && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-[4px] grid place-items-center z-[2000]" onClick={() => setColorChangedLdrBase64(null)}>
                     <div className="bg-white border-[3px] border-black rounded-[20px] p-8 w-[min(400px,90vw)] flex flex-col gap-5 shadow-[0_20px_40px_rgba(0,0,0,0.2)] relative" onClick={(e) => e.stopPropagation()}>
@@ -1006,6 +980,7 @@ export default function MyPage() {
                     </div>
                 </div>
             )}
+            */}
         </div>
     );
 }

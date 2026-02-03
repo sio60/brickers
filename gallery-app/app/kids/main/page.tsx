@@ -10,6 +10,7 @@ import { getColorThemes, applyColorVariant, base64ToBlobUrl, ThemeInfo } from "@
 // import KidsLoadingScreen from "@/components/kids/KidsLoadingScreen";
 import BrickStackMiniGame from "@/components/kids/BrickStackMiniGame";
 import { registerToGallery } from "@/lib/api/myApi"; // Import API
+import { useJobStore } from "@/stores/jobStore";
 import './KidsPage.css';
 
 // SSR 제외
@@ -177,6 +178,9 @@ function KidsPageContent() {
                 console.log("[KidsPage] 🎯 Job 생성 완료 | jobId:", jid);
                 setDebugLog(`${t.kids.generate.jobCreated} [${jid}]`);
 
+                // 전역 store에 job 등록 (폴링은 페이지 이탈 시 시작)
+                useJobStore.getState().setActiveJob({ jobId: jid, status: 'QUEUED', age });
+
                 // 4. 폴링
                 let finalData: any = null;
                 console.log("[KidsPage] 🔄 Step 4: 폴링 시작 | maxAttempts:", maxAttempts, "| interval:", POLL_INTERVAL);
@@ -220,6 +224,12 @@ function KidsPageContent() {
 
                     if (statusData.status === "FAILED") {
                         console.error("[KidsPage] ❌ Job FAILED | error:", statusData.errorMessage);
+                        // store 상태도 업데이트
+                        useJobStore.getState().setActiveJob({
+                            jobId: jid,
+                            status: 'FAILED',
+                            age
+                        });
                         throw new Error(statusData.errorMessage || "Generation failed");
                     }
 
@@ -229,6 +239,15 @@ function KidsPageContent() {
                         if (alive && statusData.glbUrl) setGlbUrl(statusData.glbUrl);
                         setShowToast(true);
                         setTimeout(() => setShowToast(false), 5000);
+
+                        // store 상태도 업데이트 (페이지 이탈 시 폴링 안 하도록)
+                        useJobStore.getState().setActiveJob({
+                            jobId: jid,
+                            status: 'DONE',
+                            ldrUrl: statusData.ldrUrl,
+                            glbUrl: statusData.glbUrl,
+                            age
+                        });
                         break;
                     }
                 }
@@ -267,6 +286,13 @@ function KidsPageContent() {
         return () => {
             alive = false;
             try { abort.abort(); } catch { }
+
+            // 페이지 이탈 시 완료 안 됐으면 백그라운드 폴링 시작 (알림용)
+            const currentJob = useJobStore.getState().activeJob;
+            if (currentJob && currentJob.status !== 'DONE' && currentJob.status !== 'FAILED') {
+                console.log("[KidsPage] 페이지 이탈 - 백그라운드 폴링 시작");
+                useJobStore.getState().startPolling(currentJob.jobId, currentJob.age);
+            }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [rawFile, age, budget]); // status 제거 - status 변경 시 cleanup이 abort를 호출해서 fetch 취소됨
