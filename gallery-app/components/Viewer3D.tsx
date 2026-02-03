@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { Bounds, OrbitControls } from "@react-three/drei";
@@ -48,7 +48,7 @@ function LdrModel({
                 if (filename && lowerName !== filename) {
                     fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
                 }
-                
+
                 const isPrimitive = /^\d+-\d+/.test(filename) ||
                     /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud|empty)/.test(filename);
                 const isSubpart = /^\d+s\d+\.dat$/i.test(filename);
@@ -133,7 +133,7 @@ interface Viewer3DProps {
     url: string;
 }
 
-export default function Viewer3D({ url }: Viewer3DProps) {
+export default React.memo(function Viewer3D({ url }: Viewer3DProps) {
     const [loading, setLoading] = useState(true);
 
     const proxiedUrl = useMemo(() => {
@@ -154,6 +154,16 @@ export default function Viewer3D({ url }: Viewer3DProps) {
         console.log("[Viewer3D] Proxied URL:", proxiedUrl);
     }, [url, proxiedUrl]);
 
+    const handleLoaded = useCallback((group: THREE.Group) => {
+        console.log("[LDraw] Model loaded successfully, setting loading to false");
+        setLoading(false);
+    }, []);
+
+    const handleError = useCallback((e: unknown) => {
+        console.error("[LDraw] 3D Viewer Error:", e);
+        setLoading(false);
+    }, []);
+
     return (
         <div className="w-full h-full relative bg-gray-50 flex items-center justify-center">
             {loading && (
@@ -168,14 +178,8 @@ export default function Viewer3D({ url }: Viewer3DProps) {
                 <directionalLight position={[3, 5, 2]} intensity={1} />
                 <LdrModel
                     url={proxiedUrl}
-                    onLoaded={(group) => {
-                        console.log("[LDraw] Model loaded successfully, setting loading to false");
-                        setLoading(false);
-                    }}
-                    onError={(e) => {
-                        console.error("[LDraw] 3D Viewer Error:", e);
-                        setLoading(false);
-                    }}
+                    onLoaded={handleLoaded}
+                    onError={handleError}
                 />
                 <OrbitControls makeDefault enablePan={false} enableZoom />
             </Canvas>
@@ -183,4 +187,4 @@ export default function Viewer3D({ url }: Viewer3DProps) {
             {/* 터치 안내 문구 제거됨 */}
         </div>
     );
-}
+});
