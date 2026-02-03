@@ -38,8 +38,17 @@ function LdrModel({
         // URL Modifier logic from original viewer
         manager.setURLModifier((u) => {
             let fixed = u.replace(/\\/g, "/");
-            if (fixed.includes("ldraw-parts-library") && fixed.endsWith(".dat") && !fixed.includes("LDConfig.ldr")) {
+            // Normalize accidental double segments
+            fixed = fixed.replace("/ldraw/p/p/", "/ldraw/p/");
+            fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
+            const lowerFixed = fixed.toLowerCase();
+            if (lowerFixed.includes("ldraw-parts-library") && lowerFixed.endsWith(".dat") && !lowerFixed.includes("ldconfig.ldr")) {
                 const filename = fixed.split("/").pop() || "";
+                const lowerName = filename.toLowerCase();
+                if (filename && lowerName !== filename) {
+                    fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
+                }
+                
                 const isPrimitive = /^\d+-\d+/.test(filename) ||
                     /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud|empty)/.test(filename);
                 const isSubpart = /^\d+s\d+\.dat$/i.test(filename);
@@ -62,6 +71,9 @@ function LdrModel({
                     else if (isPrimitive) fixed = fixed.replace("/ldraw/", "/ldraw/p/");
                     else fixed = fixed.replace("/ldraw/", "/ldraw/parts/");
                 }
+            }
+            if (fixed.startsWith(CDN_BASE)) {
+                return `/api/proxy/ldr?url=${encodeURIComponent(fixed)}`;
             }
             return fixed;
         });

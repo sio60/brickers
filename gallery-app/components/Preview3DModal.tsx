@@ -44,8 +44,18 @@ function LdrModel({ url }: { url: string }) {
         manager.setURLModifier((u) => {
             let fixed = u.replace(/\\/g, "/");
 
-            if (fixed.includes("ldraw-parts-library") && fixed.endsWith(".dat") && !fixed.includes("LDConfig.ldr")) {
-                const filename = fixed.split("/").pop() || "";
+            // Normalize accidental double segments
+            fixed = fixed.replace("/ldraw/p/p/", "/ldraw/p/");
+            fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
+
+                const lowerFixed = fixed.toLowerCase();
+                if (lowerFixed.includes("ldraw-parts-library") && lowerFixed.endsWith(".dat") && !lowerFixed.includes("ldconfig.ldr")) {
+                    const filename = fixed.split("/").pop() || "";
+                    const lowerName = filename.toLowerCase();
+                    if (filename && lowerName !== filename) {
+                        fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
+                    }
+                
                 const isPrimitive = /^\d+-\d+/.test(filename) ||
                     /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud|empty)/.test(filename);
                 const isSubpart = /^\d+s\d+\.dat$/i.test(filename);
@@ -69,6 +79,9 @@ function LdrModel({ url }: { url: string }) {
                     else if (isPrimitive) fixed = fixed.replace("/ldraw/", "/ldraw/p/");
                     else fixed = fixed.replace("/ldraw/", "/ldraw/parts/");
                 }
+            }
+            if (fixed.startsWith(CDN_BASE)) {
+                return `/api/proxy/ldr?url=${encodeURIComponent(fixed)}`;
             }
             return fixed;
         });
@@ -149,7 +162,6 @@ export default function Preview3DModal({ url, onClose, buildUrl }: { url: string
                             onClick={() => router.push(buildUrl)}
                             className="bg-black text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-gray-800 transition-colors flex items-center gap-2"
                         >
-                            <span>🧱</span>
                             Start Building
                         </button>
                     )}

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
-import { Bounds, OrbitControls, Center, Gltf, Environment } from "@react-three/drei";
+import { Bounds, OrbitControls, Center, Gltf, Environment, useBounds } from "@react-three/drei";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
@@ -65,6 +65,7 @@ function LdrModel({
     onLoaded,
     onError,
     customBounds,
+    fitTrigger,
 }: {
     url: string;
     overrideMainLdrUrl?: string;
@@ -73,6 +74,7 @@ function LdrModel({
     onLoaded?: (group: THREE.Group) => void;
     onError?: (e: unknown) => void;
     customBounds?: THREE.Box3 | null;
+    fitTrigger?: string;
 }) {
     // ... (loader useMemo remains same) ...
     const loader = useMemo(() => {
@@ -85,6 +87,10 @@ function LdrModel({
 
         manager.setURLModifier((u) => {
             let fixed = u.replace(/\\/g, "/");
+
+            // Normalize accidental double segments
+            fixed = fixed.replace("/ldraw/p/p/", "/ldraw/p/");
+            fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
             if (overrideMainLdrUrl) {
                 try {
                     const abs = new URL(fixed, window.location.href).href;
@@ -98,8 +104,14 @@ function LdrModel({
             }
 
             // LDraw 라이브러리 URL인 경우 경로 수정
-            if (fixed.includes("ldraw-parts-library") && fixed.endsWith(".dat") && !fixed.includes("LDConfig.ldr")) {
+            const lowerFixed = fixed.toLowerCase();
+            if (lowerFixed.includes("ldraw-parts-library") && lowerFixed.endsWith(".dat") && !lowerFixed.includes("ldconfig.ldr")) {
                 const filename = fixed.split("/").pop() || "";
+                const lowerName = filename.toLowerCase();
+                if (filename && lowerName !== filename) {
+                    fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
+                }
+                
 
                 // Primitive 패턴: n-n*.dat (예: 4-4edge, 1-4cyli), stud*.dat, rect*.dat, box*.dat 등
                 const isPrimitive = /^\d+-\d+/.test(filename) ||
@@ -132,6 +144,9 @@ function LdrModel({
                     else if (isPrimitive) fixed = fixed.replace("/ldraw/", "/ldraw/p/");
                     else fixed = fixed.replace("/ldraw/", "/ldraw/parts/");
                 }
+            }
+            if (fixed.startsWith(CDN_BASE)) {
+                return `/api/proxy/ldr?url=${encodeURIComponent(fixed)}`;
             }
             return fixed;
         });
@@ -193,13 +208,25 @@ function LdrModel({
     }
 
     return (
-        <Bounds fit clip observe margin={1.2}>
+        <Bounds fit clip margin={1.35}>
             <Center>
                 <primitive object={group} />
                 {boundMesh}
             </Center>
+            <FitOnceOnLoad trigger={fitTrigger ?? ""} />
         </Bounds>
     );
+}
+
+function FitOnceOnLoad({ trigger }: { trigger: string }) {
+    const bounds = useBounds();
+
+    useEffect(() => {
+        // Fit once when model url changes
+        bounds?.refresh().fit();
+    }, [bounds, trigger]);
+
+    return null;
 }
 
 // LDR 파싱 및 정렬 유틸
@@ -273,9 +300,32 @@ function parseAndProcessSteps(ldrText: string) {
     const body = segments.slice(1);
 
     // Y 내림차순 (큰 값 = 바닥 = 먼저 조립)
-    body.sort((a, b) => b.avgY - a.avgY);
+    body.sort((a, b) => a.avgY - b.avgY);
 
-    const sortedSegments = [header, ...body];
+    // Merge steps by layer (group nearby Y into one step)
+    const LAYER_EPS = 8; // LDraw units
+    const merged: { lines: string[]; avgY: number }[] = [];
+    let curLinesMerge: string[] = [];
+    let curY = Number.NEGATIVE_INFINITY;
+
+    for (const seg of body) {
+        if (!curLinesMerge.length) {
+            curLinesMerge = seg.lines.slice();
+            curY = seg.avgY;
+            continue;
+        }
+        if (seg.avgY !== -Infinity && curY !== -Infinity && Math.abs(seg.avgY - curY) <= LAYER_EPS) {
+            curLinesMerge = curLinesMerge.concat(seg.lines);
+            curY = (curY + seg.avgY) / 2;
+        } else {
+            merged.push({ lines: curLinesMerge, avgY: curY });
+            curLinesMerge = seg.lines.slice();
+            curY = seg.avgY;
+        }
+    }
+    if (curLinesMerge.length) merged.push({ lines: curLinesMerge, avgY: curY });
+
+    const sortedSegments = [header, ...merged];
 
     // 3. 누적 텍스트 생성
     const out: string[] = [];
@@ -644,29 +694,20 @@ function KidsStepPageContent() {
                             </button>
 
                             {colorChangedLdrBase64 && (
-                                <button
-                                    onClick={restoreOriginalColor}
-                                    style={{
-                                        width: "100%",
-                                        textAlign: "left",
-                                        padding: "10px 16px",
-                                        borderRadius: 16,
-                                        background: "transparent",
-                                        color: "#888",
-                                        fontWeight: 800,
-                                        border: "2px solid transparent",
-                                        cursor: "pointer",
-                                        transition: "all 0.2s",
-                                        fontSize: "0.85rem",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 6
-                                    }}
-                                    onMouseOver={(e) => e.currentTarget.style.color = "#000"}
-                                    onMouseOut={(e) => e.currentTarget.style.color = "#888"}
-                                >
-                                    ↺ 원본으로 되돌리기
-                                </button>
+                                <>
+                                    <button
+                                        onClick={downloadColorChangedLdr}
+                                        className="kidsStep__downloadColorBtn"
+                                    >
+                                        ⬇ 변경된 LDR 다운로드
+                                    </button>
+                                    <button
+                                        onClick={restoreOriginalColor}
+                                        className="kidsStep__restoreBtn"
+                                    >
+                                        ↺ 원본으로 되돌리기
+                                    </button>
+                                </>
                             )}
                         </div>
 
@@ -724,6 +765,7 @@ function KidsStepPageContent() {
                                             onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }}
                                             onError={() => setLoading(false)}
                                             customBounds={modelBounds}
+                                            fitTrigger={`${ldrUrl}|${modelUrlToUse ?? ''}`}
                                         />
                                     </Center>
                                     <OrbitControls makeDefault enablePan={false} enableZoom />
@@ -786,10 +828,11 @@ function KidsStepPageContent() {
                                 <ambientLight intensity={0.8} />
                                 <directionalLight position={[5, 10, 5]} intensity={1.5} />
                                 <Environment preset="city" />
-                                <Bounds fit clip observe margin={1.2}>
+                                <Bounds fit clip margin={1.35}>
                                     <Center>
                                         {glbUrl && <Gltf src={glbUrl} />}
                                     </Center>
+                                    <FitOnceOnLoad trigger={glbUrl ?? ''} />
                                 </Bounds>
                                 <OrbitControls makeDefault enablePan={false} enableZoom />
                             </Canvas>
@@ -819,7 +862,7 @@ function KidsStepPageContent() {
                     <div className="galleryModal colorModal" onClick={(e) => e.stopPropagation()}>
                         <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)} aria-label="close">✕</button>
                         <h3 className="galleryModal__title">
-                            🎨 {t.kids.steps.colorThemeTitle || "색상 테마 선택"}
+                            {t.kids.steps.colorThemeTitle || "색상 테마 선택"}
                         </h3>
 
                         <div className="colorModal__themes">

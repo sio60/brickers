@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import styles from "./MyPage.module.css";
-import { getMyOverview, getMyProfile, retryJob, updateMyProfile, ApiError } from "@/lib/api/myApi";
+import { getMyOverview, getMyProfile, getMyJobs, retryJob, updateMyProfile, ApiError } from "@/lib/api/myApi";
 import type { MyOverview, MyProfile, MyJob } from "@/lib/api/myApi";
 import KidsLdrPreview from "@/components/kids/KidsLdrPreview";
 import BackgroundBricks from "@/components/BackgroundBricks";
 import UpgradeModal from "@/components/UpgradeModal";
+import { getColorThemes, applyColorVariant, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
 
 // SVG Icons
 const Icons = {
@@ -48,6 +49,13 @@ export default function MyPage() {
     const [activeMenu, setActiveMenu] = useState<MenuItem>("profile");
     const [retrying, setRetrying] = useState<string | null>(null);
 
+    const [jobsList, setJobsList] = useState<MyJob[]>([]);
+    const [jobsPage, setJobsPage] = useState(0);
+    const [jobsTotalPages, setJobsTotalPages] = useState(1);
+    const [jobsLoading, setJobsLoading] = useState(false);
+    const [jobSort, setJobSort] = useState<'latest' | 'oldest'>('latest');
+    const jobsSentinelRef = useRef<HTMLDivElement | null>(null);
+
     // 문의/신고 내역 상태
     const [inquiries, setInquiries] = useState<any[]>([]);
     const [reports, setReports] = useState<any[]>([]);
@@ -73,6 +81,34 @@ export default function MyPage() {
     // 업그레이드 모달 상태
     const [showUpgrade, setShowUpgrade] = useState(false);
 
+    // 색상 변경 관련 상태
+    const [isColorModalOpen, setIsColorModalOpen] = useState(false);
+    const [colorThemes, setColorThemes] = useState<ThemeInfo[]>([]);
+    const [selectedTheme, setSelectedTheme] = useState<string>("");
+    const [isApplyingColor, setIsApplyingColor] = useState(false);
+    const [colorChangedLdrBase64, setColorChangedLdrBase64] = useState<string | null>(null);
+
+
+    const loadJobsPage = async (page: number, replace = false) => {
+        try {
+            setJobsLoading(true);
+            const res = await getMyJobs(page, 12);
+            setJobsTotalPages(res.totalPages || 1);
+            setJobsPage(page);
+            setJobsList((prev) => replace ? res.content : prev.concat(res.content));
+        } catch (err) {
+            console.error('[MyPage] Failed to load jobs:', err);
+        } finally {
+            setJobsLoading(false);
+        }
+    };
+
+    const resetAndLoadJobs = () => {
+        setJobsList([]);
+        setJobsPage(0);
+        setJobsTotalPages(1);
+        loadJobsPage(0, true);
+    };
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
             router.replace("/?login=true");
@@ -99,6 +135,28 @@ export default function MyPage() {
                 });
         }
     }, [language, isAuthenticated, isLoading, router]);
+
+    useEffect(() => {
+        if (activeMenu !== 'jobs') return;
+        resetAndLoadJobs();
+    }, [activeMenu, jobSort]);
+
+    useEffect(() => {
+        if (activeMenu !== 'jobs') return;
+        const sentinel = jobsSentinelRef.current;
+        if (!sentinel) return;
+
+        const observer = new IntersectionObserver((entries) => {
+            const entry = entries[0];
+            if (!entry.isIntersecting) return;
+            if (jobsLoading) return;
+            if (jobsPage + 1 >= jobsTotalPages) return;
+            loadJobsPage(jobsPage + 1);
+        }, { root: null, rootMargin: '200px', threshold: 0.1 });
+
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [activeMenu, jobsPage, jobsTotalPages, jobsLoading]);
 
     // 수정 모드 진입 시 현재 값으로 초기화
     const startEditing = () => {
@@ -250,6 +308,48 @@ export default function MyPage() {
         { id: "settings" as MenuItem, label: t.menu.settings },
         { id: "delete" as MenuItem, label: t.menu.delete },
     ];
+
+    // 색상 변경 관련 함수
+    const openColorModal = async () => {
+        setMenuJob(null);
+        setIsColorModalOpen(true);
+        if (colorThemes.length === 0) {
+            try {
+                const themes = await getColorThemes();
+                setColorThemes(themes);
+            } catch (e) {
+                console.error("테마 로드 실패:", e);
+            }
+        }
+    };
+
+    const handleApplyColor = async () => {
+        if (!selectedTheme || !menuJob?.ldrUrl) return;
+
+        setIsApplyingColor(true);
+        try {
+            const result = await applyColorVariant(menuJob.ldrUrl, selectedTheme, authFetch);
+
+            if (result.ok && result.ldrData) {
+                setColorChangedLdrBase64(result.ldrData);
+                setIsColorModalOpen(false);
+                alert(`${result.themeApplied} 테마 적용 완료! (${result.changedBricks}개 브릭 변경)\n다운로드 버튼을 눌러 저장하세요.`);
+            } else {
+                alert(result.message || "색상 변경 실패");
+            }
+        } catch (e: any) {
+            console.error("색상 변경 실패:", e);
+            alert(e.message || "색상 변경 중 오류가 발생했습니다.");
+        } finally {
+            setIsApplyingColor(false);
+        }
+    };
+
+    const downloadColorChangedLdr = () => {
+        if (colorChangedLdrBase64) {
+            downloadLdrFromBase64(colorChangedLdrBase64, `brickers_${selectedTheme}.ldr`);
+        }
+    };
 
     // 실시간 업데이트 (Polling) 및 문의 내역 로드
     useEffect(() => {
@@ -429,31 +529,57 @@ export default function MyPage() {
             case "jobs":
                 return (
                     <div className={styles.mypage__section}>
-                        <h2 className={styles.mypage__sectionTitle}>{t.jobs.title}</h2>
-                        {data?.jobs.recent && data.jobs.recent.length > 0 ? (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                            <h2 className={styles.mypage__sectionTitle}>{t.jobs.title}</h2>
+                            <select
+                                value={jobSort}
+                                onChange={(e) => setJobSort(e.target.value as 'latest' | 'oldest')}
+                                style={{
+                                    padding: '8px 12px',
+                                    borderRadius: 10,
+                                    border: '2px solid #000',
+                                    fontWeight: 700,
+                                    background: '#fff',
+                                }}
+                            >
+                                <option value="latest">최신순</option>
+                                <option value="oldest">오래된순</option>
+                            </select>
+                        </div>
+                        {jobsList.length > 0 ? (
                             <div className={styles.mypage__jobs}>
-                                {data.jobs.recent.map((job) => (
-                                    <div
-                                        key={job.id}
-                                        className={styles.mypage__job}
-                                        onClick={() => handleJobClick(job)}
-                                    >
-                                        <div className={styles.mypage__jobThumbData}>
-                                            <img src={job.sourceImageUrl || "/placeholder.png"} alt={job.title} className={styles.mypage__jobThumb} />
-                                            <div className={styles.mypage__jobOverlay}>
-                                                <span className={`${styles.mypage__jobStatus} ${styles[getStatusClass(job.status)]}`}>
-                                                    {getStatusLabel(job.status)}
-                                                </span>
+                                {[...jobsList]
+                                    .sort((a, b) => jobSort === 'latest'
+                                        ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                                        : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+                                    .map((job) => (
+                                        <div
+                                            key={job.id}
+                                            className={styles.mypage__job}
+                                            onClick={() => handleJobClick(job)}
+                                        >
+                                            <div className={styles.mypage__jobThumbData}>
+                                                <img src={job.sourceImageUrl || "/placeholder.png"} alt={job.title} className={styles.mypage__jobThumb} />
+                                                <div className={styles.mypage__jobOverlay}>
+                                                    <span className={`${styles.mypage__jobStatus} ${styles[getStatusClass(job.status)]}`}>
+                                                        {getStatusLabel(job.status)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className={styles.mypage__jobInfo}>
+                                                <div className={styles.mypage__jobTitle}>{job.title || "Untitled"}</div>
+                                                <div className={styles.mypage__jobDate}>{formatDate(job.createdAt)}</div>
                                             </div>
                                         </div>
-                                        <div className={styles.mypage__jobInfo}>
-                                            <div className={styles.mypage__jobTitle}>{job.title || "Untitled"}</div>
-                                            <div className={styles.mypage__jobDate}>{formatDate(job.createdAt)}</div>
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                <div ref={jobsSentinelRef} style={{ height: 1 }} />
                             </div>
-                        ) : <p className={styles.mypage__empty}>{t.jobs.empty}</p>}
+                        ) : (
+                            <p className={styles.mypage__empty}>{t.jobs.empty}</p>
+                        )}
+                        {jobsLoading && (
+                            <div style={{ marginTop: 16, fontWeight: 700 }}>{t.common.loading}...</div>
+                        )}
                     </div>
                 );
 
@@ -729,6 +855,15 @@ export default function MyPage() {
                                 <Icons.DownloadFile className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.ldrFile}</span>
                             </button>
+                            <div className="h-px bg-[#eee] my-2" />
+                            <button
+                                className="flex items-center gap-3 p-[16px_20px] bg-[#f8f9fa] border border-[#eee] rounded-2xl text-[15px] font-bold text-[#333] cursor-pointer transition-all duration-200 text-left hover:bg-black hover:text-white hover:translate-x-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                                onClick={openColorModal}
+                                disabled={!menuJob.ldrUrl}
+                            >
+                                <Icons.Edit className="w-5 h-5 flex items-center justify-center" />
+                                <span>색상 변경</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -764,6 +899,66 @@ export default function MyPage() {
                                 <KidsLdrPreview url={selectedJob.ldrUrl} stepMode={true} />
                             ) : null}
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 색상 변경 모달 */}
+            {isColorModalOpen && (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-[4px] grid place-items-center z-[2000]" onClick={() => setIsColorModalOpen(false)}>
+                    <div className="bg-white border-[3px] border-black rounded-[20px] p-8 w-[min(400px,90vw)] flex flex-col gap-5 shadow-[0_20px_40px_rgba(0,0,0,0.2)] relative" onClick={(e) => e.stopPropagation()}>
+                        <button className="absolute top-4 right-4 w-11 h-11 border-none bg-transparent cursor-pointer text-[24px] font-bold flex items-center justify-center transition-all duration-100 text-black z-[100] hover:rotate-90 hover:scale-110" onClick={() => setIsColorModalOpen(false)}>✕</button>
+                        <h3 className="text-[24px] font-black m-0 text-center">색상 테마 선택</h3>
+
+                        <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
+                            {colorThemes.length === 0 ? (
+                                <div className="p-5 text-center text-[#888]">테마 로딩 중...</div>
+                            ) : (
+                                colorThemes.map((theme: ThemeInfo) => (
+                                    <button
+                                        key={theme.name}
+                                        className={`flex flex-col items-start p-[14px_16px] rounded-xl border-2 transition-all duration-200 text-left cursor-pointer bg-white ${selectedTheme === theme.name ? "border-black" : "border-[#e0e0e0] hover:border-black"}`}
+                                        onClick={() => setSelectedTheme(theme.name)}
+                                    >
+                                        <span className={`text-[15px] font-[800] ${selectedTheme === theme.name ? "text-[#ffe135]" : "text-black"}`}>{theme.name}</span>
+                                        <span className={`text-[12px] mt-0.5 ${selectedTheme === theme.name ? "text-[#333]" : "text-[#888]"}`}>{theme.description}</span>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                className="flex-1 p-3 rounded-xl border-2 border-black font-[800] cursor-pointer transition-all duration-200 bg-white hover:-translate-y-[0.5]"
+                                onClick={() => setIsColorModalOpen(false)}
+                            >
+                                취소
+                            </button>
+                            <button
+                                className="flex-1 p-3 rounded-xl border-2 border-black font-[800] cursor-pointer transition-all duration-200 bg-black text-white hover:-translate-y-[0.5] disabled:opacity-50"
+                                onClick={handleApplyColor}
+                                disabled={!selectedTheme || isApplyingColor}
+                            >
+                                {isApplyingColor ? "..." : "적용하기"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 색상 변경된 LDR 다운로드 모달 */}
+            {colorChangedLdrBase64 && (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-[4px] grid place-items-center z-[2000]" onClick={() => setColorChangedLdrBase64(null)}>
+                    <div className="bg-white border-[3px] border-black rounded-[20px] p-8 w-[min(400px,90vw)] flex flex-col gap-5 shadow-[0_20px_40px_rgba(0,0,0,0.2)] relative" onClick={(e) => e.stopPropagation()}>
+                        <button className="absolute top-4 right-4 w-11 h-11 border-none bg-transparent cursor-pointer text-[24px] font-bold flex items-center justify-center transition-all duration-100 text-black z-[100] hover:rotate-90 hover:scale-110" onClick={() => setColorChangedLdrBase64(null)}>✕</button>
+                        <h3 className="text-[24px] font-black m-0 text-center">색상 변경 완료</h3>
+                        <p className="text-center text-[#666]">{selectedTheme} 테마가 적용되었습니다.</p>
+                        <button
+                            className="w-full p-4 rounded-xl border-2 border-black font-[800] cursor-pointer transition-all duration-200 bg-[#4CAF50] text-white hover:-translate-y-[2px]"
+                            onClick={() => { downloadColorChangedLdr(); setColorChangedLdrBase64(null); }}
+                        >
+                            변경된 LDR 다운로드
+                        </button>
                     </div>
                 </div>
             )}
