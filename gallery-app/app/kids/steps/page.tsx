@@ -111,7 +111,7 @@ function LdrModel({
                 if (filename && lowerName !== filename) {
                     fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
                 }
-                
+
 
                 // Primitive 패턴: n-n*.dat (예: 4-4edge, 1-4cyli), stud*.dat, rect*.dat, box*.dat 등
                 const isPrimitive = /^\d+-\d+/.test(filename) ||
@@ -289,11 +289,7 @@ function parseAndProcessSteps(ldrText: string) {
     // 단, 첫 번째 세그먼트(헤더 등)는 무조건 맨 앞에? 보통 헤더에는 부품이 없음.
     // 하지만 segments[0]에 부품이 있을 수도 있음.
     // 전략: 부품이 있는 세그먼트들만 정렬한다?
-    // 보통 헤더(메타데이터)는 curCount=0일 것임.
-
-    // 단순하게: 전체를 Y 내림차순(큰거->작은거)으로 정렬.
-    // AvgY가 -Infinity(부품없음)인 경우... 메타데이터일 수 있는데, 이들을 맨 앞으로 보낼까?
-    // 보통 메타데이터는 0 STEP 이전에 나옴 (segments[0]).
+    // 보통 헤더(메타데이터)는 0 STEP 이전에 나옴 (segments[0]).
     // segments[0]는 고정하고 나머지만 정렬?
 
     const header = segments[0];
@@ -604,7 +600,7 @@ function KidsStepPageContent() {
             <BackgroundBricks />
 
             {/* Content Container - Relative to center children */}
-            <div className="kidsStep__mainContainer" style={{ paddingLeft: isPreset ? 0 : undefined }}>
+            <div className="kidsStep__mainContainer" style={{ paddingLeft: isPreset ? 0 : 260 }}>
                 {/* Floating Sidebar Overlay - Hide for Preset Models */}
                 {!isPreset && (
                     <div style={{
@@ -649,19 +645,21 @@ function KidsStepPageContent() {
                             {t.kids.steps.viewModes}
                         </div>
 
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                             <button
                                 onClick={() => setActiveTab('LDR')}
                                 style={{
                                     textAlign: "left",
-                                    padding: "14px 16px",
-                                    borderRadius: 16,
-                                    background: activeTab === 'LDR' ? "#ffe135" : "transparent",
+                                    padding: "16px 20px",
+                                    borderRadius: 20,
+                                    background: activeTab === 'LDR' ? "#ffe135" : "#fff",
                                     color: "#000",
-                                    fontWeight: 800,
-                                    border: activeTab === 'LDR' ? "2px solid #000" : "2px solid transparent",
+                                    fontWeight: 900,
+                                    border: "3px solid #000",
                                     cursor: "pointer",
-                                    transition: "all 0.2s"
+                                    transition: "all 0.2s",
+                                    boxShadow: activeTab === 'LDR' ? "4px 4px 0px #000" : "2px 2px 0px #000",
+                                    fontSize: "1rem"
                                 }}
                             >
                                 {t.kids.steps.tabBrick}
@@ -670,14 +668,16 @@ function KidsStepPageContent() {
                                 onClick={() => setActiveTab('GLB')}
                                 style={{
                                     textAlign: "left",
-                                    padding: "14px 16px",
-                                    borderRadius: 16,
-                                    background: activeTab === 'GLB' ? "#ffe135" : "transparent",
+                                    padding: "16px 20px",
+                                    borderRadius: 20,
+                                    background: activeTab === 'GLB' ? "#ffe135" : "#fff",
                                     color: "#000",
-                                    fontWeight: 800,
-                                    border: "2px solid #000",
+                                    fontWeight: 900,
+                                    border: "3px solid #000",
                                     cursor: "pointer",
-                                    transition: "all 0.2s"
+                                    transition: "all 0.2s",
+                                    boxShadow: activeTab === 'GLB' ? "4px 4px 0px #000" : "2px 2px 0px #000",
+                                    fontSize: "1rem"
                                 }}
                             >
                                 {t.kids.steps.tabModeling}
@@ -913,4 +913,3 @@ export default function KidsStepPage() {
         </Suspense>
     );
 }
-

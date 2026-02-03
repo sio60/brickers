@@ -20,13 +20,28 @@ export async function requestNotificationPermission() {
     return false;
 }
 
-export function showToastNotification(title: string, body: string, icon?: string) {
+export function showToastNotification(title: string, body: string, icon?: string, onClick?: string) {
     if (!("Notification" in window)) return;
 
     if (Notification.permission === "granted") {
-        new Notification(title, {
+        const notification = new Notification(title, {
             body: body,
-            icon: icon || "/logo.png", // 브라우저 알림에 표시될 아이콘
+            icon: icon || "/logo.png",
         });
+
+        // 클릭 시 해당 URL로 이동
+        if (onClick) {
+            notification.onclick = () => {
+                window.focus();
+                window.location.href = onClick;
+                notification.close();
+            };
+        }
+
+        // cleanup - 닫힐 때 핸들러 제거 (메모리 누수 방지)
+        notification.onclose = () => {
+            notification.onclick = null;
+            notification.onclose = null;
+        };
     }
 }
