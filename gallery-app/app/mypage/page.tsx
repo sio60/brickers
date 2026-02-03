@@ -69,6 +69,7 @@ export default function MyPage() {
 
     // 3D 뷰어 모달 상태
     const [selectedJob, setSelectedJob] = useState<MyJob | null>(null);
+    const [jobViewStep, setJobViewStep] = useState<"preview" | "start">("preview");
     // 작업 메뉴 모달 상태
     const [menuJob, setMenuJob] = useState<MyJob | null>(null);
     // 이미지 원본 보기 모달 상태
@@ -140,6 +141,12 @@ export default function MyPage() {
         if (activeMenu !== 'jobs') return;
         resetAndLoadJobs();
     }, [activeMenu, jobSort]);
+
+    useEffect(() => {
+        if (selectedJob) {
+            setJobViewStep("preview");
+        }
+    }, [selectedJob]);
 
     useEffect(() => {
         if (activeMenu !== 'jobs') return;
@@ -894,10 +901,37 @@ export default function MyPage() {
                         <button className={`${styles.mypage__closeBtn} ${styles.dark}`} onClick={() => setSelectedJob(null)}>
                             ✕
                         </button>
-                        <div className={styles.mypage__viewerContainer}>
+                        <div className={styles.mypage__viewerContainer} style={{ position: "relative" }}>
                             {selectedJob.ldrUrl ? (
-                                <KidsLdrPreview url={selectedJob.ldrUrl} stepMode={true} />
+                                <KidsLdrPreview url={selectedJob.ldrUrl} />
                             ) : null}
+                            <div style={{ position: "absolute", top: 16, left: 16, fontWeight: 900, fontSize: 18 }}>
+                                {jobViewStep === "preview" ? "3D ????" : "?? ?? ?"}
+                            </div>
+                            {jobViewStep === "preview" ? (
+                                <div style={{ position: "absolute", bottom: 20, right: 20 }}>
+                                    <button
+                                        style={{ padding: "10px 18px", borderRadius: 999, border: "2px solid #000", background: "#fff", fontWeight: 800, cursor: "pointer" }}
+                                        onClick={() => setJobViewStep("start")}
+                                    >
+                                        ?? ?
+                                    </button>
+                                </div>
+                            ) : (
+                                <div style={{ position: "absolute", bottom: 20, right: 20 }}>
+                                    <button
+                                        style={{ padding: "10px 18px", borderRadius: 999, border: "2px solid #000", background: "#fff", fontWeight: 800, cursor: "pointer" }}
+                                        onClick={() => {
+                                            const url = selectedJob.ldrUrl;
+                                            if (!url) return;
+                                            setSelectedJob(null);
+                                            router.push(`/kids/steps?url=${encodeURIComponent(url)}&jobId=${selectedJob.id}`);
+                                        }}
+                                    >
+                                        ?? ???? ?
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
