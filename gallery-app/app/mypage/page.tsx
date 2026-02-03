@@ -897,45 +897,55 @@ export default function MyPage() {
             {/* 3D 뷰어 모달 */}
             {selectedJob && (
                 <div className={styles.mypage__modalOverlay}>
-                    <div className={styles.mypage__modalContent}>
-                        <button className={`${styles.mypage__closeBtn} ${styles.dark}`} onClick={() => setSelectedJob(null)}>
-                            ✕
-                        </button>
-                        <div className={styles.mypage__viewerContainer} style={{ position: "relative" }}>
+                    <div className={styles.mypage__modalContent} style={{ background: '#fff', borderRadius: '20px', overflow: 'hidden', maxWidth: '900px', width: '90%' }}>
+                        <div className={styles.mypage__previewHead}>
+                            <div className={styles.mypage__previewTitle}>
+                                {jobViewStep === "preview" ? t.kids.modelSelect.previewTitle : t.kids.steps.startAssembly}
+                            </div>
+                            <div className={styles.mypage__previewSub}>
+                                {jobViewStep === "preview" ? t.kids.modelSelect.previewSub : t.kids.steps.preview}
+                            </div>
+                            <button className={`${styles.mypage__closeBtn} ${styles.dark}`} style={{ top: '8px', right: '8px' }} onClick={() => setSelectedJob(null)}>
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className={styles.mypage__previewViewer}>
                             {selectedJob.ldrUrl ? (
                                 <KidsLdrPreview url={selectedJob.ldrUrl} />
-                            ) : null}
-                            <div style={{ position: "absolute", top: 16, left: 16, fontWeight: 900, fontSize: 18 }}>
-                                {jobViewStep === "preview" ? "3D ????" : "?? ?? ?"}
-                            </div>
-                            {jobViewStep === "preview" ? (
-                                <div style={{ position: "absolute", bottom: 20, right: 20 }}>
-                                    <button
-                                        style={{ padding: "10px 18px", borderRadius: 999, border: "2px solid #000", background: "#fff", fontWeight: 800, cursor: "pointer" }}
-                                        onClick={() => setJobViewStep("start")}
-                                    >
-                                        ?? ?
-                                    </button>
-                                </div>
                             ) : (
-                                <div style={{ position: "absolute", bottom: 20, right: 20 }}>
-                                    <button
-                                        style={{ padding: "10px 18px", borderRadius: 999, border: "2px solid #000", background: "#fff", fontWeight: 800, cursor: "pointer" }}
-                                        onClick={() => {
-                                            const url = selectedJob.ldrUrl;
-                                            if (!url) return;
-                                            setSelectedJob(null);
-                                            router.push(`/kids/steps?url=${encodeURIComponent(url)}&jobId=${selectedJob.id}`);
-                                        }}
-                                    >
-                                        ?? ???? ?
-                                    </button>
+                                <div className="flex items-center justify-center h-full text-[#999]">
+                                    {t.common.noPreview}
                                 </div>
+                            )}
+                        </div>
+
+                        <div className={styles.mypage__previewActions}>
+                            {jobViewStep === "preview" ? (
+                                <button
+                                    className={styles.mypage__previewNextBtn}
+                                    onClick={() => setJobViewStep("start")}
+                                >
+                                    {t.kids.steps.startAssembly}
+                                </button>
+                            ) : (
+                                <button
+                                    className={styles.mypage__previewNextBtn}
+                                    onClick={() => {
+                                        const url = selectedJob.ldrUrl;
+                                        if (!url) return;
+                                        setSelectedJob(null);
+                                        router.push(`/kids/steps?url=${encodeURIComponent(url)}&jobId=${selectedJob.id}&isPreset=true`);
+                                    }}
+                                >
+                                    {t.jobs.menu.viewBlueprint}
+                                </button>
                             )}
                         </div>
                     </div>
                 </div>
             )}
+
 
             {/* 색상 변경 모달 */}
             {isColorModalOpen && (

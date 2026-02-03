@@ -1101,3 +1101,60 @@
     color: #999;
     font-weight: 500;
 }
+
+/* 3D Preview Modal (Synced with KidsModelSelectModal) */
+.mypage__previewHead {
+    position: relative;
+    padding: 16px 20px 10px;
+}
+
+.mypage__previewTitle {
+    font-size: 24px;
+    font-weight: 900;
+    color: #111;
+}
+
+.mypage__previewSub {
+    margin-top: 4px;
+    font-size: 13px;
+    font-weight: 800;
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.mypage__previewViewer {
+    width: 100%;
+    height: 400px;
+    margin: 0 20px;
+    max-width: calc(100% - 40px);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f8f9fa;
+    position: relative;
+}
+
+.mypage__previewActions {
+    padding: 20px;
+}
+
+.mypage__previewNextBtn {
+    width: 100%;
+    background: #000;
+    color: #fff;
+    padding: 14px 32px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.2s;
+}
+
+.mypage__previewNextBtn:hover {
+    opacity: 0.8;
+}
+
+@media (max-width: 600px) {
+    .mypage__previewViewer {
+        height: 300px;
+    }
+}
