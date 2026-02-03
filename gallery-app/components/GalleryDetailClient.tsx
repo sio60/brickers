@@ -486,7 +486,7 @@ export default function GalleryDetailClient({ item }: Props) {
                         </div>
 
                         {/* Comments Section */}
-                        <div className="px-6 py-4 border-t border-gray-100 bg-white min-h-[300px]">
+                        <div className="px-6 py-4 border-t border-gray-100 bg-white min-h-[150px]">
                             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
                                 {t.detail.comments} ({commentCount})
                             </h3>

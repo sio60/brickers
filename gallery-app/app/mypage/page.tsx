@@ -296,8 +296,9 @@ export default function MyPage() {
                 break;
             case 'view':
                 if (menuJob.ldrUrl) {
-                    setSelectedJob(menuJob);
+                    const url = menuJob.ldrUrl;
                     setMenuJob(null);
+                    router.push(`/kids/steps?url=${encodeURIComponent(url)}&jobId=${menuJob.id}&isPreset=true`);
                 } else {
                     alert(t.jobs.modalNoData);
                 }
