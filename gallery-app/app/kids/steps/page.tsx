@@ -335,11 +335,23 @@ function parseAndProcessSteps(ldrText: string) {
     // 보통 헤더(메타데이터)는 0 STEP 이전에 나옴 (segments[0]).
     // segments[0]는 고정하고 나머지만 정렬?
 
-    const header = segments[0];
-    const body = segments.slice(1);
+    let header = segments[0];
+    let body = segments.slice(1);
+
+    // 헤더에 실제 브릭(1 line)이 섞여 있으면 헤더를 본문으로 넘김
+    const headerHasGeometry = header.lines.some((line) => line.trim().startsWith("1 "));
+    if (headerHasGeometry) {
+        body = segments;
+        header = { lines: [], avgY: -Infinity };
+    }
 
     // Y 내림차순 (큰 값 = 바닥 = 먼저 조립)
-    body.sort((a, b) => a.avgY - b.avgY);
+    body.sort((a, b) => {
+        if (a.avgY === -Infinity && b.avgY === -Infinity) return 0;
+        if (a.avgY === -Infinity) return 1;
+        if (b.avgY === -Infinity) return -1;
+        return b.avgY - a.avgY;
+    });
 
     // Merge steps by layer (group nearby Y into one step)
     const LAYER_EPS = 8; // LDraw units
