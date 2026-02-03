@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import * as THREE from "three";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import { Bounds, OrbitControls, Center, Gltf, Environment, useBounds } from "@react-three/drei";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
@@ -13,6 +13,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { registerToGallery } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
+import { parseBOM, savePDF, type StepBOM } from "@/components/kids/PDFGenerator";
 import BackgroundBricks from "@/components/BackgroundBricks";
 import './KidsStepPage.css';
 
@@ -229,6 +230,48 @@ function FitOnceOnLoad({ trigger }: { trigger: string }) {
     return null;
 }
 
+// PDF Capture Rig
+const PDF_CAM_POSITIONS = [
+    [200, -200, 200],   // View 1: Main (Right-Top-Front)
+    [-200, -200, 200],  // View 2: Left-Top-Front
+    [0, -300, -200]     // View 3: Back-Top-Center
+];
+
+function PDFRig({
+    active,
+    viewIndex,
+    onReadyToCapture
+}: {
+    active: boolean;
+    viewIndex: number;
+    onReadyToCapture: () => void;
+}) {
+    const { camera, gl, scene } = useThree();
+
+    // Safety check just in case SSR issues (though this component is client-only)
+    if (!camera) return null;
+
+    useEffect(() => {
+        if (!active) return;
+
+        const pos = PDF_CAM_POSITIONS[viewIndex];
+        if (pos) {
+            camera.position.set(pos[0], pos[1], pos[2]);
+            camera.lookAt(0, 0, 0);
+            camera.updateMatrixWorld();
+
+            // Wait for render
+            const timer = setTimeout(() => {
+                gl.render(scene, camera);
+                onReadyToCapture();
+            }, 150);
+            return () => clearTimeout(timer);
+        }
+    }, [active, viewIndex, camera, gl, scene, onReadyToCapture]);
+
+    return null;
+}
+
 // LDR 파싱 및 정렬 유틸
 function parseAndProcessSteps(ldrText: string) {
     const lines = ldrText.replace(/\r\n/g, "\n").split("\n");
@@ -376,6 +419,78 @@ function KidsStepPageContent() {
     const [selectedTheme, setSelectedTheme] = useState<string>("");
     const [isApplyingColor, setIsApplyingColor] = useState(false);
     const [colorChangedLdrBase64, setColorChangedLdrBase64] = useState<string | null>(null);
+
+    // PDF Generation State
+    const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+    const [pdfStepIdx, setPdfStepIdx] = useState(0);
+    const [pdfViewIdx, setPdfViewIdx] = useState(0); // 0, 1, 2
+    const [pdfImages, setPdfImages] = useState<string[]>([]);
+    const [pdfModelLoaded, setPdfModelLoaded] = useState(false);
+    const [pdfBOM, setPdfBOM] = useState<StepBOM[]>([]);
+
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    const handleGeneratePDF = async () => {
+        if (!ldrUrl) return;
+
+        const confirmMsg = t.kids?.steps?.pdfConfirm || "PDF 설명을 생성하시겠습니까?\n모델 크기에 따라 시간이 걸릴 수 있습니다.";
+        if (!confirm(confirmMsg)) return;
+
+        setIsPdfGenerating(true);
+        setPdfStepIdx(0);
+        setPdfViewIdx(0);
+        setPdfImages([]);
+        setPdfModelLoaded(false);
+
+        // Parse BOM
+        try {
+            const res = await fetch(originalLdrUrl || ldrUrl);
+            const text = await res.text();
+            const bom = parseBOM(text);
+            setPdfBOM(bom);
+        } catch (e) {
+            console.error("BOM parse failed", e);
+            setPdfBOM([]);
+        }
+    };
+
+    // PDF Capture Loop logic
+    const handlePdfCapture = () => {
+        // Called by PDFRig when camera is ready
+        // We capture the canvas
+        const canvas = document.querySelector('canvas');
+        if (canvas) {
+            const data = canvas.toDataURL("image/png");
+            setPdfImages(prev => [...prev, data]);
+
+            // Next View or Next Step
+            if (pdfViewIdx < 2) {
+                setPdfViewIdx(prev => prev + 1);
+            } else {
+                // Done with this step, move to next
+                const total = stepBlobUrls.length;
+                if (pdfStepIdx < total - 1) {
+                    setPdfViewIdx(0);
+                    setPdfStepIdx(prev => prev + 1);
+                    setPdfModelLoaded(false); // Wait for new model load
+                } else {
+                    // All steps done!
+                    finishPdfGeneration([...pdfImages, data]);
+                }
+            }
+        }
+    };
+
+    const finishPdfGeneration = (finalImages: string[]) => {
+        setIsPdfGenerating(false);
+        try {
+            savePDF(finalImages, pdfBOM, "brickers_guide.pdf");
+            alert("PDF 생성이 완료되었습니다.");
+        } catch (e) {
+            console.error("PDF Save failed", e);
+            alert("PDF 저장 중 오류가 발생했습니다.");
+        }
+    };
 
     const revokeAll = (arr: string[]) => {
         arr.forEach((u) => { try { URL.revokeObjectURL(u); } catch { } });
@@ -594,6 +709,17 @@ function KidsStepPageContent() {
 
     const isPreset = searchParams.get("isPreset") === "true";
 
+    // Determine Logic for PDF vs Normal
+    const effectiveStepIdx = isPdfGenerating ? pdfStepIdx : stepIdx;
+    // PDF Loop controls model URL
+    const pdfCurrentOverride = stepBlobUrls[Math.min(pdfStepIdx, stepBlobUrls.length - 1)];
+
+    // Normal Mode URL
+    const normalModelUrl = isPreviewMode ? undefined : currentOverride;
+
+    // Final URL to pass
+    const finalModelUrl = isPdfGenerating ? pdfCurrentOverride : normalModelUrl;
+
     return (
         <div style={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
             {/* 3D Background Bricks */}
@@ -732,6 +858,21 @@ function KidsStepPageContent() {
                                 </button>
                             </div>
                         </div>
+
+                        {/* PDF Download Button */}
+                        <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
+                            <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800, textTransform: "uppercase" }}>
+                                PDF Download
+                            </div>
+                            <button
+                                className="kidsStep__sidebarBtn"
+                                onClick={handleGeneratePDF}
+                                disabled={isPdfGenerating || loading}
+                                style={{ background: "#444" }}
+                            >
+                                {isPdfGenerating ? "Generating..." : "PDF 설명서 저장"}
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -739,15 +880,24 @@ function KidsStepPageContent() {
 
                 {/* Main 3D Card Area */}
                 <div className="kidsStep__card">
-                    {loading && (
+                    {(loading || isPdfGenerating) && (
                         <div style={{
                             position: "absolute", inset: 0, zIndex: 20,
                             display: "flex", alignItems: "center", justifyContent: "center",
                             background: "rgba(255,255,255,0.75)", fontWeight: 900,
                         }}>
                             <div className="flex flex-col items-center gap-3">
-                                <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
-                                <span>{t.kids.steps.loading}</span>
+                                {isPdfGenerating ? (
+                                    <>
+                                        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                        <span>PDF 생성 중... ({pdfStepIdx + 1}/{total})</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
+                                        <span>{t.kids.steps.loading}</span>
+                                    </>
+                                )}
                             </div>
                         </div>
                     )}
@@ -761,14 +911,26 @@ function KidsStepPageContent() {
                                     <Center>
                                         <LdrModel
                                             url={ldrUrl}
-                                            overrideMainLdrUrl={modelUrlToUse}
-                                            onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }}
-                                            onError={() => setLoading(false)}
+                                            overrideMainLdrUrl={finalModelUrl}
+                                            onLoaded={(g) => {
+                                                setLoading(false);
+                                                modelGroupRef.current = g;
+                                                if (isPdfGenerating) setPdfModelLoaded(true);
+                                            }}
+                                            onError={() => {
+                                                setLoading(false);
+                                                if (isPdfGenerating) setPdfModelLoaded(true); // skip error
+                                            }}
                                             customBounds={modelBounds}
-                                            fitTrigger={`${ldrUrl}|${modelUrlToUse ?? ''}`}
+                                            fitTrigger={`${ldrUrl}|${finalModelUrl ?? ''}`}
                                         />
                                     </Center>
-                                    <OrbitControls makeDefault enablePan={false} enableZoom />
+                                    <PDFRig
+                                        active={isPdfGenerating && pdfModelLoaded}
+                                        viewIndex={pdfViewIdx}
+                                        onReadyToCapture={handlePdfCapture}
+                                    />
+                                    {!isPdfGenerating && <OrbitControls makeDefault enablePan={false} enableZoom />}
                                 </Canvas>
                             </div>
 
