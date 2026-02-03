@@ -94,7 +94,7 @@ public class PaymentOrder {
     }
 
     public boolean canCancelByUser() {
-        return this.status == PaymentStatus.PENDING;
+        return this.status == PaymentStatus.PENDING || this.status == PaymentStatus.COMPLETED;
     }
 
     public boolean canCancelByAdmin() {
