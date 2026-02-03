@@ -70,10 +70,6 @@ export default function FloatingMenuButton() {
         setIsOpen(!isOpen);
     };
 
-    if (pathname?.startsWith('/gallery/') && pathname.split('/').length > 2) {
-        return null;
-    }
-
     return (
         <>
             {/* 배경 오버레이 */}
