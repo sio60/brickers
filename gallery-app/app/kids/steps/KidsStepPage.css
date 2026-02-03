@@ -251,8 +251,7 @@
 }
 
 .kidsStep__sidebarInput:focus {
-    border-color: #ffe135;
-    box-shadow: 0 0 0 3px rgba(255, 225, 53, 0.2);
+    border-color: #000;
 }
 
 .kidsStep__sidebarInput::placeholder {
@@ -270,13 +269,13 @@
     cursor: pointer;
     font-size: 0.95rem;
     transition: all 0.2s;
-    box-shadow: 2px 2px 0px #000;
+    box-shadow: 4px 4px 0px #000;
 }
 
 .kidsStep__sidebarBtn:hover:not(:disabled) {
     background: #ffd700;
-    transform: translate(-1px, -1px);
-    box-shadow: 3px 3px 0px #000;
+    transform: translate(-3px, -3px);
+    box-shadow: 6px 6px 0px #000;
 }
 
 .kidsStep__sidebarBtn:active:not(:disabled) {
@@ -372,8 +371,8 @@
 
 .kidsStep__colorBtn:hover {
     background: #ffe135;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0px #000;
 }
 
 /* 색상 모달 테마 버튼 */
