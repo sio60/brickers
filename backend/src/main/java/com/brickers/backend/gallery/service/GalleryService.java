@@ -275,6 +275,7 @@ public class GalleryService {
                 .likeCount(Math.max(0, post.getLikeCount()))
                 .dislikeCount(Math.max(0, post.getDislikeCount()))
                 .viewCount(Math.max(0, post.getViewCount()))
+                .commentCount(Math.max(0, post.getCommentCount()))
                 .bookmarked(bookmarked)
                 .myReaction(myReaction)
                 .build();
