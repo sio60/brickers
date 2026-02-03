@@ -20,6 +20,7 @@ export default function FloatingMenuButton() {
     const [isOpen, setIsOpen] = useState(false);
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isChatOpen, setIsChatOpen] = useState(false);
+    const [showHint, setShowHint] = useState(true);
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -84,6 +85,19 @@ export default function FloatingMenuButton() {
             )}
 
             <div className={styles.container}>
+                {showHint && (
+                    <div className={styles.hint}>
+                        <button
+                            type="button"
+                            className={styles.hintClose}
+                            onClick={() => setShowHint(false)}
+                            aria-label="close"
+                        >
+                            ✕
+                        </button>
+                        <span className={styles.hintText}>궁금한 점은 브릭봇을 통해 문의주세요!</span>
+                    </div>
+                )}
                 {/* 메뉴 모달 */}
                 <div className={`${styles.modal} ${isOpen ? styles.isOpen : ""}`}>
                     {menuItems.map((item) => (

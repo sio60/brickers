@@ -69,6 +69,7 @@ export default function MyPage() {
 
     // 3D 뷰어 모달 상태
     const [selectedJob, setSelectedJob] = useState<MyJob | null>(null);
+    const [jobViewStep, setJobViewStep] = useState<"preview" | "start">("preview");
     // 작업 메뉴 모달 상태
     const [menuJob, setMenuJob] = useState<MyJob | null>(null);
     // 이미지 원본 보기 모달 상태
@@ -140,6 +141,12 @@ export default function MyPage() {
         if (activeMenu !== 'jobs') return;
         resetAndLoadJobs();
     }, [activeMenu, jobSort]);
+
+    useEffect(() => {
+        if (selectedJob) {
+            setJobViewStep("preview");
+        }
+    }, [selectedJob]);
 
     useEffect(() => {
         if (activeMenu !== 'jobs') return;
@@ -890,18 +897,55 @@ export default function MyPage() {
             {/* 3D 뷰어 모달 */}
             {selectedJob && (
                 <div className={styles.mypage__modalOverlay}>
-                    <div className={styles.mypage__modalContent}>
-                        <button className={`${styles.mypage__closeBtn} ${styles.dark}`} onClick={() => setSelectedJob(null)}>
-                            ✕
-                        </button>
-                        <div className={styles.mypage__viewerContainer}>
+                    <div className={styles.mypage__modalContent} style={{ background: '#fff', borderRadius: '20px', overflow: 'hidden', maxWidth: '900px', width: '90%' }}>
+                        <div className={styles.mypage__previewHead}>
+                            <div className={styles.mypage__previewTitle}>
+                                {jobViewStep === "preview" ? t.kids.modelSelect.previewTitle : t.kids.steps.startAssembly}
+                            </div>
+                            <div className={styles.mypage__previewSub}>
+                                {jobViewStep === "preview" ? t.kids.modelSelect.previewSub : t.kids.steps.preview}
+                            </div>
+                            <button className={`${styles.mypage__closeBtn} ${styles.dark}`} style={{ top: '8px', right: '8px' }} onClick={() => setSelectedJob(null)}>
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className={styles.mypage__previewViewer}>
                             {selectedJob.ldrUrl ? (
-                                <KidsLdrPreview url={selectedJob.ldrUrl} stepMode={true} />
-                            ) : null}
+                                <KidsLdrPreview url={selectedJob.ldrUrl} />
+                            ) : (
+                                <div className="flex items-center justify-center h-full text-[#999]">
+                                    {t.common.noPreview}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className={styles.mypage__previewActions}>
+                            {jobViewStep === "preview" ? (
+                                <button
+                                    className={styles.mypage__previewNextBtn}
+                                    onClick={() => setJobViewStep("start")}
+                                >
+                                    {t.kids.steps.startAssembly}
+                                </button>
+                            ) : (
+                                <button
+                                    className={styles.mypage__previewNextBtn}
+                                    onClick={() => {
+                                        const url = selectedJob.ldrUrl;
+                                        if (!url) return;
+                                        setSelectedJob(null);
+                                        router.push(`/kids/steps?url=${encodeURIComponent(url)}&jobId=${selectedJob.id}&isPreset=true`);
+                                    }}
+                                >
+                                    {t.jobs.menu.viewBlueprint}
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
             )}
+
 
             {/* 색상 변경 모달 */}
             {isColorModalOpen && (
