@@ -209,24 +209,33 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
             activeCategory={category}
             onCategoryChange={handleCategoryChange}
             rightAction={
-                <div className="flex items-center gap-1 bg-gray-100 rounded-full p-1 border border-gray-200">
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 bg-gray-100 rounded-full p-1 border border-gray-200">
+                        <button
+                            onClick={() => handleSortChange('latest')}
+                            className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${sort === 'latest'
+                                ? 'bg-white text-blue-600 shadow-sm'
+                                : 'text-gray-400 hover:text-gray-600'
+                                }`}
+                        >
+                            {t.main.sortLatest}
+                        </button>
+                        <button
+                            onClick={() => handleSortChange('popular')}
+                            className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${sort === 'popular'
+                                ? 'bg-white text-blue-600 shadow-sm'
+                                : 'text-gray-400 hover:text-gray-600'
+                                }`}
+                        >
+                            {t.main.sortPopular}
+                        </button>
+                    </div>
                     <button
-                        onClick={() => handleSortChange('latest')}
-                        className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${sort === 'latest'
-                            ? 'bg-white text-blue-600 shadow-sm'
-                            : 'text-gray-400 hover:text-gray-600'
-                            }`}
+                        onClick={() => router.back()}
+                        className="w-11 h-11 border-none bg-transparent text-2xl font-bold flex items-center justify-center transition-all duration-200 text-black hover:rotate-90"
+                        aria-label="close"
                     >
-                        {t.main.sortLatest}
-                    </button>
-                    <button
-                        onClick={() => handleSortChange('popular')}
-                        className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${sort === 'popular'
-                            ? 'bg-white text-blue-600 shadow-sm'
-                            : 'text-gray-400 hover:text-gray-600'
-                            }`}
-                    >
-                        {t.main.sortPopular}
+                        ✕
                     </button>
                 </div>
             }
