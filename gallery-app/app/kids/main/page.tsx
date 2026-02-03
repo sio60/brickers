@@ -9,9 +9,8 @@ import { getPresignUrl } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, ThemeInfo } from "@/lib/api/colorVariantApi";
 // import KidsLoadingScreen from "@/components/kids/KidsLoadingScreen";
 import BrickStackMiniGame from "@/components/kids/BrickStackMiniGame";
-import { registerToGallery } from "@/lib/api/myApi"; // Import API
+// import { registerToGallery } from "@/lib/api/myApi"; // Import API
 import { useJobStore } from "@/stores/jobStore";
-import './KidsPage.css';
 
 // SSR 제외
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
@@ -26,9 +25,9 @@ function KidsPageContent() {
     const age = (searchParams.get("age") ?? "4-5") as "4-5" | "6-7" | "8-10";
 
     const budget = useMemo(() => {
-        if (age === "4-5") return 50;
-        if (age === "6-7") return 100;
-        return 150;
+        if (age === "4-5") return 150;
+        if (age === "6-7") return 200;
+        return 250;
     }, [age]);
 
     const [rawFile, setRawFile] = useState<File | null>(null);
