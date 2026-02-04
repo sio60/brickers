@@ -14,18 +14,20 @@ export default function LandingGalleryThumbnail({ item, isSelected, onClick }: P
     return (
         <button
             onClick={() => onClick(item)}
-            className={`relative flex flex-col bg-white rounded-3xl border-[3px] transition-all duration-300 group overflow-hidden ${isSelected
+            className={`relative flex flex-col bg-white rounded-3xl border-[3px] transition-all duration-300 group overflow-hidden aspect-[4/5] ${isSelected
                 ? 'border-yellow-400 scale-[0.98] shadow-lg'
                 : 'border-black hover:scale-[1.02] hover:shadow-xl'
                 }`}
         >
-            <div className="aspect-square w-full p-4 flex items-center justify-center bg-white">
+            <div className="aspect-[4/3] w-full p-3 flex items-center justify-center bg-[#fcfcfc] border-b-[2px] border-black/5">
                 {displayImageUrl ? (
-                    <img
-                        src={displayImageUrl}
-                        alt={item.title}
-                        className={`w-full h-full object-contain transition-transform duration-500 ${isSelected ? 'scale-110' : 'group-hover:scale-105'}`}
-                    />
+                    <div className="relative w-full h-full">
+                        <img
+                            src={displayImageUrl}
+                            alt={item.title}
+                            className={`w-full h-full object-contain transition-transform duration-500 ${isSelected ? 'scale-110' : 'group-hover:scale-105'}`}
+                        />
+                    </div>
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-200">
                         <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
@@ -35,9 +37,12 @@ export default function LandingGalleryThumbnail({ item, isSelected, onClick }: P
                 )}
             </div>
 
-            <div className="px-4 pb-4">
-                <p className="text-[11px] font-black text-black truncate uppercase tracking-tighter">
+            <div className="flex-1 flex flex-col justify-center px-3 py-3 gap-1 overflow-hidden bg-white">
+                <p className="text-[11px] font-black text-gray-900 truncate uppercase tracking-tighter text-center">
                     {item.title}
+                </p>
+                <p className="text-[9px] font-bold text-gray-400 truncate text-center">
+                    @{item.authorNickname || 'Anonymous'}
                 </p>
             </div>
 
