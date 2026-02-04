@@ -73,8 +73,8 @@ export default function GalleryPanel({ title, activeCategory, onCategoryChange, 
                     </div>
                 )}
 
-                {/* Body - Flex container, children handle their own layout */}
-                <div className="flex-1 p-10 bg-white min-h-0">
+                {/* Body - Scrollable */}
+                <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-white">
                     {children}
                 </div>
 
