@@ -17,7 +17,10 @@ export const en = {
             titleLabel: "Title:",
             authorLabel: "Creator:",
             moreWorks: "Want to see more creations?",
-            goToGallery: "Go to Gallery"
+            goToGallery: "Go to Gallery",
+            recentCreations: "Recent Creations",
+            itemsCount: "items",
+            doubleClick: "Double click for details"
         },
         galleryList: {
             workspace: "Workspace",
