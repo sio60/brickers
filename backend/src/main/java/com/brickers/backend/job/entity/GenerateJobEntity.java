@@ -81,6 +81,9 @@ public class GenerateJobEntity {
     /** 도면/PDF key */
     private String blueprintPdfKey;
 
+    /** 조립 설명서 PDF URL (S3) */
+    private String instructionsPdfUrl;
+
     /** BOM JSON key */
     @Deprecated
     private String bomKey;

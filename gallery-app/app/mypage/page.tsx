@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import styles from "./MyPage.module.css";
 import { getMyOverview, getMyProfile, getMyJobs, retryJob, updateMyProfile, ApiError } from "@/lib/api/myApi";
 import type { MyOverview, MyProfile, MyJob } from "@/lib/api/myApi";
+import { getColorThemes, applyColorVariant, downloadLdrFromBase64 } from "@/lib/api/colorVariantApi";
 import KidsLdrPreview from "@/components/kids/KidsLdrPreview";
 import BackgroundBricks from "@/components/BackgroundBricks";
 import UpgradeModal from "@/components/UpgradeModal";
@@ -298,9 +299,16 @@ export default function MyPage() {
                 if (menuJob.ldrUrl) {
                     const url = menuJob.ldrUrl;
                     setMenuJob(null);
-                    router.push(`/kids/steps?url=${encodeURIComponent(url)}&jobId=${menuJob.id}&isPreset=true`);
+                    router.push(`/kids/steps?url=${encodeURIComponent(url)}&jobId=${menuJob.id}&autoPdf=true`);
                 } else {
                     alert(t.jobs.modalNoData);
+                }
+                break;
+            case 'pdf':
+                if (menuJob.instructionsPdfUrl) {
+                    downloadFile(menuJob.instructionsPdfUrl, `${menuJob.title || 'guide'}.pdf`);
+                } else {
+                    alert('생성된 PDF가 없습니다. 조립 페이지에서 생성을 기다려주세요.');
                 }
                 break;
         }
@@ -316,19 +324,45 @@ export default function MyPage() {
         { id: "delete" as MenuItem, label: t.menu.delete },
     ];
 
-    // 색상 변경 관련 함수 (현재 마이페이지에서는 비활성화, 나중에 사용 가능)
+    // 색상 변경 관련 함수
     const openColorModal = async () => {
+        if (!menuJob) return;
         setMenuJob(null);
         setIsColorModalOpen(true);
         // 테마 로드 로직 (필요 시 colorVariantApi import 후 사용)
+        // try {
+        //     if (colorThemes.length === 0) {
+        //         const themes = await getColorThemes();
+        //         setColorThemes(themes);
+        //     }
+        // } catch (e) {
+        //     console.error("Failed to load color themes", e);
+        // }
     };
 
     const handleApplyColor = async () => {
         // 색상 적용 로직 (필요 시 구현)
+        // if (!menuJob?.ldrUrl || !selectedTheme) return;
+
+        // try {
+        //     setIsApplyingColor(true);
+        //     const res = await applyColorVariant(menuJob.ldrUrl, selectedTheme, authFetch);
+        //     if (res.ok && res.ldrData) {
+        //         setColorChangedLdrBase64(res.ldrData);
+        //         setIsColorModalOpen(false);
+        //     } else {
+        //         alert(res.message || "색상 변경 실패");
+        //     }
+        // } catch (e) {
+        //     alert(e instanceof Error ? e.message : "색상 변경 중 오류 발생");
+        // } finally {
+        //     setIsApplyingColor(false);
+        // }
     };
 
     const downloadColorChangedLdr = () => {
-        // LDR 다운로드 로직 (필요 시 구현)
+        // if (!colorChangedLdrBase64) return;
+        // downloadLdrFromBase64(colorChangedLdrBase64, `${menuJob?.title || 'model'}_${selectedTheme}.ldr`);
     };
 
     // 실시간 업데이트 (Polling) 및 문의 내역 로드
@@ -818,7 +852,39 @@ export default function MyPage() {
                                 <Icons.Layers className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.viewBlueprint}</span>
                             </button>
+
+                            {/* PDF Download Button */}
+                            {menuJob.instructionsPdfUrl && (
+                                <button
+                                    className={`${styles.mypage__menuItem2} ${styles.primary}`}
+                                    onClick={() => handleMenuAction('pdf')}
+                                >
+                                    <Icons.DownloadFile className={styles.mypage__menuIcon2} />
+                                    <span>PDF 설명서 다운로드</span>
+                                </button>
+                            )}
+
                             <div className={styles.mypage__menuDivider} />
+
+                            {/* <button
+                                className={styles.mypage__menuItem2}
+                                onClick={() => handleMenuAction('source')}
+                                disabled={!menuJob.sourceImageUrl}
+                            >
+                                <Icons.DownloadImage className={styles.mypage__menuIcon2} />
+                                <span>{t.jobs.menu?.sourceImage || '원본 이미지 다운로드'}</span>
+                            </button>
+                            <button
+                                className={styles.mypage__menuItem2}
+                                onClick={() => handleMenuAction('corrected')}
+                                disabled={!menuJob.correctedImageUrl}
+                            >
+                                <Icons.DownloadImage className={styles.mypage__menuIcon2} />
+                                <span>보정 이미지 다운로드</span>
+                            </button>
+
+                            <div className={styles.mypage__menuDivider} /> */}
+
                             <button
                                 className={styles.mypage__menuItem2}
                                 onClick={() => handleMenuAction('glb')}
@@ -835,15 +901,10 @@ export default function MyPage() {
                                 <Icons.DownloadFile className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.ldrFile}</span>
                             </button>
+
                             <div className={styles.mypage__menuDivider} />
-                            <button
-                                className={`${styles.mypage__menuItem2} ${styles.primary}`}
-                                onClick={() => handleMenuAction('pdf')}
-                                disabled={!menuJob.ldrUrl}
-                            >
-                                <Icons.DownloadFile className={styles.mypage__menuIcon2} />
-                                <span>PDF 설명서 저장</span>
-                            </button>
+                            {/* <button
+                                className={`${styles.mypage__menuItem2} ${styles.primary}`}></button> */}
                             {/* 색상 변경 버튼 - 마이페이지에서는 숨김 (나중에 활성화 가능)
                             <div className="h-px bg-[#eee] my-2" />
                             <button
@@ -851,7 +912,7 @@ export default function MyPage() {
                                 onClick={openColorModal}
                                 disabled={!menuJob.ldrUrl}
                             >
-                                <Icons.Edit className="w-5 h-5 flex items-center justify-center" />
+                                <Icons.Edit className={styles.mypage__menuIcon2} />
                                 <span>색상 변경</span>
                             </button>
                             */}
@@ -973,8 +1034,7 @@ export default function MyPage() {
                 </div>
             )}
 
-
-            {/* 색상 변경된 LDR 다운로드 모달 - 마이페이지에서는 숨김 (나중에 활성화 가능)
+            {/* 색상 변경된 LDR 다운로드 모달 
             {colorChangedLdrBase64 && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-[4px] grid place-items-center z-[2000]" onClick={() => setColorChangedLdrBase64(null)}>
                     <div className="bg-white border-[3px] border-black rounded-[20px] p-8 w-[min(400px,90vw)] flex flex-col gap-5 shadow-[0_20px_40px_rgba(0,0,0,0.2)] relative" onClick={(e) => e.stopPropagation()}>
@@ -990,7 +1050,7 @@ export default function MyPage() {
                     </div>
                 </div>
             )}
-            */}
+                */}
         </div>
     );
 }

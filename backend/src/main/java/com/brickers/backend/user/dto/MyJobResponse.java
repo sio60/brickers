@@ -34,6 +34,9 @@ public class MyJobResponse {
     /** LDR 파일 URL */
     private String ldrUrl;
 
+    /** 조립 설명서 PDF URL */
+    private String instructionsPdfUrl;
+
     /** 결과물 존재 여부(모델/도면/BOM 중 하나라도 있으면 true) */
     private boolean hasResult;
 
@@ -53,8 +56,7 @@ public class MyJobResponse {
 
         boolean hasResult = (ldrUrl != null && !ldrUrl.isBlank())
                 || (j.getGlbUrl() != null && !j.getGlbUrl().isBlank())
-                || (j.getBlueprintPdfKey() != null && !j.getBlueprintPdfKey().isBlank())
-                || (j.getBomKey() != null && !j.getBomKey().isBlank());
+                || (j.getInstructionsPdfUrl() != null && !j.getInstructionsPdfUrl().isBlank());
 
         return MyJobResponse.builder()
                 .id(j.getId())
@@ -67,6 +69,7 @@ public class MyJobResponse {
                 .correctedImageUrl(j.getCorrectedImageUrl())
                 .glbUrl(j.getGlbUrl())
                 .ldrUrl(ldrUrl)
+                .instructionsPdfUrl(j.getInstructionsPdfUrl())
                 .hasResult(hasResult)
                 .errorMessage(j.getErrorMessage())
                 .createdAt(j.getCreatedAt())

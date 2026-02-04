@@ -34,6 +34,7 @@ export interface MyJob {
     correctedImageUrl?: string;
     glbUrl?: string;
     ldrUrl?: string; // LDR 파일 URL (백엔드 MyJobResponse와 일치)
+    instructionsPdfUrl?: string; // PDF 파일 URL
     hasResult: boolean;
     errorMessage: string | null;
     createdAt: string;

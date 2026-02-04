@@ -1,6 +1,10 @@
 package com.brickers.backend.kids.service;
 
+import com.brickers.backend.job.repository.GenerateJobRepository;
 import com.brickers.backend.kids.client.AiRenderClient;
+import com.brickers.backend.kids.dto.KidsPdfRequest;
+import com.brickers.backend.kids.dto.KidsPdfResponse;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,9 +17,12 @@ import java.util.UUID;
 public class KidsRenderService {
 
     private final AiRenderClient aiClient;
+    private final GenerateJobRepository generateJobRepository;
 
-    public KidsRenderService(AiRenderClient aiClient) {
+    public KidsRenderService(AiRenderClient aiClient,
+            GenerateJobRepository generateJobRepository) {
         this.aiClient = aiClient;
+        this.generateJobRepository = generateJobRepository;
     }
 
     public String renderOneImage(MultipartFile file) throws Exception {
@@ -48,5 +55,25 @@ public class KidsRenderService {
 
         // ✅ 프론트에서 바로 접근할 URL
         return "/api/kids/rendered/" + outId + ".png";
+    }
+
+    public KidsPdfResponse createPdfWithBom(
+            KidsPdfRequest request) {
+        KidsPdfResponse response = aiClient.createPdfWithBom(request);
+
+        // ✅ 영속화: jobId가 있으면 DB 업데이트
+        if (request.getJobId() != null && response != null && response.getPdfUrl() != null) {
+            try {
+                generateJobRepository.findById(request.getJobId()).ifPresent(job -> {
+                    job.setInstructionsPdfUrl(response.getPdfUrl());
+                    generateJobRepository.save(job);
+                });
+            } catch (Exception e) {
+                // 로그만 남기고 응답은 보냄
+                System.err.println("Failed to save PDF URL to Job: " + e.getMessage());
+            }
+        }
+
+        return response;
     }
 }

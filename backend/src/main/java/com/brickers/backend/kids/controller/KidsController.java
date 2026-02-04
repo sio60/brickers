@@ -21,8 +21,7 @@ public class KidsController {
     @PostMapping(value = "/generate", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> generateBrick(
             Authentication authentication,
-            @RequestBody KidsGenerateRequest request
-    ) {
+            @RequestBody KidsGenerateRequest request) {
         log.info("📥 [KidsController] /api/kids/generate 요청 수신");
         log.info("   - sourceImageUrl: {}", request.getSourceImageUrl());
         log.info("   - age: {}, budget: {}, title: {}", request.getAge(), request.getBudget(), request.getTitle());
@@ -37,8 +36,7 @@ public class KidsController {
                 request.getSourceImageUrl(),
                 request.getAge(),
                 request.getBudget(),
-                request.getTitle()
-        );
+                request.getTitle());
         log.info("✅ [KidsController] 응답: {}", result);
         return ResponseEntity.ok(result);
     }
@@ -54,8 +52,7 @@ public class KidsController {
     @PatchMapping("/jobs/{jobId}/stage")
     public ResponseEntity<Void> updateJobStage(
             @PathVariable String jobId,
-            @RequestBody Map<String, String> body
-    ) {
+            @RequestBody Map<String, String> body) {
         String stageName = body.get("stage");
         kidsService.updateJobStage(jobId, stageName);
         return ResponseEntity.ok().build();
