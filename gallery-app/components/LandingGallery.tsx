@@ -42,7 +42,7 @@ export default function LandingGallery({ items = [], loading = false }: LandingG
                 </div>
 
                 {/* Right: Scrollable List */}
-                <div className="flex-1 min-w-0 flex flex-col h-full">
+                <div className="relative flex-1 min-w-0 flex flex-col h-full">
                     <div className="flex items-center justify-between mb-4 px-2">
                         <h3 className="text-xl font-black text-black italic uppercase tracking-tighter">
                             {t.main.landing.recentCreations}
@@ -53,7 +53,7 @@ export default function LandingGallery({ items = [], loading = false }: LandingG
                     </div>
 
                     <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar">
-                        <div className="grid grid-cols-2 gap-4 pb-6">
+                        <div className="grid grid-cols-2 gap-4 pb-28">
                             {items.map((item) => (
                                 <LandingGalleryThumbnail
                                     key={item.id}
@@ -66,7 +66,7 @@ export default function LandingGallery({ items = [], loading = false }: LandingG
                     </div>
 
                     {/* Bottom Gradient Fade */}
-                    <div className="h-20 -mt-20 bg-gradient-to-t from-white/50 to-transparent pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 right-4 h-32 bg-gradient-to-t from-white via-white/60 to-transparent pointer-events-none z-10" />
                 </div>
             </div>
 
