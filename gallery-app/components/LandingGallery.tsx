@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { GalleryItem } from '../types/gallery';
+import { useLanguage } from '@/contexts/LanguageContext';
 import LandingGalleryPreview from './LandingGalleryPreview';
 import LandingGalleryThumbnail from './LandingGalleryThumbnail';
 
@@ -11,6 +12,7 @@ interface LandingGalleryProps {
 }
 
 export default function LandingGallery({ items = [], loading = false }: LandingGalleryProps) {
+    const { t } = useLanguage();
     const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
 
     useEffect(() => {
@@ -31,9 +33,9 @@ export default function LandingGallery({ items = [], loading = false }: LandingG
 
     return (
         <div className="w-full max-w-[1200px] mx-auto px-6 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <div className="flex flex-col lg:flex-row gap-10 h-[650px]">
+            <div className="flex flex-col lg:flex-row gap-10 h-[500px]">
                 {/* Left: Big Preview */}
-                <div className="flex-[1.4] min-w-0 h-full">
+                <div className="flex-[1.2] min-w-0 h-full">
                     {selectedItem && (
                         <LandingGalleryPreview item={selectedItem} />
                     )}
@@ -42,8 +44,12 @@ export default function LandingGallery({ items = [], loading = false }: LandingG
                 {/* Right: Scrollable List */}
                 <div className="flex-1 min-w-0 flex flex-col h-full">
                     <div className="flex items-center justify-between mb-4 px-2">
-                        <h3 className="text-xl font-black text-black italic uppercase tracking-tighter">Recent Creations</h3>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{items.length} items</span>
+                        <h3 className="text-xl font-black text-black italic uppercase tracking-tighter">
+                            {t.main.landing.recentCreations}
+                        </h3>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                            {items.length} {t.main.landing.itemsCount}
+                        </span>
                     </div>
 
                     <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar">

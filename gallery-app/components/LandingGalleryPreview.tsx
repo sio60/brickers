@@ -2,12 +2,14 @@
 
 import { useRouter } from 'next/navigation';
 import { GalleryItem } from '../types/gallery';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type Props = {
     item: GalleryItem;
 };
 
 export default function LandingGalleryPreview({ item }: Props) {
+    const { t } = useLanguage();
     const router = useRouter();
     const safeTitle = item.title.replace(/\s+/g, '-').replace(/[^\w\-\uAC00-\uD7A3]/g, '');
     const slug = `${safeTitle}-${item.id}`;
@@ -27,7 +29,7 @@ export default function LandingGalleryPreview({ item }: Props) {
                     <img
                         src={displayImageUrl}
                         alt={item.title}
-                        className="w-full h-full object-contain p-12 transition-transform duration-700 group-hover:scale-[1.03]"
+                        className="w-full h-full object-contain p-8 transition-transform duration-700 group-hover:scale-[1.03]"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-200">
@@ -38,14 +40,16 @@ export default function LandingGalleryPreview({ item }: Props) {
                 )}
 
                 {/* Info Overlay */}
-                <div className="absolute inset-x-0 bottom-0 bg-white/90 backdrop-blur-sm border-t-[4px] border-black p-8 transition-transform duration-500 translate-y-[2px] group-hover:translate-y-0">
-                    <h2 className="text-3xl font-black text-black tracking-tighter leading-tight italic">
+                <div className="absolute inset-x-0 bottom-0 bg-white/90 backdrop-blur-sm border-t-[4px] border-black p-6 transition-transform duration-500 translate-y-[2px] group-hover:translate-y-0">
+                    <h2 className="text-2xl font-black text-black tracking-tighter leading-tight italic">
                         {item.title}
                     </h2>
-                    <p className="text-gray-500 font-bold mt-1 text-lg">@{item.authorNickname || 'Anonymous'}</p>
+                    <p className="text-gray-500 font-bold mt-1 text-base">@{item.authorNickname || 'Anonymous'}</p>
 
                     <div className="mt-4 flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Double click for details</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">
+                            {t.main.landing.doubleClick}
+                        </span>
                         <div className="flex items-center gap-2">
                             <div className="flex items-center gap-1.5 px-3 py-1 bg-black text-white rounded-full">
                                 <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">

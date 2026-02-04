@@ -17,7 +17,10 @@ export const ja = {
             titleLabel: "タイトル:",
             authorLabel: "作成者:",
             moreWorks: "もっと作品を見たいですか？",
-            goToGallery: "ギャラリーへ"
+            goToGallery: "ギャラリーへ",
+            recentCreations: "最新の作品",
+            itemsCount: "個の作品",
+            doubleClick: "ダブルクリックで詳細表示"
         },
         galleryList: {
             workspace: "ワークスペース",
