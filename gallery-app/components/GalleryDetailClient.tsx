@@ -403,7 +403,7 @@ export default function GalleryDetailClient({ item }: Props) {
                 </div>
 
                 {/* 3. Right Sidebar - Detail & Comments */}
-                <div className="w-[420px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10 select-none">
+                <div className="w-[350px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10 select-none">
                     {/* Scrollable Content */}
                     <div className="flex-1 overflow-y-auto">
                         {/* User Info Header */}

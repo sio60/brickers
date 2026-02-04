@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import CarouselGallery from "@/components/CarouselGallery";
+import LandingGallery from "@/components/LandingGallery";
 import AgeSelectionModal from "@/components/kids/AgeSelectionModal";
 import { GalleryItem } from "@/types/gallery";
 import styles from '@/app/LandingPage.module.css';
@@ -31,7 +31,7 @@ function LandingPageContent({ initialItems }: Props) {
         if (initialItems.length === 0) {
             const fetchGallery = async () => {
                 try {
-                    const res = await fetch('/api/gallery?page=0&size=7&sort=latest');
+                    const res = await fetch('/api/gallery?page=0&size=24&sort=latest');
                     if (res.ok) {
                         const data = await res.json();
                         setGalleryItems(data.content || []);
@@ -78,7 +78,7 @@ function LandingPageContent({ initialItems }: Props) {
             <Background3D entryDirection="top" />
 
             <div className={styles.gallerySection}>
-                <CarouselGallery
+                <LandingGallery
                     items={galleryItems}
                     loading={isLoading}
                 />
