@@ -17,7 +17,10 @@ export const ko = {
             titleLabel: "제목:",
             authorLabel: "생성한 사람:",
             moreWorks: "더 많은 작품이 궁금하신가요?",
-            goToGallery: "갤러리 보러가기"
+            goToGallery: "갤러리 보러가기",
+            recentCreations: "최신 작품",
+            itemsCount: "작품",
+            doubleClick: "상세 보려면 더블 클릭"
         },
         galleryList: {
             workspace: "워크스페이스",
