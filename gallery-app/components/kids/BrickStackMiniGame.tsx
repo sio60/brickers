@@ -178,14 +178,21 @@ function Scene({
 }
 
 function CameraFollow({ stackHeight }: { stackHeight: number }) {
+    const initialZ = 9;
+    const initialY = 1;
+
     useFrame((state) => {
-        const targetY = Math.max(0, stackHeight + FLOOR_Y + 3.5);
-        state.camera.position.y = THREE.MathUtils.lerp(
-            state.camera.position.y,
-            targetY,
-            0.1
-        );
-        state.camera.lookAt(0, targetY - 1, 0);
+        // As the stack grows, we pull the camera back (increase Z) 
+        // and move it up (increase Y) proportionally to keep the entire stack in view.
+        const targetZ = initialZ + Math.max(0, stackHeight * 0.6);
+        const targetY = initialY + Math.max(0, stackHeight * 0.3);
+
+        state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, targetZ, 0.05);
+        state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, targetY, 0.05);
+
+        // Look at the upper middle of the current stack to keep the base and the top visible
+        const lookAtY = (FLOOR_Y + (FLOOR_Y + stackHeight)) / 2 + 2;
+        state.camera.lookAt(0, lookAtY, 0);
     });
     return null;
 }
