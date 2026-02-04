@@ -179,12 +179,13 @@ function Scene({
 
 function CameraFollow({ stackHeight }: { stackHeight: number }) {
     useFrame((state) => {
-        const height = Math.max(0, stackHeight + FLOOR_Y);
-        const targetY = Math.max(3, height * 0.6 + 2);
-        const targetZ = Math.min(32, 9 + height * 0.6);
-        state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, targetY, 0.08);
-        state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, targetZ, 0.08);
-        state.camera.lookAt(0, height * 0.5, 0);
+        const targetY = Math.max(0, stackHeight + FLOOR_Y + 3.5);
+        state.camera.position.y = THREE.MathUtils.lerp(
+            state.camera.position.y,
+            targetY,
+            0.1
+        );
+        state.camera.lookAt(0, targetY - 1, 0);
     });
     return null;
 }
