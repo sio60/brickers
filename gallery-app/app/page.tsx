@@ -30,7 +30,7 @@ async function getGalleryItems(): Promise<GalleryItem[]> {
     const apiBase = process.env.API_BASE || 'http://backend:8080';
 
     try {
-        const res = await fetch(`${apiBase}/api/gallery?page=0&size=7&sort=latest`, {
+        const res = await fetch(`${apiBase}/api/gallery?page=0&size=24&sort=latest`, {
             next: { revalidate: 60 }, // Cache for 60 seconds
         });
 
