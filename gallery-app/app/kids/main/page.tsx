@@ -128,10 +128,10 @@ function KidsPageContent() {
                         signal: abort.signal,
                     });
                     console.log("[KidsPage] ✅ fetch 완료 | status:", uploadRes.status);
-                } catch (fetchError: any) {
+                } catch (fetchError) {
                     console.error("[KidsPage] ❌ fetch 자체 에러:", fetchError);
-                    console.error("[KidsPage] ❌ 에러 타입:", fetchError?.name);
-                    console.error("[KidsPage] ❌ 에러 메시지:", fetchError?.message);
+                    console.error("[KidsPage] ❌ 에러 타입:", fetchError instanceof Error ? fetchError.name : "unknown");
+                    console.error("[KidsPage] ❌ 에러 메시지:", fetchError instanceof Error ? fetchError.message : String(fetchError));
                     throw fetchError;
                 }
 
@@ -273,10 +273,10 @@ function KidsPageContent() {
                 setGlbUrl(finalData.glbUrl || finalData.glb_url);
                 setStatus("done");
                 console.log("[KidsPage] ✅ 전체 프로세스 완료! | ldrUrl:", modelUrl);
-            } catch (e: any) {
+            } catch (e) {
                 if (!alive) return;
                 console.error("[KidsPage] ❌ Brick generation failed:", e);
-                setDebugLog(`${t.kids.generate.errorOccurred}: ${e.message}`);
+                setDebugLog(`${t.kids.generate.errorOccurred}: ${e instanceof Error ? e.message : String(e)}`);
                 setStatus("error");
             }
         };
@@ -393,9 +393,9 @@ function KidsPageContent() {
             } else {
                 alert(result.message || "색상 변경 실패");
             }
-        } catch (e: any) {
+        } catch (e) {
             console.error("색상 변경 실패:", e);
-            alert(e.message || "색상 변경 중 오류가 발생했습니다.");
+            alert(e instanceof Error ? e.message : "색상 변경 중 오류가 발생했습니다.");
         } finally {
             setIsApplyingColor(false);
         }

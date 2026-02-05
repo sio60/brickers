@@ -64,6 +64,9 @@ services:
       - GALLERY_REVALIDATE_URL=${GALLERY_REVALIDATE_URL:-http://frontend:3000/api/revalidate}
       - GALLERY_REVALIDATE_SECRET=${GALLERY_REVALIDATE_SECRET}
 
+      # ✅ Internal API Token (AI Server → Backend 로그 전송 인증)
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
+
     networks:
       - brickers-network
 
