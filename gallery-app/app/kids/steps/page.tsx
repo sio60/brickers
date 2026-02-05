@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import * as THREE from "three";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import { Bounds, OrbitControls, Center, Gltf, Environment, useBounds } from "@react-three/drei";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
@@ -13,6 +13,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { registerToGallery } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
+import { parseBOM, savePDF, type StepBOM } from "@/components/kids/PDFGenerator";
 import BackgroundBricks from "@/components/BackgroundBricks";
 import './KidsStepPage.css';
 
@@ -111,7 +112,7 @@ function LdrModel({
                 if (filename && lowerName !== filename) {
                     fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
                 }
-                
+
 
                 // Primitive 패턴: n-n*.dat (예: 4-4edge, 1-4cyli), stud*.dat, rect*.dat, box*.dat 등
                 const isPrimitive = /^\d+-\d+/.test(filename) ||
@@ -229,6 +230,48 @@ function FitOnceOnLoad({ trigger }: { trigger: string }) {
     return null;
 }
 
+// PDF Capture Rig
+const PDF_CAM_POSITIONS = [
+    [200, -200, 200],   // View 1: Main (Right-Top-Front)
+    [-200, -200, 200],  // View 2: Left-Top-Front
+    [0, -300, -200]     // View 3: Back-Top-Center
+];
+
+function PDFRig({
+    active,
+    viewIndex,
+    onReadyToCapture
+}: {
+    active: boolean;
+    viewIndex: number;
+    onReadyToCapture: () => void;
+}) {
+    const { camera, gl, scene } = useThree();
+
+    // Safety check just in case SSR issues (though this component is client-only)
+    if (!camera) return null;
+
+    useEffect(() => {
+        if (!active) return;
+
+        const pos = PDF_CAM_POSITIONS[viewIndex];
+        if (pos) {
+            camera.position.set(pos[0], pos[1], pos[2]);
+            camera.lookAt(0, 0, 0);
+            camera.updateMatrixWorld();
+
+            // Wait for render
+            const timer = setTimeout(() => {
+                gl.render(scene, camera);
+                onReadyToCapture();
+            }, 300); // 150ms -> 300ms for safety
+            return () => clearTimeout(timer);
+        }
+    }, [active, viewIndex, camera, gl, scene, onReadyToCapture]);
+
+    return null;
+}
+
 // LDR 파싱 및 정렬 유틸
 function parseAndProcessSteps(ldrText: string) {
     const lines = ldrText.replace(/\r\n/g, "\n").split("\n");
@@ -289,18 +332,26 @@ function parseAndProcessSteps(ldrText: string) {
     // 단, 첫 번째 세그먼트(헤더 등)는 무조건 맨 앞에? 보통 헤더에는 부품이 없음.
     // 하지만 segments[0]에 부품이 있을 수도 있음.
     // 전략: 부품이 있는 세그먼트들만 정렬한다?
-    // 보통 헤더(메타데이터)는 curCount=0일 것임.
-
-    // 단순하게: 전체를 Y 내림차순(큰거->작은거)으로 정렬.
-    // AvgY가 -Infinity(부품없음)인 경우... 메타데이터일 수 있는데, 이들을 맨 앞으로 보낼까?
-    // 보통 메타데이터는 0 STEP 이전에 나옴 (segments[0]).
+    // 보통 헤더(메타데이터)는 0 STEP 이전에 나옴 (segments[0]).
     // segments[0]는 고정하고 나머지만 정렬?
 
-    const header = segments[0];
-    const body = segments.slice(1);
+    let header = segments[0];
+    let body = segments.slice(1);
+
+    // 헤더에 실제 브릭(1 line)이 섞여 있으면 헤더를 본문으로 넘김
+    const headerHasGeometry = header.lines.some((line) => line.trim().startsWith("1 "));
+    if (headerHasGeometry) {
+        body = segments;
+        header = { lines: [], avgY: -Infinity };
+    }
 
     // Y 내림차순 (큰 값 = 바닥 = 먼저 조립)
-    body.sort((a, b) => a.avgY - b.avgY);
+    body.sort((a, b) => {
+        if (a.avgY === -Infinity && b.avgY === -Infinity) return 0;
+        if (a.avgY === -Infinity) return 1;
+        if (b.avgY === -Infinity) return -1;
+        return b.avgY - a.avgY;
+    });
 
     // Merge steps by layer (group nearby Y into one step)
     const LAYER_EPS = 8; // LDraw units
@@ -380,6 +431,99 @@ function KidsStepPageContent() {
     const [selectedTheme, setSelectedTheme] = useState<string>("");
     const [isApplyingColor, setIsApplyingColor] = useState(false);
     const [colorChangedLdrBase64, setColorChangedLdrBase64] = useState<string | null>(null);
+
+    // PDF Generation State
+    const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+    const [pdfStepIdx, setPdfStepIdx] = useState(0);
+    const [pdfViewIdx, setPdfViewIdx] = useState(0); // 0, 1, 2
+    const [pdfImages, setPdfImages] = useState<string[]>([]);
+    const [pdfModelLoaded, setPdfModelLoaded] = useState(false);
+    const [pdfBOM, setPdfBOM] = useState<StepBOM[]>([]);
+
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    const handleGeneratePDF = async () => {
+        if (!ldrUrl) return;
+
+        const confirmMsg = t.kids?.steps?.pdfConfirm || "PDF 설명을 생성하시겠습니까?\n모델 크기에 따라 시간이 걸릴 수 있습니다.";
+        if (!confirm(confirmMsg)) return;
+
+        setIsPdfGenerating(true);
+        setPdfStepIdx(0);
+        setPdfViewIdx(0);
+        setPdfImages([]);
+        setPdfModelLoaded(false);
+
+        // Parse BOM
+        try {
+            const res = await fetch(originalLdrUrl || ldrUrl);
+            const text = await res.text();
+            const bom = parseBOM(text);
+            setPdfBOM(bom);
+        } catch (e) {
+            console.error("BOM parse failed", e);
+            setPdfBOM([]);
+        }
+    };
+
+    // PDF Capture Loop logic
+    const handlePdfCapture = () => {
+        // Called by PDFRig when camera is ready
+        // We capture the canvas
+        // Instead of querySelector, we should find the canvas within the specific container or use a specific ID if possible.
+        // But since we are inside a component, querySelector might pick up background canvas.
+        // Let's rely on the fact that PDFRig is inside the MAIN canvas.
+        // We can pass the canvas reference from PDFRig? Or just try to pick the last canvas?
+
+        // Better: Use a specific class for the main canvas
+        const canvas = document.querySelector('.kids-main-canvas canvas') as HTMLCanvasElement;
+
+        if (canvas) {
+            try {
+                const data = canvas.toDataURL("image/png");
+                setPdfImages(prev => [...prev, data]);
+            } catch (e) {
+                console.error("Canvas capture failed", e);
+            }
+
+            // Next View or Next Step
+            if (pdfViewIdx < 2) {
+                setPdfViewIdx(prev => prev + 1);
+            } else {
+                // Done with this step, move to next
+                const total = stepBlobUrls.length;
+                if (pdfStepIdx < total - 1) {
+                    setPdfViewIdx(0);
+                    setPdfStepIdx(prev => prev + 1);
+                    setPdfModelLoaded(false); // Wait for new model load
+                } else {
+                    // All steps done!
+                    // Wait a bit to ensure last state update processed
+                    setTimeout(() => {
+                        const currentData = canvas.toDataURL("image/png"); // Capture last again to be sure?
+                        // Check if we missed the last one in the logic above?
+                        // actually handlePdfCapture adds to state.
+                        // The logic "finishPdfGeneration([...pdfImages, data])" in previous code was correct.
+                        // But we just updated state. We should pass the data directly to finish logic.
+                        finishPdfGeneration([...pdfImages, currentData]);
+                    }, 100);
+                }
+            }
+        } else {
+            console.error("Canvas parsing failed: Canvas not found");
+        }
+    };
+
+    const finishPdfGeneration = (finalImages: string[]) => {
+        setIsPdfGenerating(false);
+        try {
+            savePDF(finalImages, pdfBOM, "brickers_guide.pdf");
+            alert("PDF 생성이 완료되었습니다.");
+        } catch (e) {
+            console.error("PDF Save failed", e);
+            alert("PDF 저장 중 오류가 발생했습니다.");
+        }
+    };
 
     const revokeAll = (arr: string[]) => {
         arr.forEach((u) => { try { URL.revokeObjectURL(u); } catch { } });
@@ -598,13 +742,24 @@ function KidsStepPageContent() {
 
     const isPreset = searchParams.get("isPreset") === "true";
 
+    // Determine Logic for PDF vs Normal
+    const effectiveStepIdx = isPdfGenerating ? pdfStepIdx : stepIdx;
+    // PDF Loop controls model URL
+    const pdfCurrentOverride = stepBlobUrls[Math.min(pdfStepIdx, stepBlobUrls.length - 1)];
+
+    // Normal Mode URL
+    const normalModelUrl = isPreviewMode ? undefined : currentOverride;
+
+    // Final URL to pass
+    const finalModelUrl = isPdfGenerating ? pdfCurrentOverride : normalModelUrl;
+
     return (
         <div style={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
             {/* 3D Background Bricks */}
             <BackgroundBricks />
 
             {/* Content Container - Relative to center children */}
-            <div className="kidsStep__mainContainer" style={{ paddingLeft: isPreset ? 0 : undefined }}>
+            <div className="kidsStep__mainContainer" style={{ paddingLeft: isPreset ? 0 : 260 }}>
                 {/* Floating Sidebar Overlay - Hide for Preset Models */}
                 {!isPreset && (
                     <div style={{
@@ -649,19 +804,21 @@ function KidsStepPageContent() {
                             {t.kids.steps.viewModes}
                         </div>
 
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                             <button
                                 onClick={() => setActiveTab('LDR')}
                                 style={{
                                     textAlign: "left",
-                                    padding: "14px 16px",
-                                    borderRadius: 16,
-                                    background: activeTab === 'LDR' ? "#ffe135" : "transparent",
+                                    padding: "16px 20px",
+                                    borderRadius: 20,
+                                    background: activeTab === 'LDR' ? "#ffe135" : "#fff",
                                     color: "#000",
-                                    fontWeight: 800,
-                                    border: activeTab === 'LDR' ? "2px solid #000" : "2px solid transparent",
+                                    fontWeight: 900,
+                                    border: "3px solid #000",
                                     cursor: "pointer",
-                                    transition: "all 0.2s"
+                                    transition: "all 0.2s",
+                                    boxShadow: activeTab === 'LDR' ? "4px 4px 0px #000" : "2px 2px 0px #000",
+                                    fontSize: "1rem"
                                 }}
                             >
                                 {t.kids.steps.tabBrick}
@@ -670,14 +827,16 @@ function KidsStepPageContent() {
                                 onClick={() => setActiveTab('GLB')}
                                 style={{
                                     textAlign: "left",
-                                    padding: "14px 16px",
-                                    borderRadius: 16,
-                                    background: activeTab === 'GLB' ? "#ffe135" : "transparent",
+                                    padding: "16px 20px",
+                                    borderRadius: 20,
+                                    background: activeTab === 'GLB' ? "#ffe135" : "#fff",
                                     color: "#000",
-                                    fontWeight: 800,
-                                    border: "2px solid #000",
+                                    fontWeight: 900,
+                                    border: "3px solid #000",
                                     cursor: "pointer",
-                                    transition: "all 0.2s"
+                                    transition: "all 0.2s",
+                                    boxShadow: activeTab === 'GLB' ? "4px 4px 0px #000" : "2px 2px 0px #000",
+                                    fontSize: "1rem"
                                 }}
                             >
                                 {t.kids.steps.tabModeling}
@@ -732,22 +891,46 @@ function KidsStepPageContent() {
                                 </button>
                             </div>
                         </div>
+
+                        {/* PDF Download Button */}
+                        <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
+                            <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800, textTransform: "uppercase" }}>
+                                PDF Download
+                            </div>
+                            <button
+                                className="kidsStep__sidebarBtn"
+                                onClick={handleGeneratePDF}
+                                disabled={isPdfGenerating || loading}
+                                style={{ background: "#444" }}
+                            >
+                                {isPdfGenerating ? "Generating..." : "PDF 설명서 저장"}
+                            </button>
+                        </div>
                     </div>
                 )}
 
 
 
                 {/* Main 3D Card Area */}
-                <div className="kidsStep__card">
-                    {loading && (
+                <div className="kidsStep__card kids-main-canvas">
+                    {(loading || isPdfGenerating) && (
                         <div style={{
                             position: "absolute", inset: 0, zIndex: 20,
                             display: "flex", alignItems: "center", justifyContent: "center",
                             background: "rgba(255,255,255,0.75)", fontWeight: 900,
                         }}>
                             <div className="flex flex-col items-center gap-3">
-                                <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
-                                <span>{t.kids.steps.loading}</span>
+                                {isPdfGenerating ? (
+                                    <>
+                                        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                        <span>PDF 생성 중... ({pdfStepIdx + 1}/{total})</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
+                                        <span>{t.kids.steps.loading}</span>
+                                    </>
+                                )}
                             </div>
                         </div>
                     )}
@@ -755,20 +938,36 @@ function KidsStepPageContent() {
                     {activeTab === 'LDR' ? (
                         <>
                             <div style={{ position: "absolute", inset: 0 }}>
-                                <Canvas camera={{ position: [200, -200, 200], fov: 45 }} dpr={[1, 2]}>
+                                <Canvas
+                                    camera={{ position: [200, -200, 200], fov: 45 }}
+                                    dpr={[1, 2]}
+                                    gl={{ preserveDrawingBuffer: true }}
+                                >
                                     <ambientLight intensity={0.9} />
                                     <directionalLight position={[3, 5, 2]} intensity={1} />
                                     <Center>
                                         <LdrModel
                                             url={ldrUrl}
-                                            overrideMainLdrUrl={modelUrlToUse}
-                                            onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }}
-                                            onError={() => setLoading(false)}
+                                            overrideMainLdrUrl={finalModelUrl}
+                                            onLoaded={(g) => {
+                                                setLoading(false);
+                                                modelGroupRef.current = g;
+                                                if (isPdfGenerating) setPdfModelLoaded(true);
+                                            }}
+                                            onError={() => {
+                                                setLoading(false);
+                                                if (isPdfGenerating) setPdfModelLoaded(true); // skip error
+                                            }}
                                             customBounds={modelBounds}
-                                            fitTrigger={`${ldrUrl}|${modelUrlToUse ?? ''}`}
+                                            fitTrigger={`${ldrUrl}|${finalModelUrl ?? ''}`}
                                         />
                                     </Center>
-                                    <OrbitControls makeDefault enablePan={false} enableZoom />
+                                    <PDFRig
+                                        active={isPdfGenerating && pdfModelLoaded}
+                                        viewIndex={pdfViewIdx}
+                                        onReadyToCapture={handlePdfCapture}
+                                    />
+                                    {!isPdfGenerating && <OrbitControls makeDefault enablePan={false} enableZoom />}
                                 </Canvas>
                             </div>
 
@@ -913,4 +1112,3 @@ export default function KidsStepPage() {
         </Suspense>
     );
 }
-

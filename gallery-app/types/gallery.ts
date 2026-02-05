@@ -7,6 +7,7 @@ export type GalleryItem = {
     brickCount?: number;
     likeCount?: number;
     viewCount?: number;
+    commentCount?: number;
     bookmarked?: boolean;
     myReaction?: 'LIKE' | 'DISLIKE' | null;
     ldrUrl?: string;

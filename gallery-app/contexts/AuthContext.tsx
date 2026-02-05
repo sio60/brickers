@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 type Provider = "kakao" | "google";
 type OAuthUser = Record<string, any>;
@@ -138,7 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     // access 자동 부착 + 만료(401)시 refresh 후 1회 재시도
-    const authFetch = async (input: RequestInfo | URL, init: RequestInit = {}) => {
+    const authFetch = useCallback(async (input: RequestInfo | URL, init: RequestInit = {}) => {
         const url = toAbsoluteUrl(input);
 
         // 기본 헤더 설정 (body가 있으면 JSON 권장)
@@ -162,7 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         retryHeaders.set("Authorization", `Bearer ${newAccess}`);
 
         return fetch(url, { ...init, headers: retryHeaders, credentials: "include" });
-    };
+    }, [accessToken]);
 
     useEffect(() => {
         if (accessToken) {

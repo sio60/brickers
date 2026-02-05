@@ -4,6 +4,7 @@ import com.brickers.backend.gallery.dto.CommentCreateRequest;
 import com.brickers.backend.gallery.dto.CommentResponse;
 import com.brickers.backend.gallery.entity.GalleryCommentEntity;
 import com.brickers.backend.gallery.repository.GalleryCommentRepository;
+import com.brickers.backend.gallery.repository.GalleryPostRepository;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,17 +20,27 @@ import java.time.LocalDateTime;
 public class GalleryCommentService {
 
     private final GalleryCommentRepository commentRepository;
+    private final GalleryPostRepository galleryPostRepository;
     private final UserRepository userRepository;
 
     public Page<CommentResponse> getComments(String postId, int page, int size) {
         // 1. Fetch all comments for the post
         java.util.List<GalleryCommentEntity> allComments = commentRepository.findByPostIdAndDeletedFalse(postId);
 
-        // 2. Filter root comments (parentId is null)
+        // DEBUG: Log all comments
+        System.out.println("[DEBUG] postId: " + postId + ", Total comments fetched: " + allComments.size());
+        for (GalleryCommentEntity c : allComments) {
+            System.out.println("[DEBUG] Comment id=" + c.getId() + ", parentId=" + c.getParentId() + ", content="
+                    + c.getContent());
+        }
+
+        // 2. Filter root comments (parentId is null or empty)
         java.util.List<GalleryCommentEntity> rootComments = allComments.stream()
-                .filter(c -> c.getParentId() == null)
+                .filter(c -> c.getParentId() == null || c.getParentId().isBlank())
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .collect(java.util.stream.Collectors.toList());
+
+        System.out.println("[DEBUG] Root comments count: " + rootComments.size());
 
         // 3. Pagination in memory
         int start = Math.min(page * size, rootComments.size());
@@ -50,10 +61,13 @@ public class GalleryCommentService {
 
         // Filter children (replies) for this current comment
         java.util.List<CommentResponse> children = allComments.stream()
-                .filter(c -> root.getId().equals(c.getParentId()))
+                .filter(c -> root.getId() != null && root.getId().equals(c.getParentId()))
                 .sorted((a, b) -> a.getCreatedAt().compareTo(b.getCreatedAt()))
                 .map(child -> toResponseWithChildren(child, allComments)) // Recursive call for nested replies
                 .collect(java.util.stream.Collectors.toList());
+
+        // DEBUG: Log children count for each comment
+        System.out.println("[DEBUG] Comment id=" + root.getId() + " has " + children.size() + " children");
 
         response.setChildren(children);
         return response;
@@ -75,7 +89,7 @@ public class GalleryCommentService {
         GalleryCommentEntity comment = GalleryCommentEntity.builder()
                 .postId(postId)
                 .authorId(userId)
-                .parentId(req.getParentId()) // Set parentId
+                .parentId((req.getParentId() == null || req.getParentId().isBlank()) ? null : req.getParentId().trim())
                 .authorNickname(user.getNickname())
                 .authorProfileImage(user.getProfileImage())
                 .content(req.getContent())
@@ -84,6 +98,13 @@ public class GalleryCommentService {
                 .build();
 
         GalleryCommentEntity saved = commentRepository.save(comment);
+
+        // Update post comment count
+        galleryPostRepository.findById(postId).ifPresent(post -> {
+            post.setCommentCount(post.getCommentCount() + 1);
+            galleryPostRepository.save(post);
+        });
+
         return toResponse(saved);
     }
 
@@ -99,6 +120,12 @@ public class GalleryCommentService {
         comment.setDeleted(true);
         comment.setUpdatedAt(LocalDateTime.now());
         commentRepository.save(comment);
+
+        // Update post comment count
+        galleryPostRepository.findById(comment.getPostId()).ifPresent(post -> {
+            post.setCommentCount(Math.max(0, post.getCommentCount() - 1));
+            galleryPostRepository.save(post);
+        });
     }
 
     public long getCommentCount(String postId) {
@@ -114,6 +141,7 @@ public class GalleryCommentService {
                 .authorProfileImage(entity.getAuthorProfileImage())
                 .content(entity.getContent())
                 .parentId(entity.getParentId()) // Map parentId
+                .children(new java.util.ArrayList<>()) // Initialize empty children
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();

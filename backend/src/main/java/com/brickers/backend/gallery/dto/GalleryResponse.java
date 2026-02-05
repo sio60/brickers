@@ -34,6 +34,7 @@ public class GalleryResponse {
     private long likeCount;
     private long dislikeCount;
     private long viewCount;
+    private long commentCount; // Added field
 
     // ✅ 추가: 현재 사용자의 북마크/반응 상태
     private Boolean bookmarked;

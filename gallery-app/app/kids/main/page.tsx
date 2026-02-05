@@ -9,9 +9,8 @@ import { getPresignUrl } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, ThemeInfo } from "@/lib/api/colorVariantApi";
 // import KidsLoadingScreen from "@/components/kids/KidsLoadingScreen";
 import BrickStackMiniGame from "@/components/kids/BrickStackMiniGame";
-import { registerToGallery } from "@/lib/api/myApi"; // Import API
+// import { registerToGallery } from "@/lib/api/myApi"; // Import API
 import { useJobStore } from "@/stores/jobStore";
-import './KidsPage.css';
 
 // SSR 제외
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });

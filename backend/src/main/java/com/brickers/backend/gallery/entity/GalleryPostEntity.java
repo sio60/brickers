@@ -57,4 +57,7 @@ public class GalleryPostEntity {
 
     @Builder.Default
     private long viewCount = 0;
+
+    @Builder.Default
+    private long commentCount = 0;
 }

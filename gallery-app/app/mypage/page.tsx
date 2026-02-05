@@ -296,8 +296,9 @@ export default function MyPage() {
                 break;
             case 'view':
                 if (menuJob.ldrUrl) {
-                    setSelectedJob(menuJob);
+                    const url = menuJob.ldrUrl;
                     setMenuJob(null);
+                    router.push(`/kids/steps?url=${encodeURIComponent(url)}&jobId=${menuJob.id}&isPreset=true`);
                 } else {
                     alert(t.jobs.modalNoData);
                 }
@@ -834,6 +835,15 @@ export default function MyPage() {
                                 <Icons.DownloadFile className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.ldrFile}</span>
                             </button>
+                            <div className={styles.mypage__menuDivider} />
+                            <button
+                                className={`${styles.mypage__menuItem2} ${styles.primary}`}
+                                onClick={() => handleMenuAction('pdf')}
+                                disabled={!menuJob.ldrUrl}
+                            >
+                                <Icons.DownloadFile className={styles.mypage__menuIcon2} />
+                                <span>PDF 설명서 저장</span>
+                            </button>
                             {/* 색상 변경 버튼 - 마이페이지에서는 숨김 (나중에 활성화 가능)
                             <div className="h-px bg-[#eee] my-2" />
                             <button
@@ -962,7 +972,7 @@ export default function MyPage() {
                     </div>
                 </div>
             )}
-            */}
+
 
             {/* 색상 변경된 LDR 다운로드 모달 - 마이페이지에서는 숨김 (나중에 활성화 가능)
             {colorChangedLdrBase64 && (
