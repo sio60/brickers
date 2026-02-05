@@ -109,7 +109,7 @@ export default function GalleryDetailClient({ item }: Props) {
         fetchRecommendations();
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [item.id]);
+    }, [item.id, isAuthenticated]); // ✅ 로그인 상태 변경 시 데이터 다시 조회
 
     const handleLikeToggle = async () => {
         if (!isAuthenticated) return alert('로그인이 필요합니다.');
