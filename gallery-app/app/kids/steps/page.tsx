@@ -574,9 +574,9 @@ function KidsStepPageContent() {
             } else {
                 alert(result.message || "색상 변경 실패");
             }
-        } catch (e: any) {
+        } catch (e) {
             console.error("색상 변경 실패:", e);
-            alert(e.message || "색상 변경 중 오류가 발생했습니다.");
+            alert(e instanceof Error ? e.message : "색상 변경 중 오류가 발생했습니다.");
         } finally {
             setIsApplyingColor(false);
         }
