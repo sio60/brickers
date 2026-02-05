@@ -410,3 +410,53 @@
     border-color: #333;
     transform: scale(1.05);
 }
+
+/* ===== CoScientist Agent Log Panel ===== */
+.agentLogPanel {
+    margin-top: 16px;
+    max-width: 500px;
+    width: 100%;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    border-radius: 16px;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    padding: 16px;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 13px;
+    color: #e2e8f0;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.agentLogPanel__header {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #818cf8;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.agentLogPanel__logs {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.agentLogPanel__line {
+    opacity: 0.5;
+    line-height: 1.5;
+    transition: opacity 0.3s ease;
+}
+
+.agentLogPanel__line--active {
+    opacity: 1;
+    color: #a5b4fc;
+}
+
+.agentLogPanel__line--active::before {
+    content: '\25B8 ';
+    color: #818cf8;
+}

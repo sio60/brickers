@@ -14,10 +14,18 @@ import com.brickers.backend.sqs.service.SqsProducerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +37,12 @@ public class KidsService {
     private final KidsAsyncWorker kidsAsyncWorker;
     private final UserRepository userRepository;
     private final SqsProducerService sqsProducerService;
+
+    // === CoScientist Agent Log Streaming ===
+    private static final int MAX_LOG_BUFFER_SIZE = 100;
+    private final ConcurrentHashMap<String, List<String>> agentLogBuffer = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, List<SseEmitter>> agentLogEmitters = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Long> agentLogLastWrite = new ConcurrentHashMap<>();
 
     @Value("${aws.sqs.enabled:false}")
     private boolean sqsEnabled;
@@ -127,5 +141,101 @@ public class KidsService {
 
     private String safe(String s) {
         return s == null ? "null" : s;
+    }
+
+    /**
+     * AI Server에서 에이전트 로그 수신 + SSE 푸시
+     */
+    public void addAgentLog(String jobId, String step, String message) {
+        String logEntry = "[" + step + "] " + message;
+        log.debug("[AgentLog] jobId={} | {}", jobId, logEntry);
+
+        // 버퍼에 저장 (최대 크기 제한)
+        List<String> buffer = agentLogBuffer.computeIfAbsent(jobId, k -> Collections.synchronizedList(new ArrayList<>()));
+        synchronized (buffer) {
+            buffer.add(logEntry);
+            while (buffer.size() > MAX_LOG_BUFFER_SIZE) {
+                buffer.remove(0);
+            }
+        }
+        agentLogLastWrite.put(jobId, System.currentTimeMillis());
+
+        // SSE 구독자에게 전송
+        List<SseEmitter> emitters = agentLogEmitters.get(jobId);
+        if (emitters != null) {
+            List<SseEmitter> dead = new ArrayList<>();
+            for (SseEmitter emitter : emitters) {
+                try {
+                    emitter.send(SseEmitter.event()
+                            .name("agent-log")
+                            .data(logEntry));
+                } catch (IOException e) {
+                    dead.add(emitter);
+                }
+            }
+            emitters.removeAll(dead);
+        }
+    }
+
+    /**
+     * 프론트엔드 SSE 구독
+     */
+    public SseEmitter subscribeAgentLogs(String jobId) {
+        SseEmitter emitter = new SseEmitter(1_800_000L); // 30분 타임아웃
+
+        // emitter를 먼저 등록한 후 버퍼 replay (per-job synchronized)
+        List<SseEmitter> emitterList = agentLogEmitters.computeIfAbsent(jobId, k -> new CopyOnWriteArrayList<>());
+        List<String> buffer = agentLogBuffer.get(jobId);
+
+        if (buffer != null) {
+            synchronized (buffer) {
+                emitterList.add(emitter);
+                // 기존 로그 전송 (synchronized 블록 안에서 replay)
+                for (String logEntry : buffer) {
+                    try {
+                        emitter.send(SseEmitter.event()
+                                .name("agent-log")
+                                .data(logEntry));
+                    } catch (IOException e) {
+                        break;
+                    }
+                }
+            }
+        } else {
+            emitterList.add(emitter);
+        }
+
+        emitter.onCompletion(() -> removeEmitter(jobId, emitter));
+        emitter.onTimeout(() -> removeEmitter(jobId, emitter));
+        emitter.onError(e -> removeEmitter(jobId, emitter));
+
+        return emitter;
+    }
+
+    private void removeEmitter(String jobId, SseEmitter emitter) {
+        List<SseEmitter> emitters = agentLogEmitters.get(jobId);
+        if (emitters != null) {
+            emitters.remove(emitter);
+            if (emitters.isEmpty()) {
+                agentLogEmitters.remove(jobId);
+            }
+        }
+    }
+
+    /**
+     * 5분마다 실행: 마지막 로그 추가 후 10분 지난 jobId의 버퍼 삭제
+     */
+    @Scheduled(fixedRate = 300000)
+    public void cleanupStaleAgentLogBuffers() {
+        long now = System.currentTimeMillis();
+        long staleThreshold = 10 * 60 * 1000L; // 10분
+
+        agentLogLastWrite.forEach((jobId, lastWrite) -> {
+            if (now - lastWrite > staleThreshold) {
+                agentLogBuffer.remove(jobId);
+                agentLogLastWrite.remove(jobId);
+                log.debug("[AgentLog] Cleaned up stale buffer for jobId={}", jobId);
+            }
+        });
     }
 }

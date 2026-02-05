@@ -25,9 +25,9 @@ function KidsPageContent() {
     const age = (searchParams.get("age") ?? "4-5") as "4-5" | "6-7" | "8-10";
 
     const budget = useMemo(() => {
-        if (age === "4-5") return 400;
-        if (age === "6-7") return 450;
-        return 500;
+        if (age === "4-5") return 100;
+        if (age === "6-7") return 150;
+        return 200;
     }, [age]);
 
     const [rawFile, setRawFile] = useState<File | null>(null);
@@ -69,6 +69,7 @@ function KidsPageContent() {
     const [showToast, setShowToast] = useState(false);
     const [debugLog, setDebugLog] = useState<string>("");
     const [currentStage, setCurrentStage] = useState<string>("QUEUED");
+    const [agentLogs, setAgentLogs] = useState<string[]>([]);
 
     // 색상 변경 관련
     const [isColorModalOpen, setIsColorModalOpen] = useState(false);
@@ -296,6 +297,34 @@ function KidsPageContent() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [rawFile, age, budget]); // status 제거 - status 변경 시 cleanup이 abort를 호출해서 fetch 취소됨
 
+    // SSE: CoScientist 에이전트 로그 스트리밍
+    useEffect(() => {
+        if (!jobId || status !== "loading") return;
+
+        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+        const es = new EventSource(`${apiBase}/api/kids/jobs/${encodeURIComponent(jobId)}/logs/stream`);
+        let errorCount = 0;
+
+        es.addEventListener("agent-log", (e) => {
+            errorCount = 0;
+            setAgentLogs(prev => {
+                const next = [...prev, e.data];
+                return next.length > 50 ? next.slice(-50) : next;
+            });
+        });
+
+        es.onerror = () => {
+            errorCount++;
+            console.warn(`[SSE] Agent log stream error (${errorCount})`);
+            if (errorCount >= 5) {
+                console.warn("[SSE] Too many errors, closing connection");
+                es.close();
+            }
+        };
+
+        return () => { es.close(); };
+    }, [jobId, status]);
+
     const percent = useMemo(() => {
         if (status === "done") return 100;
         if (status !== "loading") return 0;
@@ -382,8 +411,22 @@ function KidsPageContent() {
             <div className="center">
                 {status === "loading" && (
                     <>
-                        {/* <div className="debugLog">{debugLog}</div> */}
                         <BrickStackMiniGame percent={percent} />
+                        {agentLogs.length > 0 && (
+                            <div className="agentLogPanel">
+                                <div className="agentLogPanel__header">CoScientist AI</div>
+                                <div className="agentLogPanel__logs">
+                                    {agentLogs.map((log, i) => (
+                                        <div
+                                            key={i}
+                                            className={`agentLogPanel__line ${i === agentLogs.length - 1 ? 'agentLogPanel__line--active' : ''}`}
+                                        >
+                                            {log}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </>
                 )}
 
