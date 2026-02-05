@@ -25,9 +25,9 @@ function KidsPageContent() {
     const age = (searchParams.get("age") ?? "4-5") as "4-5" | "6-7" | "8-10";
 
     const budget = useMemo(() => {
-        if (age === "4-5") return 100;
-        if (age === "6-7") return 150;
-        return 200;
+        if (age === "4-5") return 400;
+        if (age === "6-7") return 450;
+        return 500;
     }, [age]);
 
     const [rawFile, setRawFile] = useState<File | null>(null);
