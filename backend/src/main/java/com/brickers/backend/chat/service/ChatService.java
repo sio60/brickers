@@ -14,36 +14,36 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class ChatService {
 
-    private final WebClient aiWebClient; // ✅ FastAPI 호출용 WebClient
+        private final WebClient aiWebClient; // ✅ FastAPI 호출용 WebClient
 
-    public ChatResponse processChat(ChatRequest request) {
+        public ChatResponse processChat(ChatRequest request) {
 
-        // FastAPI 요청 DTO (conversation_id 이름 맞추기)
-        AiChatRequest aiReq = new AiChatRequest(
-                request.getMessage(),
-                request.getLanguage(),
-                request.getConversationId());
+                // FastAPI 요청 DTO (conversation_id 이름 맞추기)
+                AiChatRequest aiReq = new AiChatRequest(
+                                request.getMessage(),
+                                request.getLanguage(),
+                                request.getConversationId());
 
-        AiChatResponse aiRes = aiWebClient.post()
-                .uri("/api/v1/chat")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(aiReq)
-                .retrieve()
-                .bodyToMono(AiChatResponse.class)
-                .block(Duration.ofSeconds(35));
+                AiChatResponse aiRes = aiWebClient.post()
+                                .uri("/api/chat/query")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .bodyValue(aiReq)
+                                .retrieve()
+                                .bodyToMono(AiChatResponse.class)
+                                .block(Duration.ofSeconds(35));
 
-        return new ChatResponse(aiRes.content(), aiRes.conversationId());
-    }
+                return new ChatResponse(aiRes.content(), aiRes.conversationId());
+        }
 
-    // ---- 내부 DTO ----
-    public record AiChatRequest(
-            String message,
-            String language,
-            @JsonProperty("conversation_id") String conversationId) {
-    }
+        // ---- 내부 DTO ----
+        public record AiChatRequest(
+                        String message,
+                        String language,
+                        @JsonProperty("conversation_id") String conversationId) {
+        }
 
-    public record AiChatResponse(
-            String content,
-            @JsonProperty("conversation_id") String conversationId) {
-    }
+        public record AiChatResponse(
+                        String content,
+                        @JsonProperty("conversation_id") String conversationId) {
+        }
 }
