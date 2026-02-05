@@ -121,7 +121,7 @@ export default function GalleryDetailClient({ item }: Props) {
             });
             if (res.ok) {
                 const data = await res.json();
-                const newLiked = data.currentReaction === 'LIKE'; // currentReaction field name check
+                const newLiked = data.myReaction === 'LIKE'; // ✅ Fixed field name
                 setIsLiked(newLiked);
                 if (data.likeCount !== undefined) setLikeCount(data.likeCount);
             }
