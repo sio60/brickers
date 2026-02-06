@@ -8,6 +8,8 @@ import com.brickers.backend.gallery.entity.Visibility;
 
 @Data
 public class GalleryCreateRequest {
+    /** 원본 Job ID (선택적, 중복 등록 방지용) */
+    private String jobId;
     private String title;
     private String content;
     private List<String> tags;

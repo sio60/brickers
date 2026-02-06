@@ -23,6 +23,7 @@ public class AdminJobDto {
     private String glbUrl;
     private String ldrUrl;
     private String blueprintPdfKey;
+    private String instructionsPdfUrl;
     private String bomKey;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -48,6 +49,7 @@ public class AdminJobDto {
                 .glbUrl(job.getGlbUrl())
                 .ldrUrl(ldrUrl)
                 .blueprintPdfKey(job.getBlueprintPdfKey())
+                .instructionsPdfUrl(job.getInstructionsPdfUrl())
                 .bomKey(job.getBomKey())
                 .createdAt(job.getCreatedAt())
                 .updatedAt(job.getUpdatedAt())

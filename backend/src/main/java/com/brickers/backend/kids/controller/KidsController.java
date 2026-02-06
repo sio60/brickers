@@ -5,6 +5,7 @@ import com.brickers.backend.kids.dto.KidsGenerateRequest;
 import com.brickers.backend.kids.service.KidsService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -20,6 +21,9 @@ import java.util.Map;
 public class KidsController {
 
     private final KidsService kidsService;
+
+    @Value("${INTERNAL_API_TOKEN:}")
+    private String internalApiToken;
 
     @PostMapping(value = "/generate", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> generateBrick(
@@ -60,8 +64,8 @@ public class KidsController {
             @RequestHeader("X-Internal-Token") String token,
             @RequestBody Map<String, String> body
     ) {
-        String expected = System.getenv("INTERNAL_API_TOKEN");
-        if (expected == null || expected.isBlank() || !expected.equals(token)) {
+        if (internalApiToken.isBlank() || !internalApiToken.equals(token)) {
+            log.warn("[KidsController] 토큰 불일치: expected={}, received={}", internalApiToken, token);
             return ResponseEntity.status(403).build();
         }
         String stageName = body.get("stage");
@@ -81,8 +85,8 @@ public class KidsController {
             @RequestHeader("X-Internal-Token") String token,
             @Valid @RequestBody AgentLogRequest request
     ) {
-        String expected = System.getenv("INTERNAL_API_TOKEN");
-        if (expected == null || expected.isBlank() || !expected.equals(token)) {
+        if (internalApiToken.isBlank() || !internalApiToken.equals(token)) {
+            log.warn("[KidsController] 로그 수신 토큰 불일치");
             return ResponseEntity.status(403).build();
         }
         kidsService.addAgentLog(jobId, request.getStep(), request.getMessage());
@@ -95,5 +99,28 @@ public class KidsController {
     @GetMapping("/jobs/{jobId}/logs/stream")
     public SseEmitter streamAgentLogs(@PathVariable String jobId) {
         return kidsService.subscribeAgentLogs(jobId);
+    }
+
+    /**
+     * ✅ AI Server에서 Gemini 추천 태그 저장
+     * Python: PATCH /api/kids/jobs/{jobId}/suggested-tags
+     */
+    @PatchMapping("/jobs/{jobId}/suggested-tags")
+    public ResponseEntity<Void> updateSuggestedTags(
+            @PathVariable String jobId,
+            @RequestHeader("X-Internal-Token") String token,
+            @RequestBody Map<String, Object> body
+    ) {
+        if (internalApiToken.isBlank() || !internalApiToken.equals(token)) {
+            log.warn("[KidsController] 태그 업데이트 토큰 불일치");
+            return ResponseEntity.status(403).build();
+        }
+        @SuppressWarnings("unchecked")
+        java.util.List<String> tags = (java.util.List<String>) body.get("suggestedTags");
+        if (tags == null || tags.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        kidsService.updateSuggestedTags(jobId, tags);
+        return ResponseEntity.ok().build();
     }
 }

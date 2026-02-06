@@ -34,6 +34,8 @@ export interface MyJob {
     correctedImageUrl?: string;
     glbUrl?: string;
     ldrUrl?: string; // LDR 파일 URL (백엔드 MyJobResponse와 일치)
+    instructionsPdfUrl?: string; // PDF 파일 URL
+    suggestedTags?: string[];  // ✅ Gemini가 추천한 태그 목록
     hasResult: boolean;
     errorMessage: string | null;
     createdAt: string;
@@ -140,6 +142,7 @@ export interface GalleryRegisterResponse {
 
 // 갤러리 등록 요청 타입 (백엔드 스펙)
 export interface GalleryCreateRequest {
+    jobId?: string;  // 원본 Job ID (중복 등록 방지용)
     title: string;
     content?: string;
     tags?: string[];

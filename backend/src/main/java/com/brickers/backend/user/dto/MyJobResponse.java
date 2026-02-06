@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -34,11 +35,17 @@ public class MyJobResponse {
     /** LDR 파일 URL */
     private String ldrUrl;
 
+    /** 조립 설명서 PDF URL */
+    private String instructionsPdfUrl;
+
     /** 결과물 존재 여부(모델/도면/BOM 중 하나라도 있으면 true) */
     private boolean hasResult;
 
     /** 실패 메시지(FAILED일 때 표시용) */
     private String errorMessage;
+
+    /** Gemini가 추천한 태그 목록 */
+    private List<String> suggestedTags;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -53,8 +60,7 @@ public class MyJobResponse {
 
         boolean hasResult = (ldrUrl != null && !ldrUrl.isBlank())
                 || (j.getGlbUrl() != null && !j.getGlbUrl().isBlank())
-                || (j.getBlueprintPdfKey() != null && !j.getBlueprintPdfKey().isBlank())
-                || (j.getBomKey() != null && !j.getBomKey().isBlank());
+                || (j.getInstructionsPdfUrl() != null && !j.getInstructionsPdfUrl().isBlank());
 
         return MyJobResponse.builder()
                 .id(j.getId())
@@ -67,8 +73,10 @@ public class MyJobResponse {
                 .correctedImageUrl(j.getCorrectedImageUrl())
                 .glbUrl(j.getGlbUrl())
                 .ldrUrl(ldrUrl)
+                .instructionsPdfUrl(j.getInstructionsPdfUrl())
                 .hasResult(hasResult)
                 .errorMessage(j.getErrorMessage())
+                .suggestedTags(j.getSuggestedTags())
                 .createdAt(j.getCreatedAt())
                 .updatedAt(j.getUpdatedAt())
                 .stageUpdatedAt(j.getStageUpdatedAt())
