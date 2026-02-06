@@ -39,6 +39,9 @@ public interface GalleryPostRepository extends MongoRepository<GalleryPostEntity
   // 작성자의 게시글 수
   long countByAuthorIdAndDeletedFalse(String authorId);
 
+  /** ✅ Job ID로 갤러리 포스트 존재 여부 확인 (중복 등록 방지) */
+  boolean existsByJobIdAndDeletedFalse(String jobId);
+
   /** ✅ 공개된 모든 게시글의 태그 중복 제거후 목록 추출 */
   @Aggregation(pipeline = {
       "{ '$match': { 'deleted': false, 'visibility': 'PUBLIC' } }",

@@ -37,8 +37,17 @@ public class GalleryService {
         User me = currentUserService.get(auth);
         validateTitle(req.getTitle());
 
+        // ✅ jobId 중복 체크 (이미 갤러리에 등록된 Job인지 확인)
+        String jobId = req.getJobId();
+        if (jobId != null && !jobId.isBlank()) {
+            if (galleryPostRepository.existsByJobIdAndDeletedFalse(jobId)) {
+                throw new IllegalStateException("이미 갤러리에 등록된 작품입니다.");
+            }
+        }
+
         LocalDateTime now = LocalDateTime.now();
         GalleryPostEntity post = GalleryPostEntity.builder()
+                .jobId(jobId) // ✅ jobId 저장
                 .authorId(me.getId())
                 .authorNickname(me.getNickname())
                 .authorProfileImage(me.getProfileImage())

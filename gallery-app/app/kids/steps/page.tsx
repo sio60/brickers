@@ -421,6 +421,8 @@ function KidsStepPageContent() {
     const [galleryTitle, setGalleryTitle] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [jobThumbnailUrl, setJobThumbnailUrl] = useState<string | null>(null);
+    const [isRegisteredToGallery, setIsRegisteredToGallery] = useState(false);  // ✅ 갤러리 등록 완료 상태
+    const [suggestedTags, setSuggestedTags] = useState<string[]>([]);  // ✅ Gemini 추천 태그
 
     const [isPreviewMode, setIsPreviewMode] = useState(true);
     const [isDownloadOpen, setIsDownloadOpen] = useState(false);
@@ -691,6 +693,10 @@ function KidsStepPageContent() {
                     if (!ldrUrl) setLdrUrl(data.ldrUrl || data.ldr_url || "");
                     setJobThumbnailUrl(data.sourceImageUrl || null);
                     setGlbUrl(data.glbUrl || data.glb_url || null);
+                    // ✅ Gemini 추천 태그 로드
+                    if (data.suggestedTags && Array.isArray(data.suggestedTags)) {
+                        setSuggestedTags(data.suggestedTags);
+                    }
                 }
             } catch (e) {
                 console.error("[KidsStepPage] failed to resolve job info:", e);
@@ -778,9 +784,10 @@ function KidsStepPageContent() {
         setIsSubmitting(true);
         try {
             await registerToGallery({
+                jobId: jobId || undefined,  // ✅ jobId 전달 (중복 등록 방지)
                 title: galleryTitle,
                 content: t.kids.steps.galleryModal.content,
-                tags: ["Kids", "Brick"],
+                tags: suggestedTags.length > 0 ? suggestedTags : ["Kids", "Brick"],  // ✅ Gemini 태그 사용
                 thumbnailUrl: jobThumbnailUrl || undefined,
                 ldrUrl: ldrUrl || undefined,
                 sourceImageUrl: jobThumbnailUrl || undefined,
@@ -790,7 +797,17 @@ function KidsStepPageContent() {
             alert(t.kids.steps.galleryModal.success);
             setIsGalleryModalOpen(false);
             setGalleryTitle("");
-        } catch (err) { console.error(err); alert(t.kids.steps.galleryModal.fail); }
+            setIsRegisteredToGallery(true);  // ✅ 등록 완료 상태 업데이트
+        } catch (err: any) {
+            console.error(err);
+            // 중복 등록 에러 처리
+            if (err.message?.includes("이미 갤러리에 등록")) {
+                alert(err.message);
+                setIsRegisteredToGallery(true);
+            } else {
+                alert(t.kids.steps.galleryModal.fail);
+            }
+        }
         finally { setIsSubmitting(false); }
     };
 
@@ -941,13 +958,15 @@ function KidsStepPageContent() {
                                     placeholder={t.kids.steps.galleryModal.placeholder}
                                     value={galleryTitle}
                                     onChange={(e) => setGalleryTitle(e.target.value)}
+                                    disabled={isRegisteredToGallery}
                                 />
                                 <button
                                     className="kidsStep__sidebarBtn"
                                     onClick={handleRegisterGallery}
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || isRegisteredToGallery}
+                                    style={isRegisteredToGallery ? { background: "#aaa", cursor: "not-allowed" } : {}}
                                 >
-                                    {isSubmitting ? "..." : t.kids.steps.registerGallery}
+                                    {isRegisteredToGallery ? "✓ 등록완료" : (isSubmitting ? "..." : t.kids.steps.registerGallery)}
                                 </button>
                             </div>
                         </div>

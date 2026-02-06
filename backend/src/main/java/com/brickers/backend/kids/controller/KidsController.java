@@ -92,4 +92,26 @@ public class KidsController {
     public SseEmitter streamAgentLogs(@PathVariable String jobId) {
         return kidsService.subscribeAgentLogs(jobId);
     }
+
+    /**
+     * ✅ AI Server에서 Gemini 추천 태그 저장
+     * Python: PATCH /api/kids/jobs/{jobId}/suggested-tags
+     */
+    @PatchMapping("/jobs/{jobId}/suggested-tags")
+    public ResponseEntity<Void> updateSuggestedTags(
+            @PathVariable String jobId,
+            @RequestHeader("X-Internal-Token") String token,
+            @RequestBody Map<String, Object> body) {
+        String expected = System.getenv("INTERNAL_API_TOKEN");
+        if (expected == null || expected.isBlank() || !expected.equals(token)) {
+            return ResponseEntity.status(403).build();
+        }
+        @SuppressWarnings("unchecked")
+        java.util.List<String> tags = (java.util.List<String>) body.get("suggestedTags");
+        if (tags == null || tags.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        kidsService.updateSuggestedTags(jobId, tags);
+        return ResponseEntity.ok().build();
+    }
 }

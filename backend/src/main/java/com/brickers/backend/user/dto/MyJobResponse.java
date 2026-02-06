@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -43,6 +44,9 @@ public class MyJobResponse {
     /** 실패 메시지(FAILED일 때 표시용) */
     private String errorMessage;
 
+    /** Gemini가 추천한 태그 목록 */
+    private List<String> suggestedTags;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime stageUpdatedAt;
@@ -72,6 +76,7 @@ public class MyJobResponse {
                 .instructionsPdfUrl(j.getInstructionsPdfUrl())
                 .hasResult(hasResult)
                 .errorMessage(j.getErrorMessage())
+                .suggestedTags(j.getSuggestedTags())
                 .createdAt(j.getCreatedAt())
                 .updatedAt(j.getUpdatedAt())
                 .stageUpdatedAt(j.getStageUpdatedAt())
