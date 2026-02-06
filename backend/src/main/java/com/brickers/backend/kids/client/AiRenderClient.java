@@ -13,6 +13,7 @@ import com.brickers.backend.kids.dto.KidsPdfResponse;
 import reactor.netty.http.client.HttpClient;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 
+import org.springframework.beans.factory.annotation.Value;
 import java.nio.file.Path;
 import java.time.Duration;
 
@@ -21,14 +22,16 @@ public class AiRenderClient {
 
         private final WebClient webClient;
 
-        public AiRenderClient() {
+        public AiRenderClient(@Value("${ai.server.url}") String aiServerUrl) {
                 int maxBytes = 10 * 1024 * 1024; // ✅ 10MB (필요하면 20MB로)
                 ExchangeStrategies strategies = ExchangeStrategies.builder()
                                 .codecs(cfg -> cfg.defaultCodecs().maxInMemorySize(maxBytes))
                                 .build();
 
+                System.out.println("[AiRenderClient] Initializing with AI server URL: " + aiServerUrl);
+
                 this.webClient = WebClient.builder()
-                                .baseUrl(System.getenv().getOrDefault("AI_BASE_URL", "http://localhost:8000"))
+                                .baseUrl(aiServerUrl)
                                 .exchangeStrategies(strategies)
                                 .clientConnector(new ReactorClientHttpConnector(
                                                 HttpClient.create().responseTimeout(Duration.ofSeconds(120))))
