@@ -22,11 +22,13 @@ function KidsPageContent() {
     const { t } = useLanguage();
     const { authFetch } = useAuth();
     const searchParams = useSearchParams();
-    const age = (searchParams.get("age") ?? "4-5") as "4-5" | "6-7" | "8-10";
+    const age = (searchParams.get("age") ?? "4-5") as "4-5" | "6-7" | "8-10" | "PRO";
 
     const budget = useMemo(() => {
         if (age === "4-5") return 300;
         if (age === "6-7") return 350;
+        if (age === "8-10") return 400;
+        if (age === "PRO") return 2000;
         return 400;
     }, [age]);
 
