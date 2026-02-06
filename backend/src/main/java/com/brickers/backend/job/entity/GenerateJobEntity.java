@@ -94,6 +94,9 @@ public class GenerateJobEntity {
     /** BOM JSON URL (S3) */
     private String bomUrl;
 
+    /** PDF URL (S3) */
+    private String pdfUrl; // [New]
+
     /** 실패 시 에러 메시지 */
     private String errorMessage;
 
