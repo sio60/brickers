@@ -3,7 +3,7 @@
 import { Canvas } from "@react-three/fiber";
 import { Bounds, OrbitControls, Center } from "@react-three/drei";
 import * as THREE from "three";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef, forwardRef, useImperativeHandle } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
@@ -61,7 +61,7 @@ function LdrModel({
                 if (filename && lowerName !== filename) {
                     fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
                 }
-                
+
 
                 // Primitive 패턴: n-n*.dat (예: 4-4edge, 1-4cyli), stud*.dat, rect*.dat, box*.dat 등
                 const isPrimitive = /^\d+-\d+/.test(filename) ||
@@ -197,13 +197,77 @@ function LdrModel({
     );
 }
 
-export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, stepMode = false }: Props) {
+export type KidsLdrPreviewHandle = {
+    captureAllSteps: () => Promise<string[][]>;
+};
+
+const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibraryPath, ldconfigUrl, stepMode = false }, ref) => {
     const { t } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [errorMSG, setErrorMSG] = useState<string | null>(null);
     const [currentStep, setCurrentStep] = useState(1);
     const [totalSteps, setTotalSteps] = useState(1);
     const [isPreview, setIsPreview] = useState(true);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const groupRef = useRef<THREE.Group | null>(null);
+    const controlsRef = useRef<any>(null); // OrbitControls ref
+
+    // 캡처를 위한 상태 (렌더링 동기화용)
+    const renderTrigger = useRef<(() => void) | null>(null);
+
+    useImperativeHandle(ref, () => ({
+        captureAllSteps: async () => {
+            if (!groupRef.current || !canvasRef.current || !controlsRef.current) return [];
+
+            console.log("📸 Starting Capture Sequence...");
+            const stepsImages: string[][] = [];
+
+            // 1. 프리뷰 모드 해제 및 초기화
+            setIsPreview(false);
+
+            // 캡처 중엔 배경 투명보다는 흰색이 나을 수 있음 (선택사항)
+            // 여기서는 그대로 진행
+
+            const originalStep = currentStep;
+
+            for (let step = 1; step <= totalSteps; step++) {
+                setCurrentStep(step);
+
+                // Step 변경 후 렌더링 반영 대기 (간단히 시간 지연)
+                await new Promise(r => setTimeout(r, 100));
+
+                const stepImgs: string[] = [];
+
+                // 3 Views: Main, Top/Left, Back
+                // 카메라 위치 정의 (x, y, z)
+                const views = [
+                    [150, 150, 150],    // View 1: Main Quarter
+                    [-100, 200, 100],   // View 2: Top Left
+                    [-150, 50, -150]    // View 3: Back Low
+                ];
+
+                for (const [vx, vy, vz] of views) {
+                    // 카메라 이동
+                    controlsRef.current.object.position.set(vx, vy, vz);
+                    controlsRef.current.object.lookAt(0, 0, 0);
+                    controlsRef.current.update();
+
+                    // 렌더링 대기
+                    await new Promise(r => setTimeout(r, 50));
+
+                    // 캡처
+                    const dataUrl = canvasRef.current.toDataURL("image/png");
+                    stepImgs.push(dataUrl);
+                }
+                stepsImages.push(stepImgs);
+            }
+
+            // 복귀
+            setCurrentStep(originalStep);
+            console.log(`✅ Captured ${stepsImages.length} steps.`);
+            return stepsImages;
+        }
+    }));
 
     const handleNext = () => {
         if (currentStep < totalSteps) {
@@ -365,30 +429,33 @@ export default function KidsLdrPreview({ url, partsLibraryPath, ldconfigUrl, ste
             )}
 
             <Canvas
+                ref={canvasRef}
                 camera={{ position: [200, 200, 200], fov: 45 }}
                 dpr={[1, 2]}
-                gl={{ alpha: true }}
+                gl={{ alpha: true, preserveDrawingBuffer: true }} // 캡처를 위해 preserveDrawingBuffer 필수
             >
                 <ambientLight intensity={1.2} />
                 <directionalLight position={[10, 20, 10]} intensity={1.5} />
                 <directionalLight position={[-10, -20, -10]} intensity={0.8} />
 
-                <LdrModel
-                    url={url}
-                    partsLibraryPath={partsLibraryPath}
-                    ldconfigUrl={ldconfigUrl}
-                    stepMode={stepMode}
-                    currentStep={currentStep}
-                    isPreview={isPreview}
-                    onStepCountChange={setTotalSteps}
-                    onLoaded={() => setLoading(false)}
-                    onError={(e) => {
-                        setLoading(false);
-                        setErrorMSG(e?.message || "Unknown error");
-                    }}
-                />
+                <group ref={groupRef}>
+                    <LdrModel
+                        url={url}
+                        partsLibraryPath={partsLibraryPath}
+                        ldconfigUrl={ldconfigUrl}
+                        stepMode={stepMode}
+                        currentStep={currentStep}
+                        isPreview={isPreview}
+                        onStepCountChange={setTotalSteps}
+                        onLoaded={() => setLoading(false)}
+                        onError={(e) => {
+                            setLoading(false);
+                            setErrorMSG(e?.message || "Unknown error");
+                        }}
+                    />
+                </group>
 
-                <OrbitControls makeDefault enablePan={false} enableZoom minDistance={10} maxDistance={1000} autoRotate={false} />
+                <OrbitControls ref={controlsRef} makeDefault enablePan={false} enableZoom minDistance={10} maxDistance={1000} autoRotate={false} />
             </Canvas>
         </div>
     );

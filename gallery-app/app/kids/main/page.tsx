@@ -17,6 +17,9 @@ const Background3D = dynamic(() => import("@/components/three/Background3D"), { 
 const KidsLdrPreview = dynamic(() => import("@/components/kids/KidsLdrPreview"), { ssr: false });
 const KidsModelSelectModal = dynamic(() => import("@/components/kids/KidsModelSelectModal"), { ssr: false });
 
+import { KidsLdrPreviewHandle } from "@/components/kids/KidsLdrPreview";
+import { generatePdfFromServer } from "@/components/kids/PDFGenerator";
+
 function KidsPageContent() {
     const router = useRouter();
     const { t } = useLanguage();
@@ -410,6 +413,36 @@ function KidsPageContent() {
         return <div className="page">Loading...</div>;
     }
 
+    // PDF 다운로드 핸들러
+    const previewRef = useRef<KidsLdrPreviewHandle>(null);
+    const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+
+    const handleDownloadPdf = async () => {
+        if (!ldrUrl || !previewRef.current || isPdfGenerating) return;
+
+        try {
+            setIsPdfGenerating(true);
+            setDebugLog("📸 3D 모델 캡처 및 PDF 생성 중...");
+
+            // 1. 캡처 실행
+            const stepImages = await previewRef.current.captureAllSteps();
+            if (stepImages.length === 0) throw new Error("캡처된 이미지가 없습니다.");
+
+            // 2. 서버 요청
+            const pdfUrl = await generatePdfFromServer(ldrUrl, jobId || "model", stepImages);
+
+            // 3. 다운로드
+            window.open(pdfUrl, "_blank");
+            setDebugLog("✅ PDF 다운로드 완료");
+        } catch (e) {
+            console.error("PDF Download Error:", e);
+            alert("PDF 생성 중 오류가 발생했습니다.");
+            setDebugLog(`❌ PDF 오류: ${e instanceof Error ? e.message : String(e)}`);
+        } finally {
+            setIsPdfGenerating(false);
+        }
+    };
+
     return (
         <div className="page">
             <Background3D entryDirection="float" />
@@ -441,7 +474,7 @@ function KidsPageContent() {
                         <div className="resultTitle">{t.kids.generate.ready}</div>
                         <div className="resultCard" style={{ position: 'relative' }}>
                             <div className="viewer3d">
-                                <KidsLdrPreview key={ldrUrl} url={ldrUrl} />
+                                <KidsLdrPreview key={ldrUrl} url={ldrUrl} ref={previewRef} />
                             </div>
 
                             {/* 우측 하단 Next 버튼 */}
@@ -469,6 +502,9 @@ function KidsPageContent() {
                                     <div className="dropdownMenu">
                                         <button onClick={downloadLdr}>LDR Download</button>
                                         {glbUrl && <button onClick={downloadGlb}>GLB Download</button>}
+                                        <button onClick={handleDownloadPdf} disabled={isPdfGenerating}>
+                                            {isPdfGenerating ? "PDF Generating..." : "PDF Download"}
+                                        </button>
                                     </div>
                                 )}
                             </div>
