@@ -13,7 +13,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { registerToGallery } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
-import { parseBOM, savePDF, type StepBOM } from "@/components/kids/PDFGenerator";
+// PDF generation moved to backend
 import BackgroundBricks from "@/components/BackgroundBricks";
 import './KidsStepPage.css';
 
@@ -421,6 +421,8 @@ function KidsStepPageContent() {
     const [galleryTitle, setGalleryTitle] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [jobThumbnailUrl, setJobThumbnailUrl] = useState<string | null>(null);
+    const [isRegisteredToGallery, setIsRegisteredToGallery] = useState(false);  // ✅ 갤러리 등록 완료 상태
+    const [suggestedTags, setSuggestedTags] = useState<string[]>([]);  // ✅ Gemini 추천 태그
 
     const [isPreviewMode, setIsPreviewMode] = useState(true);
     const [isDownloadOpen, setIsDownloadOpen] = useState(false);
@@ -438,15 +440,17 @@ function KidsStepPageContent() {
     const [pdfViewIdx, setPdfViewIdx] = useState(0); // 0, 1, 2
     const [pdfImages, setPdfImages] = useState<string[]>([]);
     const [pdfModelLoaded, setPdfModelLoaded] = useState(false);
-    const [pdfBOM, setPdfBOM] = useState<StepBOM[]>([]);
+    // BOM parsing moved to backend
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const handleGeneratePDF = async () => {
+    const handleGeneratePDF = async (isAuto = false) => {
         if (!ldrUrl) return;
 
-        const confirmMsg = t.kids?.steps?.pdfConfirm || "PDF 설명을 생성하시겠습니까?\n모델 크기에 따라 시간이 걸릴 수 있습니다.";
-        if (!confirm(confirmMsg)) return;
+        if (!isAuto) {
+            const confirmMsg = t.kids?.steps?.pdfConfirm || "PDF 설명을 생성하시겠습니까?\n모델 크기에 따라 시간이 걸릴 수 있습니다.";
+            if (!confirm(confirmMsg)) return;
+        }
 
         setIsPdfGenerating(true);
         setPdfStepIdx(0);
@@ -454,16 +458,7 @@ function KidsStepPageContent() {
         setPdfImages([]);
         setPdfModelLoaded(false);
 
-        // Parse BOM
-        try {
-            const res = await fetch(originalLdrUrl || ldrUrl);
-            const text = await res.text();
-            const bom = parseBOM(text);
-            setPdfBOM(bom);
-        } catch (e) {
-            console.error("BOM parse failed", e);
-            setPdfBOM([]);
-        }
+        // BOM parsing is handled by backend API
     };
 
     // PDF Capture Loop logic
@@ -514,14 +509,68 @@ function KidsStepPageContent() {
         }
     };
 
-    const finishPdfGeneration = (finalImages: string[]) => {
+    const finishPdfGeneration = async (finalImages: string[]) => {
         setIsPdfGenerating(false);
+
         try {
-            savePDF(finalImages, pdfBOM, "brickers_guide.pdf");
-            alert("PDF 생성이 완료되었습니다.");
+            // 이미지를 step별로 그룹화 (3개 뷰씩)
+            const VIEWS_PER_STEP = 3;
+            const stepImageGroups: { stepIndex: number; images: string[] }[] = [];
+
+            for (let i = 0; i < finalImages.length; i += VIEWS_PER_STEP) {
+                const stepImages = finalImages.slice(i, i + VIEWS_PER_STEP);
+                stepImageGroups.push({
+                    stepIndex: Math.floor(i / VIEWS_PER_STEP) + 1,
+                    images: stepImages
+                });
+            }
+
+            // 커버 이미지 (마지막 Step의 첫 번째 뷰)
+            const coverImage = stepImageGroups.length > 0
+                ? stepImageGroups[stepImageGroups.length - 1].images[0]
+                : undefined;
+
+            // 백엔드 API 호출
+            const API_BASE = process.env.NEXT_PUBLIC_AI_API_URL || '';
+            const jobId = searchParams.get("jobId");
+            const response = await fetch(`${API_BASE}/api/kids/pdf-with-bom`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    modelName: "Brickers Model",
+                    ldrUrl: originalLdrUrl || ldrUrl,
+                    jobId: jobId,
+                    steps: stepImageGroups,
+                    coverImage: coverImage
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(`PDF 생성 실패: ${error}`);
+            }
+
+            const result = await response.json();
+
+            if (result.ok && result.pdfUrl) {
+                // PDF 다운로드
+                if (result.pdfUrl.startsWith('data:')) {
+                    // Base64 데이터인 경우 직접 다운로드
+                    const link = document.createElement('a');
+                    link.href = result.pdfUrl;
+                    link.download = 'brickers_guide.pdf';
+                    link.click();
+                } else {
+                    // S3 URL인 경우 새 탭에서 열기
+                    window.open(result.pdfUrl, '_blank');
+                }
+                alert("PDF 생성이 완료되었습니다.");
+            } else {
+                throw new Error(result.message || "PDF 생성 실패");
+            }
         } catch (e) {
-            console.error("PDF Save failed", e);
-            alert("PDF 저장 중 오류가 발생했습니다.");
+            console.error("PDF generation failed", e);
+            alert(`PDF 생성 중 오류가 발생했습니다: ${e instanceof Error ? e.message : '알 수 없는 오류'}`);
         }
     };
 
@@ -611,6 +660,19 @@ function KidsStepPageContent() {
         }
     };
 
+    // 자동 PDF 생성 트리거
+    useEffect(() => {
+        const jobId = searchParams.get("jobId");
+        const shouldAutoPdf = searchParams.get("autoPdf") === "true";
+
+        if (ldrUrl && jobId && shouldAutoPdf && !isPdfGenerating && pdfImages.length === 0) {
+            // 약간의 지연을 주어 모델이 첫 화면에 보인 뒤 시작하도록 함
+            setTimeout(() => {
+                handleGeneratePDF(true);
+            }, 1000);
+        }
+    }, [ldrUrl, searchParams, isPdfGenerating, pdfImages.length]); // ldrUrl 로드 시점 확인
+
     const downloadColorChangedLdr = () => {
         if (colorChangedLdrBase64) {
             downloadLdrFromBase64(colorChangedLdrBase64, `brickers_${selectedTheme}.ldr`);
@@ -631,6 +693,10 @@ function KidsStepPageContent() {
                     if (!ldrUrl) setLdrUrl(data.ldrUrl || data.ldr_url || "");
                     setJobThumbnailUrl(data.sourceImageUrl || null);
                     setGlbUrl(data.glbUrl || data.glb_url || null);
+                    // ✅ Gemini 추천 태그 로드
+                    if (data.suggestedTags && Array.isArray(data.suggestedTags)) {
+                        setSuggestedTags(data.suggestedTags);
+                    }
                 }
             } catch (e) {
                 console.error("[KidsStepPage] failed to resolve job info:", e);
@@ -718,9 +784,10 @@ function KidsStepPageContent() {
         setIsSubmitting(true);
         try {
             await registerToGallery({
+                jobId: jobId || undefined,  // ✅ jobId 전달 (중복 등록 방지)
                 title: galleryTitle,
                 content: t.kids.steps.galleryModal.content,
-                tags: ["Kids", "Brick"],
+                tags: suggestedTags.length > 0 ? suggestedTags : ["Kids", "Brick"],  // ✅ Gemini 태그 사용
                 thumbnailUrl: jobThumbnailUrl || undefined,
                 ldrUrl: ldrUrl || undefined,
                 sourceImageUrl: jobThumbnailUrl || undefined,
@@ -730,7 +797,17 @@ function KidsStepPageContent() {
             alert(t.kids.steps.galleryModal.success);
             setIsGalleryModalOpen(false);
             setGalleryTitle("");
-        } catch (err) { console.error(err); alert(t.kids.steps.galleryModal.fail); }
+            setIsRegisteredToGallery(true);  // ✅ 등록 완료 상태 업데이트
+        } catch (err: any) {
+            console.error(err);
+            // 중복 등록 에러 처리
+            if (err.message?.includes("이미 갤러리에 등록")) {
+                alert(err.message);
+                setIsRegisteredToGallery(true);
+            } else {
+                alert(t.kids.steps.galleryModal.fail);
+            }
+        }
         finally { setIsSubmitting(false); }
     };
 
@@ -881,13 +958,15 @@ function KidsStepPageContent() {
                                     placeholder={t.kids.steps.galleryModal.placeholder}
                                     value={galleryTitle}
                                     onChange={(e) => setGalleryTitle(e.target.value)}
+                                    disabled={isRegisteredToGallery}
                                 />
                                 <button
                                     className="kidsStep__sidebarBtn"
                                     onClick={handleRegisterGallery}
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || isRegisteredToGallery}
+                                    style={isRegisteredToGallery ? { background: "#aaa", cursor: "not-allowed" } : {}}
                                 >
-                                    {isSubmitting ? "..." : t.kids.steps.registerGallery}
+                                    {isRegisteredToGallery ? "✓ 등록완료" : (isSubmitting ? "..." : t.kids.steps.registerGallery)}
                                 </button>
                             </div>
                         </div>
@@ -899,7 +978,7 @@ function KidsStepPageContent() {
                             </div>
                             <button
                                 className="kidsStep__sidebarBtn"
-                                onClick={handleGeneratePDF}
+                                onClick={() => handleGeneratePDF()}
                                 disabled={isPdfGenerating || loading}
                                 style={{ background: "#444" }}
                             >

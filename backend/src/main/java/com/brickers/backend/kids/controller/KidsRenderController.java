@@ -1,5 +1,6 @@
 package com.brickers.backend.kids.controller;
 
+import com.brickers.backend.kids.dto.KidsPdfRequest;
 import com.brickers.backend.kids.service.KidsRenderService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -28,6 +29,15 @@ public class KidsRenderController {
             return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
         } catch (Exception e) {
             // ✅ 프론트에 원인 보이게
+            return ResponseEntity.status(500).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/pdf-with-bom")
+    public ResponseEntity<?> createPdfWithBom(@RequestBody KidsPdfRequest request) {
+        try {
+            return ResponseEntity.ok(service.createPdfWithBom(request));
+        } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("message", e.getMessage()));
         }
     }

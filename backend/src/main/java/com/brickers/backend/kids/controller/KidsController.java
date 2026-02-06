@@ -24,8 +24,7 @@ public class KidsController {
     @PostMapping(value = "/generate", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> generateBrick(
             Authentication authentication,
-            @RequestBody KidsGenerateRequest request
-    ) {
+            @RequestBody KidsGenerateRequest request) {
         log.info("📥 [KidsController] /api/kids/generate 요청 수신");
         log.info("   - sourceImageUrl: {}", request.getSourceImageUrl());
         log.info("   - age: {}, budget: {}, title: {}", request.getAge(), request.getBudget(), request.getTitle());
@@ -40,8 +39,7 @@ public class KidsController {
                 request.getSourceImageUrl(),
                 request.getAge(),
                 request.getBudget(),
-                request.getTitle()
-        );
+                request.getTitle());
         log.info("✅ [KidsController] 응답: {}", result);
         return ResponseEntity.ok(result);
     }
@@ -58,8 +56,7 @@ public class KidsController {
     public ResponseEntity<Void> updateJobStage(
             @PathVariable String jobId,
             @RequestHeader("X-Internal-Token") String token,
-            @RequestBody Map<String, String> body
-    ) {
+            @RequestBody Map<String, String> body) {
         String expected = System.getenv("INTERNAL_API_TOKEN");
         if (expected == null || expected.isBlank() || !expected.equals(token)) {
             return ResponseEntity.status(403).build();
@@ -79,8 +76,7 @@ public class KidsController {
     public ResponseEntity<Void> receiveAgentLog(
             @PathVariable String jobId,
             @RequestHeader("X-Internal-Token") String token,
-            @Valid @RequestBody AgentLogRequest request
-    ) {
+            @Valid @RequestBody AgentLogRequest request) {
         String expected = System.getenv("INTERNAL_API_TOKEN");
         if (expected == null || expected.isBlank() || !expected.equals(token)) {
             return ResponseEntity.status(403).build();
@@ -95,5 +91,27 @@ public class KidsController {
     @GetMapping("/jobs/{jobId}/logs/stream")
     public SseEmitter streamAgentLogs(@PathVariable String jobId) {
         return kidsService.subscribeAgentLogs(jobId);
+    }
+
+    /**
+     * ✅ AI Server에서 Gemini 추천 태그 저장
+     * Python: PATCH /api/kids/jobs/{jobId}/suggested-tags
+     */
+    @PatchMapping("/jobs/{jobId}/suggested-tags")
+    public ResponseEntity<Void> updateSuggestedTags(
+            @PathVariable String jobId,
+            @RequestHeader("X-Internal-Token") String token,
+            @RequestBody Map<String, Object> body) {
+        String expected = System.getenv("INTERNAL_API_TOKEN");
+        if (expected == null || expected.isBlank() || !expected.equals(token)) {
+            return ResponseEntity.status(403).build();
+        }
+        @SuppressWarnings("unchecked")
+        java.util.List<String> tags = (java.util.List<String>) body.get("suggestedTags");
+        if (tags == null || tags.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        kidsService.updateSuggestedTags(jobId, tags);
+        return ResponseEntity.ok().build();
     }
 }

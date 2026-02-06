@@ -18,6 +18,10 @@ public class GalleryPostEntity {
     @Id
     private String id;
 
+    /** 원본 생성 Job ID (갤러리 등록 시 연결) */
+    @Indexed
+    private String jobId;
+
     @Indexed
     private String authorId;
 

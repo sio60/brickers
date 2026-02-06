@@ -47,7 +47,8 @@ public class KidsService {
     @Value("${aws.sqs.enabled:false}")
     private boolean sqsEnabled;
 
-    public Map<String, Object> startGeneration(String userId, String sourceImageUrl, String age, int budget, String title) {
+    public Map<String, Object> startGeneration(String userId, String sourceImageUrl, String age, int budget,
+            String title) {
         log.info("AI 생성 요청 접수: userId={}, sourceImageUrl={}, age={}, budget={}, title={}",
                 safe(userId), sourceImageUrl, safe(age), budget, safe(title));
 
@@ -61,8 +62,8 @@ public class KidsService {
                 .level(ageToKidsLevel(age))
                 .status(JobStatus.QUEUED)
                 .stage(JobStage.THREE_D_PREVIEW)
-                .sourceImageUrl(sourceImageUrl)  // Frontend가 업로드한 S3 URL
-                .title(title)  // 작업 제목 (파일명)
+                .sourceImageUrl(sourceImageUrl) // Frontend가 업로드한 S3 URL
+                .title(title) // 작업 제목 (파일명)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .stageUpdatedAt(LocalDateTime.now())
@@ -128,6 +129,22 @@ public class KidsService {
         log.info("[Brickers] ✅ Job Stage 업데이트 완료 | jobId={} | stage={}", jobId, stage);
     }
 
+    /**
+     * ✅ Gemini 추천 태그 저장 (AI Server에서 호출)
+     */
+    public void updateSuggestedTags(String jobId, List<String> tags) {
+        log.info("[Brickers] Suggested Tags 업데이트 | jobId={} | tags={}", jobId, tags);
+
+        GenerateJobEntity job = generateJobRepository.findById(jobId)
+                .orElseThrow(() -> new java.util.NoSuchElementException("Job not found: " + jobId));
+
+        job.setSuggestedTags(tags);
+        job.setUpdatedAt(LocalDateTime.now());
+        generateJobRepository.save(job);
+
+        log.info("[Brickers] ✅ Suggested Tags 저장 완료 | jobId={} | tags={}", jobId, tags);
+    }
+
     private KidsLevel ageToKidsLevel(String age) {
         if (age == null)
             return KidsLevel.LEVEL_1;
@@ -151,7 +168,8 @@ public class KidsService {
         log.debug("[AgentLog] jobId={} | {}", jobId, logEntry);
 
         // 버퍼에 저장 (최대 크기 제한)
-        List<String> buffer = agentLogBuffer.computeIfAbsent(jobId, k -> Collections.synchronizedList(new ArrayList<>()));
+        List<String> buffer = agentLogBuffer.computeIfAbsent(jobId,
+                k -> Collections.synchronizedList(new ArrayList<>()));
         synchronized (buffer) {
             buffer.add(logEntry);
             while (buffer.size() > MAX_LOG_BUFFER_SIZE) {
