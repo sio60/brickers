@@ -37,7 +37,7 @@ public class SqsConsumerService {
             .registerModule(new JavaTimeModule());
 
     @Value("${aws.sqs.queue.result-url}")
-    private String resultQueueUrl;  // AI → Backend (RESULT 수신용)
+    private String resultQueueUrl; // AI → Backend (RESULT 수신용)
 
     @Value("${aws.sqs.polling.max-messages:10}")
     private int maxMessages;
@@ -147,6 +147,7 @@ public class SqsConsumerService {
             job.setGlbUrl(result.getGlbUrl());
             job.setLdrUrl(result.getLdrUrl());
             job.setBomUrl(result.getBomUrl());
+            job.setPdfUrl(result.getPdfUrl()); // [New]
             job.markDone();
 
             log.info("   ✅ Job 완료 처리 | jobId={} | ldrUrl={}", job.getId(), job.getLdrUrl());

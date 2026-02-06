@@ -22,8 +22,8 @@ public class SqsMessage {
      * 메시지 타입
      */
     public enum MessageType {
-        REQUEST,  // Backend → AI Server (작업 요청)
-        RESULT    // AI Server → Backend (작업 결과)
+        REQUEST, // Backend → AI Server (작업 요청)
+        RESULT // AI Server → Backend (작업 결과)
     }
 
     private MessageType type;
@@ -42,6 +42,7 @@ public class SqsMessage {
     private String glbUrl;
     private String ldrUrl;
     private String bomUrl;
+    private String pdfUrl; // [New] PDF URL
     private Integer parts;
     private Integer finalTarget;
     private String errorMessage;
