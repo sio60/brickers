@@ -5,7 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import KidsModelSelectModal from "./KidsModelSelectModal";
 import styles from "./AgeSelectionModal.module.css";
 
-type AgeGroup = "4-5" | "6-7" | "8-10" | null;
+type AgeGroup = "4-5" | "6-7" | "8-10" | "PRO" | null;
 
 interface AgeSelectionModalProps {
     isOpen: boolean;
@@ -39,9 +39,16 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
         { title: t.kids.model2, url: "/ldraw/models/8-10_2.ldr", thumbnail: "/8-10_2.png" },
     ];
 
+    // PRO 모델들 (일단 8-10 모델들 사용)
+    const modelsPro = [
+        { title: t.kids.model1, url: "/ldraw/models/8-10_1.ldr", thumbnail: "/8-10.png" },
+        { title: t.kids.model2, url: "/ldraw/models/8-10_2.ldr", thumbnail: "/8-10_2.png" },
+    ];
+
     const getCurrentModels = () => {
         if (modalAge === "6-7") return models67;
         if (modalAge === "8-10") return models810;
+        if (modalAge === "PRO") return modelsPro;
         return models45;
     };
 
@@ -87,6 +94,13 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
                                 onClick={() => handleSelect("8-10")}
                             >
                                 <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "3")}</div>
+                            </button>
+
+                            <button
+                                className={`${styles.ageBtn} ${selectedAge === "PRO" ? styles.active : ""}`}
+                                onClick={() => handleSelect("PRO")}
+                            >
+                                <div className={styles.ageLabel}>{t.kids.pro}</div>
                             </button>
                         </div>
                     </div>
