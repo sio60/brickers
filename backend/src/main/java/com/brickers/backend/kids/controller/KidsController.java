@@ -5,6 +5,7 @@ import com.brickers.backend.kids.dto.KidsGenerateRequest;
 import com.brickers.backend.kids.service.KidsService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -21,10 +22,14 @@ public class KidsController {
 
     private final KidsService kidsService;
 
+    @Value("${INTERNAL_API_TOKEN:}")
+    private String internalApiToken;
+
     @PostMapping(value = "/generate", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> generateBrick(
             Authentication authentication,
-            @RequestBody KidsGenerateRequest request) {
+            @RequestBody KidsGenerateRequest request
+    ) {
         log.info("📥 [KidsController] /api/kids/generate 요청 수신");
         log.info("   - sourceImageUrl: {}", request.getSourceImageUrl());
         log.info("   - age: {}, budget: {}, title: {}", request.getAge(), request.getBudget(), request.getTitle());
@@ -39,7 +44,8 @@ public class KidsController {
                 request.getSourceImageUrl(),
                 request.getAge(),
                 request.getBudget(),
-                request.getTitle());
+                request.getTitle()
+        );
         log.info("✅ [KidsController] 응답: {}", result);
         return ResponseEntity.ok(result);
     }
@@ -56,9 +62,10 @@ public class KidsController {
     public ResponseEntity<Void> updateJobStage(
             @PathVariable String jobId,
             @RequestHeader("X-Internal-Token") String token,
-            @RequestBody Map<String, String> body) {
-        String expected = System.getenv("INTERNAL_API_TOKEN");
-        if (expected == null || expected.isBlank() || !expected.equals(token)) {
+            @RequestBody Map<String, String> body
+    ) {
+        if (internalApiToken.isBlank() || !internalApiToken.equals(token)) {
+            log.warn("[KidsController] 토큰 불일치: expected={}, received={}", internalApiToken, token);
             return ResponseEntity.status(403).build();
         }
         String stageName = body.get("stage");
@@ -76,9 +83,10 @@ public class KidsController {
     public ResponseEntity<Void> receiveAgentLog(
             @PathVariable String jobId,
             @RequestHeader("X-Internal-Token") String token,
-            @Valid @RequestBody AgentLogRequest request) {
-        String expected = System.getenv("INTERNAL_API_TOKEN");
-        if (expected == null || expected.isBlank() || !expected.equals(token)) {
+            @Valid @RequestBody AgentLogRequest request
+    ) {
+        if (internalApiToken.isBlank() || !internalApiToken.equals(token)) {
+            log.warn("[KidsController] 로그 수신 토큰 불일치");
             return ResponseEntity.status(403).build();
         }
         kidsService.addAgentLog(jobId, request.getStep(), request.getMessage());
@@ -101,9 +109,10 @@ public class KidsController {
     public ResponseEntity<Void> updateSuggestedTags(
             @PathVariable String jobId,
             @RequestHeader("X-Internal-Token") String token,
-            @RequestBody Map<String, Object> body) {
-        String expected = System.getenv("INTERNAL_API_TOKEN");
-        if (expected == null || expected.isBlank() || !expected.equals(token)) {
+            @RequestBody Map<String, Object> body
+    ) {
+        if (internalApiToken.isBlank() || !internalApiToken.equals(token)) {
+            log.warn("[KidsController] 태그 업데이트 토큰 불일치");
             return ResponseEntity.status(403).build();
         }
         @SuppressWarnings("unchecked")
