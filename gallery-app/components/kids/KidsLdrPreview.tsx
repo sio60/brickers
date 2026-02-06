@@ -459,4 +459,6 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
             </Canvas>
         </div>
     );
-}
+});
+
+export default KidsLdrPreview;
