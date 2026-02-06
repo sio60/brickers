@@ -299,10 +299,16 @@ function KidsPageContent() {
 
     // SSE: CoScientist 에이전트 로그 스트리밍
     useEffect(() => {
-        if (!jobId || status !== "loading") return;
+        console.log(`[SSE] useEffect triggered | jobId=${jobId} | status=${status}`);
+        if (!jobId || status !== "loading") {
+            console.log(`[SSE] Skipping - conditions not met`);
+            return;
+        }
 
         const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-        const es = new EventSource(`${apiBase}/api/kids/jobs/${encodeURIComponent(jobId)}/logs/stream`);
+        const sseUrl = `${apiBase}/api/kids/jobs/${encodeURIComponent(jobId)}/logs/stream`;
+        console.log(`[SSE] Connecting to: ${sseUrl}`);
+        const es = new EventSource(sseUrl);
         let errorCount = 0;
 
         es.addEventListener("agent-log", (e) => {
