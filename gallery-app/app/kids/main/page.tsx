@@ -85,6 +85,10 @@ function KidsPageContent() {
     // 다운로드 드롭다운 상태
     const [isDownloadOpen, setIsDownloadOpen] = useState(false);
 
+    // PDF 다운로드 관련 (Hooks는 반드시 리턴 이전에 선언되어야 함)
+    const previewRef = useRef<KidsLdrPreviewHandle>(null);
+    const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+
     const processingRef = useRef(false);
 
     useEffect(() => {
@@ -416,8 +420,6 @@ function KidsPageContent() {
     }
 
     // PDF 다운로드 핸들러
-    const previewRef = useRef<KidsLdrPreviewHandle>(null);
-    const [isPdfGenerating, setIsPdfGenerating] = useState(false);
 
     const handleDownloadPdf = async () => {
         if (!ldrUrl || !previewRef.current || isPdfGenerating) return;
