@@ -315,7 +315,7 @@ export default function AdminPage() {
                                     (메인 서버에 통합됨)
                                 </p>
                                 <a
-                                    href="http://localhost:8000/brick-judge/viewer"
+                                    href="/brick-judge/viewer"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     style={{
