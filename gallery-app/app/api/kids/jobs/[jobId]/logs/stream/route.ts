@@ -1,5 +1,6 @@
 /**
  * SSE 프록시 - Next.js rewrites가 EventSource를 지원하지 않아서 별도 API route로 처리
+ * ReadableStream을 명시적으로 chunk 단위로 파이프하여 실시간 스트리밍 보장
  */
 export async function GET(
     request: Request,
@@ -12,25 +13,46 @@ export async function GET(
     console.log(`[SSE Proxy] Connecting to: ${targetUrl}`);
 
     try {
-        const response = await fetch(targetUrl, {
+        const upstream = await fetch(targetUrl, {
             headers: {
                 'Accept': 'text/event-stream',
                 'Cache-Control': 'no-cache',
             },
         });
 
-        if (!response.ok) {
-            console.error(`[SSE Proxy] Backend returned ${response.status}`);
-            return new Response(`Backend error: ${response.status}`, { status: response.status });
+        if (!upstream.ok || !upstream.body) {
+            console.error(`[SSE Proxy] Backend returned ${upstream.status}`);
+            return new Response(`Backend error: ${upstream.status}`, { status: upstream.status });
         }
 
-        // SSE 스트림 그대로 전달
-        return new Response(response.body, {
+        const reader = upstream.body.getReader();
+
+        const stream = new ReadableStream({
+            async pull(controller) {
+                try {
+                    const { done, value } = await reader.read();
+                    if (done) {
+                        controller.close();
+                        return;
+                    }
+                    controller.enqueue(value);
+                } catch (err) {
+                    console.error('[SSE Proxy] Stream read error:', err);
+                    controller.close();
+                    reader.cancel().catch(() => {});
+                }
+            },
+            cancel() {
+                reader.cancel().catch(() => {});
+            },
+        });
+
+        return new Response(stream, {
             headers: {
                 'Content-Type': 'text/event-stream',
                 'Cache-Control': 'no-cache, no-transform',
                 'Connection': 'keep-alive',
-                'X-Accel-Buffering': 'no', // nginx 버퍼링 방지
+                'X-Accel-Buffering': 'no',
             },
         });
     } catch (error) {
