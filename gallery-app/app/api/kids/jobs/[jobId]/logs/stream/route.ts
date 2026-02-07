@@ -39,5 +39,5 @@ export async function GET(
     }
 }
 
-// Edge Runtime 사용 시 스트리밍 성능 향상
-export const runtime = 'edge';
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
