@@ -223,6 +223,11 @@ public class KidsService {
             emitterList.add(emitter);
         }
 
+        // 응답 헤더 즉시 flush용 초기 이벤트
+        try {
+            emitter.send(SseEmitter.event().name("connected").data("ok"));
+        } catch (IOException ignored) {}
+
         emitter.onCompletion(() -> removeEmitter(jobId, emitter));
         emitter.onTimeout(() -> removeEmitter(jobId, emitter));
         emitter.onError(e -> removeEmitter(jobId, emitter));
