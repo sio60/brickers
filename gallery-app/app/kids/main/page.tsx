@@ -306,7 +306,7 @@ function KidsPageContent() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [rawFile, age, budget]); // status 제거 - status 변경 시 cleanup이 abort를 호출해서 fetch 취소됨
 
-    // SSE: CoScientist 에이전트 로그 스트리밍 (fetch + ReadableStream)
+    // SSE: CoScientist 에이전트 로그 스트리밍
     useEffect(() => {
         console.log(`[SSE] useEffect triggered | jobId=${jobId} | status=${status}`);
         if (!jobId || status !== "loading") {
@@ -316,57 +316,28 @@ function KidsPageContent() {
 
         const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
         const sseUrl = `${apiBase}/api/kids/jobs/${encodeURIComponent(jobId)}/logs/stream`;
-        console.log(`[SSE] Connecting via fetch: ${sseUrl}`);
+        console.log(`[SSE] Connecting to: ${sseUrl}`);
+        const es = new EventSource(sseUrl);
+        let errorCount = 0;
 
-        const abortCtrl = new AbortController();
-        let cancelled = false;
+        es.addEventListener("agent-log", (e) => {
+            errorCount = 0;
+            setAgentLogs(prev => {
+                const next = [...prev, e.data];
+                return next.length > 50 ? next.slice(-50) : next;
+            });
+        });
 
-        (async () => {
-            try {
-                const res = await fetch(sseUrl, {
-                    headers: { 'Accept': 'text/event-stream', 'Cache-Control': 'no-cache' },
-                    signal: abortCtrl.signal,
-                });
-                console.log(`[SSE] fetch response: ${res.status} ${res.statusText}`);
-
-                if (!res.ok || !res.body) {
-                    console.error(`[SSE] Bad response: ${res.status}`);
-                    return;
-                }
-
-                const reader = res.body.getReader();
-                const decoder = new TextDecoder();
-                let buffer = '';
-
-                while (!cancelled) {
-                    const { done, value } = await reader.read();
-                    if (done) { console.log('[SSE] Stream ended'); break; }
-
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop() || '';
-
-                    for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            const data = line.slice(6);
-                            setAgentLogs(prev => {
-                                const next = [...prev, data];
-                                return next.length > 50 ? next.slice(-50) : next;
-                            });
-                        }
-                    }
-                }
-            } catch (err: any) {
-                if (err?.name !== 'AbortError') {
-                    console.error('[SSE] Stream error:', err);
-                }
+        es.onerror = () => {
+            errorCount++;
+            console.warn(`[SSE] Agent log stream error (${errorCount})`);
+            if (errorCount >= 5) {
+                console.warn("[SSE] Too many errors, closing connection");
+                es.close();
             }
-        })();
-
-        return () => {
-            cancelled = true;
-            abortCtrl.abort();
         };
+
+        return () => { es.close(); };
     }, [jobId, status]);
 
     const percent = useMemo(() => {
