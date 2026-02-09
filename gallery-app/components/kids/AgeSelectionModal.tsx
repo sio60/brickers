@@ -5,7 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import KidsModelSelectModal from "./KidsModelSelectModal";
 import styles from "./AgeSelectionModal.module.css";
 
-type AgeGroup = "4-5" | "6-7" | "8-10" | null;
+type AgeGroup = "4-5" | "6-7" | "8-10" | "PRO" | null;
 
 interface AgeSelectionModalProps {
     isOpen: boolean;
@@ -55,7 +55,7 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
 
     const handlePickModel = (url: string | null, file: File | null) => {
         setOpenModelModal(false);
-        onSelect(url, file, modalAge || "4-5");
+        onSelect(url, file, selectedAge || "4-5");
         onClose();
     };
 
@@ -89,6 +89,12 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
                                 <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "3")}</div>
                             </button>
 
+                            <button
+                                className={`${styles.ageBtn} ${selectedAge === "PRO" ? styles.active : ""}`}
+                                onClick={() => handleSelect("PRO")}
+                            >
+                                <div className={styles.ageLabel}>PRO</div>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -98,7 +104,7 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
                 open={openModelModal}
                 onClose={() => setOpenModelModal(false)}
                 onSelect={handlePickModel}
-                items={getCurrentModels()}
+                items={modalAge === "PRO" ? [] : getCurrentModels()}
             />
         </>
     );

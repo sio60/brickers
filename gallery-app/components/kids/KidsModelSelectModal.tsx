@@ -116,43 +116,56 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                 <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
                     {step === 'select' ? (
                         <>
-                            <div className={styles.head}>
-                                <div className={styles.title}>{t.kids.modelSelect.title}</div>
-                                <div className={styles.sub}>{t.kids.modelSelect.sub}</div>
-                                <button className={styles.close} onClick={onClose} aria-label="close">
-                                    ✕
-                                </button>
-                            </div>
-
-                            <div className={styles.grid}>
-                                {items.map((it) => (
-                                    <div
-                                        key={it.url}
-                                        className={`${styles.card} ${selectedUrl === it.url ? styles.isSelected : ""}`}
-                                        onClick={() => handleModelClick(it.url)}
-                                    >
-                                        <div className={styles.cardViewer}>
-                                            {it.thumbnail ? (
-                                                <Image
-                                                    src={it.thumbnail}
-                                                    alt={it.title}
-                                                    fill
-                                                    style={{ objectFit: "contain" }}
-                                                />
-                                            ) : (
-                                                <div className={styles.noPreview}>
-                                                    {t.common.noPreview}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className={styles.cardFooter}>
-                                            <div className={styles.cardLabel}>{it.title}</div>
-                                            <div className={styles.cardPick}>{t.kids.modelSelect.pick}</div>
-                                        </div>
+                            {items.length > 0 && (
+                                <>
+                                    <div className={styles.head}>
+                                        <div className={styles.title}>{t.kids.modelSelect.title}</div>
+                                        <div className={styles.sub}>{t.kids.modelSelect.sub}</div>
+                                        <button className={styles.close} onClick={onClose} aria-label="close">
+                                            ✕
+                                        </button>
                                     </div>
-                                ))}
-                            </div>
+
+                                    <div className={styles.grid}>
+                                        {items.map((it) => (
+                                            <div
+                                                key={it.url}
+                                                className={`${styles.card} ${selectedUrl === it.url ? styles.isSelected : ""}`}
+                                                onClick={() => handleModelClick(it.url)}
+                                            >
+                                                <div className={styles.cardViewer}>
+                                                    {it.thumbnail ? (
+                                                        <Image
+                                                            src={it.thumbnail}
+                                                            alt={it.title}
+                                                            fill
+                                                            style={{ objectFit: "contain" }}
+                                                        />
+                                                    ) : (
+                                                        <div className={styles.noPreview}>
+                                                            {t.common.noPreview}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className={styles.cardFooter}>
+                                                    <div className={styles.cardLabel}>{it.title}</div>
+                                                    <div className={styles.cardPick}>{t.kids.modelSelect.pick}</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+
+                            {items.length === 0 && (
+                                <div className={styles.head}>
+                                    <div className={styles.title}>{t.kids.modelSelect.uploadTitle}</div>
+                                    <button className={styles.close} onClick={onClose} aria-label="close">
+                                        ✕
+                                    </button>
+                                </div>
+                            )}
 
                             {/* 이미지 업로드 영역 */}
                             <div
@@ -162,6 +175,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                 onDragLeave={() => setDragOver(false)}
                                 onDragOver={(e) => e.preventDefault()}
                                 onDrop={onDrop}
+                                style={items.length === 0 ? { marginTop: '20px' } : {}}
                             >
                                 <input
                                     ref={inputRef}
@@ -180,7 +194,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                     </div>
                                 ) : (
                                     <>
-                                        <div className={styles.uploadTitle}>{t.kids.modelSelect.uploadTitle}</div>
+                                        {items.length > 0 && <div className={styles.uploadTitle}>{t.kids.modelSelect.uploadTitle}</div>}
                                         <div className={styles.uploadSub}>{t.kids.modelSelect.uploadSub}</div>
                                         <div className={styles.uploadHint}>{t.kids.modelSelect.uploadHint}</div>
                                         <div className={styles.uploadNotice} style={{ marginTop: '8px', fontSize: '13px', color: '#ff4444', fontWeight: 'bold' }}>
