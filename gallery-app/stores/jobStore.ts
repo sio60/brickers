@@ -13,6 +13,7 @@ interface JobStore {
     // 현재 진행 중인 job
     activeJob: JobInfo | null;
     isPolling: boolean;
+    showDoneToast: boolean;
 
     // 내부 상태 (module-level 아닌 store 내부)
     _pollingTimeoutId: ReturnType<typeof setTimeout> | null;
@@ -20,6 +21,7 @@ interface JobStore {
 
     // Actions
     setActiveJob: (job: JobInfo | null) => void;
+    setShowDoneToast: (show: boolean) => void;
     startPolling: (jobId: string, age?: string) => void;
     stopPolling: () => void;
     clearJob: () => void;
@@ -31,10 +33,12 @@ const MAX_POLLING_COUNT = 400; // 최대 20분 (3초 * 400 = 1200초)
 export const useJobStore = create<JobStore>((set, get) => ({
     activeJob: null,
     isPolling: false,
+    showDoneToast: false,
     _pollingTimeoutId: null,
     _pollingCount: 0,
 
     setActiveJob: (job) => set({ activeJob: job }),
+    setShowDoneToast: (show) => set({ showDoneToast: show }),
 
     startPolling: (jobId: string, age?: string) => {
         // 이미 폴링 중이면 중지

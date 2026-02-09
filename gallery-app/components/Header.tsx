@@ -8,6 +8,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import LoginModal from './common/LoginModal';
 import UpgradeModal from './UpgradeModal';
+import { useJobStore } from '../stores/jobStore';
 import './Header.css';
 
 function HeaderContent() {
@@ -16,6 +17,8 @@ function HeaderContent() {
     const pathname = usePathname();
     const router = useRouter();
     const searchParams = useSearchParams();
+
+    const { showDoneToast, setShowDoneToast } = useJobStore();
 
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -27,6 +30,16 @@ function HeaderContent() {
         }
     }, [searchParams, isAuthenticated]);
 
+    // 토스트 자동 숨김 (5초)
+    useEffect(() => {
+        if (showDoneToast) {
+            const timer = setTimeout(() => {
+                setShowDoneToast(false);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [showDoneToast, setShowDoneToast]);
+
     const handleLogout = async () => {
         await logout();
     };
@@ -34,6 +47,9 @@ function HeaderContent() {
     // 업그레이드 여부 확인
     const isPro = user?.membershipPlan === "PRO";
     const isAdmin = user?.role === "ADMIN";
+
+    // "완성 화면 벗어나면 뜨게 해줘" -> /kids/main 이 아닐 때만 표시
+    const shouldShowGlobalToast = showDoneToast && pathname !== '/kids/main';
 
     return (
         <>
@@ -79,6 +95,13 @@ function HeaderContent() {
                     </div>
                 ) : null}
             </header>
+
+            {/* 글로벌 완료 토스트 */}
+            {shouldShowGlobalToast && (
+                <div className="toast" onClick={() => setShowDoneToast(false)}>
+                    {t.kids.generate.complete}
+                </div>
+            )}
 
             <LoginModal
                 isOpen={isLoginModalOpen}
