@@ -85,4 +85,12 @@ public class MyController {
             @RequestBody(required = false) MyJobRetryRequest req) {
         return myService.retryJob(authentication, jobId, req);
     }
+
+    /** ✅ job 취소 요청 */
+    @PostMapping("/jobs/{jobId}/cancel")
+    public MyJobResponse cancel(
+            Authentication authentication,
+            @PathVariable("jobId") String jobId) {
+        return myService.cancelJob(authentication, jobId);
+    }
 }

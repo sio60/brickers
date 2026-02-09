@@ -121,6 +121,8 @@ export const ko = {
         modalNoData: "모델 데이터를 불러올 수 없습니다.",
         stillGenerating: "아직 생성 중입니다. 잠시만 기다려 주세요.",
         retryConfirm: "생성에 실패했거나 중단된 작업입니다. 다시 시도하시겠습니까?",
+        cancelConfirm: "진행 중인 작업을 취소하시겠습니까?",
+        cancelFail: "작업 취소에 실패했습니다.",
         settingsTbd: "설정 기능 준비 중"
     },
     settings: {
