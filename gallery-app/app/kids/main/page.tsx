@@ -18,7 +18,6 @@ const KidsLdrPreview = dynamic(() => import("@/components/kids/KidsLdrPreview"),
 const KidsModelSelectModal = dynamic(() => import("@/components/kids/KidsModelSelectModal"), { ssr: false });
 
 import { KidsLdrPreviewHandle } from "@/components/kids/KidsLdrPreview";
-import { generatePdfFromServer } from "@/components/kids/PDFGenerator";
 
 function KidsPageContent() {
     const router = useRouter();
@@ -68,6 +67,7 @@ function KidsPageContent() {
     const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
     const [ldrUrl, setLdrUrl] = useState<string | null>(null);
     const [glbUrl, setGlbUrl] = useState<string | null>(null);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [jobThumbnailUrl, setJobThumbnailUrl] = useState<string | null>(null);
     const [jobId, setJobId] = useState<string | null>(null);
     const [showToast, setShowToast] = useState(false);
@@ -84,9 +84,8 @@ function KidsPageContent() {
     // 다운로드 드롭다운 상태
     const [isDownloadOpen, setIsDownloadOpen] = useState(false);
 
-    // PDF 다운로드 관련 (Hooks는 반드시 리턴 이전에 선언되어야 함)
+    // 3D 프리뷰 ref
     const previewRef = useRef<KidsLdrPreviewHandle>(null);
-    const [isPdfGenerating, setIsPdfGenerating] = useState(false);
 
     const processingRef = useRef(false);
 
@@ -279,6 +278,7 @@ function KidsPageContent() {
 
                 setLdrUrl(modelUrl);
                 setGlbUrl(finalData.glbUrl || finalData.glb_url);
+                if (finalData.pdfUrl) setPdfUrl(finalData.pdfUrl);
                 setStatus("done");
                 console.log("[KidsPage] ✅ 전체 프로세스 완료! | ldrUrl:", modelUrl);
             } catch (e) {
@@ -420,30 +420,9 @@ function KidsPageContent() {
 
     // PDF 다운로드 핸들러
 
-    const handleDownloadPdf = async () => {
-        if (!ldrUrl || !previewRef.current || isPdfGenerating) return;
-
-        try {
-            setIsPdfGenerating(true);
-            setDebugLog("📸 3D 모델 캡처 및 PDF 생성 중...");
-
-            // 1. 캡처 실행
-            const stepImages = await previewRef.current.captureAllSteps();
-            if (stepImages.length === 0) throw new Error("캡처된 이미지가 없습니다.");
-
-            // 2. 서버 요청
-            const pdfUrl = await generatePdfFromServer(ldrUrl, jobId || "model", stepImages);
-
-            // 3. 다운로드
-            window.open(pdfUrl, "_blank");
-            setDebugLog("✅ PDF 다운로드 완료");
-        } catch (e) {
-            console.error("PDF Download Error:", e);
-            alert("PDF 생성 중 오류가 발생했습니다.");
-            setDebugLog(`❌ PDF 오류: ${e instanceof Error ? e.message : String(e)}`);
-        } finally {
-            setIsPdfGenerating(false);
-        }
+    const handleDownloadPdf = () => {
+        if (!pdfUrl) return;
+        window.open(pdfUrl, "_blank");
     };
 
     return (
@@ -469,7 +448,7 @@ function KidsPageContent() {
                             <button
                                 className="nextBtn nextBtn--ab"
                                 onClick={() => {
-                                    router.push(`/kids/steps?url=${encodeURIComponent(ldrUrl)}&jobId=${jobId ?? ""}&age=${age}`);
+                                    router.push(`/kids/steps?url=${encodeURIComponent(ldrUrl)}&jobId=${jobId ?? ""}&age=${age}${pdfUrl ? `&pdfUrl=${encodeURIComponent(pdfUrl)}` : ""}`);
                                 }}
                             >
                                 {t.kids.generate.next}
@@ -490,9 +469,11 @@ function KidsPageContent() {
                                     <div className="dropdownMenu">
                                         <button onClick={downloadLdr}>LDR Download</button>
                                         {glbUrl && <button onClick={downloadGlb}>GLB Download</button>}
-                                        <button onClick={handleDownloadPdf} disabled={isPdfGenerating}>
-                                            {isPdfGenerating ? "PDF Generating..." : "PDF Download"}
-                                        </button>
+                                        {pdfUrl && (
+                                            <button onClick={handleDownloadPdf}>
+                                                PDF Download
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>

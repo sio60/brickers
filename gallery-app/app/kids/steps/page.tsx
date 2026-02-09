@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import * as THREE from "three";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import { Bounds, OrbitControls, Center, Gltf, Environment, useBounds } from "@react-three/drei";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
@@ -13,7 +13,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { registerToGallery } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
-// PDF generation moved to backend
 import BackgroundBricks from "@/components/BackgroundBricks";
 import './KidsStepPage.css';
 
@@ -230,48 +229,6 @@ function FitOnceOnLoad({ trigger }: { trigger: string }) {
     return null;
 }
 
-// PDF Capture Rig
-const PDF_CAM_POSITIONS = [
-    [200, -200, 200],   // View 1: Main (Right-Top-Front)
-    [-200, -200, 200],  // View 2: Left-Top-Front
-    [0, -300, -200]     // View 3: Back-Top-Center
-];
-
-function PDFRig({
-    active,
-    viewIndex,
-    onReadyToCapture
-}: {
-    active: boolean;
-    viewIndex: number;
-    onReadyToCapture: () => void;
-}) {
-    const { camera, gl, scene } = useThree();
-
-    // Safety check just in case SSR issues (though this component is client-only)
-    if (!camera) return null;
-
-    useEffect(() => {
-        if (!active) return;
-
-        const pos = PDF_CAM_POSITIONS[viewIndex];
-        if (pos) {
-            camera.position.set(pos[0], pos[1], pos[2]);
-            camera.lookAt(0, 0, 0);
-            camera.updateMatrixWorld();
-
-            // Wait for render
-            const timer = setTimeout(() => {
-                gl.render(scene, camera);
-                onReadyToCapture();
-            }, 300); // 150ms -> 300ms for safety
-            return () => clearTimeout(timer);
-        }
-    }, [active, viewIndex, camera, gl, scene, onReadyToCapture]);
-
-    return null;
-}
-
 // LDR 파싱 및 정렬 유틸
 function parseAndProcessSteps(ldrText: string) {
     const lines = ldrText.replace(/\r\n/g, "\n").split("\n");
@@ -407,6 +364,7 @@ function KidsStepPageContent() {
 
     const jobId = searchParams.get("jobId") || "";
     const urlParam = searchParams.get("url") || "";
+    const serverPdfUrl = searchParams.get("pdfUrl") || "";
 
     const [ldrUrl, setLdrUrl] = useState<string>(urlParam);
     const [originalLdrUrl] = useState<string>(urlParam); // 원본 URL 보존
@@ -434,144 +392,10 @@ function KidsStepPageContent() {
     const [isApplyingColor, setIsApplyingColor] = useState(false);
     const [colorChangedLdrBase64, setColorChangedLdrBase64] = useState<string | null>(null);
 
-    // PDF Generation State
-    const [isPdfGenerating, setIsPdfGenerating] = useState(false);
-    const [pdfStepIdx, setPdfStepIdx] = useState(0);
-    const [pdfViewIdx, setPdfViewIdx] = useState(0); // 0, 1, 2
-    const [pdfImages, setPdfImages] = useState<string[]>([]);
-    const [pdfModelLoaded, setPdfModelLoaded] = useState(false);
-    // BOM parsing moved to backend
-
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-
-    const handleGeneratePDF = async (isAuto = false) => {
-        if (!ldrUrl) return;
-
-        if (!isAuto) {
-            const confirmMsg = t.kids?.steps?.pdfConfirm || "PDF 설명을 생성하시겠습니까?\n모델 크기에 따라 시간이 걸릴 수 있습니다.";
-            if (!confirm(confirmMsg)) return;
-        }
-
-        setIsPdfGenerating(true);
-        setPdfStepIdx(0);
-        setPdfViewIdx(0);
-        setPdfImages([]);
-        setPdfModelLoaded(false);
-
-        // BOM parsing is handled by backend API
-    };
-
-    // PDF Capture Loop logic
-    const handlePdfCapture = () => {
-        // Called by PDFRig when camera is ready
-        // We capture the canvas
-        // Instead of querySelector, we should find the canvas within the specific container or use a specific ID if possible.
-        // But since we are inside a component, querySelector might pick up background canvas.
-        // Let's rely on the fact that PDFRig is inside the MAIN canvas.
-        // We can pass the canvas reference from PDFRig? Or just try to pick the last canvas?
-
-        // Better: Use a specific class for the main canvas
-        const canvas = document.querySelector('.kids-main-canvas canvas') as HTMLCanvasElement;
-
-        if (canvas) {
-            try {
-                const data = canvas.toDataURL("image/png");
-                setPdfImages(prev => [...prev, data]);
-            } catch (e) {
-                console.error("Canvas capture failed", e);
-            }
-
-            // Next View or Next Step
-            if (pdfViewIdx < 2) {
-                setPdfViewIdx(prev => prev + 1);
-            } else {
-                // Done with this step, move to next
-                const total = stepBlobUrls.length;
-                if (pdfStepIdx < total - 1) {
-                    setPdfViewIdx(0);
-                    setPdfStepIdx(prev => prev + 1);
-                    setPdfModelLoaded(false); // Wait for new model load
-                } else {
-                    // All steps done!
-                    // Wait a bit to ensure last state update processed
-                    setTimeout(() => {
-                        const currentData = canvas.toDataURL("image/png"); // Capture last again to be sure?
-                        // Check if we missed the last one in the logic above?
-                        // actually handlePdfCapture adds to state.
-                        // The logic "finishPdfGeneration([...pdfImages, data])" in previous code was correct.
-                        // But we just updated state. We should pass the data directly to finish logic.
-                        finishPdfGeneration([...pdfImages, currentData]);
-                    }, 100);
-                }
-            }
-        } else {
-            console.error("Canvas parsing failed: Canvas not found");
-        }
-    };
-
-    const finishPdfGeneration = async (finalImages: string[]) => {
-        setIsPdfGenerating(false);
-
-        try {
-            // 이미지를 step별로 그룹화 (3개 뷰씩)
-            const VIEWS_PER_STEP = 3;
-            const stepImageGroups: { stepIndex: number; images: string[] }[] = [];
-
-            for (let i = 0; i < finalImages.length; i += VIEWS_PER_STEP) {
-                const stepImages = finalImages.slice(i, i + VIEWS_PER_STEP);
-                stepImageGroups.push({
-                    stepIndex: Math.floor(i / VIEWS_PER_STEP) + 1,
-                    images: stepImages
-                });
-            }
-
-            // 커버 이미지 (마지막 Step의 첫 번째 뷰)
-            const coverImage = stepImageGroups.length > 0
-                ? stepImageGroups[stepImageGroups.length - 1].images[0]
-                : undefined;
-
-            // 백엔드 API 호출
-            const API_BASE = process.env.NEXT_PUBLIC_AI_API_URL || '';
-            const jobId = searchParams.get("jobId");
-            const response = await fetch(`${API_BASE}/api/kids/pdf-with-bom`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    modelName: "Brickers Model",
-                    ldrUrl: originalLdrUrl || ldrUrl,
-                    jobId: jobId,
-                    steps: stepImageGroups,
-                    coverImage: coverImage
-                })
-            });
-
-            if (!response.ok) {
-                const error = await response.text();
-                throw new Error(`PDF 생성 실패: ${error}`);
-            }
-
-            const result = await response.json();
-
-            if (result.ok && result.pdfUrl) {
-                // PDF 다운로드
-                if (result.pdfUrl.startsWith('data:')) {
-                    // Base64 데이터인 경우 직접 다운로드
-                    const link = document.createElement('a');
-                    link.href = result.pdfUrl;
-                    link.download = 'brickers_guide.pdf';
-                    link.click();
-                } else {
-                    // S3 URL인 경우 새 탭에서 열기
-                    window.open(result.pdfUrl, '_blank');
-                }
-                alert("PDF 생성이 완료되었습니다.");
-            } else {
-                throw new Error(result.message || "PDF 생성 실패");
-            }
-        } catch (e) {
-            console.error("PDF generation failed", e);
-            alert(`PDF 생성 중 오류가 발생했습니다: ${e instanceof Error ? e.message : '알 수 없는 오류'}`);
-        }
+    // PDF: 서버에서 생성된 pdfUrl을 바로 다운로드
+    const handleDownloadPdf = () => {
+        if (!serverPdfUrl) return;
+        window.open(serverPdfUrl, "_blank");
     };
 
     const revokeAll = (arr: string[]) => {
@@ -659,19 +483,6 @@ function KidsStepPageContent() {
             setLoading(false);
         }
     };
-
-    // 자동 PDF 생성 트리거
-    useEffect(() => {
-        const jobId = searchParams.get("jobId");
-        const shouldAutoPdf = searchParams.get("autoPdf") === "true";
-
-        if (ldrUrl && jobId && shouldAutoPdf && !isPdfGenerating && pdfImages.length === 0) {
-            // 약간의 지연을 주어 모델이 첫 화면에 보인 뒤 시작하도록 함
-            setTimeout(() => {
-                handleGeneratePDF(true);
-            }, 1000);
-        }
-    }, [ldrUrl, searchParams, isPdfGenerating, pdfImages.length]); // ldrUrl 로드 시점 확인
 
     const downloadColorChangedLdr = () => {
         if (colorChangedLdrBase64) {
@@ -819,16 +630,8 @@ function KidsStepPageContent() {
 
     const isPreset = searchParams.get("isPreset") === "true";
 
-    // Determine Logic for PDF vs Normal
-    const effectiveStepIdx = isPdfGenerating ? pdfStepIdx : stepIdx;
-    // PDF Loop controls model URL
-    const pdfCurrentOverride = stepBlobUrls[Math.min(pdfStepIdx, stepBlobUrls.length - 1)];
-
-    // Normal Mode URL
-    const normalModelUrl = isPreviewMode ? undefined : currentOverride;
-
-    // Final URL to pass
-    const finalModelUrl = isPdfGenerating ? pdfCurrentOverride : normalModelUrl;
+    const effectiveStepIdx = stepIdx;
+    const finalModelUrl = isPreviewMode ? undefined : currentOverride;
 
     return (
         <div style={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
@@ -978,11 +781,11 @@ function KidsStepPageContent() {
                             </div>
                             <button
                                 className="kidsStep__sidebarBtn"
-                                onClick={() => handleGeneratePDF()}
-                                disabled={isPdfGenerating || loading}
-                                style={{ background: "#444" }}
+                                onClick={handleDownloadPdf}
+                                disabled={!serverPdfUrl || loading}
+                                style={{ background: serverPdfUrl ? "#444" : "#aaa" }}
                             >
-                                {isPdfGenerating ? "Generating..." : "PDF 설명서 저장"}
+                                {serverPdfUrl ? "PDF 다운로드" : "PDF 준비중..."}
                             </button>
                         </div>
                     </div>
@@ -992,24 +795,15 @@ function KidsStepPageContent() {
 
                 {/* Main 3D Card Area */}
                 <div className="kidsStep__card kids-main-canvas">
-                    {(loading || isPdfGenerating) && (
+                    {loading && (
                         <div style={{
                             position: "absolute", inset: 0, zIndex: 20,
                             display: "flex", alignItems: "center", justifyContent: "center",
                             background: "rgba(255,255,255,0.75)", fontWeight: 900,
                         }}>
                             <div className="flex flex-col items-center gap-3">
-                                {isPdfGenerating ? (
-                                    <>
-                                        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                                        <span>PDF 생성 중... ({pdfStepIdx + 1}/{total})</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
-                                        <span>{t.kids.steps.loading}</span>
-                                    </>
-                                )}
+                                <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
+                                <span>{t.kids.steps.loading}</span>
                             </div>
                         </div>
                     )}
@@ -1031,22 +825,15 @@ function KidsStepPageContent() {
                                             onLoaded={(g) => {
                                                 setLoading(false);
                                                 modelGroupRef.current = g;
-                                                if (isPdfGenerating) setPdfModelLoaded(true);
                                             }}
                                             onError={() => {
                                                 setLoading(false);
-                                                if (isPdfGenerating) setPdfModelLoaded(true); // skip error
                                             }}
                                             customBounds={modelBounds}
                                             fitTrigger={`${ldrUrl}|${finalModelUrl ?? ''}`}
                                         />
                                     </Center>
-                                    <PDFRig
-                                        active={isPdfGenerating && pdfModelLoaded}
-                                        viewIndex={pdfViewIdx}
-                                        onReadyToCapture={handlePdfCapture}
-                                    />
-                                    {!isPdfGenerating && <OrbitControls makeDefault enablePan={false} enableZoom />}
+                                    <OrbitControls makeDefault enablePan={false} enableZoom />
                                 </Canvas>
                             </div>
 
