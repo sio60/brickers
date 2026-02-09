@@ -5,7 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import KidsModelSelectModal from "./KidsModelSelectModal";
 import styles from "./AgeSelectionModal.module.css";
 
-type AgeGroup = "4-5" | "6-7" | "8-10" | null;
+type AgeGroup = "4-5" | "6-7" | "8-10" | "PRO" | null;
 
 interface AgeSelectionModalProps {
     isOpen: boolean;
@@ -48,14 +48,20 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
     const handleSelect = (ageGroup: AgeGroup) => {
         setSelectedAge(ageGroup);
         if (ageGroup) {
-            setModalAge(ageGroup);
-            setOpenModelModal(true);
+            if (ageGroup === "PRO") {
+                // PRO는 모델 선택 없이 바로 이미지 업로드로 유도하거나, 
+                // 기존 handlePickModel을 호출하여 KidsPage로 이동
+                handlePickModel(null, null);
+            } else {
+                setModalAge(ageGroup);
+                setOpenModelModal(true);
+            }
         }
     };
 
     const handlePickModel = (url: string | null, file: File | null) => {
         setOpenModelModal(false);
-        onSelect(url, file, modalAge || "4-5");
+        onSelect(url, file, selectedAge || "4-5");
         onClose();
     };
 
@@ -73,6 +79,7 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
                                 onClick={() => handleSelect("4-5")}
                             >
                                 <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "1")}</div>
+                                <div className={styles.ageDesc}>~ 400 Bricks</div>
                             </button>
 
                             <button
@@ -80,6 +87,7 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
                                 onClick={() => handleSelect("6-7")}
                             >
                                 <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "2")}</div>
+                                <div className={styles.ageDesc}>~ 450 Bricks</div>
                             </button>
 
                             <button
@@ -87,8 +95,16 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
                                 onClick={() => handleSelect("8-10")}
                             >
                                 <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "3")}</div>
+                                <div className={styles.ageDesc}>~ 500 Bricks</div>
                             </button>
 
+                            <button
+                                className={`${styles.ageBtn} ${styles.proBtn} ${selectedAge === "PRO" ? styles.active : ""}`}
+                                onClick={() => handleSelect("PRO")}
+                            >
+                                <div className={styles.ageLabel}>PRO</div>
+                                <div className={styles.ageDesc}>~ 2000 Bricks</div>
+                            </button>
                         </div>
                     </div>
                 </div>
