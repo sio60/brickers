@@ -119,42 +119,6 @@
     color: #000;
 }
 
-.ageDesc {
-    font-size: 14px;
-    font-weight: 700;
-    color: #666;
-    margin-top: -8px;
-}
-
-.proBtn {
-    background: #000;
-    border-color: #000;
-}
-
-.proBtn .ageLabel {
-    color: #ffe135;
-    font-size: 56px;
-}
-
-.proBtn .ageDesc {
-    color: #aaa;
-}
-
-.proBtn:hover {
-    background: #222;
-}
-
-.proBtn:active,
-.proBtn.active {
-    background: #ffe135;
-    color: #000;
-}
-
-.proBtn.active .ageLabel,
-.proBtn.active .ageDesc {
-    color: #000;
-}
-
 @keyframes fadeIn {
     from {
         opacity: 0;
