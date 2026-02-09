@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import styles from "./MyPage.module.css";
-import { getMyOverview, getMyProfile, getMyJobs, retryJob, updateMyProfile, ApiError } from "@/lib/api/myApi";
+import { getMyOverview, getMyProfile, getMyJobs, retryJob, cancelJob, updateMyProfile, ApiError } from "@/lib/api/myApi";
 import type { MyOverview, MyProfile, MyJob } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, downloadLdrFromBase64 } from "@/lib/api/colorVariantApi";
 import KidsLdrPreview from "@/components/kids/KidsLdrPreview";
@@ -207,6 +207,18 @@ export default function MyPage() {
             alert(t.jobs.retryFail);
         } finally {
             setRetrying(null);
+        }
+    };
+
+    const handleCancelJob = async (jobId: string) => {
+        if (!confirm(t.jobs.cancelConfirm)) return;
+
+        try {
+            await cancelJob(jobId);
+            const updated = await getMyOverview();
+            setData(updated);
+        } catch {
+            alert(t.jobs.cancelFail);
         }
     };
 
@@ -578,6 +590,20 @@ export default function MyPage() {
                                                     <span className={`${styles.mypage__jobStatus} ${styles[getStatusClass(job.status)]}`}>
                                                         {getStatusLabel(job.status)}
                                                     </span>
+                                                </div>
+                                                <div className={styles.mypage__jobActionOverlay}>
+                                                    {(job.status === 'QUEUED' || job.status === 'RUNNING') && (
+                                                        <button
+                                                            className={styles.mypage__jobCancelBtn}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleCancelJob(job.id);
+                                                            }}
+                                                            title={t.common.cancel}
+                                                        >
+                                                            <Icons.X width={16} height={16} />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className={styles.mypage__jobInfo}>

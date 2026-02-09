@@ -141,6 +141,12 @@ public class SqsConsumerService {
         GenerateJobEntity job = jobRepository.findById(result.getJobId())
                 .orElseThrow(() -> new java.util.NoSuchElementException("Job not found: " + result.getJobId()));
 
+        // ✅ 유저가 이미 취소한 작업인 경우 업데이트 무시
+        if (job.getStatus() == com.brickers.backend.job.entity.JobStatus.CANCELED) {
+            log.info("   🚫 [CANCELED] 유저가 취소한 작업이므로 업데이트를 무시합니다. | jobId={}", job.getId());
+            return;
+        }
+
         if (result.getSuccess()) {
             // 성공 - URL 필드 업데이트
             job.setCorrectedImageUrl(result.getCorrectedUrl());
