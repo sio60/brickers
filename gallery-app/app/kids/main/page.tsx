@@ -71,7 +71,6 @@ function KidsPageContent() {
     const [glbUrl, setGlbUrl] = useState<string | null>(null);
     const [jobThumbnailUrl, setJobThumbnailUrl] = useState<string | null>(null);
     const [jobId, setJobId] = useState<string | null>(null);
-    const [showToast, setShowToast] = useState(false);
     const [debugLog, setDebugLog] = useState<string>("");
     const [currentStage, setCurrentStage] = useState<string>("QUEUED");
     const [agentLogs, setAgentLogs] = useState<string[]>([]);
@@ -246,8 +245,9 @@ function KidsPageContent() {
                         console.log("[KidsPage] ✅ Job DONE! | ldrUrl:", statusData.ldrUrl);
                         finalData = statusData;
                         if (alive && statusData.glbUrl) setGlbUrl(statusData.glbUrl);
-                        setShowToast(true);
-                        setTimeout(() => setShowToast(false), 5000);
+
+                        // 전역 토스트 표시 예약 (페이지 이탈 시 표시되도록)
+                        useJobStore.getState().setShowDoneToast(true);
 
                         // store 상태도 업데이트 (페이지 이탈 시 폴링 안 하도록)
                         useJobStore.getState().setActiveJob({
@@ -526,12 +526,6 @@ function KidsPageContent() {
                         {t.kids.generate.error}
                         <br />
                         <span style={{ fontSize: "0.8em", color: "#d32f2f" }}>{debugLog}</span>
-                    </div>
-                )}
-
-                {showToast && (
-                    <div className="toast">
-                        {t.kids.generate.complete}
                     </div>
                 )}
 
