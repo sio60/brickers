@@ -17,5 +17,6 @@ public class GalleryCreateRequest {
     private String ldrUrl; // LDR 파일 URL (3D 뷰어용)
     private String sourceImageUrl; // 원본 이미지 URL
     private String glbUrl; // GLB 파일 URL
+    private Integer parts; // 최종 브릭 개수
     private Visibility visibility; // null이면 PUBLIC
 }

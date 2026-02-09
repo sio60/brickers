@@ -154,8 +154,18 @@ public class SqsConsumerService {
             job.setLdrUrl(result.getLdrUrl());
             job.setBomUrl(result.getBomUrl());
             job.setPdfUrl(result.getPdfUrl());
-            job.setSuggestedTags(result.getTags());
+            if (result.getParts() != null) {
+                job.setParts(result.getParts());
+            }
+            if (result.getFinalTarget() != null) {
+                job.setFinalTarget(result.getFinalTarget());
+            }
+            if (result.getTags() != null && !result.getTags().isEmpty()) {
+                job.setSuggestedTags(result.getTags());
+            }
             job.markDone();
+
+            jobRepository.save(job);
 
             log.info("   ✅ Job 완료 처리 | jobId={} | ldrUrl={}", job.getId(), job.getLdrUrl());
 
