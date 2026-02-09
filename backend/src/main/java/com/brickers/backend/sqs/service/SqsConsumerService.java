@@ -153,7 +153,8 @@ public class SqsConsumerService {
             job.setGlbUrl(result.getGlbUrl());
             job.setLdrUrl(result.getLdrUrl());
             job.setBomUrl(result.getBomUrl());
-            job.setPdfUrl(result.getPdfUrl()); // [New]
+            job.setPdfUrl(result.getPdfUrl());
+            job.setSuggestedTags(result.getTags());
             job.markDone();
 
             log.info("   ✅ Job 완료 처리 | jobId={} | ldrUrl={}", job.getId(), job.getLdrUrl());
