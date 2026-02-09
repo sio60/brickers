@@ -423,6 +423,8 @@ function KidsStepPageContent() {
     const [jobThumbnailUrl, setJobThumbnailUrl] = useState<string | null>(null);
     const [isRegisteredToGallery, setIsRegisteredToGallery] = useState(false);  // ✅ 갤러리 등록 완료 상태
     const [suggestedTags, setSuggestedTags] = useState<string[]>([]);  // ✅ Gemini 추천 태그
+    const [brickCount, setBrickCount] = useState<number>(0);           // ✅ 추가: 모델 브릭 수
+    const [isProMode, setIsProMode] = useState(false);                 // ✅ 추가: PRO 모드 여부
 
     const [isPreviewMode, setIsPreviewMode] = useState(true);
     const [isDownloadOpen, setIsDownloadOpen] = useState(false);
@@ -697,6 +699,8 @@ function KidsStepPageContent() {
                     if (data.suggestedTags && Array.isArray(data.suggestedTags)) {
                         setSuggestedTags(data.suggestedTags);
                     }
+                    if (data.parts) setBrickCount(data.parts);
+                    if (data.isPro) setIsProMode(true);
                 }
             } catch (e) {
                 console.error("[KidsStepPage] failed to resolve job info:", e);
@@ -792,6 +796,7 @@ function KidsStepPageContent() {
                 ldrUrl: ldrUrl || undefined,
                 sourceImageUrl: jobThumbnailUrl || undefined,
                 glbUrl: glbUrl || undefined,
+                parts: brickCount || undefined,  // ✅ 최종 브릭 개수 전달
                 visibility: "PUBLIC",
             });
             alert(t.kids.steps.galleryModal.success);

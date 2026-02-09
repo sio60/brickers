@@ -142,7 +142,8 @@ export const ko = {
         ageAlt: {
             level1: "레벨 1 - 쉬움",
             level2: "레벨 2 - 보통",
-            level3: "레벨 3 - 어려움"
+            level3: "레벨 3 - 어려움",
+            pro: "PRO - 고해상도 (2000브릭)"
         },
         model1: "모델 1",
         model2: "모델 2",

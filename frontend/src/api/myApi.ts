@@ -39,6 +39,10 @@ export interface MyJob {
     correctedImageUrl?: string;
     glbUrl?: string;
     ldrUrl?: string; // LDR 파일 URL (백엔드 MyJobResponse와 일치)
+    parts?: number;        // ✅ 추가: 최종 브릭 개수
+    finalTarget?: number;  // ✅ 추가: 최종 타겟 해상도
+    isPro?: boolean;       // ✅ 추가: PRO 모드 여부
+    suggestedTags?: string[]; // ✅ Gemini 추천 태그
     hasResult: boolean;
     errorMessage: string | null;
     createdAt: string;
@@ -91,6 +95,8 @@ export interface GalleryItem {
     tags: string[];
     thumbnailUrl: string;
     ldrUrl?: string;
+    parts?: number;        // ✅ 추가: 최종 브릭 개수
+    isPro?: boolean;       // ✅ 추가: PRO 모드 여부
     visibility: 'PUBLIC' | 'PRIVATE';
     createdAt: string;
     updatedAt: string;

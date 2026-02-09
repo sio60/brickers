@@ -24,6 +24,8 @@ public class GalleryResponse {
     private String ldrUrl;
     private String sourceImageUrl;
     private String glbUrl;
+    private Integer parts;
+    private boolean isPro;
 
     private Visibility visibility;
 

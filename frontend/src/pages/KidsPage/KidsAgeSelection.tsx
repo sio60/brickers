@@ -26,7 +26,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useAuth } from "../Auth/AuthContext";
 import LoginModal from "../MainPage/components/LoginModal";
 
-type AgeGroup = "4-5" | "6-7" | "8-10" | null;
+type AgeGroup = "4-5" | "6-7" | "8-10" | "PRO" | null;
 
 export default function KidsAgeSelection() {
   const navigate = useNavigate();
@@ -51,7 +51,7 @@ export default function KidsAgeSelection() {
   }, [searchParams, setSearchParams, isAuthenticated]);
 
   // 현재 모달에 표시할 연령대
-  const [modalAge, setModalAge] = useState<"4-5" | "6-7" | "8-10" | null>(null);
+  const [modalAge, setModalAge] = useState<AgeGroup>(null);
 
   // 4-5 모델들
   const models45 = [
@@ -114,7 +114,7 @@ export default function KidsAgeSelection() {
   // 현재 모달에 표시할 모델 목록
   const getCurrentModels = () => {
     if (modalAge === "6-7") return models67;
-    if (modalAge === "8-10") return models810;
+    if (modalAge === "8-10" || modalAge === "PRO") return models810;
     return models45;
   };
 
@@ -154,6 +154,15 @@ export default function KidsAgeSelection() {
         >
           <img src={img810} alt={t.kids.ageAlt?.level3 || "Level 3"} className="kidsAgeBtn__img" />
           <div className="kidsAgeBtn__label font-en">{t.kids.level.replace("{lv}", "3")}</div>
+        </button>
+
+        <button
+          className={`kidsAgeBtn kidsAgeBtn--pro ${selectedAge === "PRO" ? "active" : ""}`}
+          onClick={() => handleSelect("PRO")}
+          type="button"
+        >
+          <img src={img810} alt={t.kids.ageAlt?.pro || "PRO"} className="kidsAgeBtn__img" />
+          <div className="kidsAgeBtn__label font-en">PRO</div>
         </button>
       </div>
 
