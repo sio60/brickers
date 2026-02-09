@@ -453,22 +453,7 @@ function KidsPageContent() {
             <div className="center">
                 {status === "loading" && (
                     <>
-                        <BrickStackMiniGame percent={percent} />
-                        {agentLogs.length > 0 && (
-                            <div className="agentLogPanel">
-                                <div className="agentLogPanel__header">CoScientist AI</div>
-                                <div className="agentLogPanel__logs">
-                                    {agentLogs.map((log, i) => (
-                                        <div
-                                            key={i}
-                                            className={`agentLogPanel__line ${i === agentLogs.length - 1 ? 'agentLogPanel__line--active' : ''}`}
-                                        >
-                                            {log}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                        <BrickStackMiniGame percent={percent} message={agentLogs.length > 0 ? agentLogs[agentLogs.length - 1].replace(/^\[.*?\]\s*/, '') : undefined} />
                     </>
                 )}
 
