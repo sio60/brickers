@@ -257,6 +257,13 @@ export async function retryJob(jobId: string): Promise<MyJob> {
     });
 }
 
+// 작업 취소
+export async function cancelJob(jobId: string): Promise<MyJob> {
+    return request<MyJob>(`${API_BASE}/api/my/jobs/${jobId}/cancel`, {
+        method: 'POST',
+    });
+}
+
 // 프로필 수정 요청 타입
 export interface MyProfileUpdateRequest {
     nickname?: string;

@@ -244,6 +244,30 @@ public class MyService {
         return MyJobResponse.from(job);
     }
 
+    /** ✅ job 취소 */
+    public MyJobResponse cancelJob(Authentication authentication, String jobId) {
+        User user = currentUserService.get(authentication);
+
+        GenerateJobEntity job = generateJobRepository.findById(jobId)
+                .orElseThrow(() -> new IllegalArgumentException("job을 찾을 수 없습니다. id=" + jobId));
+
+        if (!job.getUserId().equals(user.getId())) {
+            throw new IllegalStateException("내 job만 취소할 수 있습니다.");
+        }
+
+        // 대기 중(QUEUED)이거나 실행 중(RUNNING)일 때만 취소 가능
+        if (job.getStatus() != JobStatus.QUEUED && job.getStatus() != JobStatus.RUNNING) {
+            throw new IllegalStateException("취소할 수 없는 상태입니다 (현재 상태: " + job.getStatus() + ")");
+        }
+
+        job.markCanceled("User requested cancellation");
+        generateJobRepository.save(job);
+
+        log.info("[MyService] Job CANCELED | jobId={} | userId={}", jobId, user.getId());
+
+        return MyJobResponse.from(job);
+    }
+
     public List<MyActivityResponse> getActivity(Authentication authentication) {
         User user = currentUserService.get(authentication);
 
