@@ -1,5 +1,6 @@
 package com.brickers.backend.sqs.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * SQS 메시지 공통 구조
@@ -16,6 +18,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SqsMessage {
 
     /**
@@ -45,5 +48,6 @@ public class SqsMessage {
     private String pdfUrl; // [New] PDF URL
     private Integer parts;
     private Integer finalTarget;
+    private List<String> tags;
     private String errorMessage;
 }
