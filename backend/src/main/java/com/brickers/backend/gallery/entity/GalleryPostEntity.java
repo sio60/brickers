@@ -44,6 +44,9 @@ public class GalleryPostEntity {
     // GLB 파일 URL (3D 모델링 탭용)
     private String glbUrl;
 
+    /** 최종 브릭 개수 */
+    private Integer parts;
+
     @Builder.Default
     private Visibility visibility = Visibility.PUBLIC;
 

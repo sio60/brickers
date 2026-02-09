@@ -141,7 +141,8 @@ export const ja = {
         ageAlt: {
             level1: "レベル1 - 簡単",
             level2: "レベル2 - 普通",
-            level3: "レベル3 - 難しい"
+            level3: "レベル3 - 難しい",
+            pro: "PRO - 高解像度 (2000ブリック)"
         },
         model1: "モデル 1",
         model2: "モデル 2",

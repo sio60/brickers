@@ -47,6 +47,15 @@ public class MyJobResponse {
     /** Gemini가 추천한 태그 목록 */
     private List<String> suggestedTags;
 
+    /** 최종 생성된 브릭 개수 */
+    private Integer parts;
+
+    /** 엔진이 시도한 최종 타겟 해상도 */
+    private Integer finalTarget;
+
+    /** PRO 모드 여부 (보통 1000개 이상) */
+    private boolean isPro;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime stageUpdatedAt;
@@ -77,6 +86,9 @@ public class MyJobResponse {
                 .hasResult(hasResult)
                 .errorMessage(j.getErrorMessage())
                 .suggestedTags(j.getSuggestedTags())
+                .parts(j.getParts())
+                .finalTarget(j.getFinalTarget())
+                .isPro(j.getParts() != null && j.getParts() >= 1000)
                 .createdAt(j.getCreatedAt())
                 .updatedAt(j.getUpdatedAt())
                 .stageUpdatedAt(j.getStageUpdatedAt())

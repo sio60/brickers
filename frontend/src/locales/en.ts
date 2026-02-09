@@ -141,7 +141,8 @@ export const en = {
         ageAlt: {
             level1: "Level 1 - Easy",
             level2: "Level 2 - Medium",
-            level3: "Level 3 - Hard"
+            level3: "Level 3 - Hard",
+            pro: "PRO - High Resolution (2000 Bricks)"
         },
         model1: "Model 1",
         model2: "Model 2",

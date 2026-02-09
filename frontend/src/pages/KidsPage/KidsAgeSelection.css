@@ -105,3 +105,27 @@
     background: #333;
     transform: scale(1.05);
 }
+
+/* PRO Mode Button Unique Style */
+.kidsAgeBtn--pro {
+    background: rgba(0, 0, 0, 0.85) !important;
+    border: 3px solid #FFD700 !important;
+    backdrop-filter: blur(20px);
+}
+
+.kidsAgeBtn--pro .kidsAgeBtn__label {
+    color: #FFD700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.kidsAgeBtn--pro.active,
+.kidsAgeBtn--pro:hover {
+    background: #FFD700 !important;
+    border-color: #000 !important;
+}
+
+.kidsAgeBtn--pro.active .kidsAgeBtn__label,
+.kidsAgeBtn--pro:hover .kidsAgeBtn__label {
+    color: #000;
+    text-shadow: none;
+}

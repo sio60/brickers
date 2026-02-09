@@ -97,6 +97,12 @@ public class GenerateJobEntity {
     /** PDF URL (S3) */
     private String pdfUrl; // [New]
 
+    /** 최종 생성된 브릭 개수 */
+    private Integer parts;
+
+    /** 엔진이 시도한 최종 타겟 해상도 */
+    private Integer finalTarget;
+
     /** 실패 시 에러 메시지 */
     private String errorMessage;
 
