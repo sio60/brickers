@@ -38,6 +38,9 @@ public class MyService {
     private final GalleryService galleryService;
     private final GenerateJobRepository generateJobRepository;
     private final PaymentService paymentService;
+    private final com.brickers.backend.gallery.repository.GalleryPostRepository galleryPostRepository;
+    private final com.brickers.backend.gallery.repository.GalleryCommentRepository galleryCommentRepository;
+    private final com.brickers.backend.gallery.service.GalleryRevalidateService galleryRevalidateService;
 
     /** 내 프로필 조회 */
     public MyProfileResponse getMyProfile(Authentication authentication) {
@@ -82,6 +85,31 @@ public class MyService {
 
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
+
+        // 닉네임이 변경된 경우 갤러리/댓글 닉네임 동기화
+        if (req.getNickname() != null) {
+            String newNickname = user.getNickname();
+            String userId = user.getId();
+
+            // 1. 갤러리 포스트 닉네임 동기화
+            List<com.brickers.backend.gallery.entity.GalleryPostEntity> posts = galleryPostRepository
+                    .findByAuthorId(userId);
+            if (!posts.isEmpty()) {
+                posts.forEach(p -> p.setAuthorNickname(newNickname));
+                galleryPostRepository.saveAll(posts);
+            }
+
+            // 2. 갤러리 댓글 닉네임 동기화
+            List<com.brickers.backend.gallery.entity.GalleryCommentEntity> comments = galleryCommentRepository
+                    .findByAuthorId(userId);
+            if (!comments.isEmpty()) {
+                comments.forEach(c -> c.setAuthorNickname(newNickname));
+                galleryCommentRepository.saveAll(comments);
+            }
+
+            // 3. Next.js 캐시 갱신
+            galleryRevalidateService.onNicknameChanged();
+        }
 
         return toProfileResponse(user);
     }
