@@ -168,11 +168,11 @@ export default function KidsDrawingCanvas({ onCancel, onDone }: Props) {
                 </div>
             </div>
 
-            <div className={styles.canvasArea}>
+            <div className={styles.canvasArea} style={{ flex: 1, minHeight: 0 }}>
                 <canvas
                     ref={canvasRef}
-                    width={800}
-                    height={600}
+                    width={1200}
+                    height={900}
                     onMouseDown={startDrawing}
                     onMouseMove={draw}
                     onMouseUp={stopDrawing}
@@ -181,14 +181,19 @@ export default function KidsDrawingCanvas({ onCancel, onDone }: Props) {
                     onTouchMove={draw}
                     onTouchEnd={stopDrawing}
                     className={styles.canvas}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', border: '1px solid #ddd', borderRadius: '8px' }}
                 />
             </div>
 
-            <div className={styles.footer}>
+            <div className={styles.footer} style={{ marginTop: '10px' }}>
                 <button className={styles.cancelBtn} onClick={onCancel}>
                     {t.common.cancel}
                 </button>
-                <button className={styles.doneBtn} onClick={handleDone}>
+                <button
+                    className={styles.doneBtn}
+                    onClick={handleDone}
+                    style={{ backgroundColor: '#000000', color: '#ffffff', border: '1px solid #000' }}
+                >
                     {t.kids.modelSelect.drawTool.done}
                 </button>
             </div>
