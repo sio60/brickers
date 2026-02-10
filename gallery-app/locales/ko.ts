@@ -182,6 +182,7 @@ export const ko = {
     kids: {
         title: "난이도를 선택해 보세요",
         level: "L{lv}",
+        bricks: "개",
         pro: "PRO",
         continueBtn: "계속하기",
         model1: "모델 1",
