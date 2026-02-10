@@ -42,6 +42,24 @@ export default function CarouselGallery({ items = [], loading = false }: Carouse
         }
     }, [displayItems.length]);
 
+    // Auto-rotation
+    const [isPaused, setIsPaused] = useState(false);
+
+    useEffect(() => {
+        if (displayItems.length === 0 || isPaused || showGalleryPrompt) return;
+
+        const interval = setInterval(() => {
+            setActiveIndex(prev => {
+                if (prev === displayItems.length - 1) {
+                    return 0;
+                }
+                return prev + 1;
+            });
+        }, 3000);
+
+        return () => clearInterval(interval);
+    }, [displayItems.length, isPaused, showGalleryPrompt]);
+
     // Reset prompt when index changes
     useEffect(() => {
         setShowGalleryPrompt(false);
@@ -109,7 +127,11 @@ export default function CarouselGallery({ items = [], loading = false }: Carouse
     };
 
     return (
-        <div className="w-full h-[550px] flex flex-col items-center justify-center overflow-hidden relative pt-5">
+        <div
+            className="w-full h-[550px] flex flex-col items-center justify-center overflow-hidden relative pt-5"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+        >
             {/* Gallery Prompt Overlay */}
             {showGalleryPrompt && (
                 <div

@@ -316,6 +316,7 @@ export const en = {
         login: "LOGIN",
         logout: "LOGOUT",
         gallery: "GALLERY",
+        notifications: "Notifications",
         logoAlt: "BRICKERS Logo",
         myGallery: "My Gallery",
         myPage: "My Page"
