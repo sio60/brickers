@@ -279,8 +279,8 @@ function BrickThumbnail({ partName, color }: { partName: string, color: string }
 
     return (
         <div className="kidsStep__brickCanvasContainer">
-            <Canvas camera={{ position: [100, -100, 100], fov: 45 }} gl={{ antialias: true }}>
-                <ambientLight intensity={1.5} />
+            <Canvas camera={{ position: [100, 150, 100], fov: 45 }} gl={{ antialias: true, alpha: true }}>
+                <ambientLight intensity={2} />
                 <directionalLight position={[5, 10, 5]} intensity={2} />
                 <LdrModel
                     url={url}
@@ -672,9 +672,6 @@ function KidsStepPageContent() {
 
                                 {stepBricks[stepIdx] && stepBricks[stepIdx].length > 0 && (
                                     <div className="kidsStep__brickList">
-                                        <div className="kidsStep__brickListHeader">
-                                            {t.kids.steps?.bricksNeeded || 'Bricks Needed'}
-                                        </div>
                                         {stepBricks[stepIdx].map((b, i) => (
                                             <div key={i} className="kidsStep__brickItem">
                                                 <BrickThumbnail partName={b.partName} color={b.color} />
