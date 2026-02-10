@@ -539,63 +539,63 @@ function KidsStepPageContent() {
                         </div>
                     )}
 
-                    {activeTab === 'LDR' ? (
-                        <>
-                            <div style={{ position: "absolute", inset: 0 }}>
-                                <Canvas camera={{ position: [200, -200, 200], fov: 45 }} dpr={[1, 2]} gl={{ preserveDrawingBuffer: true }}>
-                                    <ambientLight intensity={0.9} />
-                                    <directionalLight position={[3, 5, 2]} intensity={1} />
-                                    <Center>
-                                        <LdrModel
-                                            url={ldrUrl}
-                                            overrideMainLdrUrl={finalModelUrl}
-                                            onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }}
-                                            onError={() => setLoading(false)}
-                                            customBounds={modelBounds}
-                                            fitTrigger={`${ldrUrl}|${finalModelUrl ?? ''}`}
-                                        />
-                                    </Center>
-                                    <OrbitControls makeDefault enablePan={false} enableZoom />
-                                </Canvas>
-                            </div>
-
-                            {isPreviewMode ? (
-                                <div className="kidsStep__previewOverlay">
-                                    <button onClick={() => { setIsPreviewMode(false); setStepIdx(0); }} className="kidsStep__startNavBtn">
-                                        {t.kids.steps.startAssembly}
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="kidsStep__navOverlay">
-                                    <button className="kidsStep__navBtn" disabled={!canPrev} onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}>
-                                        ← {t.kids.steps.prev}
-                                    </button>
-                                    <div className="kidsStep__stepInfo">
-                                        Step {stepIdx + 1} <span style={{ color: "#aaa" }}>/ {total}</span>
-                                    </div>
-                                    <button className="kidsStep__navBtn kidsStep__navBtn--next" disabled={!canNext} onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}>
-                                        {t.kids.steps.next} →
-                                    </button>
-                                </div>
+                    {/* LDR Viewer (Always mounted) */}
+                    <div style={{ position: "absolute", inset: 0, display: activeTab === 'LDR' ? 'block' : 'none' }}>
+                        <Canvas camera={{ position: [200, -200, 200], fov: 45 }} dpr={[1, 2]} gl={{ preserveDrawingBuffer: true }}>
+                            <ambientLight intensity={0.9} />
+                            <directionalLight position={[3, 5, 2]} intensity={1} />
+                            {ldrUrl && (
+                                <LdrModel
+                                    url={ldrUrl}
+                                    overrideMainLdrUrl={finalModelUrl}
+                                    onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }}
+                                    onError={() => setLoading(false)}
+                                    customBounds={modelBounds}
+                                    fitTrigger={`${ldrUrl}|${finalModelUrl ?? ''}`}
+                                />
                             )}
-                        </>
-                    ) : (
-                        <div style={{ position: "absolute", inset: 0 }}>
-                            <Canvas camera={{ position: [5, 5, 5], fov: 50 }} dpr={[1, 2]}>
-                                <ambientLight intensity={0.8} />
-                                <directionalLight position={[5, 10, 5]} intensity={1.5} />
-                                <Environment preset="city" />
+                            <OrbitControls makeDefault enablePan={false} enableZoom />
+                        </Canvas>
+
+                        {isPreviewMode ? (
+                            <div className="kidsStep__previewOverlay">
+                                <button onClick={() => { setIsPreviewMode(false); setStepIdx(0); }} className="kidsStep__startNavBtn">
+                                    {t.kids.steps.startAssembly}
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="kidsStep__navOverlay">
+                                <button className="kidsStep__navBtn" disabled={!canPrev} onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}>
+                                    ← {t.kids.steps.prev}
+                                </button>
+                                <div className="kidsStep__stepInfo">
+                                    Step {stepIdx + 1} <span style={{ color: "#aaa" }}>/ {total}</span>
+                                </div>
+                                <button className="kidsStep__navBtn kidsStep__navBtn--next" disabled={!canNext} onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}>
+                                    {t.kids.steps.next} →
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* GLB Viewer (Always mounted) */}
+                    <div style={{ position: "absolute", inset: 0, display: activeTab === 'GLB' ? 'block' : 'none' }}>
+                        <Canvas camera={{ position: [5, 5, 5], fov: 50 }} dpr={[1, 2]}>
+                            <ambientLight intensity={0.8} />
+                            <directionalLight position={[5, 10, 5]} intensity={1.5} />
+                            <Environment preset="city" />
+                            {glbUrl && (
                                 <Bounds fit clip margin={1.35}>
                                     <Center>
-                                        {glbUrl && <Gltf src={glbUrl} />}
+                                        <Gltf src={glbUrl} />
                                     </Center>
-                                    <FitOnceOnLoad trigger={glbUrl ?? ''} />
+                                    <FitOnceOnLoad trigger={glbUrl} />
                                 </Bounds>
-                                <OrbitControls makeDefault enablePan={false} enableZoom autoRotate autoRotateSpeed={2.5} enableDamping />
-                            </Canvas>
-                            {!glbUrl && <div className="kidsStep__noModel">3D Model not available</div>}
-                        </div>
-                    )}
+                            )}
+                            <OrbitControls makeDefault enablePan={false} enableZoom autoRotate autoRotateSpeed={2.5} enableDamping />
+                        </Canvas>
+                        {!glbUrl && <div className="kidsStep__noModel">3D Model not available</div>}
+                    </div>
                 </div>
             </div>
 

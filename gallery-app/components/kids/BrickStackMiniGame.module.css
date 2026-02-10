@@ -5,7 +5,7 @@
     background: #ffffff;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
     position: relative;
-    max-width: 500px;
+    max-width: 640px;
     margin: 0 auto;
 }
 
@@ -125,6 +125,9 @@
     color: #4b5563;
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
+    white-space: pre-wrap;
+    word-break: keep-all;
 }
 
 .brickGame__progressBar {
