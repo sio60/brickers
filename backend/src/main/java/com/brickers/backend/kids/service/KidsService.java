@@ -130,6 +130,22 @@ public class KidsService {
     }
 
     /**
+     * ✅ Blueprint 서버에서 PDF URL 업데이트
+     */
+    public void updatePdfUrl(String jobId, String pdfUrl) {
+        log.info("[Brickers] PDF URL 업데이트 | jobId={} | pdfUrl={}", jobId, pdfUrl);
+
+        GenerateJobEntity job = generateJobRepository.findById(jobId)
+                .orElseThrow(() -> new java.util.NoSuchElementException("Job not found: " + jobId));
+
+        job.setPdfUrl(pdfUrl);
+        job.setUpdatedAt(LocalDateTime.now());
+        generateJobRepository.save(job);
+
+        log.info("[Brickers] ✅ PDF URL 저장 완료 | jobId={}", jobId);
+    }
+
+    /**
      * ✅ Gemini 추천 태그 저장 (AI Server에서 호출)
      */
     public void updateSuggestedTags(String jobId, List<String> tags) {

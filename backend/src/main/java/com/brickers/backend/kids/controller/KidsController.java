@@ -111,6 +111,27 @@ public class KidsController {
     }
 
     /**
+     * Blueprint 서버에서 PDF 생성 완료 시 pdfUrl 업데이트
+     * Python: PATCH /api/kids/jobs/{jobId}/pdf
+     */
+    @PatchMapping("/jobs/{jobId}/pdf")
+    public ResponseEntity<Void> updatePdfUrl(
+            @PathVariable String jobId,
+            @RequestHeader("X-Internal-Token") String token,
+            @RequestBody Map<String, String> body) {
+        if (internalApiToken.isBlank() || !internalApiToken.equals(token)) {
+            log.warn("[KidsController] PDF 업데이트 토큰 불일치");
+            return ResponseEntity.status(403).build();
+        }
+        String pdfUrl = body.get("pdfUrl");
+        if (pdfUrl == null || pdfUrl.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        kidsService.updatePdfUrl(jobId, pdfUrl);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * ✅ AI Server에서 Gemini 추천 태그 저장
      * Python: PATCH /api/kids/jobs/{jobId}/suggested-tags
      */
