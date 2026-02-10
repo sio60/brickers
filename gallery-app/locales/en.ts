@@ -35,7 +35,8 @@ export const en = {
         gallery: "Gallery",
         admin: "Admin Page",
         open: "Open Menu",
-        iconAlt: "Menu Icon"
+        iconAlt: "Menu Icon",
+        hint: "Ask BrickBot if you have any questions!"
     },
     upgradeModal: {
         title: "UPGRADE",
@@ -110,7 +111,9 @@ export const en = {
             viewBlueprint: "View Assembly Guide",
             sourceImage: "Download Original Image",
             glbFile: "Download Model (glb)",
-            ldrFile: "Download Blueprint (ldr)"
+            ldrFile: "Download Blueprint (ldr)",
+            downloadPdf: "Download PDF Guide",
+            downloadEnhanced: "Download Enhanced Image"
         },
         noGlbFile: "GLB file not available.",
         noLdrFile: "LDR file not available.",
@@ -121,6 +124,12 @@ export const en = {
         modalNoData: "Model data not found.",
         stillGenerating: "Still generating. Please wait.",
         retryConfirm: "Job failed or was canceled. Would you like to retry?",
+        cancelConfirm: "Cancel this running job?",
+        cancelFail: "Failed to cancel job.",
+        sortLatest: "Latest",
+        sortOldest: "Oldest",
+        noPdfFile: "No PDF generated yet. Please wait on the assembly page.",
+        noCapturedImage: "No captured image available.",
         settingsTbd: "Settings coming soon"
     },
     settings: {
@@ -175,10 +184,12 @@ export const en = {
         labelType: "Type",
         labelReason: "Reason",
         dataId: "Data ID",
+        noData: "No reports found.",
     },
     kids: {
         title: "Select Your Level",
         level: "L{lv}",
+        pro: "PRO",
         continueBtn: "Continue",
         model1: "Model 1",
         model2: "Model 2",
@@ -199,7 +210,9 @@ export const en = {
             loadingResult: "Loading result...",
             serverDelay: "Server response delayed...",
             aiNoResponse: "AI server not responding",
-            errorOccurred: "Error occurred"
+            errorOccurred: "Error occurred",
+            completeTitle: "Generation Complete!",
+            completeBody: "Brick model is ready. Click to check it out!"
         },
         modelSelect: {
             title: "Creating Brick",
@@ -215,6 +228,13 @@ export const en = {
             uploadProHint: "Available after upgrade",
             confirm: "Generate",
             previewSub: "Rotate the model to check",
+            freeUserNotice: "* Free users need to upgrade to use this feature",
+            promptTitle: "Create with Text",
+            promptSub: "Describe what you imagine",
+            promptInputTitle: "What do you want to make?",
+            promptInputPlaceholder: "e.g. A car with wings, a rainbow castle",
+            promptInputHint: "The more detail, the better!",
+            promptConfirm: "Create this",
             drawTitle: "Draw Directly",
             drawSub: "Draw your own model here",
             drawTool: {
@@ -270,7 +290,15 @@ export const en = {
             colorThemeTitle: "Select Color Theme",
             colorThemeApplied: "Theme applied successfully!",
             colorThemeFailed: "Failed to change color",
-            colorThemeError: "An error occurred while changing colors."
+            colorThemeError: "An error occurred while changing colors.",
+            changeColor: "Change Color",
+            restoreOriginal: "Restore Original",
+            pdfDownloadBtn: "Download PDF",
+            pdfPreparing: "Preparing PDF...",
+            pdfWait: "Preparing PDF. Please wait a moment.",
+            registered: "Registered",
+            themeLoading: "Loading themes...",
+            colorChangeModelError: "Error occurred while generating model after color change."
         },
         viewer: {
             noUrl: "Model URL not found",
@@ -322,7 +350,14 @@ export const en = {
         anonymous: "Anonymous",
         confirm: "Confirm",
         cancel: "Cancel",
-        later: "Maybe later"
+        later: "Maybe later",
+        apply: "Apply",
+        applying: "Applying...",
+        colorChangeComplete: "Color Change Complete",
+        themeApplied: "Theme has been applied",
+        downloadChangedLdr: "Download Modified LDR",
+        requestFailed: "Request failed",
+        networkError: "Network error"
     },
     admin: {
         panelTitle: "Admin Panel",
@@ -409,7 +444,18 @@ export const en = {
         loginToComment: "Login to comment",
         post: "POST",
         noGlb: "GLB Model Not Available",
-        noImg: "Original Image Not Available"
+        noImg: "Original Image Not Available",
+        copied: "URL copied",
+        copyFailed: "Failed to copy URL.",
+        reply: "Reply",
+        replyPlaceholder: "Write a reply...",
+        hideReplies: "Hide replies",
+        showReplies: "Show {count} replies",
+        views3d: {
+            noLdrUrl: "LDR URL not found.",
+            dragRotate: "Drag: Rotate",
+            scrollZoom: "Scroll: Zoom"
+        }
     },
     my: {
         title: "My Gallery",
@@ -442,5 +488,23 @@ export const en = {
         REFLECT: "Comparing with previous attempts and summarizing improvements.",
         EVOLVE: "Balancing form and efficiency.",
         COMPLETE: "Design is finalized. Ready to move to the next step."
+    },
+    viewer3d: {
+        loading: "Loading 3D model...",
+        loadFailed: "Failed to load 3D model.",
+        loadingWait: "Loading 3D model...\nPlease wait a moment",
+        loadError: "Model loading failed"
+    },
+    loginModal: {
+        title: "Login Required",
+        bookmarkDesc: "Please login to use\nthe bookmark feature.",
+        loginBtn: "Login"
+    },
+    galleryCard: {
+        bookmarkRemove: "Remove bookmark",
+        bookmarkAdd: "Add bookmark",
+        likeRemove: "Remove like",
+        likeAdd: "Add like",
+        monthDay: "{month}/{day}"
     }
 };

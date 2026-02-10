@@ -1,11 +1,14 @@
 'use client';
 
+import { useLanguage } from "@/contexts/LanguageContext";
+
 type Props = {
     isOpen: boolean;
     onClose: () => void;
 };
 
 export default function LoginModal({ isOpen, onClose }: Props) {
+    const { t } = useLanguage();
     if (!isOpen) return null;
 
     const handleLogin = () => {
@@ -39,23 +42,21 @@ export default function LoginModal({ isOpen, onClose }: Props) {
                         </svg>
                     </div>
 
-                    <h3 className="text-xl font-bold mb-2">로그인이 필요합니다</h3>
-                    <p className="text-gray-500 mb-6">
-                        북마크 기능을 사용하려면<br />로그인해 주세요.
-                    </p>
+                    <h3 className="text-xl font-bold mb-2">{t.loginModal?.title || t.common.loginRequired}</h3>
+                    <p className="text-gray-500 mb-6" dangerouslySetInnerHTML={{ __html: (t.loginModal?.bookmarkDesc || '').replace(/\n/g, '<br />') }} />
 
                     <div className="flex flex-col gap-3">
                         <button
                             onClick={handleLogin}
                             className="btn-primary w-full"
                         >
-                            로그인하기
+                            {t.loginModal?.loginBtn || t.header.login}
                         </button>
                         <button
                             onClick={onClose}
                             className="text-gray-500 hover:text-gray-700 text-sm"
                         >
-                            나중에 할게요
+                            {t.common.later}
                         </button>
                     </div>
                 </div>

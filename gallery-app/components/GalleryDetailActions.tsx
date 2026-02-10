@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import Preview3DModal from '@/components/Preview3DModal';
 
 type Props = {
@@ -8,6 +9,7 @@ type Props = {
 };
 
 export default function GalleryDetailActions({ ldrUrl }: Props) {
+    const { t } = useLanguage();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     if (!ldrUrl) return null;
@@ -18,7 +20,7 @@ export default function GalleryDetailActions({ ldrUrl }: Props) {
                 onClick={() => setIsModalOpen(true)}
                 className="bg-black text-white font-medium text-lg py-3 px-6 rounded-lg hover:opacity-80 transition-opacity"
             >
-                3D로 보기 & 만들기
+                {t.detail.view3d}
             </button>
 
             {isModalOpen && (

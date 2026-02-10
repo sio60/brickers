@@ -257,7 +257,7 @@ function GalleryRegisterInput({ t, isRegisteredToGallery, isSubmitting, onRegist
                 className="kidsStep__sidebarBtn" onClick={handleClick}
                 disabled={isSubmitting || isRegisteredToGallery}
             >
-                {isRegisteredToGallery ? "✓ 등록완료" : (isSubmitting ? "..." : t.kids.steps.registerGallery)}
+                {isRegisteredToGallery ? `✓ ${t.kids.steps?.registered || '등록완료'}` : (isSubmitting ? "..." : t.kids.steps.registerGallery)}
             </button>
         </div>
     );
@@ -337,18 +337,18 @@ function KidsStepPageContent() {
                         setStepIdx(stepTexts.length - 1);
                         setIsPreviewMode(false);
                         setIsColorModalOpen(false);
-                        alert(`${result.themeApplied} 테마 적용 완료!`);
+                        alert(`${result.themeApplied} ${t.kids.steps.colorThemeApplied}`);
                     } else {
-                        alert("색상 변경 후 모델 생성 중 오류가 발생했습니다.");
+                        alert(t.kids.steps?.colorChangeModelError);
                     }
                     worker.terminate();
                 };
             } else {
-                alert(result.message || "색상 변경 실패");
+                alert(result.message || t.kids.steps.colorThemeFailed);
             }
         } catch (e) {
             console.error(e);
-            alert("색상 변경 중 오류가 발생했습니다.");
+            alert(t.kids.steps.colorThemeError);
         } finally {
             setIsApplyingColor(false);
         }
@@ -467,7 +467,7 @@ function KidsStepPageContent() {
         if (serverPdfUrl) {
             window.open(serverPdfUrl, "_blank");
         } else {
-            alert("PDF 준비중입니다. 잠시만 기다려주세요.");
+            alert(t.kids.steps?.pdfWait);
         }
     };
 
@@ -545,15 +545,15 @@ function KidsStepPageContent() {
 
                         <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
                             <button onClick={() => setIsColorModalOpen(true)} className="kidsStep__colorBtn">
-                                색상 변경
+                                {t.kids.steps?.changeColor || '색상 변경'}
                             </button>
                             {colorChangedLdrBase64 && (
                                 <>
                                     <button onClick={downloadColorChangedLdr} className="kidsStep__downloadColorBtn">
-                                        ⬇ LDR 다운로드
+                                        ⬇ {t.kids.steps.downloadLdr}
                                     </button>
                                     <button onClick={restoreOriginalColor} className="kidsStep__restoreBtn">
-                                        ↺ 원본 복원
+                                        ↺ {t.kids.steps?.restoreOriginal || '원본 복원'}
                                     </button>
                                 </>
                             )}
@@ -575,7 +575,7 @@ function KidsStepPageContent() {
                                 disabled={!serverPdfUrl || loading}
                                 style={{ background: serverPdfUrl ? "#444" : "#aaa" }}
                             >
-                                {serverPdfUrl ? "PDF 다운로드" : "PDF 준비중..."}
+                                {serverPdfUrl ? t.kids.steps?.pdfDownloadBtn : t.kids.steps?.pdfPreparing}
                             </button>
                         </div>
                     </div>
@@ -688,7 +688,7 @@ function KidsStepPageContent() {
                         <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)}>✕</button>
                         <h3 className="galleryModal__title">{t.kids.steps.colorThemeTitle || "색상 테마 선택"}</h3>
                         <div className="colorModal__themes">
-                            {colorThemes.length === 0 ? <div className="colorModal__loading">테마 로딩 중...</div> : (
+                            {colorThemes.length === 0 ? <div className="colorModal__loading">{t.kids.steps?.themeLoading || t.common.loading}</div> : (
                                 colorThemes.map((theme: ThemeInfo) => (
                                     <button key={theme.name} className={`colorModal__themeBtn ${selectedTheme === theme.name ? "selected" : ""}`} onClick={() => setSelectedTheme(theme.name)}>
                                         <span className="colorModal__themeName">{theme.name}</span>
@@ -700,7 +700,7 @@ function KidsStepPageContent() {
                         <div className="galleryModal__actions">
                             <button className="galleryModal__btn galleryModal__btn--cancel" onClick={() => setIsColorModalOpen(false)}>{t.kids.steps.galleryModal.cancel}</button>
                             <button className="galleryModal__btn galleryModal__btn--confirm" onClick={handleApplyColor} disabled={!selectedTheme || isApplyingColor}>
-                                {isApplyingColor ? "..." : (t.kids.steps.apply || "적용하기")}
+                                {isApplyingColor ? "..." : t.common?.apply}
                             </button>
                         </div>
                     </div>
