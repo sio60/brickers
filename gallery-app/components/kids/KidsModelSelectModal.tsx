@@ -158,14 +158,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                 ))}
                             </div>
 
-                            {items.length === 0 && (
-                                <div className={styles.head}>
-                                    <div className={styles.title}>{t.kids.modelSelect.uploadTitle}</div>
-                                    <button className={styles.close} onClick={onClose} aria-label="close">
-                                        ✕
-                                    </button>
-                                </div>
-                            )}
+
 
                             {/* 이미지 업로드 영역 */}
                             <div
