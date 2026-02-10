@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Document(collection = "gallery_posts")
 @Data
@@ -43,6 +44,9 @@ public class GalleryPostEntity {
 
     // GLB 파일 URL (3D 모델링 탭용)
     private String glbUrl;
+
+    /** 6면 스크린샷 URL 맵 (front, back, left, right, top, bottom) */
+    private Map<String, String> screenshotUrls;
 
     /** 최종 브릭 개수 */
     private Integer parts;

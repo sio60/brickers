@@ -209,6 +209,22 @@ public class KidsService {
     }
 
     /**
+     * ✅ Screenshot 서버에서 screenshotUrls 업데이트
+     */
+    public void updateScreenshotUrls(String jobId, Map<String, String> screenshotUrls) {
+        log.info("[Brickers] Screenshot URLs 업데이트 | jobId={} | views={}", jobId, screenshotUrls.keySet());
+
+        GenerateJobEntity job = generateJobRepository.findById(jobId)
+                .orElseThrow(() -> new java.util.NoSuchElementException("Job not found: " + jobId));
+
+        job.setScreenshotUrls(screenshotUrls);
+        job.setUpdatedAt(LocalDateTime.now());
+        generateJobRepository.save(job);
+
+        log.info("[Brickers] ✅ Screenshot URLs 저장 완료 | jobId={} | views={}", jobId, screenshotUrls.keySet());
+    }
+
+    /**
      * ✅ Gemini 추천 태그 저장 (AI Server에서 호출)
      */
     public void updateSuggestedTags(String jobId, List<String> tags) {

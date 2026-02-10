@@ -252,6 +252,7 @@ function KidsStepPageContent() {
     const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
     const [brickCount, setBrickCount] = useState<number>(0);
     const [isProMode, setIsProMode] = useState(false);
+    const [jobScreenshotUrls, setJobScreenshotUrls] = useState<Record<string, string> | null>(null);
 
     const [isPreviewMode, setIsPreviewMode] = useState(true);
     const [activeTab, setActiveTab] = useState<'LDR' | 'GLB'>('LDR');
@@ -374,6 +375,7 @@ function KidsStepPageContent() {
                     if (data.parts) setBrickCount(data.parts);
                     if (data.isPro) setIsProMode(true);
                     if (data.pdfUrl || data.pdf_url) setServerPdfUrl(data.pdfUrl || data.pdf_url);
+                    if (data.screenshotUrls) setJobScreenshotUrls(data.screenshotUrls);
                 }
             } catch (e) { console.error(e); }
         })();
@@ -445,6 +447,7 @@ function KidsStepPageContent() {
                 sourceImageUrl: jobThumbnailUrl || undefined,
                 glbUrl: glbUrl || undefined,
                 parts: brickCount || undefined,
+                screenshotUrls: jobScreenshotUrls || undefined,
                 visibility: "PUBLIC",
             });
             alert(t.kids.steps.galleryModal.success);
