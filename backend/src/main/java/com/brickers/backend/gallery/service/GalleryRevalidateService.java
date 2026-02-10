@@ -25,8 +25,7 @@ public class GalleryRevalidateService {
             WebClient.Builder webClientBuilder,
             @Value("${gallery.revalidate.url:}") String revalidateUrl,
             @Value("${gallery.revalidate.secret:}") String revalidateSecret,
-            @Value("${gallery.revalidate.enabled:false}") boolean enabled
-    ) {
+            @Value("${gallery.revalidate.enabled:false}") boolean enabled) {
         this.webClient = webClientBuilder.build();
         this.revalidateUrl = revalidateUrl;
         this.revalidateSecret = revalidateSecret;
@@ -54,6 +53,13 @@ public class GalleryRevalidateService {
         revalidate("delete", postId, title);
     }
 
+    /**
+     * 닉네임 변경 시 호출
+     */
+    public void onNicknameChanged() {
+        revalidate("update", null, null);
+    }
+
     private void revalidate(String type, String postId, String title) {
         if (!enabled || revalidateUrl == null || revalidateUrl.isBlank()) {
             log.debug("[Revalidate] Disabled or URL not configured. type={}, postId={}", type, postId);
@@ -71,8 +77,7 @@ public class GalleryRevalidateService {
         Map<String, Object> body = Map.of(
                 "type", type,
                 "id", postId != null ? postId : "",
-                "slug", slug != null ? slug : ""
-        );
+                "slug", slug != null ? slug : "");
 
         // 비동기로 호출 (응답 기다리지 않음)
         webClient.post()
@@ -83,8 +88,9 @@ public class GalleryRevalidateService {
                 .retrieve()
                 .bodyToMono(String.class)
                 .subscribe(
-                        response -> log.info("[Revalidate] Success. type={}, postId={}, response={}", type, postId, response),
-                        error -> log.warn("[Revalidate] Failed. type={}, postId={}, error={}", type, postId, error.getMessage())
-                );
+                        response -> log.info("[Revalidate] Success. type={}, postId={}, response={}", type, postId,
+                                response),
+                        error -> log.warn("[Revalidate] Failed. type={}, postId={}, error={}", type, postId,
+                                error.getMessage()));
     }
 }

@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
-import { Bounds, OrbitControls } from "@react-three/drei";
+import { Bounds, OrbitControls, Center } from "@react-three/drei";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 
@@ -124,7 +124,9 @@ function LdrModel({
     if (!group) return null;
     return (
         <Bounds fit clip observe margin={1.2}>
-            <primitive object={group} />
+            <Center>
+                <primitive object={group} />
+            </Center>
         </Bounds>
     );
 }
@@ -173,15 +175,24 @@ export default React.memo(function Viewer3D({ url }: Viewer3DProps) {
                 </div>
             )}
 
-            <Canvas camera={{ position: [200, -200, 200], fov: 45 }} dpr={[1, 2]}>
+            <Canvas camera={{ position: [0, 80, 500], fov: 45 }} dpr={[1, 2]}>
                 <ambientLight intensity={0.9} />
-                <directionalLight position={[3, 5, 2]} intensity={1} />
+                <directionalLight position={[10, 20, 10]} intensity={1.5} />
+                <directionalLight position={[-10, -20, -10]} intensity={0.8} />
                 <LdrModel
                     url={proxiedUrl}
                     onLoaded={handleLoaded}
                     onError={handleError}
                 />
-                <OrbitControls makeDefault enablePan={false} enableZoom />
+                <OrbitControls
+                    makeDefault
+                    enablePan={false}
+                    enableZoom
+                    minDistance={10}
+                    maxDistance={1000}
+                    autoRotate={true}
+                    autoRotateSpeed={2}
+                />
             </Canvas>
 
             {/* 터치 안내 문구 제거됨 */}

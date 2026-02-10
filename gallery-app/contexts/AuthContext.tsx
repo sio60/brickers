@@ -14,6 +14,7 @@ type AuthContextValue = {
     login: (provider: Provider) => void;
     logout: () => Promise<void>;
     authFetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+    setUser: (user: OAuthUser | null) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -188,6 +189,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             login,
             logout,
             authFetch,
+            setUser,
         }),
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [user, accessToken, isLoading]

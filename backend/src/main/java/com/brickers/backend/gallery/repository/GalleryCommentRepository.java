@@ -13,5 +13,7 @@ public interface GalleryCommentRepository extends MongoRepository<GalleryComment
 
     List<GalleryCommentEntity> findByPostIdAndDeletedFalse(String postId);
 
+    List<GalleryCommentEntity> findByAuthorId(String authorId);
+
     long countByPostIdAndDeletedFalse(String postId);
 }
