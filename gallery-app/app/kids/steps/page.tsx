@@ -281,7 +281,7 @@ function BrickThumbnail({ partName, color }: { partName: string, color: string }
 
     return (
         <div className="kidsStep__brickCanvasContainer">
-            <Canvas camera={{ position: [25, 35, 25], fov: 45 }} gl={{ antialias: true, alpha: true }}>
+            <Canvas camera={{ position: [100, 120, 100], fov: 30 }} gl={{ antialias: true, alpha: true }}>
                 <ambientLight intensity={2} />
                 <directionalLight position={[5, 10, 5]} intensity={2} />
                 <LdrModel

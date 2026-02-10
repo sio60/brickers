@@ -662,8 +662,8 @@
     align-items: center;
     background: transparent;
     pointer-events: auto;
-    min-width: 60px;
-    /* Ensure a minimum footprint */
+    min-width: 50px;
+    gap: 0px;
 }
 
 .kidsStep__brickCanvasContainer {
