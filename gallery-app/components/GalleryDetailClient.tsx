@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -9,16 +9,9 @@ import Image from 'next/image';
 import Viewer3D from './Viewer3D';
 import { Canvas } from "@react-three/fiber";
 import { Bounds, Center, Gltf, Environment, OrbitControls } from "@react-three/drei";
-
-type Comment = {
-    id: string;
-    authorNickname: string;
-    authorProfileImage?: string;
-    content: string;
-    createdAt: string;
-    parentId?: string;
-    children?: Comment[];
-};
+import ScreenshotGallery from './gallery/ScreenshotGallery';
+import { CommentList, CommentInput, Comment } from './gallery/CommentSection';
+import RecommendationSidebar from './gallery/RecommendationSidebar';
 
 type Props = {
     item: GalleryItem;
@@ -40,28 +33,14 @@ export default function GalleryDetailClient({ item }: Props) {
     const [commentInput, setCommentInput] = useState('');
     const [commentLoading, setCommentLoading] = useState(false);
 
-    // Reply State
-    const [replyingTo, setReplyingTo] = useState<string | null>(null);
-    const [replyInput, setReplyInput] = useState('');
-    const [replyLoading, setReplyLoading] = useState(false);
-
-    // Track which comments' replies are expanded
-    const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
-
-    const toggleExpand = (commentId: string) => {
-        setExpandedComments(prev => {
-            const next = new Set(prev);
-            if (next.has(commentId)) next.delete(commentId);
-            else next.add(commentId);
-            return next;
-        });
-    };
-
     // Toast State
     const [showToast, setShowToast] = useState(false);
 
     // View State
     const [activeTab, setActiveTab] = useState<'LDR' | 'GLB' | 'IMG'>('IMG');
+
+    // Screenshot check
+    const hasScreenshots = item.screenshotUrls && Object.keys(item.screenshotUrls).length > 0;
 
     // Recommendations State
     const [recommendations, setRecommendations] = useState<GalleryItem[]>([]);
@@ -110,7 +89,7 @@ export default function GalleryDetailClient({ item }: Props) {
         fetchRecommendations();
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [item.id, isAuthenticated]); // ✅ 로그인 상태 변경 시 데이터 다시 조회
+    }, [item.id, isAuthenticated]);
 
     const handleLikeToggle = async () => {
         if (!isAuthenticated) return alert('로그인이 필요합니다.');
@@ -122,7 +101,7 @@ export default function GalleryDetailClient({ item }: Props) {
             });
             if (res.ok) {
                 const data = await res.json();
-                const newLiked = data.myReaction === 'LIKE'; // ✅ Fixed field name
+                const newLiked = data.myReaction === 'LIKE';
                 setIsLiked(newLiked);
                 if (data.likeCount !== undefined) setLikeCount(data.likeCount);
             }
@@ -140,14 +119,13 @@ export default function GalleryDetailClient({ item }: Props) {
         } catch (error) { console.error(error); }
     };
 
-    const handleCommentSubmit = async (parentId?: string) => {
+    const handleCommentSubmit = async (parentId?: string, replyContent?: string) => {
         if (!isAuthenticated) return alert('로그인이 필요합니다.');
 
-        const content = parentId ? replyInput : commentInput;
+        const content = parentId ? (replyContent || '') : commentInput;
         if (!content.trim()) return;
 
-        if (parentId) setReplyLoading(true);
-        else setCommentLoading(true);
+        setCommentLoading(true);
 
         try {
             const res = await authFetch(`/api/gallery/${item.id}/comments`, {
@@ -173,21 +151,16 @@ export default function GalleryDetailClient({ item }: Props) {
 
                 if (parentId) {
                     setComments(prev => updateCommentsRecursive(prev));
-                    setCommentCount(prev => prev + 1); // Locally increment count
-                    setReplyInput('');
-                    setReplyingTo(null);
-                    // Automatically expand parent to see the new reply
-                    if (!expandedComments.has(parentId)) toggleExpand(parentId);
+                    setCommentCount(prev => prev + 1);
                 } else {
                     setComments(prev => [newComment, ...prev]);
-                    setCommentCount(prev => prev + 1); // Locally increment count
+                    setCommentCount(prev => prev + 1);
                     setCommentInput('');
                 }
             }
         } catch (error) { console.error(error); }
         finally {
-            if (parentId) setReplyLoading(false);
-            else setCommentLoading(false);
+            setCommentLoading(false);
         }
     };
 
@@ -200,98 +173,6 @@ export default function GalleryDetailClient({ item }: Props) {
             console.error('Failed to copy: ', err);
             alert('URL 복사에 실패했습니다.');
         }
-    };
-
-    const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
-    };
-
-    const renderComment = (c: Comment, depth = 0, parentNickname?: string) => {
-        const isExpanded = expandedComments.has(c.id);
-        const hasChildren = c.children && c.children.length > 0;
-
-        return (
-            <div key={c.id} className="w-full">
-                {/* Instagram Style Row */}
-                <div className={`flex gap-3 py-2 ${depth > 0 ? 'ml-2' : ''}`}>
-                    {/* Avatar */}
-                    {c.authorProfileImage ? (
-                        <img src={c.authorProfileImage} alt={c.authorNickname || ''} className="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-200 shadow-sm" />
-                    ) : (
-                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200 shadow-sm overflow-hidden">
-                            <span className="text-[10px] font-bold text-gray-500">{c.authorNickname ? c.authorNickname[0].toUpperCase() : '?'}</span>
-                        </div>
-                    )}
-
-                    {/* Content Section */}
-                    <div className="flex flex-col flex-1 min-w-0">
-                        <div className="text-[13px] leading-relaxed">
-                            <span className="font-bold mr-2 text-gray-900 leading-none">@{c.authorNickname}</span>
-                            <span className="text-gray-700 break-words">
-                                {parentNickname && depth > 0 && (
-                                    <span className="text-blue-500 font-semibold mr-1">@{parentNickname}</span>
-                                )}
-                                {c.content}
-                            </span>
-                        </div>
-
-                        <div className="flex items-center gap-4 mt-2 mb-1">
-                            <span className="text-[11px] text-gray-400 font-medium">{formatDate(c.createdAt)}</span>
-                            <button
-                                onClick={() => setReplyingTo(replyingTo === c.id ? null : c.id)}
-                                className="text-[11px] font-bold text-gray-500 hover:text-gray-900 transition-colors"
-                            >
-                                {t.detail.reply || "답글 달기"}
-                            </button>
-                        </div>
-
-                        {/* Reply Input */}
-                        {replyingTo === c.id && (
-                            <div className="mt-3 flex gap-2">
-                                <input
-                                    className="flex-1 bg-transparent border-b border-gray-100 py-1 text-xs focus:border-black outline-none transition-all"
-                                    placeholder={`@${c.authorNickname}님에게 답글...`}
-                                    value={replyInput}
-                                    onChange={e => setReplyInput(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && handleCommentSubmit(c.id)}
-                                    disabled={replyLoading}
-                                    autoFocus
-                                />
-                                <button
-                                    onClick={() => handleCommentSubmit(c.id)}
-                                    disabled={!replyInput.trim() || replyLoading}
-                                    className="text-blue-500 font-bold text-xs hover:text-blue-700 disabled:opacity-30"
-                                >
-                                    {replyLoading ? '...' : '게시'}
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Sub-replies */}
-                {hasChildren && (
-                    <div className="ml-8 flex flex-col">
-                        <button
-                            onClick={() => toggleExpand(c.id)}
-                            className="flex items-center gap-3 py-1 group"
-                        >
-                            <div className="w-8 border-t border-gray-200 group-hover:border-gray-400 transition-all"></div>
-                            <span className="text-[11px] font-bold text-gray-400 group-hover:text-gray-600 transition-colors flex items-center gap-1.5">
-                                {isExpanded ? '답글 숨기기' : `답글 ${c.children?.length}개 더 보기`}
-                            </span>
-                        </button>
-
-                        {isExpanded && (
-                            <div className="flex flex-col">
-                                {c.children?.map(child => renderComment(child, depth + 1, c.authorNickname))}
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-        );
     };
 
     return (
@@ -329,7 +210,7 @@ export default function GalleryDetailClient({ item }: Props) {
                         {t.kids.steps.tabModeling}
                     </button>
 
-                    {/* Back Button (Moved here) */}
+                    {/* Back Button */}
                     <button
                         onClick={() => router.back()}
                         className="text-left px-8 py-4 transition-all font-medium flex items-center gap-3 bg-transparent text-gray-400 hover:text-white hover:bg-white/5"
@@ -337,8 +218,6 @@ export default function GalleryDetailClient({ item }: Props) {
                         ← {t.kids.steps.back}
                     </button>
                 </div>
-
-                {/* Back Button (Moved to bottom) */}
             </div>
 
             {/* Content Wrapper (Canvas + Right Sidebar) */}
@@ -357,7 +236,11 @@ export default function GalleryDetailClient({ item }: Props) {
                     {/* Canvas Area */}
                     <div className="flex-1 relative bg-[#f0f0f0]">
                         {activeTab === 'LDR' && (
-                            item.ldrUrl ? <Viewer3D url={item.ldrUrl} /> : (
+                            hasScreenshots ? (
+                                <ScreenshotGallery item={item} />
+                            ) : item.ldrUrl ? (
+                                <Viewer3D url={item.ldrUrl} />
+                            ) : (
                                 <div className="absolute inset-0 flex items-center justify-center text-gray-400 font-bold">
                                     LDR Model Not Available
                                 </div>
@@ -394,7 +277,7 @@ export default function GalleryDetailClient({ item }: Props) {
                                             src={item.sourceImageUrl || item.thumbnailUrl}
                                             alt="Project Image"
                                             fill
-                                            className="object-contain" // Maintain aspect ratio
+                                            className="object-contain"
                                         />
                                     </div>
                                 </div>
@@ -495,100 +378,28 @@ export default function GalleryDetailClient({ item }: Props) {
                         </div>
 
                         {/* Comments Section */}
-                        <div className="px-6 py-4 border-t border-gray-100 bg-white min-h-[150px]">
-                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
-                                {t.detail.comments} ({commentCount})
-                            </h3>
-
-                            <div className="flex flex-col gap-3">
-                                {comments.length === 0 ? (
-                                    <div className="text-center py-10 text-gray-400">
-                                        <p className="text-sm">{t.detail.noComments}</p>
-                                    </div>
-                                ) : comments.map(c => renderComment(c))}
-                            </div>
-                        </div>
+                        <CommentList
+                            comments={comments}
+                            commentCount={commentCount}
+                            isAuthenticated={isAuthenticated}
+                            onCommentSubmit={handleCommentSubmit}
+                            t={t}
+                        />
                     </div>
 
-                    {/* Comment Input */}
-                    <div className="p-4 border-t border-gray-200 bg-white">
-                        <div className="flex gap-2">
-                            <input
-                                className="flex-1 bg-gray-100 border-none rounded-xl px-4 py-3 text-xs font-medium focus:ring-2 focus:ring-black/5 outline-none transition-all placeholder:text-gray-400"
-                                placeholder={isAuthenticated ? t.detail.placeholderComment : t.detail.loginToComment}
-                                value={commentInput}
-                                onChange={e => setCommentInput(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && handleCommentSubmit()}
-                                disabled={!isAuthenticated || commentLoading}
-                            />
-                            <button
-                                onClick={() => handleCommentSubmit()}
-                                disabled={!isAuthenticated || !commentInput.trim() || commentLoading}
-                                className="bg-black text-white px-4 rounded-xl font-bold text-[10px] hover:bg-gray-800 disabled:opacity-30 transition-all uppercase"
-                            >
-                                {t.detail.post}
-                            </button>
-                        </div>
-                    </div>
+                    {/* Comment Input (fixed at bottom) */}
+                    <CommentInput
+                        commentInput={commentInput}
+                        commentLoading={commentLoading}
+                        isAuthenticated={isAuthenticated}
+                        onCommentInputChange={setCommentInput}
+                        onCommentSubmit={handleCommentSubmit}
+                        t={t}
+                    />
                 </div>
 
                 {/* 4. Recommendation Sidebar */}
-                <div className="w-[260px] bg-white border-l border-gray-200 flex flex-col shrink-0 relative z-10 rounded-r-3xl overflow-hidden">
-                    <div className="p-5 border-b border-gray-100 bg-gray-50/30 flex items-center justify-between">
-                        <h3 className="text-sm font-black text-gray-900 tracking-tight italic uppercase">
-                            {t.main.galleryList.allCreations}
-                        </h3>
-                        <button
-                            onClick={() => router.back()}
-                            className="text-gray-400 hover:text-gray-900 transition-colors p-1 rounded-full hover:bg-gray-100"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar">
-                        {recommendations.length > 0 ? (
-                            recommendations.map((rec) => {
-                                const safeTitle = rec.title.replace(/\s+/g, '-').replace(/[^\w\-\uAC00-\uD7A3]/g, '');
-                                const recSlug = `${safeTitle}-${rec.id}`;
-                                return (
-                                    <button
-                                        key={rec.id}
-                                        onClick={() => router.push(`/gallery/${recSlug}`)}
-                                        className="group text-left flex flex-col gap-2 p-2 rounded-2xl bg-white transition-all border-2 border-black hover:shadow-[4px_4px_0px_rgba(0,0,0,0.05)] hover:-translate-y-0.5"
-                                    >
-                                        <div className="relative aspect-square w-full bg-[#f9f9f9] rounded-xl overflow-hidden border border-gray-100">
-                                            {(rec.sourceImageUrl || rec.thumbnailUrl) ? (
-                                                <Image
-                                                    src={rec.sourceImageUrl || rec.thumbnailUrl}
-                                                    alt={rec.title}
-                                                    fill
-                                                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                                                />
-                                            ) : (
-                                                <div className="absolute inset-0 flex items-center justify-center text-[10px] text-gray-300 font-bold uppercase">No Img</div>
-                                            )}
-                                        </div>
-                                        <div className="px-1">
-                                            <h4 className="text-[11px] font-black text-gray-900 line-clamp-1 mb-0.5 tracking-tight group-hover:text-yellow-600 transition-colors">
-                                                {rec.title}
-                                            </h4>
-                                            <p className="text-[9px] font-bold text-gray-400">@{rec.authorNickname || 'Anonymous'}</p>
-                                        </div>
-                                    </button>
-                                );
-                            })
-                        ) : (
-                            <div className="flex flex-col items-center justify-center py-20 text-center opacity-20 grayscale">
-                                <div className="text-4xl mb-2">📦</div>
-                                <div className="text-[10px] font-black uppercase tracking-widest">Loading...</div>
-                            </div>
-                        )}
-                    </div>
-
-                </div>
+                <RecommendationSidebar recommendations={recommendations} t={t} />
             </div>
         </div>
     );

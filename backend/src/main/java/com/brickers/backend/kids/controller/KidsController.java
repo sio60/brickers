@@ -132,6 +132,28 @@ public class KidsController {
     }
 
     /**
+     * Screenshot 서버에서 6면 스크린샷 완료 시 screenshotUrls 업데이트
+     * Python: PATCH /api/kids/jobs/{jobId}/screenshots
+     */
+    @PatchMapping("/jobs/{jobId}/screenshots")
+    public ResponseEntity<Void> updateScreenshots(
+            @PathVariable String jobId,
+            @RequestHeader("X-Internal-Token") String token,
+            @RequestBody Map<String, Object> body) {
+        if (internalApiToken.isBlank() || !internalApiToken.equals(token)) {
+            log.warn("[KidsController] 스크린샷 업데이트 토큰 불일치");
+            return ResponseEntity.status(403).build();
+        }
+        @SuppressWarnings("unchecked")
+        java.util.Map<String, String> urls = (java.util.Map<String, String>) body.get("screenshotUrls");
+        if (urls == null || urls.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        kidsService.updateScreenshotUrls(jobId, urls);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * ✅ AI Server에서 Gemini 추천 태그 저장
      * Python: PATCH /api/kids/jobs/{jobId}/suggested-tags
      */
