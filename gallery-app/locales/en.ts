@@ -189,6 +189,8 @@ export const en = {
     kids: {
         title: "Select Your Level",
         level: "L{lv}",
+
+        bricks: "Bricks",
         pro: "PRO",
         continueBtn: "Continue",
         model1: "Model 1",
