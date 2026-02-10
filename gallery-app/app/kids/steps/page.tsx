@@ -74,6 +74,20 @@ function buildCumulativeStepTexts(ldrText: string): string[] {
     return out;
 }
 
+// 모달용 어댑터 (기존 코드 호환성)
+function GalleryRegisterInputModalAdapter({ t, onRegister, isSubmitting, onClose }: any) {
+    const [title, setTitle] = useState("");
+    return (
+        <>
+            <input type="text" className="galleryModal__input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t.kids.steps.galleryModal.placeholder} autoFocus />
+            <div className="galleryModal__actions">
+                <button className="galleryModal__btn galleryModal__btn--cancel" onClick={onClose}>{t.kids.steps.galleryModal.cancel}</button>
+                <button className="galleryModal__btn galleryModal__btn--confirm" onClick={() => onRegister(title)} disabled={isSubmitting}>{isSubmitting ? "..." : t.kids.steps.galleryModal.confirm}</button>
+            </div>
+        </>
+    );
+}
+
 function LdrModel({
     url,
     overrideMainLdrUrl,
@@ -550,25 +564,20 @@ function KidsStepPageContent() {
         <div style={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
             <BackgroundBricks />
 
-            <div className="kidsStep__mainContainer" style={{ paddingLeft: isPreset ? 0 : 260 }}>
-                {!isPreset && (
-                    <div style={{
-                        position: "absolute", top: 100, left: 24, zIndex: 20, width: 260,
-                        background: "#fff", borderRadius: 32, color: "#000",
-                        display: "flex", flexDirection: "column", padding: "24px 16px",
-                        border: "3px solid #000", boxShadow: "0 20px 50px rgba(0, 0, 0, 0.1)"
-                    }}>
+            <div className="kidsStep__mainContainer">
+                {!isPreset ? (
+                    <div className="kidsStep__sidebar">
                         <button onClick={() => router.back()} className="kidsStep__backBtn">
                             ← {t.kids.steps.back}
                         </button>
 
-                        <h2 style={{ fontSize: "1.3rem", fontWeight: 900, marginBottom: 20, paddingLeft: 8 }}>BRICKERS</h2>
+                        <h2 className="kidsStep__sidebarTitle">BRICKERS</h2>
 
-                        <div style={{ marginBottom: 10, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800 }}>
+                        <div className="kidsStep__sidebarSectionLabel">
                             {t.kids.steps.viewModes}
                         </div>
 
-                        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        <div className="kidsStep__modeContainer">
                             <button onClick={() => setActiveTab('LDR')} className={`kidsStep__modeBtn ${activeTab === 'LDR' ? 'active' : ''}`}>
                                 {t.kids.steps.tabBrick}
                             </button>
@@ -577,7 +586,7 @@ function KidsStepPageContent() {
                             </button>
                         </div>
 
-                        <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+                        <div className="kidsStep__colorContainer">
                             <button onClick={() => setIsColorModalOpen(true)} className="kidsStep__colorBtn">
                                 {t.kids.steps?.changeColor || '색상 변경'}
                             </button>
@@ -600,8 +609,8 @@ function KidsStepPageContent() {
                             onRegister={handleRegisterGallery}
                         />
 
-                        <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
-                            <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800 }}>
+                        <div className="kidsStep__sidebarSection">
+                            <div className="kidsStep__sidebarSectionLabel">
                                 PDF Download
                             </div>
                             <button
@@ -613,180 +622,176 @@ function KidsStepPageContent() {
                             </button>
                         </div>
                     </div>
+                ) : (
+                    <div className="kidsStep__sidebarSpacer" />
                 )}
 
-                <div className="kidsStep__card kids-main-canvas">
-                    {loading && (
-                        <div className="kidsStep__loadingOverlay">
-                            <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
-                            <span>{t.kids.steps.loading}</span>
-                        </div>
-                    )}
-
-                    {activeTab === 'LDR' && (
-                        <div className="kidsStep__splitContainer">
-                            {/* Left: Full Model */}
-                            <div className="kidsStep__splitPane left">
-                                <div className="kidsStep__paneLabel">완성 모습</div>
-                                <Canvas
-                                    camera={{ position: [200, -200, 200], fov: 45 }}
-                                    dpr={[1, 2]}
-                                    gl={{ preserveDrawingBuffer: true }}
-                                >
-                                    <ambientLight intensity={0.9} />
-                                    <directionalLight position={[3, 5, 2]} intensity={1} />
-                                    {ldrUrl && (
-                                        <LdrModel
-                                            url={ldrUrl}
-                                            // No override -> Full model
-                                            onLoaded={(g) => { setLoading(false); }}
-                                            onError={() => setLoading(false)}
-                                            customBounds={modelBounds}
-                                            fitTrigger={`${ldrUrl}|left`}
-                                        />
-                                    )}
-                                    <OrbitControls makeDefault enablePan={false} enableZoom />
-                                </Canvas>
+                <div className="kidsStep__layoutCenter">
+                    <div className="kidsStep__card kids-main-canvas">
+                        {loading && (
+                            <div className="kidsStep__loadingOverlay">
+                                <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
+                                <span>{t.kids.steps.loading}</span>
                             </div>
+                        )}
 
-                            {/* Right: Step Model */}
-                            <div className="kidsStep__splitPane right">
-                                <div className="kidsStep__paneLabel">조립 순서</div>
-                                <Canvas
-                                    camera={{ position: [200, -200, 200], fov: 45 }}
-                                    dpr={[1, 2]}
-                                    gl={{ preserveDrawingBuffer: true }}
-                                >
-                                    <ambientLight intensity={0.9} />
-                                    <directionalLight position={[3, 5, 2]} intensity={1} />
-                                    {ldrUrl && (
-                                        <LdrModel
-                                            url={ldrUrl}
-                                            overrideMainLdrUrl={currentOverride}
-                                            onLoaded={(g) => { modelGroupRef.current = g; }}
-                                            onError={() => setLoading(false)}
-                                            customBounds={modelBounds}
-                                            fitTrigger={`${ldrUrl}|${currentOverride}|right`}
-                                        />
-                                    )}
-                                    <OrbitControls makeDefault enablePan={false} enableZoom />
-                                </Canvas>
+                        {activeTab === 'LDR' && (
+                            <div className="kidsStep__splitContainer">
+                                {/* Left: Full Model */}
+                                <div className="kidsStep__splitPane left">
+                                    <div className="kidsStep__paneLabel">완성 모습</div>
+                                    <Canvas
+                                        camera={{ position: [200, -200, 200], fov: 45 }}
+                                        dpr={[1, 2]}
+                                        gl={{ preserveDrawingBuffer: true }}
+                                    >
+                                        <ambientLight intensity={0.9} />
+                                        <directionalLight position={[3, 5, 2]} intensity={1} />
+                                        {ldrUrl && (
+                                            <LdrModel
+                                                url={ldrUrl}
+                                                // No override -> Full model
+                                                onLoaded={(g) => { setLoading(false); }}
+                                                onError={() => setLoading(false)}
+                                                customBounds={modelBounds}
+                                                fitTrigger={`${ldrUrl}|left`}
+                                            />
+                                        )}
+                                        <OrbitControls makeDefault enablePan={false} enableZoom />
+                                    </Canvas>
+                                </div>
 
-                                {stepBricks[stepIdx] && stepBricks[stepIdx].length > 0 && (
-                                    <div className="kidsStep__brickList">
-                                        {stepBricks[stepIdx].map((b, i) => (
-                                            <div key={i} className="kidsStep__brickItem">
-                                                <BrickThumbnail partName={b.partName} color={b.color} />
-                                                <span className="kidsStep__brickCount">x{b.count}</span>
-                                            </div>
-                                        ))}
+                                {/* Right: Step Model */}
+                                <div className="kidsStep__splitPane right">
+                                    <div className="kidsStep__paneLabel">조립 순서</div>
+                                    <Canvas
+                                        camera={{ position: [200, -200, 200], fov: 45 }}
+                                        dpr={[1, 2]}
+                                        gl={{ preserveDrawingBuffer: true }}
+                                    >
+                                        <ambientLight intensity={0.9} />
+                                        <directionalLight position={[3, 5, 2]} intensity={1} />
+                                        {ldrUrl && (
+                                            <LdrModel
+                                                url={ldrUrl}
+                                                overrideMainLdrUrl={currentOverride}
+                                                onLoaded={(g) => { modelGroupRef.current = g; }}
+                                                onError={() => setLoading(false)}
+                                                customBounds={modelBounds}
+                                                fitTrigger={`${ldrUrl}|${currentOverride}|right`}
+                                            />
+                                        )}
+                                        <OrbitControls makeDefault enablePan={false} enableZoom />
+                                    </Canvas>
+
+                                    <div className="kidsStep__placeholder" />
+
+
+                                    <div className="kidsStep__navOverlay">
+                                        <button className="kidsStep__navBtn" disabled={!canPrev} onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}>
+                                            ← {t.kids.steps.prev}
+                                        </button>
+                                        <div className="kidsStep__stepInfo">
+                                            Step {stepIdx + 1} <span style={{ color: "#aaa" }}>/ {total}</span>
+                                        </div>
+                                        <button className="kidsStep__navBtn kidsStep__navBtn--next" disabled={!canNext} onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}>
+                                            {t.kids.steps.next} →
+                                        </button>
                                     </div>
-                                )}
-
-
-                                <div className="kidsStep__navOverlay">
-                                    <button className="kidsStep__navBtn" disabled={!canPrev} onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}>
-                                        ← {t.kids.steps.prev}
-                                    </button>
-                                    <div className="kidsStep__stepInfo">
-                                        Step {stepIdx + 1} <span style={{ color: "#aaa" }}>/ {total}</span>
-                                    </div>
-                                    <button className="kidsStep__navBtn kidsStep__navBtn--next" disabled={!canNext} onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}>
-                                        {t.kids.steps.next} →
-                                    </button>
                                 </div>
                             </div>
+                        )}
+
+                        {/* GLB Viewer */}
+                        {activeTab === 'GLB' && (
+                            <Canvas
+                                camera={{ position: [5, 5, 5], fov: 50 }}
+                                dpr={[1, 2]}
+                            >
+                                <ambientLight intensity={0.8} />
+                                <directionalLight position={[5, 10, 5]} intensity={1.5} />
+                                <Environment preset="city" />
+                                {glbUrl && (
+                                    <Bounds fit clip margin={1.35}>
+                                        <Center>
+                                            <Gltf src={glbUrl} />
+                                        </Center>
+                                        <FitOnceOnLoad trigger={glbUrl} />
+                                    </Bounds>
+                                )}
+                                <OrbitControls makeDefault enablePan={false} enableZoom autoRotate autoRotateSpeed={2.5} enableDamping />
+                            </Canvas>
+                        )}
+                        {activeTab === 'GLB' && !glbUrl && <div className="kidsStep__noModel">3D Model not available</div>}
+                    </div>
+                </div>
+
+                <div className="kidsStep__rightSidebar">
+                    <div className="kidsStep__rightSidebarHeader">
+                        {t.kids.steps.tabBrick}
+                    </div>
+                    {stepBricks[stepIdx] && stepBricks[stepIdx].length > 0 ? (
+                        <div className="kidsStep__brickList">
+                            {stepBricks[stepIdx].map((b, i) => (
+                                <div key={i} className="kidsStep__brickItem">
+                                    <BrickThumbnail partName={b.partName} color={b.color} />
+                                    <span className="kidsStep__brickCount">x{b.count}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="kidsStep__noBricks">
+                            No bricks needed for this step.
                         </div>
                     )}
-
-                    {/* GLB Viewer */}
-                    {activeTab === 'GLB' && (
-                        <Canvas
-                            camera={{ position: [5, 5, 5], fov: 50 }}
-                            dpr={[1, 2]}
-                        >
-                            <ambientLight intensity={0.8} />
-                            <directionalLight position={[5, 10, 5]} intensity={1.5} />
-                            <Environment preset="city" />
-                            {glbUrl && (
-                                <Bounds fit clip margin={1.35}>
-                                    <Center>
-                                        <Gltf src={glbUrl} />
-                                    </Center>
-                                    <FitOnceOnLoad trigger={glbUrl} />
-                                </Bounds>
-                            )}
-                            <OrbitControls makeDefault enablePan={false} enableZoom autoRotate autoRotateSpeed={2.5} enableDamping />
-                        </Canvas>
-                    )}
-                    {activeTab === 'GLB' && !glbUrl && <div className="kidsStep__noModel">3D Model not available</div>}
                 </div>
+
+                {/* Gallery Modal */}
+                {isGalleryModalOpen && (
+                    <div className="galleryModalOverlay" onClick={() => setIsGalleryModalOpen(false)}>
+                        <div className="galleryModal" onClick={(e) => e.stopPropagation()}>
+                            <h3 className="galleryModal__title">{t.kids.steps.galleryModal.title}</h3>
+                            <GalleryRegisterInputModalAdapter
+                                t={t}
+                                onRegister={handleRegisterGallery}
+                                isSubmitting={isSubmitting}
+                                onClose={() => setIsGalleryModalOpen(false)}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* Color Modal */}
+                {isColorModalOpen && (
+                    <div className="galleryModalOverlay" onClick={() => setIsColorModalOpen(false)}>
+                        <div className="galleryModal colorModal" onClick={(e) => e.stopPropagation()}>
+                            <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)}>✕</button>
+                            <h3 className="galleryModal__title">{t.kids.steps.colorThemeTitle || "색상 테마 선택"}</h3>
+                            <div className="colorModal__themes">
+                                {colorThemes.length === 0 ? <div className="colorModal__loading">{t.kids.steps?.themeLoading || t.common.loading}</div> : (
+                                    colorThemes.map((theme: ThemeInfo) => (
+                                        <button key={theme.name} className={`colorModal__themeBtn ${selectedTheme === theme.name ? "selected" : ""}`} onClick={() => setSelectedTheme(theme.name)}>
+                                            <span className="colorModal__themeName">{theme.name}</span>
+                                            <span className="colorModal__themeDesc">{theme.description}</span>
+                                        </button>
+                                    ))
+                                )}
+                            </div>
+                            <div className="galleryModal__actions">
+                                <button className="galleryModal__btn galleryModal__btn--cancel" onClick={() => setIsColorModalOpen(false)}>{t.kids.steps.galleryModal.cancel}</button>
+                                <button className="galleryModal__btn galleryModal__btn--confirm" onClick={handleApplyColor} disabled={!selectedTheme || isApplyingColor}>
+                                    {isApplyingColor ? "..." : t.common?.apply}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
-
-            {/* Gallery Modal (모달에도 입력창이 있는데 이건 별도임. 아마 모바일용/다른 경로용?) */}
-            {isGalleryModalOpen && (
-                <div className="galleryModalOverlay" onClick={() => setIsGalleryModalOpen(false)}>
-                    <div className="galleryModal" onClick={(e) => e.stopPropagation()}>
-                        <h3 className="galleryModal__title">{t.kids.steps.galleryModal.title}</h3>
-                        {/* 이 모달 내의 입력도 깜빡일 수 있으나 사이드바 문제가 급선무. 여기는 별도 state [galleryTitle state가 제거되었으므로 수정 필요] */}
-                        {/* 
-                           주의: galleryTitle state를 제거했으므로 여기도 수정해야 함.
-                           모달용 input state를 별도로 만들거나, GalleryRegisterInput를 재사용해야 함.
-                           하지만 모달 로직은 현재 보여지지 않는 듯함(사이드바에 박혀있음).
-                           혹시 모르니 로컬 state를 사용하는 방식으로 수정.
-                        */}
-                        <GalleryRegisterInputModalAdapter
-                            t={t}
-                            onRegister={handleRegisterGallery}
-                            isSubmitting={isSubmitting}
-                            onClose={() => setIsGalleryModalOpen(false)}
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* Color Modal */}
-            {isColorModalOpen && (
-                <div className="galleryModalOverlay" onClick={() => setIsColorModalOpen(false)}>
-                    <div className="galleryModal colorModal" onClick={(e) => e.stopPropagation()}>
-                        <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)}>✕</button>
-                        <h3 className="galleryModal__title">{t.kids.steps.colorThemeTitle || "색상 테마 선택"}</h3>
-                        <div className="colorModal__themes">
-                            {colorThemes.length === 0 ? <div className="colorModal__loading">{t.kids.steps?.themeLoading || t.common.loading}</div> : (
-                                colorThemes.map((theme: ThemeInfo) => (
-                                    <button key={theme.name} className={`colorModal__themeBtn ${selectedTheme === theme.name ? "selected" : ""}`} onClick={() => setSelectedTheme(theme.name)}>
-                                        <span className="colorModal__themeName">{theme.name}</span>
-                                        <span className="colorModal__themeDesc">{theme.description}</span>
-                                    </button>
-                                ))
-                            )}
-                        </div>
-                        <div className="galleryModal__actions">
-                            <button className="galleryModal__btn galleryModal__btn--cancel" onClick={() => setIsColorModalOpen(false)}>{t.kids.steps.galleryModal.cancel}</button>
-                            <button className="galleryModal__btn galleryModal__btn--confirm" onClick={handleApplyColor} disabled={!selectedTheme || isApplyingColor}>
-                                {isApplyingColor ? "..." : t.common?.apply}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
 
-// 모달용 어댑터 (기존 코드 호환성)
-function GalleryRegisterInputModalAdapter({ t, onRegister, isSubmitting, onClose }: any) {
-    const [title, setTitle] = useState("");
-    return (
-        <>
-            <input type="text" className="galleryModal__input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t.kids.steps.galleryModal.placeholder} autoFocus />
-            <div className="galleryModal__actions">
-                <button className="galleryModal__btn galleryModal__btn--cancel" onClick={onClose}>{t.kids.steps.galleryModal.cancel}</button>
-                <button className="galleryModal__btn galleryModal__btn--confirm" onClick={() => onRegister(title)} disabled={isSubmitting}>{isSubmitting ? "..." : t.kids.steps.galleryModal.confirm}</button>
-            </div>
-        </>
-    );
-}
+
 
 export default function KidsStepPage() {
     return (
