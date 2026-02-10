@@ -383,7 +383,10 @@ export default function BrickStackMiniGame({ percent, message }: BrickStackProps
             {percent !== undefined && (
                 <div className={styles.brickGame__progress}>
                     <div className={styles.brickGame__progressText}>
-                        <span>{message || t.kids.generate.loading}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span>{t.kids.generate.loading}</span>
+                            {message && <span style={{ fontSize: '0.8rem', opacity: 0.8, marginTop: '4px' }}>{message}</span>}
+                        </div>
                         <span>{percent}%</span>
                     </div>
                     <div className={styles.brickGame__progressBar}>
@@ -424,6 +427,6 @@ export default function BrickStackMiniGame({ percent, message }: BrickStackProps
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }
