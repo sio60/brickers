@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,7 +37,7 @@ const Icons = {
 // types
 type MenuItem = "profile" | "membership" | "jobs" | "inquiries" | "reports" | "settings" | "delete";
 
-export default function MyPage() {
+function MyPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { language, setLanguage, t } = useLanguage();
@@ -1089,5 +1089,13 @@ export default function MyPage() {
             )}
                 */}
         </div>
+    );
+}
+
+export default function MyPage() {
+    return (
+        <Suspense fallback={<div className={styles.mypage__loading}>Loading...</div>}>
+            <MyPageContent />
+        </Suspense>
     );
 }
