@@ -416,5 +416,22 @@ export const en = {
         playAgain: "Play Again",
         gameOver: "Game Over!",
         score: "Score"
+    },
+    sse: {
+        download: "Image received. Let's examine the structure.",
+        gemini: "Analyzing light and form. Adjusting for optimal brick color mapping.",
+        tripo: "Building a 3D shape based on the 2D information.",
+        brickify: "Breaking down into bricks and searching for stable combinations.",
+        bom: "Calculating the number of parts needed for the current design.",
+        pdf: "Organizing the assembly order into the instruction guide.",
+        complete: "Design is complete. Let's take a look at the result!",
+        HYPOTHESIZE: "Referencing similar brick structures to hypothesize possible forms.",
+        STRATEGY: "Setting the most reasonable design strategy for current conditions.",
+        GENERATE: "Implementing design proposals one by one.",
+        VERIFY: "Checking durability and assembly feasibility.",
+        ANALYZE: "Reviewing for unnecessary complexity.",
+        REFLECT: "Comparing with previous attempts and summarizing improvements.",
+        EVOLVE: "Balancing form and efficiency.",
+        COMPLETE: "Design is finalized. Ready to move to the next step."
     }
 };

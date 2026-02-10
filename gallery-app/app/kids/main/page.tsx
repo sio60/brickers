@@ -462,7 +462,12 @@ function KidsPageContent() {
             <div className="center">
                 {status === "loading" && (
                     <>
-                        <BrickStackMiniGame percent={percent} message={agentLogs.length > 0 ? agentLogs[agentLogs.length - 1].replace(/^\[.*?\]\s*/, '') : undefined} />
+                        <BrickStackMiniGame percent={percent} message={agentLogs.length > 0 ? (() => {
+                            const last = agentLogs[agentLogs.length - 1];
+                            const match = last.match(/^\[(.+?)\]\s*/);
+                            const step = match?.[1];
+                            return (step && t.sse?.[step]) || last.replace(/^\[.*?\]\s*/, '');
+                        })() : undefined} />
                     </>
                 )}
 
