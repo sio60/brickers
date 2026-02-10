@@ -11,6 +11,7 @@ import { getColorThemes, applyColorVariant, base64ToBlobUrl, ThemeInfo } from "@
 import BrickStackMiniGame from "@/components/kids/BrickStackMiniGame";
 // import { registerToGallery } from "@/lib/api/myApi"; // Import API
 import { useJobStore } from "@/stores/jobStore";
+import { generatePdfFromServer } from "@/components/kids/PDFGenerator";
 
 // SSR 제외
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
@@ -84,8 +85,9 @@ function KidsPageContent() {
     // 다운로드 드롭다운 상태
     const [isDownloadOpen, setIsDownloadOpen] = useState(false);
 
-    // 3D 프리뷰 ref
+    // 3D 프리뷰 ref 및 PDF 생성 상태
     const previewRef = useRef<KidsLdrPreviewHandle>(null);
+    const [isPdfGenerating, setIsPdfGenerating] = useState(false);
 
     const processingRef = useRef(false);
 
@@ -404,13 +406,13 @@ function KidsPageContent() {
                 const newBlobUrl = base64ToBlobUrl(result.ldrData);
                 setLdrUrl(newBlobUrl);
                 setIsColorModalOpen(false);
-                alert(`${result.themeApplied} 테마 적용 완료! (${result.changedBricks}개 브릭 변경)`);
+                alert(`${result.themeApplied} ${t.kids?.steps?.colorThemeApplied || "테마 적용 완료!"} (${result.changedBricks}개 브릭 변경)`);
             } else {
-                alert(result.message || "색상 변경 실패");
+                alert(result.message || (t.kids?.steps?.colorThemeFailed || "색상 변경 실패"));
             }
         } catch (e) {
             console.error("색상 변경 실패:", e);
-            alert(e instanceof Error ? e.message : "색상 변경 중 오류가 발생했습니다.");
+            alert(e instanceof Error ? e.message : (t.kids?.steps?.colorThemeError || "색상 변경 중 오류가 발생했습니다."));
         } finally {
             setIsApplyingColor(false);
         }
@@ -420,10 +422,37 @@ function KidsPageContent() {
     }
 
     // PDF 다운로드 핸들러
+    const handleDownloadPdf = async () => {
+        // 이미 서버에서 생성된 PDF가 있으면 그냥 엶
+        if (pdfUrl) {
+            window.open(pdfUrl, "_blank");
+            return;
+        }
 
-    const handleDownloadPdf = () => {
-        if (!pdfUrl) return;
-        window.open(pdfUrl, "_blank");
+        // 없으면 클라이언트 캡처 기반 생성 시도
+        if (!ldrUrl || !previewRef.current || isPdfGenerating) return;
+
+        try {
+            setIsPdfGenerating(true);
+            setDebugLog(t.kids?.steps?.pdfGenerating || "📸 3D 모델 캡처 및 PDF 생성 중...");
+
+            // 1. 캡처 실행
+            const stepImages = await previewRef.current.captureAllSteps();
+            if (stepImages.length === 0) throw new Error("캡처된 이미지가 없습니다.");
+
+            // 2. 서버 요청
+            const generatedPdfUrl = await generatePdfFromServer(ldrUrl, jobId || "model", stepImages);
+
+            // 3. 다운로드
+            window.open(generatedPdfUrl, "_blank");
+            setDebugLog(t.kids?.steps?.pdfDownloadComplete || "✅ PDF 다운로드 완료");
+        } catch (e) {
+            console.error("PDF Download Error:", e);
+            alert(t.kids?.steps?.colorThemeError || "PDF 생성 중 오류가 발생했습니다.");
+            setDebugLog(`${t.kids?.steps?.pdfError || "❌ PDF 오류"}: ${e instanceof Error ? e.message : String(e)}`);
+        } finally {
+            setIsPdfGenerating(false);
+        }
     };
 
     return (
@@ -470,11 +499,9 @@ function KidsPageContent() {
                                     <div className="dropdownMenu">
                                         <button onClick={downloadLdr}>LDR Download</button>
                                         {glbUrl && <button onClick={downloadGlb}>GLB Download</button>}
-                                        {pdfUrl && (
-                                            <button onClick={handleDownloadPdf}>
-                                                PDF Download
-                                            </button>
-                                        )}
+                                        <button onClick={handleDownloadPdf} disabled={isPdfGenerating}>
+                                            {isPdfGenerating ? "PDF Generating..." : "PDF Download"}
+                                        </button>
                                     </div>
                                 )}
                             </div>
@@ -504,7 +531,7 @@ function KidsPageContent() {
 
                             <div className="colorModal__themes">
                                 {colorThemes.length === 0 ? (
-                                    <div className="colorModal__loading">테마 로딩 중...</div>
+                                    <div className="colorModal__loading">{t.common?.loading || "테마 로딩 중..."}</div>
                                 ) : (
                                     colorThemes.map((theme) => (
                                         <button
@@ -524,14 +551,14 @@ function KidsPageContent() {
                                     className="colorModal__btn colorModal__btn--cancel"
                                     onClick={() => setIsColorModalOpen(false)}
                                 >
-                                    취소
+                                    {t.common?.cancel || "취소"}
                                 </button>
                                 <button
                                     className="colorModal__btn colorModal__btn--confirm"
                                     onClick={handleApplyColor}
                                     disabled={!selectedTheme || isApplyingColor}
                                 >
-                                    {isApplyingColor ? "적용 중..." : "적용하기"}
+                                    {isApplyingColor ? (t.common?.loading || "적용 중...") : (t.common?.confirm || "적용하기")}
                                 </button>
                             </div>
                         </div>
@@ -549,4 +576,3 @@ export default function KidsPage() {
         </Suspense>
     );
 }
-

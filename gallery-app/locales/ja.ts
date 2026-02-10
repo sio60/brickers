@@ -251,7 +251,24 @@ export const ja = {
             tabOriginal: "オリジナル画像",
             originalModel: "AI 3Dモデル",
             previewTitle: "ブリックプレビュー",
-            startAssembly: "組み立て開始"
+            startAssembly: "組み立て開始",
+            pdfConfirm: "PDFガイドを生成しますか？\nモデルのサイズによっては時間がかかる場合があります。",
+            pdfComplete: "PDF生成が完了しました。",
+            pdfGenerating: "📸 3Dモデルをキャプチャし、PDFを生成中...",
+            pdfDownloadComplete: "✅ PDFダウンロード完了",
+            pdfError: "❌ PDFエラー",
+            colorThemeTitle: "カラーテーマ選択",
+            colorThemeApplied: "テーマの適用が完了しました！",
+            colorThemeFailed: "色の変更に失敗しました",
+            colorThemeError: "色の変更中にエラーが発生しました。"
+        },
+        viewer: {
+            noUrl: "モデルURLがありません",
+            back: "戻る",
+            loading: "3Dモデル読み込み中...",
+            completeModel: "完成したモデル",
+            instructions: "ドラッグで回転 • スクロールで拡大/縮小",
+            viewSteps: "ステップ表示"
         }
     },
     header: {

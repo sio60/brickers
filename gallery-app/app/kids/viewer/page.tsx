@@ -130,14 +130,17 @@ function ViewerContent() {
 
     if (!urlParam) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
                 <div className="text-center">
-                    <p className="text-gray-500 mb-4">모델 URL이 없습니다</p>
+                    <p className="text-xl font-bold text-gray-800 mb-6">{t.kids?.viewer?.noUrl || "모델 URL이 없습니다"}</p>
                     <button
                         onClick={() => router.back()}
-                        className="px-6 py-3 bg-black text-white rounded-full font-bold"
+                        className="px-8 py-3 bg-black text-white font-bold rounded-2xl hover:bg-gray-800 transition-all flex items-center gap-2 mx-auto shadow-lg"
                     >
-                        ← 돌아가기
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path d="M19 12H5m7-7-7 7 7 7" />
+                        </svg>
+                        {t.kids?.viewer?.back || "돌아가기"}
                     </button>
                 </div>
             </div>
@@ -154,7 +157,7 @@ function ViewerContent() {
                     {loading && (
                         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm">
                             <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mb-4" />
-                            <p className="font-bold text-gray-600">3D 모델 로딩 중...</p>
+                            <p className="font-bold text-gray-600">{t.kids?.viewer?.loading || "3D 모델 로딩 중..."}</p>
                         </div>
                     )}
 
@@ -166,11 +169,11 @@ function ViewerContent() {
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                             <path d="M19 12H5m7-7-7 7 7 7" />
                         </svg>
-                        돌아가기
+                        {t.kids?.viewer?.back || "돌아가기"}
                     </button>
 
                     <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 px-6 py-2 bg-black text-white rounded-full font-bold text-sm shadow-lg">
-                        완성된 모델
+                        {t.kids?.viewer?.completeModel || "완성된 모델"}
                     </div>
 
                     <Canvas camera={{ position: [200, -200, 200], fov: 45 }} dpr={[1, 2]}>
@@ -189,7 +192,7 @@ function ViewerContent() {
 
                     {/* Instructions overlay */}
                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full text-sm text-gray-500 font-medium shadow-md">
-                        드래그하여 회전 • 스크롤하여 확대/축소
+                        {t.kids?.viewer?.instructions || "드래그하여 회전 • 스크롤하여 확대/축소"}
                     </div>
                 </div>
             </div>
@@ -206,7 +209,7 @@ function ViewerContent() {
                             <rect x="9" y="3" width="6" height="4" rx="1" />
                             <path d="M9 12h6m-6 4h6" />
                         </svg>
-                        스텝 보기
+                        {t.kids?.viewer?.viewSteps || "스텝 보기"}
                     </Link>
                 </div>
             </div>
