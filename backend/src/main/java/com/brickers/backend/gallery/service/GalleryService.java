@@ -20,6 +20,7 @@ import org.springframework.security.core.Authentication;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -220,6 +221,15 @@ public class GalleryService {
         Page<GalleryPostEntity> result = galleryPostRepository.findByDeletedFalseAndAuthorId(me.getId(), pageable);
 
         return result.map(this::toResponse);
+    }
+
+    /** 갤러리 포스트 screenshotUrls 업데이트 (내부 API용) */
+    public void updateScreenshotUrls(String postId, Map<String, String> screenshotUrls) {
+        GalleryPostEntity post = galleryPostRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다. id=" + postId));
+        post.setScreenshotUrls(screenshotUrls);
+        post.setUpdatedAt(LocalDateTime.now());
+        galleryPostRepository.save(post);
     }
 
     // ========================= helpers =========================
