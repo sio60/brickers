@@ -252,6 +252,7 @@ export const en = {
             back: "Back",
             noUrl: "No URL available for steps.",
             title: "STEP {cur} / {total}",
+            bricksNeeded: "Bricks Needed",
             preview: "Brick Preview",
             loading: "Loading steps...",
             prev: "PREV",
