@@ -424,13 +424,13 @@ function KidsPageContent() {
                 const newBlobUrl = base64ToBlobUrl(result.ldrData);
                 setLdrUrl(newBlobUrl);
                 setIsColorModalOpen(false);
-                alert(`${result.themeApplied} ${t.kids?.steps?.colorThemeApplied || "테마 적용 완료!"} (${result.changedBricks}개 브릭 변경)`);
+                alert(`${result.themeApplied} ${t.kids.steps.colorThemeApplied} (${result.changedBricks}개 브릭 변경)`);
             } else {
-                alert(result.message || (t.kids?.steps?.colorThemeFailed || "색상 변경 실패"));
+                alert(result.message || t.kids.steps.colorThemeFailed);
             }
         } catch (e) {
             console.error("색상 변경 실패:", e);
-            alert(e instanceof Error ? e.message : (t.kids?.steps?.colorThemeError || "색상 변경 중 오류가 발생했습니다."));
+            alert(e instanceof Error ? e.message : t.kids.steps.colorThemeError);
         } finally {
             setIsApplyingColor(false);
         }
@@ -456,7 +456,7 @@ function KidsPageContent() {
 
             // 1. 캡처 실행
             const stepImages = await previewRef.current.captureAllSteps();
-            if (stepImages.length === 0) throw new Error("캡처된 이미지가 없습니다.");
+            if (stepImages.length === 0) throw new Error(t.jobs?.noCapturedImage || 'No captured image');
 
             // 2. 서버 요청
             const generatedPdfUrl = await generatePdfFromServer(ldrUrl, jobId || "model", stepImages);
@@ -530,7 +530,7 @@ function KidsPageContent() {
                             </div>
 
                             <button className="dlBtn colorBtn" onClick={openColorModal} style={{ display: 'none' }}>
-                                색상 변경
+                                {t.kids.steps?.changeColor || '색상 변경'}
                             </button>
                         </div>
                     </>
@@ -574,14 +574,14 @@ function KidsPageContent() {
                                     className="colorModal__btn colorModal__btn--cancel"
                                     onClick={() => setIsColorModalOpen(false)}
                                 >
-                                    {t.common?.cancel || "취소"}
+                                    {t.common.cancel}
                                 </button>
                                 <button
                                     className="colorModal__btn colorModal__btn--confirm"
                                     onClick={handleApplyColor}
                                     disabled={!selectedTheme || isApplyingColor}
                                 >
-                                    {isApplyingColor ? (t.common?.loading || "적용 중...") : (t.common?.confirm || "적용하기")}
+                                    {isApplyingColor ? (t.common?.applying || '...') : (t.common?.apply || '적용')}
                                 </button>
                             </div>
                         </div>

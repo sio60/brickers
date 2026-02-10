@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { Bounds, OrbitControls, Center } from "@react-three/drei";
@@ -136,6 +137,7 @@ interface Viewer3DProps {
 }
 
 export default React.memo(function Viewer3D({ url }: Viewer3DProps) {
+    const { t } = useLanguage();
     const [loading, setLoading] = useState(true);
 
     const proxiedUrl = useMemo(() => {
@@ -171,7 +173,7 @@ export default React.memo(function Viewer3D({ url }: Viewer3DProps) {
             {loading && (
                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/50 backdrop-blur-sm">
                     <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin mb-4" />
-                    <p className="font-bold text-gray-600 text-sm">3D 모델 로딩 중...</p>
+                    <p className="font-bold text-gray-600 text-sm">{t.viewer3d?.loading || t.common.loading}</p>
                 </div>
             )}
 

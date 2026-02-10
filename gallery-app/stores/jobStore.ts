@@ -120,8 +120,8 @@ export const useJobStore = create<JobStore>((set, get) => ({
                     if (typeof window !== 'undefined') {
                         import('@/lib/toast-utils').then(({ showToastNotification }) => {
                             showToastNotification(
-                                '생성 완료!',
-                                '브릭 모델 생성이 완료되었습니다. 클릭해서 확인하세요!',
+                                'Generation Complete!',
+                                'Brick model is ready. Click to check it out!',
                                 '/logo.png',
                                 stepsUrl
                             );

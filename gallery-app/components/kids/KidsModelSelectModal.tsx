@@ -191,7 +191,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                         <div className={styles.uploadSub}>{t.kids.modelSelect.uploadSub}</div>
                                         <div className={styles.uploadHint}>{t.kids.modelSelect.uploadHint}</div>
                                         <div className={styles.uploadNotice} style={{ marginTop: '8px', fontSize: '13px', color: '#ff4444', fontWeight: 'bold' }}>
-                                            * 무료 회원은 결제 후 이용 가능합니다
+                                            {t.kids.modelSelect?.freeUserNotice || '* Free users need to upgrade'}
                                         </div>
                                     </>
                                 )}

@@ -3,18 +3,20 @@
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Viewer3D = dynamic(() => import('@/components/Viewer3D'), { ssr: false });
 
 function Viewer3DContent() {
     const searchParams = useSearchParams();
+    const { t } = useLanguage();
     const ldrUrl = searchParams.get('ldrUrl') || '';
     const title = searchParams.get('title') || 'Brickers 3D Viewer';
 
     if (!ldrUrl) {
         return (
             <div className="w-screen h-screen flex items-center justify-center bg-gray-100">
-                <p className="text-gray-500 font-bold">LDR URL이 없습니다.</p>
+                <p className="text-gray-500 font-bold">{t.detail?.views3d?.noLdrUrl || 'LDR URL not found.'}</p>
             </div>
         );
     }
@@ -35,8 +37,8 @@ function Viewer3DContent() {
 
             {/* Footer */}
             <div className="h-10 bg-gray-100 flex items-center justify-center gap-6 text-xs text-gray-500 font-medium shrink-0">
-                <span>드래그: 회전</span>
-                <span>스크롤: 줌</span>
+                <span>{t.detail?.views3d?.dragRotate || 'Drag: Rotate'}</span>
+                <span>{t.detail?.views3d?.scrollZoom || 'Scroll: Zoom'}</span>
             </div>
         </div>
     );
