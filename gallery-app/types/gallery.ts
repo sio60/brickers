@@ -17,6 +17,14 @@ export type GalleryItem = {
     ldrUrl?: string;
     glbUrl?: string;
     sourceImageUrl?: string;
+    screenshotUrls?: {
+        front?: string;
+        back?: string;
+        left?: string;
+        right?: string;
+        top?: string;
+        bottom?: string;
+    };
 };
 
 export type PageResponse<T> = {

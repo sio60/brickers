@@ -107,7 +107,7 @@ function LdrModel({ url }: { url: string }) {
             } catch (err) {
                 console.error("LDraw load failed:", err);
                 const errorMessage = err instanceof Error ? err.message : "Unknown error";
-                alert(`3D 모델을 불러오는데 실패했습니다.\nURL: ${url}\nError: ${errorMessage}`);
+                alert(`Failed to load 3D model.\nURL: ${url}\nError: ${errorMessage}`);
             }
         })();
 
