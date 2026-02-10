@@ -127,45 +127,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                             </div>
 
                             <div className={styles.grid}>
-                                {/* 직접 그리기 카드 - 가장 먼저 표시 */}
-                                <div
-                                    className={`${styles.card} ${styles.drawCard}`}
-                                    onClick={() => {
-                                        if (!isAuthenticated) {
-                                            router.push('?login=true');
-                                            return;
-                                        }
-                                        setStep('draw');
-                                    }}
-                                >
-                                    <div className={`${styles.cardViewer} ${styles.drawIconContainer}`}>
-                                        <span className={styles.drawIcon}>🖌️</span>
-                                    </div>
-                                    <div className={styles.cardFooter}>
-                                        <div className={styles.cardLabel}>{t.kids.modelSelect.drawTitle}</div>
-                                        <div className={styles.cardPick}>{t.kids.modelSelect.drawSub}</div>
-                                    </div>
-                                </div>
 
-                                {/* 글자로 만들기 카드 */}
-                                <div
-                                    className={`${styles.card} ${styles.promptCard}`}
-                                    onClick={() => {
-                                        if (!isAuthenticated) {
-                                            router.push('?login=true');
-                                            return;
-                                        }
-                                        setStep('prompt');
-                                    }}
-                                >
-                                    <div className={`${styles.cardViewer} ${styles.drawIconContainer}`}>
-                                        <span className={styles.drawIcon}>✨</span>
-                                    </div>
-                                    <div className={styles.cardFooter}>
-                                        <div className={styles.cardLabel}>{t.kids.modelSelect.promptTitle}</div>
-                                        <div className={styles.cardPick}>{t.kids.modelSelect.promptSub}</div>
-                                    </div>
-                                </div>
 
                                 {items.map((it) => (
                                     <div
@@ -242,6 +204,75 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                 )}
                             </div>
 
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '20px', width: '100%' }}>
+                                <button
+                                    onClick={() => {
+                                        if (!isAuthenticated) { router.push('?login=true'); return; }
+                                        setStep('draw');
+                                    }}
+                                    style={{
+                                        flex: 1,
+                                        background: '#fff',
+                                        color: '#000',
+                                        border: '2px solid #000',
+                                        borderRadius: '12px',
+                                        padding: '14px',
+                                        fontSize: '1rem',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = '#000';
+                                        e.currentTarget.style.color = '#fff';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = '#fff';
+                                        e.currentTarget.style.color = '#000';
+                                    }}
+                                >
+                                    <span>🖌️</span>
+                                    {t.kids.modelSelect.drawTitle || "그림으로 만들기"}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (!isAuthenticated) { router.push('?login=true'); return; }
+                                        setStep('prompt');
+                                    }}
+                                    style={{
+                                        flex: 1,
+                                        background: '#fff',
+                                        color: '#000',
+                                        border: '2px solid #000',
+                                        borderRadius: '12px',
+                                        padding: '14px',
+                                        fontSize: '1rem',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = '#000';
+                                        e.currentTarget.style.color = '#fff';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = '#fff';
+                                        e.currentTarget.style.color = '#000';
+                                    }}
+                                >
+                                    <span>✨</span>
+                                    {t.kids.modelSelect.promptTitle || "글자로 만들기"}
+                                </button>
+                            </div>
+
                             <div className={styles.actions}>
                                 <button
                                     className={styles.confirmBtn}
@@ -261,7 +292,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                     ✕
                                 </button>
                             </div>
-                            <div style={{ height: 500, padding: '0 20px 20px' }}>
+                            <div style={{ height: '70vh', padding: '0 20px 20px', display: 'flex', flexDirection: 'column' }}>
                                 <KidsDrawingCanvas
                                     onCancel={() => setStep('select')}
                                     onDone={(f) => {
