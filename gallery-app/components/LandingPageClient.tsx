@@ -54,8 +54,11 @@ function LandingPageContent({ initialItems }: Props) {
         setIsAgeModalOpen(true);
     };
 
-    const handleLevelSelect = (url: string | null, file: File | null, age: string) => {
-        if (file) {
+    const handleLevelSelect = (url: string | null, file: File | null, age: string, prompt?: string) => {
+        if (prompt) {
+            sessionStorage.setItem('pendingPrompt', prompt);
+            router.push(`/kids/main?age=${age}`);
+        } else if (file) {
             const reader = new FileReader();
             reader.onload = () => {
                 const dataUrl = reader.result as string;

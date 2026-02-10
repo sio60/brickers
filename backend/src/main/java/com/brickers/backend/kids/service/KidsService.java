@@ -44,16 +44,40 @@ public class KidsService {
     private final ConcurrentHashMap<String, List<SseEmitter>> agentLogEmitters = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Long> agentLogLastWrite = new ConcurrentHashMap<>();
 
+    @Value("${APP_OPENAI_API_KEY}")
+    private String openaiApiKey;
+
     @Value("${aws.sqs.enabled:false}")
     private boolean sqsEnabled;
 
-    public Map<String, Object> startGeneration(String userId, String sourceImageUrl, String age, int budget,
-            String title) {
-        log.info("AI 생성 요청 접수: userId={}, sourceImageUrl={}, age={}, budget={}, title={}",
-                safe(userId), sourceImageUrl, safe(age), budget, safe(title));
+    private final org.springframework.web.reactive.function.client.WebClient.Builder webClientBuilder;
 
-        if (sourceImageUrl == null || sourceImageUrl.isBlank()) {
-            throw new IllegalArgumentException("sourceImageUrl is required");
+    public Map<String, Object> startGeneration(String userId, String sourceImageUrl, String age, int budget,
+            String title, String prompt) { // prompt 추가
+        log.info("AI 생성 요청 접수: userId={}, sourceImageUrl={}, age={}, budget={}, title={}, prompt={}",
+                safe(userId), sourceImageUrl, safe(age), budget, safe(title), safe(prompt));
+
+        String finalImageUrl = sourceImageUrl;
+
+        // 0) 프롬프트가 있으면 DALL-E로 이미지 생성 -> S3 업로드
+        if ((finalImageUrl == null || finalImageUrl.isBlank()) && (prompt != null && !prompt.isBlank())) {
+            try {
+                log.info("[Brickers] 프롬프트로 이미지 생성 시작: {}", prompt);
+                byte[] imageBytes = generateImageFromPrompt(prompt);
+                String fileName = "dalle_" + java.util.UUID.randomUUID() + ".png";
+
+                // S3 업로드
+                var stored = storageService.storeFile(userId, fileName, imageBytes, "image/png");
+                finalImageUrl = stored.url(); // Record getter
+                log.info("[Brickers] DALL-E 이미지 S3 업로드 완료: {}", finalImageUrl);
+            } catch (Exception e) {
+                log.error("[Brickers] 이미지 생성 실패: {}", e.getMessage());
+                throw new RuntimeException("이미지 생성 실패: " + e.getMessage());
+            }
+        }
+
+        if (finalImageUrl == null || finalImageUrl.isBlank()) {
+            throw new IllegalArgumentException("sourceImageUrl or prompt is required");
         }
 
         // 1) Job 생성/저장
@@ -62,7 +86,7 @@ public class KidsService {
                 .level(ageToKidsLevel(age))
                 .status(JobStatus.QUEUED)
                 .stage(JobStage.THREE_D_PREVIEW)
-                .sourceImageUrl(sourceImageUrl) // Frontend가 업로드한 S3 URL
+                .sourceImageUrl(finalImageUrl) // S3 URL
                 .title(title) // 작업 제목 (파일명)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -80,7 +104,7 @@ public class KidsService {
             sqsProducerService.sendJobRequest(
                     job.getId(),
                     userId,
-                    sourceImageUrl,
+                    finalImageUrl,
                     age,
                     budget);
         } else {
@@ -92,6 +116,45 @@ public class KidsService {
 
         // 3) 즉시 응답
         return Map.of("jobId", job.getId(), "status", JobStatus.QUEUED);
+    }
+
+    // 기존 메서드 오버로딩 유지 (하위 호환)
+    public Map<String, Object> startGeneration(String userId, String sourceImageUrl, String age, int budget,
+            String title) {
+        return startGeneration(userId, sourceImageUrl, age, budget, title, null);
+    }
+
+    private byte[] generateImageFromPrompt(String prompt) {
+        // OpenAI DALL-E 3 API 호출
+        // Request Body: { "model": "dall-e-3", "prompt": "...", "n": 1, "size":
+        // "1024x1024", "response_format": "b64_json" }
+        Map<String, Object> requestBody = Map.of(
+                "model", "dall-e-3",
+                "prompt", prompt + " (LEGO style, simple, clean background)", // 스타일 강제
+                "n", 1,
+                "size", "1024x1024",
+                "response_format", "b64_json");
+
+        Map response = webClientBuilder.build().post()
+                .uri("https://api.openai.com/v1/images/generations")
+                .header("Authorization", "Bearer " + openaiApiKey)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block(java.time.Duration.ofSeconds(60)); // 타임아웃 60초
+
+        if (response == null || !response.containsKey("data")) {
+            throw new RuntimeException("OpenAI 응답 없음");
+        }
+
+        List<Map<String, Object>> data = (List<Map<String, Object>>) response.get("data");
+        if (data.isEmpty()) {
+            throw new RuntimeException("OpenAI 이미지 데이터 없음");
+        }
+
+        String b64Json = (String) data.get(0).get("b64_json");
+        return java.util.Base64.getDecoder().decode(b64Json);
     }
 
     public GenerateJobEntity getJobStatus(String jobId) {

@@ -36,13 +36,16 @@ function KidsPageContent() {
     }, [age]);
 
     const [rawFile, setRawFile] = useState<File | null>(null);
+    const [targetPrompt, setTargetPrompt] = useState<string | null>(null); // New state
     const [isFileLoaded, setIsFileLoaded] = useState(false);
 
     useEffect(() => {
-        const storedData = sessionStorage.getItem('pendingUpload');
-        if (storedData) {
+        const storedUpload = sessionStorage.getItem('pendingUpload');
+        const storedPrompt = sessionStorage.getItem('pendingPrompt');
+
+        if (storedUpload) {
             try {
-                const { name, type, dataUrl } = JSON.parse(storedData);
+                const { name, type, dataUrl } = JSON.parse(storedUpload);
                 fetch(dataUrl)
                     .then(res => res.blob())
                     .then(blob => {
@@ -55,16 +58,20 @@ function KidsPageContent() {
                 console.error('Failed to restore file:', e);
                 setIsFileLoaded(true);
             }
+        } else if (storedPrompt) {
+            setTargetPrompt(storedPrompt);
+            setIsFileLoaded(true);
+            sessionStorage.removeItem('pendingPrompt');
         } else {
             setIsFileLoaded(true);
         }
     }, []);
 
     useEffect(() => {
-        if (isFileLoaded && !rawFile) {
+        if (isFileLoaded && !rawFile && !targetPrompt) {
             router.replace("/");
         }
-    }, [rawFile, isFileLoaded, router]);
+    }, [rawFile, targetPrompt, isFileLoaded, router]);
 
     const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
     const [ldrUrl, setLdrUrl] = useState<string | null>(null);
@@ -92,7 +99,7 @@ function KidsPageContent() {
     const processingRef = useRef(false);
 
     useEffect(() => {
-        if (!rawFile) return;
+        if (!rawFile && !targetPrompt) return;
         if (processingRef.current || status !== "idle") return;
 
         let alive = true;
@@ -112,57 +119,68 @@ function KidsPageContent() {
             await sleep(200);
 
             setDebugLog(t.kids.generate.starting);
-            console.log("[KidsPage] 🚀 runProcess 시작 | file:", rawFile.name, rawFile.type, rawFile.size);
+            console.log("[KidsPage] 🚀 runProcess 시작 | file:", rawFile?.name, "prompt:", targetPrompt);
 
             try {
-                // 1. Presigned URL 요청
-                setDebugLog(t.kids.generate.uploadPrepare);
-                console.log("[KidsPage] 📤 Step 1: Presigned URL 요청 중...");
-                const presign = await getPresignUrl(rawFile.type, rawFile.name);
-                console.log("[KidsPage] ✅ Step 1 완료 | uploadUrl:", presign.uploadUrl?.substring(0, 80) + "...");
-                console.log("[KidsPage]    publicUrl:", presign.publicUrl);
-                if (alive) setJobThumbnailUrl(presign.publicUrl);
+                let sourceImageUrl = "";
+                let fileTitle = "prompt_gen";
 
-                // 2. S3에 직접 업로드
-                setDebugLog(t.kids.generate.uploading);
-                console.log("[KidsPage] 📤 Step 2: S3 업로드 시작...");
-                console.log("[KidsPage] 📤 fetch 호출 직전 | url:", presign.uploadUrl?.substring(0, 100));
+                if (rawFile) {
+                    // 1. Presigned URL 요청
 
-                let uploadRes: Response;
-                try {
-                    uploadRes = await fetch(presign.uploadUrl, {
-                        method: "PUT",
-                        body: rawFile,
-                        headers: { "Content-Type": rawFile.type },
-                        signal: abort.signal,
-                    });
-                    console.log("[KidsPage] ✅ fetch 완료 | status:", uploadRes.status);
-                } catch (fetchError) {
-                    console.error("[KidsPage] ❌ fetch 자체 에러:", fetchError);
-                    console.error("[KidsPage] ❌ 에러 타입:", fetchError instanceof Error ? fetchError.name : "unknown");
-                    console.error("[KidsPage] ❌ 에러 메시지:", fetchError instanceof Error ? fetchError.message : String(fetchError));
-                    throw fetchError;
+                    setDebugLog(t.kids.generate.uploadPrepare);
+                    console.log("[KidsPage] 📤 Step 1: Presigned URL 요청 중...");
+                    const presign = await getPresignUrl(rawFile.type, rawFile.name);
+                    console.log("[KidsPage] ✅ Step 1 완료 | uploadUrl:", presign.uploadUrl?.substring(0, 80) + "...");
+                    console.log("[KidsPage]    publicUrl:", presign.publicUrl);
+                    if (alive) setJobThumbnailUrl(presign.publicUrl);
+
+                    // 2. S3에 직접 업로드
+                    setDebugLog(t.kids.generate.uploading);
+                    console.log("[KidsPage] 📤 Step 2: S3 업로드 시작...");
+                    console.log("[KidsPage] 📤 fetch 호출 직전 | url:", presign.uploadUrl?.substring(0, 100));
+
+                    let uploadRes: Response;
+                    try {
+                        uploadRes = await fetch(presign.uploadUrl, {
+                            method: "PUT",
+                            body: rawFile,
+                            headers: { "Content-Type": rawFile.type },
+                            signal: abort.signal,
+                        });
+                        console.log("[KidsPage] ✅ fetch 완료 | status:", uploadRes.status);
+                    } catch (fetchError) {
+                        console.error("[KidsPage] ❌ fetch 자체 에러:", fetchError);
+                        console.error("[KidsPage] ❌ 에러 타입:", fetchError instanceof Error ? fetchError.name : "unknown");
+                        console.error("[KidsPage] ❌ 에러 메시지:", fetchError instanceof Error ? fetchError.message : String(fetchError));
+                        throw fetchError;
+                    }
+
+                    console.log("[KidsPage] ✅ Step 2 완료 | S3 Upload status:", uploadRes.status);
+
+                    if (!uploadRes.ok) {
+                        console.error("[KidsPage] ❌ S3 Upload 실패 | status:", uploadRes.status);
+                        throw new Error(`S3 Upload Error: ${uploadRes.status}`);
+                    }
+                    sourceImageUrl = presign.publicUrl;
+                    fileTitle = rawFile.name.replace(/\.[^/.]+$/, "");
+                } else if (targetPrompt) {
+                    console.log("[KidsPage] 🚀 Prompt 모드 진입: S3 업로드 스킵");
+                    fileTitle = targetPrompt.substring(0, 10);
                 }
 
-                console.log("[KidsPage] ✅ Step 2 완료 | S3 Upload status:", uploadRes.status);
-
-                if (!uploadRes.ok) {
-                    console.error("[KidsPage] ❌ S3 Upload 실패 | status:", uploadRes.status);
-                    throw new Error(`S3 Upload Error: ${uploadRes.status}`);
-                }
-
-                // 3. Backend에 S3 URL 전달 (JSON)
+                // 3. Backend에 S3 URL or Prompt 전달 (JSON)
                 setDebugLog(t.kids.generate.creating2);
-                const fileTitle = rawFile.name.replace(/\.[^/.]+$/, "");
 
                 console.log("[KidsPage] 📤 Step 3: /api/kids/generate 호출 시작...");
-                console.log("[KidsPage]    payload:", { sourceImageUrl: presign.publicUrl, age, budget, title: fileTitle });
+                console.log("[KidsPage]    payload:", { sourceImageUrl, prompt: targetPrompt, age, budget, title: fileTitle });
 
                 const startRes = await authFetch('/api/kids/generate', {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        sourceImageUrl: presign.publicUrl,
+                        sourceImageUrl: sourceImageUrl || undefined, // prompt 모드면 undefined
+                        prompt: targetPrompt || undefined,
                         age,
                         budget,
                         title: fileTitle,
@@ -306,7 +324,7 @@ function KidsPageContent() {
             }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [rawFile, age, budget]); // status 제거 - status 변경 시 cleanup이 abort를 호출해서 fetch 취소됨
+    }, [rawFile, targetPrompt, age, budget]); // status 제거 - status 변경 시 cleanup이 abort를 호출해서 fetch 취소됨
 
     // SSE: CoScientist 에이전트 로그 스트리밍
     useEffect(() => {

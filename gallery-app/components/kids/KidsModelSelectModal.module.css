@@ -287,3 +287,70 @@
         height: 300px;
     }
 }
+
+.drawCard {
+    background: linear-gradient(135deg, #fff7ad 0%, #ffa94d 100%);
+    border-color: rgba(255, 169, 77, 0.3);
+}
+
+.drawCard .cardLabel {
+    color: #854d0e;
+}
+
+.drawCard .cardPick {
+    background: rgba(133, 77, 14, 0.1);
+    color: #854d0e;
+}
+
+.drawIconContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.4);
+    margin: 12px;
+    border-radius: 12px;
+    height: 176px !important;
+}
+
+.drawIcon {
+    font-size: 80px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+}
+
+.promptCard {
+    background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+    border-color: rgba(142, 197, 252, 0.3);
+}
+
+.promptCard .kidsModelCard__label {
+    color: #5b21b6;
+}
+
+.promptCard .kidsModelCard__pick {
+    background: rgba(91, 33, 182, 0.1);
+    color: #5b21b6;
+}
+
+.promptInputArea {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.promptInput {
+    width: 100%;
+    height: 120px;
+    padding: 16px;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    font-size: 18px;
+    resize: none;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.promptInput:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
