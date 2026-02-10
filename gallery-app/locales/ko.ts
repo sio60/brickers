@@ -218,8 +218,23 @@ export const ko = {
             uploadProSub: "클릭하여 업그레이드하세요",
             uploadProHint: "업그레이드 시 사용 가능",
             confirm: "생성하기",
-            previewTitle: "3D 미리보기",
-            previewSub: "모델을 회전시켜 확인하세요"
+            previewSub: "모델을 회전시켜 확인하세요",
+            drawTitle: "그림으로 만들기",
+            drawSub: "웹에서 직접 그림을 그려보세요",
+            drawTool: {
+                brush: "브러시",
+                eraser: "지우개",
+                clear: "초기화",
+                done: "다 그렸어요!",
+                color: "색상",
+                size: "크기"
+            },
+            promptTitle: "글자로 만들기",
+            promptSub: "상상한 것을 글로 적어보세요",
+            promptInputTitle: "무엇을 만들고 싶나요?",
+            promptInputPlaceholder: "예: 날개 달린 자동차, 무지개 색깔의 성",
+            promptInputHint: "자세하게 적을수록 좋아요!",
+            promptConfirm: "이대로 만들기"
         },
         steps: {
             back: "뒤로",
