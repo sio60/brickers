@@ -204,7 +204,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                 )}
                             </div>
 
-                            <div style={{ display: 'flex', gap: '10px', marginTop: '20px', width: '100%' }}>
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '10px', width: '100%', padding: '0 20px', boxSizing: 'border-box' }}>
                                 <button
                                     onClick={() => {
                                         if (!isAuthenticated) { router.push('?login=true'); return; }
@@ -235,7 +235,6 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                         e.currentTarget.style.color = '#000';
                                     }}
                                 >
-                                    <span>🖌️</span>
                                     {t.kids.modelSelect.drawTitle || "그림으로 만들기"}
                                 </button>
                                 <button
@@ -268,12 +267,11 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                         e.currentTarget.style.color = '#000';
                                     }}
                                 >
-                                    <span>✨</span>
                                     {t.kids.modelSelect.promptTitle || "글자로 만들기"}
                                 </button>
                             </div>
 
-                            <div className={styles.actions}>
+                            <div className={styles.actions} style={{ marginTop: '10px' }}>
                                 <button
                                     className={styles.confirmBtn}
                                     disabled={!canSubmit}
