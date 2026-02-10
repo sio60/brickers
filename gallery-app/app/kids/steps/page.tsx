@@ -19,8 +19,17 @@ import './KidsStepPage.css';
 // SSR 제외
 const CDN_BASE = "https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/";
 
+function removeNullChildren(obj: THREE.Object3D) {
+    if (!obj) return;
+    if (obj.children) {
+        obj.children = obj.children.filter(c => c !== null && c !== undefined);
+        obj.children.forEach(c => removeNullChildren(c));
+    }
+}
+
 function disposeObject3D(root: THREE.Object3D) {
     if (!root) return;
+    removeNullChildren(root);
     root.traverse((obj: any) => {
         if (!obj) return;
         if (obj.geometry) obj.geometry.dispose?.();
@@ -157,11 +166,7 @@ function LdrModel({
             const g = await loader.loadAsync(url);
             if (cancelled) { disposeObject3D(g); return; }
             if (g) {
-                g.traverse((obj) => {
-                    if (obj && obj.children) {
-                        obj.children = obj.children.filter(c => c !== null);
-                    }
-                });
+                removeNullChildren(g);
                 g.rotation.x = Math.PI;
             }
             prev = g;
