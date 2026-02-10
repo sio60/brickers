@@ -384,15 +384,28 @@ function KidsStepPageContent() {
         try {
             const res = await fetch(originalLdrUrl);
             const text = await res.text();
-            const { stepTexts, bounds } = parseAndProcessSteps(text);
-            setModelBounds(bounds);
-            const blobs = stepTexts.map(t => URL.createObjectURL(new Blob([t], { type: "text/plain" })));
-            revokeAll(blobRef.current);
-            blobRef.current = blobs;
-            setStepBlobUrls(blobs);
+            // 정렬 및 Bounds 계산 적용 (Worker 사용)
+            const worker = new Worker(new URL('@/lib/ldrWorker.ts', import.meta.url));
+            worker.postMessage({ type: 'PROCESS_LDR', text });
+            worker.onmessage = (e) => {
+                if (e.data.type === 'SUCCESS') {
+                    const { stepTexts, bounds } = e.data.payload;
+                    if (bounds) {
+                        setModelBounds(new THREE.Box3(
+                            new THREE.Vector3(bounds.min.x, bounds.min.y, bounds.min.z),
+                            new THREE.Vector3(bounds.max.x, bounds.max.y, bounds.max.z)
+                        ));
+                    }
+                    const blobs = stepTexts.map((t: string) => URL.createObjectURL(new Blob([t], { type: "text/plain" })));
+                    revokeAll(blobRef.current);
+                    blobRef.current = blobs;
+                    setStepBlobUrls(blobs);
+                    setStepIdx(stepTexts.length - 1);
+                }
+                worker.terminate();
+            };
             setColorChangedLdrBase64(null);
             setSelectedTheme("");
-            setStepIdx(stepTexts.length - 1);
         } catch (e) {
             console.error(e);
         } finally {
