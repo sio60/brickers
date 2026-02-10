@@ -13,6 +13,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { registerToGallery } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
+import { type StepBrickInfo } from "@/lib/ldrUtils";
 import BackgroundBricks from "@/components/BackgroundBricks";
 import './KidsStepPage.css';
 
@@ -278,6 +279,7 @@ function KidsStepPageContent() {
     const [loading, setLoading] = useState(true);
     const [stepIdx, setStepIdx] = useState(0);
     const [stepBlobUrls, setStepBlobUrls] = useState<string[]>([]);
+    const [stepBricks, setStepBricks] = useState<StepBrickInfo[][]>([]);
     const [modelBounds, setModelBounds] = useState<THREE.Box3 | null>(null);
     const blobRef = useRef<string[]>([]);
     const modelGroupRef = useRef<THREE.Group | null>(null);
@@ -292,7 +294,7 @@ function KidsStepPageContent() {
     const [isProMode, setIsProMode] = useState(false);
     const [jobScreenshotUrls, setJobScreenshotUrls] = useState<Record<string, string> | null>(null);
 
-    const [isPreviewMode, setIsPreviewMode] = useState(true);
+
     const [activeTab, setActiveTab] = useState<'LDR' | 'GLB'>('LDR');
     const [glbUrl, setGlbUrl] = useState<string | null>(null);
 
@@ -327,15 +329,15 @@ function KidsStepPageContent() {
                 worker.postMessage({ type: 'PROCESS_LDR', text });
                 worker.onmessage = (e) => {
                     if (e.data.type === 'SUCCESS') {
-                        const { stepTexts } = e.data.payload;
+                        const { stepTexts, stepBricks: bricks } = e.data.payload;
                         const blobs = stepTexts.map((t_blob: string) =>
                             URL.createObjectURL(new Blob([t_blob], { type: "text/plain" }))
                         );
                         revokeAll(blobRef.current);
                         blobRef.current = blobs;
                         setStepBlobUrls(blobs);
+                        setStepBricks(bricks || []);
                         setStepIdx(stepTexts.length - 1);
-                        setIsPreviewMode(false);
                         setIsColorModalOpen(false);
                         alert(`${result.themeApplied} ${t.kids.steps.colorThemeApplied}`);
                     } else {
@@ -372,10 +374,12 @@ function KidsStepPageContent() {
                             new THREE.Vector3(bounds.max.x, bounds.max.y, bounds.max.z)
                         ));
                     }
+                    const { stepBricks: bricks } = e.data.payload;
                     const blobs = stepTexts.map((t: string) => URL.createObjectURL(new Blob([t], { type: "text/plain" })));
                     revokeAll(blobRef.current);
                     blobRef.current = blobs;
                     setStepBlobUrls(blobs);
+                    setStepBricks(bricks || []);
                     setStepIdx(stepTexts.length - 1);
                 }
                 worker.terminate();
@@ -435,7 +439,7 @@ function KidsStepPageContent() {
             worker.postMessage({ type: 'PROCESS_LDR', text });
             worker.onmessage = (e) => {
                 if (e.data.type === 'SUCCESS' && alive) {
-                    const { stepTexts, bounds } = e.data.payload;
+                    const { stepTexts, bounds, stepBricks: bricks } = e.data.payload;
                     if (bounds) {
                         setModelBounds(new THREE.Box3(
                             new THREE.Vector3(bounds.min.x, bounds.min.y, bounds.min.z),
@@ -446,6 +450,7 @@ function KidsStepPageContent() {
                     revokeAll(blobRef.current);
                     blobRef.current = blobs;
                     setStepBlobUrls(blobs);
+                    setStepBricks(bricks || []);
                     setLoading(false);
                 } else if (alive) {
                     setLoading(false);
@@ -509,7 +514,7 @@ function KidsStepPageContent() {
     const currentOverride = stepBlobUrls[Math.min(stepIdx, stepBlobUrls.length - 1)];
     const canPrev = stepIdx > 0;
     const canNext = stepIdx < total - 1;
-    const finalModelUrl = isPreviewMode ? undefined : currentOverride;
+
     const isPreset = searchParams.get("isPreset") === "true";
 
     return (
@@ -590,36 +595,69 @@ function KidsStepPageContent() {
                     )}
 
                     {activeTab === 'LDR' && (
-                        <Canvas
-                            camera={{ position: [200, -200, 200], fov: 45 }}
-                            dpr={[1, 2]}
-                            gl={{ preserveDrawingBuffer: true }}
-                        >
-                            <ambientLight intensity={0.9} />
-                            <directionalLight position={[3, 5, 2]} intensity={1} />
-                            {ldrUrl && (
-                                <LdrModel
-                                    url={ldrUrl}
-                                    overrideMainLdrUrl={finalModelUrl}
-                                    onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }}
-                                    onError={() => setLoading(false)}
-                                    customBounds={modelBounds}
-                                    fitTrigger={`${ldrUrl}|${finalModelUrl ?? ''}`}
-                                />
-                            )}
-                            <OrbitControls makeDefault enablePan={false} enableZoom />
-                        </Canvas>
-                    )}
+                        <div className="kidsStep__splitContainer">
+                            {/* Left: Full Model */}
+                            <div className="kidsStep__splitPane left">
+                                <div className="kidsStep__paneLabel">완성 모습</div>
+                                <Canvas
+                                    camera={{ position: [200, -200, 200], fov: 45 }}
+                                    dpr={[1, 2]}
+                                    gl={{ preserveDrawingBuffer: true }}
+                                >
+                                    <ambientLight intensity={0.9} />
+                                    <directionalLight position={[3, 5, 2]} intensity={1} />
+                                    {ldrUrl && (
+                                        <LdrModel
+                                            url={ldrUrl}
+                                            // No override -> Full model
+                                            onLoaded={(g) => { setLoading(false); }}
+                                            onError={() => setLoading(false)}
+                                            customBounds={modelBounds}
+                                            fitTrigger={`${ldrUrl}|left`}
+                                        />
+                                    )}
+                                    <OrbitControls makeDefault enablePan={false} enableZoom />
+                                </Canvas>
+                            </div>
 
-                    {activeTab === 'LDR' && (
-                        <>
-                            {isPreviewMode ? (
-                                <div className="kidsStep__previewOverlay">
-                                    <button onClick={() => { setIsPreviewMode(false); setStepIdx(0); }} className="kidsStep__startNavBtn">
-                                        {t.kids.steps.startAssembly}
-                                    </button>
-                                </div>
-                            ) : (
+                            {/* Right: Step Model */}
+                            <div className="kidsStep__splitPane right">
+                                <div className="kidsStep__paneLabel">조립 순서</div>
+                                <Canvas
+                                    camera={{ position: [200, -200, 200], fov: 45 }}
+                                    dpr={[1, 2]}
+                                    gl={{ preserveDrawingBuffer: true }}
+                                >
+                                    <ambientLight intensity={0.9} />
+                                    <directionalLight position={[3, 5, 2]} intensity={1} />
+                                    {ldrUrl && (
+                                        <LdrModel
+                                            url={ldrUrl}
+                                            overrideMainLdrUrl={currentOverride}
+                                            onLoaded={(g) => { modelGroupRef.current = g; }}
+                                            onError={() => setLoading(false)}
+                                            customBounds={modelBounds}
+                                            fitTrigger={`${ldrUrl}|${currentOverride}|right`}
+                                        />
+                                    )}
+                                    <OrbitControls makeDefault enablePan={false} enableZoom />
+                                </Canvas>
+
+                                {stepBricks[stepIdx] && stepBricks[stepIdx].length > 0 && (
+                                    <div className="kidsStep__brickList">
+                                        <div className="kidsStep__brickListHeader">
+                                            {t.kids.steps?.bricksNeeded || 'Bricks Needed'}
+                                        </div>
+                                        {stepBricks[stepIdx].map((b, i) => (
+                                            <div key={i} className="kidsStep__brickItem">
+                                                <span className="kidsStep__brickName">{b.partName}</span>
+                                                <span className="kidsStep__brickCount">x{b.count}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+
                                 <div className="kidsStep__navOverlay">
                                     <button className="kidsStep__navBtn" disabled={!canPrev} onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}>
                                         ← {t.kids.steps.prev}
@@ -631,8 +669,8 @@ function KidsStepPageContent() {
                                         {t.kids.steps.next} →
                                     </button>
                                 </div>
-                            )}
-                        </>
+                            </div>
+                        </div>
                     )}
 
                     {/* GLB Viewer */}

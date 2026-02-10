@@ -251,6 +251,7 @@ export const ko = {
             back: "뒤로",
             noUrl: "스텝을 볼 URL이 없습니다.",
             title: "STEP {cur} / {total}",
+            bricksNeeded: "필요한 브릭",
             preview: "브릭 정보",
             loading: "스텝 로딩 중...",
             prev: "이전",

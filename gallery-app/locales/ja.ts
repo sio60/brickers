@@ -252,6 +252,7 @@ export const ja = {
             back: "戻る",
             noUrl: "ステップを表示するURLがありません。",
             title: "ステップ {cur} / {total}",
+            bricksNeeded: "必要なブリック",
             preview: "ブリックプレビュー",
             loading: "ステップ読み込み中...",
             prev: "前へ",
