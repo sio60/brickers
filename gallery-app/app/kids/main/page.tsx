@@ -404,13 +404,13 @@ function KidsPageContent() {
                 const newBlobUrl = base64ToBlobUrl(result.ldrData);
                 setLdrUrl(newBlobUrl);
                 setIsColorModalOpen(false);
-                alert(`${result.themeApplied} 테마 적용 완료! (${result.changedBricks}개 브릭 변경)`);
+                alert(`${result.themeApplied} ${t.kids?.steps?.colorThemeApplied || "테마 적용 완료!"} (${result.changedBricks}개 브릭 변경)`);
             } else {
-                alert(result.message || "색상 변경 실패");
+                alert(result.message || (t.kids?.steps?.colorThemeFailed || "색상 변경 실패"));
             }
         } catch (e) {
             console.error("색상 변경 실패:", e);
-            alert(e instanceof Error ? e.message : "색상 변경 중 오류가 발생했습니다.");
+            alert(e instanceof Error ? e.message : (t.kids?.steps?.colorThemeError || "색상 변경 중 오류가 발생했습니다."));
         } finally {
             setIsApplyingColor(false);
         }
@@ -426,7 +426,7 @@ function KidsPageContent() {
 
         try {
             setIsPdfGenerating(true);
-            setDebugLog("📸 3D 모델 캡처 및 PDF 생성 중...");
+            setDebugLog(t.kids?.steps?.pdfGenerating || "📸 3D 모델 캡처 및 PDF 생성 중...");
 
             // 1. 캡처 실행
             const stepImages = await previewRef.current.captureAllSteps();
@@ -437,11 +437,11 @@ function KidsPageContent() {
 
             // 3. 다운로드
             window.open(pdfUrl, "_blank");
-            setDebugLog("✅ PDF 다운로드 완료");
+            setDebugLog(t.kids?.steps?.pdfDownloadComplete || "✅ PDF 다운로드 완료");
         } catch (e) {
             console.error("PDF Download Error:", e);
-            alert("PDF 생성 중 오류가 발생했습니다.");
-            setDebugLog(`❌ PDF 오류: ${e instanceof Error ? e.message : String(e)}`);
+            alert(t.kids?.steps?.colorThemeError || "PDF 생성 중 오류가 발생했습니다.");
+            setDebugLog(`${t.kids?.steps?.pdfError || "❌ PDF 오류"}: ${e instanceof Error ? e.message : String(e)}`);
         } finally {
             setIsPdfGenerating(false);
         }
@@ -538,7 +538,7 @@ function KidsPageContent() {
 
                             <div className="colorModal__themes">
                                 {colorThemes.length === 0 ? (
-                                    <div className="colorModal__loading">테마 로딩 중...</div>
+                                    <div className="colorModal__loading">{t.common?.loading || "테마 로딩 중..."}</div>
                                 ) : (
                                     colorThemes.map((theme) => (
                                         <button
@@ -558,14 +558,14 @@ function KidsPageContent() {
                                     className="colorModal__btn colorModal__btn--cancel"
                                     onClick={() => setIsColorModalOpen(false)}
                                 >
-                                    취소
+                                    {t.common?.cancel || "취소"}
                                 </button>
                                 <button
                                     className="colorModal__btn colorModal__btn--confirm"
                                     onClick={handleApplyColor}
                                     disabled={!selectedTheme || isApplyingColor}
                                 >
-                                    {isApplyingColor ? "적용 중..." : "적용하기"}
+                                    {isApplyingColor ? (t.common?.loading || "적용 중...") : (t.common?.confirm || "적용하기")}
                                 </button>
                             </div>
                         </div>

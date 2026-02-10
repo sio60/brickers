@@ -177,6 +177,7 @@ export const ko = {
         labelType: "유형",
         labelReason: "사유",
         dataId: "데이터 ID",
+        noData: "신고 내역이 없습니다.",
     },
     kids: {
         title: "난이도를 선택해 보세요",
@@ -255,7 +256,24 @@ export const ko = {
             tabOriginal: "원본 이미지",
             originalModel: "AI 3D 모델",
             previewTitle: "브릭 미리보기",
-            startAssembly: "조립 시작하기"
+            startAssembly: "조립 시작하기",
+            pdfConfirm: "PDF 설명을 생성하시겠습니까?\n모델 크기에 따라 시간이 걸릴 수 있습니다.",
+            pdfComplete: "PDF 생성이 완료되었습니다.",
+            pdfGenerating: "📸 3D 모델 캡처 및 PDF 생성 중...",
+            pdfDownloadComplete: "✅ PDF 다운로드 완료",
+            pdfError: "❌ PDF 오류",
+            colorThemeTitle: "색상 테마 선택",
+            colorThemeApplied: "테마 적용 완료!",
+            colorThemeFailed: "색상 변경 실패",
+            colorThemeError: "색상 변경 중 오류가 발생했습니다."
+        },
+        viewer: {
+            noUrl: "모델 URL이 없습니다",
+            back: "돌아가기",
+            loading: "3D 모델 로딩 중...",
+            completeModel: "완성된 모델",
+            instructions: "드래그하여 회전 • 스크롤하여 확대/축소",
+            viewSteps: "스텝 보기"
         }
     },
     header: {

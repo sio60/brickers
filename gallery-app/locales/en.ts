@@ -252,7 +252,24 @@ export const en = {
             tabOriginal: "Original Image",
             originalModel: "AI 3D Model",
             previewTitle: "Brick Preview",
-            startAssembly: "Start Assembly"
+            startAssembly: "Start Assembly",
+            pdfConfirm: "Would you like to generate a PDF guide?\nThis may take some time depending on the model size.",
+            pdfComplete: "PDF generation complete.",
+            pdfGenerating: "📸 Capturing 3D model and generating PDF...",
+            pdfDownloadComplete: "✅ PDF download complete",
+            pdfError: "❌ PDF error",
+            colorThemeTitle: "Select Color Theme",
+            colorThemeApplied: "Theme applied successfully!",
+            colorThemeFailed: "Failed to change color",
+            colorThemeError: "An error occurred while changing colors."
+        },
+        viewer: {
+            noUrl: "Model URL not found",
+            back: "Go Back",
+            loading: "Loading 3D model...",
+            completeModel: "Completed Model",
+            instructions: "Drag to rotate • Scroll to zoom",
+            viewSteps: "View Steps"
         }
     },
     header: {

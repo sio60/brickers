@@ -566,13 +566,13 @@ function KidsStepPageContent() {
                     // S3 URL인 경우 새 탭에서 열기
                     window.open(result.pdfUrl, '_blank');
                 }
-                alert("PDF 생성이 완료되었습니다.");
+                alert(t.kids?.steps?.pdfComplete || "PDF 생성이 완료되었습니다.");
             } else {
-                throw new Error(result.message || "PDF 생성 실패");
+                throw new Error(result.message || (t.kids?.steps?.pdfError || "PDF 생성 실패"));
             }
         } catch (e) {
             console.error("PDF generation failed", e);
-            alert(`PDF 생성 중 오류가 발생했습니다: ${e instanceof Error ? e.message : '알 수 없는 오류'}`);
+            alert(`${t.kids?.steps?.pdfError || "PDF 생성 중 오류가 발생했습니다"}: ${e instanceof Error ? e.message : '알 수 없는 오류'}`);
         }
     };
 
@@ -621,13 +621,13 @@ function KidsStepPageContent() {
                 setIsPreviewMode(false); // 미리보기 모드 해제하여 변경된 결과 바로 확인
 
                 setIsColorModalOpen(false);
-                alert(`${result.themeApplied} 테마 적용 완료! (${result.changedBricks}개 브릭 변경)`);
+                alert(`${result.themeApplied} ${t.kids?.steps?.colorThemeApplied || "테마 적용 완료!"} (${result.changedBricks}개 브릭 변경)`);
             } else {
-                alert(result.message || "색상 변경 실패");
+                alert(result.message || (t.kids?.steps?.colorThemeFailed || "색상 변경 실패"));
             }
         } catch (e) {
             console.error("색상 변경 실패:", e);
-            alert(e instanceof Error ? e.message : "색상 변경 중 오류가 발생했습니다.");
+            alert(e instanceof Error ? e.message : (t.kids?.steps?.colorThemeError || "색상 변경 중 오류가 발생했습니다."));
         } finally {
             setIsApplyingColor(false);
         }
@@ -1117,7 +1117,14 @@ function KidsStepPageContent() {
                                     </Center>
                                     <FitOnceOnLoad trigger={glbUrl ?? ''} />
                                 </Bounds>
-                                <OrbitControls makeDefault enablePan={false} enableZoom />
+                                <OrbitControls
+                                    makeDefault
+                                    enablePan={false}
+                                    enableZoom
+                                    autoRotate
+                                    autoRotateSpeed={2.5}
+                                    enableDamping
+                                />
                             </Canvas>
                             {!glbUrl && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#888", fontWeight: 700 }}>3D Model not available</div>}
                         </div>
