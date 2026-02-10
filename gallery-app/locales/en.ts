@@ -214,8 +214,17 @@ export const en = {
             uploadProSub: "Click to upgrade",
             uploadProHint: "Available after upgrade",
             confirm: "Generate",
-            previewTitle: "3D Preview",
-            previewSub: "Rotate the model to check"
+            previewSub: "Rotate the model to check",
+            drawTitle: "Draw Directly",
+            drawSub: "Draw your own model here",
+            drawTool: {
+                brush: "Brush",
+                eraser: "Eraser",
+                clear: "Clear",
+                done: "Done!",
+                color: "Color",
+                size: "Size"
+            }
         },
         steps: {
             back: "Back",

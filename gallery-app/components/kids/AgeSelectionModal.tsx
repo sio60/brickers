@@ -10,7 +10,7 @@ type AgeGroup = "4-5" | "6-7" | "8-10" | "PRO" | null;
 interface AgeSelectionModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSelect: (url: string | null, file: File | null, age: string) => void;
+    onSelect: (url: string | null, file: File | null, age: string, prompt?: string) => void;
 }
 
 export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSelectionModalProps) {
@@ -53,9 +53,9 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
         }
     };
 
-    const handlePickModel = (url: string | null, file: File | null) => {
+    const handlePickModel = (url: string | null, file: File | null, prompt?: string) => {
         setOpenModelModal(false);
-        onSelect(url, file, selectedAge || "4-5");
+        onSelect(url, file, modalAge || "4-5", prompt);
         onClose();
     };
 
