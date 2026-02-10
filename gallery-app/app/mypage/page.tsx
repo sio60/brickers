@@ -40,7 +40,7 @@ type MenuItem = "profile" | "membership" | "jobs" | "inquiries" | "reports" | "s
 export default function MyPage() {
     const router = useRouter();
     const { language, setLanguage, t } = useLanguage();
-    const { isAuthenticated, isLoading, authFetch } = useAuth(); // Removed 'user' as it's not used directly (we use profile state)
+    const { isAuthenticated, isLoading, authFetch, setUser } = useAuth(); // Added setUser
 
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<MyOverview | null>(null);
@@ -188,6 +188,7 @@ export default function MyPage() {
                 bio: editBio,
             });
             setProfile(updated);
+            setUser(updated); // Sync with global AuthContext
             setIsEditing(false);
             alert(t.profile.alertSaved);
         } catch {

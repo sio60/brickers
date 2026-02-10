@@ -42,6 +42,8 @@ public interface GalleryPostRepository extends MongoRepository<GalleryPostEntity
   /** ✅ Job ID로 갤러리 포스트 존재 여부 확인 (중복 등록 방지) */
   boolean existsByJobIdAndDeletedFalse(String jobId);
 
+  List<GalleryPostEntity> findByAuthorId(String authorId);
+
   /** ✅ 공개된 모든 게시글의 태그 중복 제거후 목록 추출 */
   @Aggregation(pipeline = {
       "{ '$match': { 'deleted': false, 'visibility': 'PUBLIC' } }",

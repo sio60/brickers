@@ -189,7 +189,7 @@ function LdrModel({
     if (!group) return null;
 
     return (
-        <Bounds fit clip observe margin={0.8}>
+        <Bounds fit clip observe margin={1.2}>
             <Center>
                 <primitive object={group} />
             </Center>
@@ -426,11 +426,12 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
                         </div>
                     )}
                 </>
-            )}
+            )
+            }
 
             <Canvas
                 ref={canvasRef}
-                camera={{ position: [200, 200, 200], fov: 45 }}
+                camera={{ position: [0, 80, 500], fov: 45 }}
                 dpr={[1, 2]}
                 gl={{ alpha: true, preserveDrawingBuffer: true }} // 캡처를 위해 preserveDrawingBuffer 필수
             >
@@ -455,9 +456,18 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
                     />
                 </group>
 
-                <OrbitControls ref={controlsRef} makeDefault enablePan={false} enableZoom minDistance={10} maxDistance={1000} autoRotate={false} />
+                <OrbitControls
+                    ref={controlsRef}
+                    makeDefault
+                    enablePan={false}
+                    enableZoom
+                    minDistance={10}
+                    maxDistance={1000}
+                    autoRotate={true}
+                    autoRotateSpeed={2}
+                />
             </Canvas>
-        </div>
+        </div >
     );
 });
 
