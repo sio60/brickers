@@ -427,6 +427,6 @@ export default function BrickStackMiniGame({ percent, message }: BrickStackProps
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }

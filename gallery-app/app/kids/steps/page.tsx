@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import * as THREE from "three";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import { Bounds, OrbitControls, Center, Gltf, Environment, useBounds } from "@react-three/drei";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
@@ -13,12 +13,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { registerToGallery } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
-// PDF generation moved to backend
 import BackgroundBricks from "@/components/BackgroundBricks";
 import './KidsStepPage.css';
 
 // SSR 제외
-
 const CDN_BASE = "https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/";
 
 function disposeObject3D(root: THREE.Object3D) {
@@ -77,7 +75,6 @@ function LdrModel({
     customBounds?: THREE.Box3 | null;
     fitTrigger?: string;
 }) {
-    // ... (loader useMemo remains same) ...
     const loader = useMemo(() => {
         THREE.Cache.enabled = true;
         const manager = new THREE.LoadingManager();
@@ -88,8 +85,6 @@ function LdrModel({
 
         manager.setURLModifier((u) => {
             let fixed = u.replace(/\\/g, "/");
-
-            // Normalize accidental double segments
             fixed = fixed.replace("/ldraw/p/p/", "/ldraw/p/");
             fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
             if (overrideMainLdrUrl) {
@@ -104,7 +99,6 @@ function LdrModel({
                 try { fixed = new URL(fixed, url).href; } catch { }
             }
 
-            // LDraw 라이브러리 URL인 경우 경로 수정
             const lowerFixed = fixed.toLowerCase();
             if (lowerFixed.includes("ldraw-parts-library") && lowerFixed.endsWith(".dat") && !lowerFixed.includes("ldconfig.ldr")) {
                 const filename = fixed.split("/").pop() || "";
@@ -113,15 +107,10 @@ function LdrModel({
                     fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
                 }
 
-
-                // Primitive 패턴: n-n*.dat (예: 4-4edge, 1-4cyli), stud*.dat, rect*.dat, box*.dat 등
                 const isPrimitive = /^\d+-\d+/.test(filename) ||
                     /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud|empty)/.test(filename);
-
-                // Subpart 패턴: 파트번호 + s + 숫자.dat (예: 3003s02.dat)
                 const isSubpart = /^\d+s\d+\.dat$/i.test(filename);
 
-                // 1. 잘못된 경로 조합 수정
                 fixed = fixed.replace("/ldraw/models/p/", "/ldraw/p/");
                 fixed = fixed.replace("/ldraw/models/parts/", "/ldraw/parts/");
                 fixed = fixed.replace("/ldraw/p/parts/s/", "/ldraw/parts/s/");
@@ -129,17 +118,13 @@ function LdrModel({
                 fixed = fixed.replace("/ldraw/p/s/", "/ldraw/parts/s/");
                 fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
 
-                // 2. primitive가 /parts/에 잘못 들어간 경우 /p/로 수정
                 if (isPrimitive && fixed.includes("/ldraw/parts/") && !fixed.includes("/parts/s/")) {
                     fixed = fixed.replace("/ldraw/parts/", "/ldraw/p/");
                 }
-
-                // 3. subpart가 /p/에 잘못 들어간 경우 /parts/s/로 수정
                 if (isSubpart && fixed.includes("/ldraw/p/") && !fixed.includes("/p/48/") && !fixed.includes("/p/8/")) {
                     fixed = fixed.replace("/ldraw/p/", "/ldraw/parts/s/");
                 }
 
-                // 4. 경로가 없는 경우 적절한 경로 추가
                 if (!fixed.includes("/parts/") && !fixed.includes("/p/")) {
                     if (isSubpart) fixed = fixed.replace("/ldraw/", "/ldraw/parts/s/");
                     else if (isPrimitive) fixed = fixed.replace("/ldraw/", "/ldraw/p/");
@@ -164,7 +149,6 @@ function LdrModel({
     useEffect(() => {
         let cancelled = false;
         let prev: THREE.Group | null = null;
-
         (async () => {
             setGroup(null);
             await loader.preloadMaterials(ldconfigUrl);
@@ -178,7 +162,6 @@ function LdrModel({
             console.error("[LDraw] load failed:", e);
             onError?.(e);
         });
-
         return () => {
             cancelled = true;
             if (prev) disposeObject3D(prev);
@@ -187,19 +170,12 @@ function LdrModel({
 
     if (!group) return null;
 
-    // Custom Bounds 처리 (Invisible Box)
     let boundMesh = null;
     if (customBounds) {
         const size = new THREE.Vector3();
         customBounds.getSize(size);
         const center = new THREE.Vector3();
         customBounds.getCenter(center);
-
-        // LDraw 좌표계 보정 (rotation.x = Math.PI 적용됨)
-        // Group이 pi 회전하므로, box도 맞춰야 함. 하지만 Center 내부에 있으므로 Center가 알아서 처리?
-        // 아니, customBounds는 raw LDR 좌표 기준일 것.
-        // Group이 180도 돌면 Y가 반전됨.
-
         boundMesh = (
             <mesh position={[center.x, -center.y, center.z]}>
                 <boxGeometry args={[size.x, size.y, size.z]} />
@@ -221,62 +197,14 @@ function LdrModel({
 
 function FitOnceOnLoad({ trigger }: { trigger: string }) {
     const bounds = useBounds();
-
     useEffect(() => {
-        // Fit once when model url changes
         bounds?.refresh().fit();
     }, [bounds, trigger]);
-
     return null;
 }
 
-// PDF Capture Rig
-const PDF_CAM_POSITIONS = [
-    [200, -200, 200],   // View 1: Main (Right-Top-Front)
-    [-200, -200, 200],  // View 2: Left-Top-Front
-    [0, -300, -200]     // View 3: Back-Top-Center
-];
-
-function PDFRig({
-    active,
-    viewIndex,
-    onReadyToCapture
-}: {
-    active: boolean;
-    viewIndex: number;
-    onReadyToCapture: () => void;
-}) {
-    const { camera, gl, scene } = useThree();
-
-    // Safety check just in case SSR issues (though this component is client-only)
-    if (!camera) return null;
-
-    useEffect(() => {
-        if (!active) return;
-
-        const pos = PDF_CAM_POSITIONS[viewIndex];
-        if (pos) {
-            camera.position.set(pos[0], pos[1], pos[2]);
-            camera.lookAt(0, 0, 0);
-            camera.updateMatrixWorld();
-
-            // Wait for render
-            const timer = setTimeout(() => {
-                gl.render(scene, camera);
-                onReadyToCapture();
-            }, 300); // 150ms -> 300ms for safety
-            return () => clearTimeout(timer);
-        }
-    }, [active, viewIndex, camera, gl, scene, onReadyToCapture]);
-
-    return null;
-}
-
-// LDR 파싱 및 정렬 유틸
 function parseAndProcessSteps(ldrText: string) {
     const lines = ldrText.replace(/\r\n/g, "\n").split("\n");
-
-    // 1. 전체 Bounds 계산 및 Step 분리
     let minX = Infinity, minY = Infinity, minZ = Infinity;
     let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
 
@@ -285,10 +213,8 @@ function parseAndProcessSteps(ldrText: string) {
     let curYSum = 0;
     let curCount = 0;
 
-    let hasStep = false;
-
     const flush = () => {
-        const avgY = curCount > 0 ? curYSum / curCount : -Infinity; // 부품 없으면 맨 위로?
+        const avgY = curCount > 0 ? curYSum / curCount : -Infinity;
         segments.push({ lines: curLines, avgY });
         curLines = [];
         curYSum = 0;
@@ -297,55 +223,36 @@ function parseAndProcessSteps(ldrText: string) {
 
     for (const raw of lines) {
         const line = raw.trim();
-
-        // Step 구분
         if (/^0\s+(STEP|ROTSTEP)\b/i.test(line)) {
-            hasStep = true;
             flush();
             continue;
         }
-
-        // 부품 라인 파싱 (Type 1)
-        // 1 <colour> x y z a b c d e f g h i <file>
         if (line.startsWith('1 ')) {
             const parts = line.split(/\s+/);
             if (parts.length >= 15) {
                 const x = parseFloat(parts[2]);
                 const y = parseFloat(parts[3]);
                 const z = parseFloat(parts[4]);
-
                 if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
                     minX = Math.min(minX, x); minY = Math.min(minY, y); minZ = Math.min(minZ, z);
                     maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); maxZ = Math.max(maxZ, z);
-
                     curYSum += y;
                     curCount++;
                 }
             }
         }
-
         curLines.push(raw);
     }
     flush();
 
-    // 2. 정렬 (LDraw 좌표계: Y가 아래쪽. 즉 Y가 클수록 바닥. 바닥부터 쌓으려면 Y 내림차순 정렬)
-    // 단, 첫 번째 세그먼트(헤더 등)는 무조건 맨 앞에? 보통 헤더에는 부품이 없음.
-    // 하지만 segments[0]에 부품이 있을 수도 있음.
-    // 전략: 부품이 있는 세그먼트들만 정렬한다?
-    // 보통 헤더(메타데이터)는 0 STEP 이전에 나옴 (segments[0]).
-    // segments[0]는 고정하고 나머지만 정렬?
-
     let header = segments[0];
     let body = segments.slice(1);
-
-    // 헤더에 실제 브릭(1 line)이 섞여 있으면 헤더를 본문으로 넘김
     const headerHasGeometry = header.lines.some((line) => line.trim().startsWith("1 "));
     if (headerHasGeometry) {
         body = segments;
         header = { lines: [], avgY: -Infinity };
     }
 
-    // Y 내림차순 (큰 값 = 바닥 = 먼저 조립)
     body.sort((a, b) => {
         if (a.avgY === -Infinity && b.avgY === -Infinity) return 0;
         if (a.avgY === -Infinity) return 1;
@@ -353,8 +260,7 @@ function parseAndProcessSteps(ldrText: string) {
         return b.avgY - a.avgY;
     });
 
-    // Merge steps by layer (group nearby Y into one step)
-    const LAYER_EPS = 8; // LDraw units
+    const LAYER_EPS = 8;
     const merged: { lines: string[]; avgY: number }[] = [];
     let curLinesMerge: string[] = [];
     let curY = Number.NEGATIVE_INFINITY;
@@ -377,17 +283,13 @@ function parseAndProcessSteps(ldrText: string) {
     if (curLinesMerge.length) merged.push({ lines: curLinesMerge, avgY: curY });
 
     const sortedSegments = [header, ...merged];
-
-    // 3. 누적 텍스트 생성
     const out: string[] = [];
     let acc: string[] = [];
-
     for (const seg of sortedSegments) {
         acc = acc.concat(seg.lines);
         out.push(acc.join("\n"));
     }
 
-    // Bounds 생성
     let bounds = null;
     if (minX !== Infinity) {
         bounds = new THREE.Box3(
@@ -395,7 +297,6 @@ function parseAndProcessSteps(ldrText: string) {
             new THREE.Vector3(maxX, maxY, maxZ)
         );
     }
-
     return { stepTexts: out, bounds };
 }
 
@@ -407,9 +308,10 @@ function KidsStepPageContent() {
 
     const jobId = searchParams.get("jobId") || "";
     const urlParam = searchParams.get("url") || "";
+    const serverPdfUrl = searchParams.get("pdfUrl") || "";
 
     const [ldrUrl, setLdrUrl] = useState<string>(urlParam);
-    const [originalLdrUrl] = useState<string>(urlParam); // 원본 URL 보존
+    const [originalLdrUrl] = useState<string>(urlParam);
     const [loading, setLoading] = useState(true);
     const [stepIdx, setStepIdx] = useState(0);
     const [stepBlobUrls, setStepBlobUrls] = useState<string[]>([]);
@@ -421,234 +323,70 @@ function KidsStepPageContent() {
     const [galleryTitle, setGalleryTitle] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [jobThumbnailUrl, setJobThumbnailUrl] = useState<string | null>(null);
-    const [isRegisteredToGallery, setIsRegisteredToGallery] = useState(false);  // ✅ 갤러리 등록 완료 상태
-    const [suggestedTags, setSuggestedTags] = useState<string[]>([]);  // ✅ Gemini 추천 태그
-    const [brickCount, setBrickCount] = useState<number>(0);           // ✅ 추가: 모델 브릭 수
-    const [isProMode, setIsProMode] = useState(false);                 // ✅ 추가: PRO 모드 여부
+    const [isRegisteredToGallery, setIsRegisteredToGallery] = useState(false);
+    const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
+    const [brickCount, setBrickCount] = useState<number>(0);
+    const [isProMode, setIsProMode] = useState(false);
 
     const [isPreviewMode, setIsPreviewMode] = useState(true);
-    const [isDownloadOpen, setIsDownloadOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<'LDR' | 'GLB'>('LDR');
+    const [glbUrl, setGlbUrl] = useState<string | null>(null);
 
     // Color Variant State
     const [isColorModalOpen, setIsColorModalOpen] = useState(false);
-    const [colorThemes, setColorThemes] = useState<any[]>([]);
+    const [colorThemes, setColorThemes] = useState<ThemeInfo[]>([]);
     const [selectedTheme, setSelectedTheme] = useState<string>("");
     const [isApplyingColor, setIsApplyingColor] = useState(false);
     const [colorChangedLdrBase64, setColorChangedLdrBase64] = useState<string | null>(null);
-
-    // PDF Generation State
-    const [isPdfGenerating, setIsPdfGenerating] = useState(false);
-    const [pdfStepIdx, setPdfStepIdx] = useState(0);
-    const [pdfViewIdx, setPdfViewIdx] = useState(0); // 0, 1, 2
-    const [pdfImages, setPdfImages] = useState<string[]>([]);
-    const [pdfModelLoaded, setPdfModelLoaded] = useState(false);
-    // BOM parsing moved to backend
-
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-
-    const handleGeneratePDF = async (isAuto = false) => {
-        if (!ldrUrl) return;
-
-        if (!isAuto) {
-            const confirmMsg = t.kids?.steps?.pdfConfirm || "PDF 설명을 생성하시겠습니까?\n모델 크기에 따라 시간이 걸릴 수 있습니다.";
-            if (!confirm(confirmMsg)) return;
-        }
-
-        setIsPdfGenerating(true);
-        setPdfStepIdx(0);
-        setPdfViewIdx(0);
-        setPdfImages([]);
-        setPdfModelLoaded(false);
-
-        // BOM parsing is handled by backend API
-    };
-
-    // PDF Capture Loop logic
-    const handlePdfCapture = () => {
-        // Called by PDFRig when camera is ready
-        // We capture the canvas
-        // Instead of querySelector, we should find the canvas within the specific container or use a specific ID if possible.
-        // But since we are inside a component, querySelector might pick up background canvas.
-        // Let's rely on the fact that PDFRig is inside the MAIN canvas.
-        // We can pass the canvas reference from PDFRig? Or just try to pick the last canvas?
-
-        // Better: Use a specific class for the main canvas
-        const canvas = document.querySelector('.kids-main-canvas canvas') as HTMLCanvasElement;
-
-        if (canvas) {
-            try {
-                const data = canvas.toDataURL("image/png");
-                setPdfImages(prev => [...prev, data]);
-            } catch (e) {
-                console.error("Canvas capture failed", e);
-            }
-
-            // Next View or Next Step
-            if (pdfViewIdx < 2) {
-                setPdfViewIdx(prev => prev + 1);
-            } else {
-                // Done with this step, move to next
-                const total = stepBlobUrls.length;
-                if (pdfStepIdx < total - 1) {
-                    setPdfViewIdx(0);
-                    setPdfStepIdx(prev => prev + 1);
-                    setPdfModelLoaded(false); // Wait for new model load
-                } else {
-                    // All steps done!
-                    // Wait a bit to ensure last state update processed
-                    setTimeout(() => {
-                        const currentData = canvas.toDataURL("image/png"); // Capture last again to be sure?
-                        // Check if we missed the last one in the logic above?
-                        // actually handlePdfCapture adds to state.
-                        // The logic "finishPdfGeneration([...pdfImages, data])" in previous code was correct.
-                        // But we just updated state. We should pass the data directly to finish logic.
-                        finishPdfGeneration([...pdfImages, currentData]);
-                    }, 100);
-                }
-            }
-        } else {
-            console.error("Canvas parsing failed: Canvas not found");
-        }
-    };
-
-    const finishPdfGeneration = async (finalImages: string[]) => {
-        setIsPdfGenerating(false);
-
-        try {
-            // 이미지를 step별로 그룹화 (3개 뷰씩)
-            const VIEWS_PER_STEP = 3;
-            const stepImageGroups: { stepIndex: number; images: string[] }[] = [];
-
-            for (let i = 0; i < finalImages.length; i += VIEWS_PER_STEP) {
-                const stepImages = finalImages.slice(i, i + VIEWS_PER_STEP);
-                stepImageGroups.push({
-                    stepIndex: Math.floor(i / VIEWS_PER_STEP) + 1,
-                    images: stepImages
-                });
-            }
-
-            // 커버 이미지 (마지막 Step의 첫 번째 뷰)
-            const coverImage = stepImageGroups.length > 0
-                ? stepImageGroups[stepImageGroups.length - 1].images[0]
-                : undefined;
-
-            // 백엔드 API 호출
-            const API_BASE = process.env.NEXT_PUBLIC_AI_API_URL || '';
-            const jobId = searchParams.get("jobId");
-            const response = await fetch(`${API_BASE}/api/kids/pdf-with-bom`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    modelName: "Brickers Model",
-                    ldrUrl: originalLdrUrl || ldrUrl,
-                    jobId: jobId,
-                    steps: stepImageGroups,
-                    coverImage: coverImage
-                })
-            });
-
-            if (!response.ok) {
-                const error = await response.text();
-                throw new Error(`PDF 생성 실패: ${error}`);
-            }
-
-            const result = await response.json();
-
-            if (result.ok && result.pdfUrl) {
-                // PDF 다운로드
-                if (result.pdfUrl.startsWith('data:')) {
-                    // Base64 데이터인 경우 직접 다운로드
-                    const link = document.createElement('a');
-                    link.href = result.pdfUrl;
-                    link.download = 'brickers_guide.pdf';
-                    link.click();
-                } else {
-                    // S3 URL인 경우 새 탭에서 열기
-                    window.open(result.pdfUrl, '_blank');
-                }
-                alert(t.kids?.steps?.pdfComplete || "PDF 생성이 완료되었습니다.");
-            } else {
-                throw new Error(result.message || (t.kids?.steps?.pdfError || "PDF 생성 실패"));
-            }
-        } catch (e) {
-            console.error("PDF generation failed", e);
-            alert(`${t.kids?.steps?.pdfError || "PDF 생성 중 오류가 발생했습니다"}: ${e instanceof Error ? e.message : '알 수 없는 오류'}`);
-        }
-    };
 
     const revokeAll = (arr: string[]) => {
         arr.forEach((u) => { try { URL.revokeObjectURL(u); } catch { } });
     };
 
-    const [activeTab, setActiveTab] = useState<'LDR' | 'GLB'>('LDR');
-    const [glbUrl, setGlbUrl] = useState<string | null>(null);
-
-    // 색상 테마 목록 로드
+    // 테마 로드
     useEffect(() => {
         if (isColorModalOpen && colorThemes.length === 0) {
-            getColorThemes()
-                .then(setColorThemes)
-                .catch((e) => console.error("테마 로드 실패:", e));
+            getColorThemes().then(setColorThemes).catch(e => console.error(e));
         }
     }, [isColorModalOpen, colorThemes.length]);
 
-    // 색상 변경 적용
     const handleApplyColor = async () => {
         if (!selectedTheme || !ldrUrl) return;
-
         setIsApplyingColor(true);
         try {
             const result = await applyColorVariant(ldrUrl, selectedTheme, authFetch);
-
             if (result.ok && result.ldrData) {
-                // 새 blob URL 생성 및 저장
-                const newBlobUrl = base64ToBlobUrl(result.ldrData);
-                // setLdrUrl(newBlobUrl); // 원본 URL은 유지하고 override를 통해 보여줄수도 있지만, 여기선 ldrUrl을 업데이트하는게 나을지 판단 필요
-                // 일단 base64만 저장해둠 (다운로드용)
                 setColorChangedLdrBase64(result.ldrData);
-
-                // step blob들 재생성
                 const text = atob(result.ldrData);
-                const stepTexts = buildCumulativeStepTexts(text);
-                const blobs = stepTexts.map((t) =>
-                    URL.createObjectURL(new Blob([t], { type: "text/plain" }))
-                );
-
+                const { stepTexts, bounds } = parseAndProcessSteps(text);
+                const blobs = stepTexts.map(t => URL.createObjectURL(new Blob([t], { type: "text/plain" })));
                 revokeAll(blobRef.current);
                 blobRef.current = blobs;
                 setStepBlobUrls(blobs);
-                setStepIdx(stepTexts.length - 1); // 마지막 단계로 이동
-                setIsPreviewMode(false); // 미리보기 모드 해제하여 변경된 결과 바로 확인
-
+                setStepIdx(stepTexts.length - 1);
+                setIsPreviewMode(false);
                 setIsColorModalOpen(false);
-                alert(`${result.themeApplied} ${t.kids?.steps?.colorThemeApplied || "테마 적용 완료!"} (${result.changedBricks}개 브릭 변경)`);
+                alert(`${result.themeApplied} 테마 적용 완료!`);
             } else {
-                alert(result.message || (t.kids?.steps?.colorThemeFailed || "색상 변경 실패"));
+                alert(result.message || "색상 변경 실패");
             }
         } catch (e) {
-            console.error("색상 변경 실패:", e);
-            alert(e instanceof Error ? e.message : (t.kids?.steps?.colorThemeError || "색상 변경 중 오류가 발생했습니다."));
+            console.error(e);
+            alert("색상 변경 중 오류가 발생했습니다.");
         } finally {
             setIsApplyingColor(false);
         }
     };
 
-    // 원본 색상 복원
     const restoreOriginalColor = async () => {
         if (!originalLdrUrl) return;
         setLoading(true);
         try {
             const res = await fetch(originalLdrUrl);
-            if (!res.ok) throw new Error(`LDR fetch failed: ${res.status}`);
             const text = await res.text();
-
-            // 정렬 및 Bounds 계산 적용
             const { stepTexts, bounds } = parseAndProcessSteps(text);
             setModelBounds(bounds);
-
-            const blobs = stepTexts.map((t) =>
-                URL.createObjectURL(new Blob([t], { type: "text/plain" }))
-            );
+            const blobs = stepTexts.map(t => URL.createObjectURL(new Blob([t], { type: "text/plain" })));
             revokeAll(blobRef.current);
             blobRef.current = blobs;
             setStepBlobUrls(blobs);
@@ -656,24 +394,11 @@ function KidsStepPageContent() {
             setSelectedTheme("");
             setStepIdx(stepTexts.length - 1);
         } catch (e) {
-            console.error("원본 복원 실패:", e);
+            console.error(e);
         } finally {
             setLoading(false);
         }
     };
-
-    // 자동 PDF 생성 트리거
-    useEffect(() => {
-        const jobId = searchParams.get("jobId");
-        const shouldAutoPdf = searchParams.get("autoPdf") === "true";
-
-        if (ldrUrl && jobId && shouldAutoPdf && !isPdfGenerating && pdfImages.length === 0) {
-            // 약간의 지연을 주어 모델이 첫 화면에 보인 뒤 시작하도록 함
-            setTimeout(() => {
-                handleGeneratePDF(true);
-            }, 1000);
-        }
-    }, [ldrUrl, searchParams, isPdfGenerating, pdfImages.length]); // ldrUrl 로드 시점 확인
 
     const downloadColorChangedLdr = () => {
         if (colorChangedLdrBase64) {
@@ -681,7 +406,7 @@ function KidsStepPageContent() {
         }
     };
 
-    // Fetch Job Info
+    // Job 정보 로드
     useEffect(() => {
         let alive = true;
         (async () => {
@@ -695,20 +420,16 @@ function KidsStepPageContent() {
                     if (!ldrUrl) setLdrUrl(data.ldrUrl || data.ldr_url || "");
                     setJobThumbnailUrl(data.sourceImageUrl || null);
                     setGlbUrl(data.glbUrl || data.glb_url || null);
-                    // ✅ Gemini 추천 태그 로드
-                    if (data.suggestedTags && Array.isArray(data.suggestedTags)) {
-                        setSuggestedTags(data.suggestedTags);
-                    }
+                    if (data.suggestedTags && Array.isArray(data.suggestedTags)) setSuggestedTags(data.suggestedTags);
                     if (data.parts) setBrickCount(data.parts);
                     if (data.isPro) setIsProMode(true);
                 }
-            } catch (e) {
-                console.error("[KidsStepPage] failed to resolve job info:", e);
-            }
+            } catch (e) { console.error(e); }
         })();
         return () => { alive = false; };
     }, [jobId, ldrUrl]);
 
+    // LDR 파싱 및 Steps 생성
     useEffect(() => {
         let alive = true;
         (async () => {
@@ -718,18 +439,16 @@ function KidsStepPageContent() {
             const res = await fetch(ldrUrl);
             if (!res.ok) throw new Error(`LDR fetch failed: ${res.status}`);
             const text = await res.text();
-
-            // 정렬 및 Bounds 계산 적용
             const { stepTexts, bounds } = parseAndProcessSteps(text);
-            setModelBounds(bounds);
-
-            const blobs = stepTexts.map((t) => URL.createObjectURL(new Blob([t], { type: "text/plain" })));
-            if (!alive) { revokeAll(blobs); return; }
-            revokeAll(blobRef.current);
-            blobRef.current = blobs;
-            setStepBlobUrls(blobs);
-        })().catch((e) => {
-            console.error("[KidsStepPage] build steps failed:", e);
+            if (alive) {
+                setModelBounds(bounds);
+                const blobs = stepTexts.map(t => URL.createObjectURL(new Blob([t], { type: "text/plain" })));
+                revokeAll(blobRef.current);
+                blobRef.current = blobs;
+                setStepBlobUrls(blobs);
+            }
+        })().catch(e => {
+            console.error(e);
             setLoading(false);
         });
         return () => { alive = false; };
@@ -739,48 +458,12 @@ function KidsStepPageContent() {
         return () => revokeAll(blobRef.current);
     }, []);
 
-    const downloadLdr = async () => {
-        if (!ldrUrl) return;
-        try {
-            const res = await fetch(ldrUrl);
-            const text = await res.text();
-            const blob = new Blob([text], { type: "text/plain" });
-            const dUrl = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = dUrl;
-            link.download = "brickers_model.ldr";
-            link.click();
-            URL.revokeObjectURL(dUrl);
-        } catch (err) { console.error(err); }
-    };
-
-    const downloadGlb = async () => {
-        if (!jobId) {
-            if (!modelGroupRef.current) return;
-            const exporter = new GLTFExporter();
-            exporter.parse(modelGroupRef.current, (result) => {
-                const output = result instanceof ArrayBuffer ? result : JSON.stringify(result);
-                const blob = new Blob([output], { type: result instanceof ArrayBuffer ? "application/octet-stream" : "application/json" });
-                const dUrl = URL.createObjectURL(blob);
-                const link = document.createElement("a");
-                link.href = dUrl;
-                link.download = "brickers_model.glb";
-                link.click();
-                URL.revokeObjectURL(dUrl);
-            }, (error) => console.error(error), { binary: true });
-            return;
+    const handleDownloadPdf = () => {
+        if (serverPdfUrl) {
+            window.open(serverPdfUrl, "_blank");
+        } else {
+            alert("PDF 준비중입니다. 잠시만 기다려주세요.");
         }
-        try {
-            const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-            const res = await fetch(`${API_BASE}/api/kids/jobs/${jobId}`, { credentials: 'include' });
-            const data = await res.json();
-            const glbUrl = data.glbUrl || data.glb_url;
-            if (!glbUrl) return alert(t.kids.steps.glbNotFound);
-            const link = document.createElement("a");
-            link.href = glbUrl;
-            link.download = `brickers_${jobId}.glb`;
-            link.click();
-        } catch (e) { console.error(e); }
     };
 
     const handleRegisterGallery = async () => {
@@ -788,324 +471,170 @@ function KidsStepPageContent() {
         setIsSubmitting(true);
         try {
             await registerToGallery({
-                jobId: jobId || undefined,  // ✅ jobId 전달 (중복 등록 방지)
+                jobId: jobId || undefined,
                 title: galleryTitle,
                 content: t.kids.steps.galleryModal.content,
-                tags: suggestedTags.length > 0 ? suggestedTags : ["Kids", "Brick"],  // ✅ Gemini 태그 사용
+                tags: suggestedTags.length > 0 ? suggestedTags : ["Kids", "Brick"],
                 thumbnailUrl: jobThumbnailUrl || undefined,
                 ldrUrl: ldrUrl || undefined,
                 sourceImageUrl: jobThumbnailUrl || undefined,
                 glbUrl: glbUrl || undefined,
-                parts: brickCount || undefined,  // ✅ 최종 브릭 개수 전달
+                parts: brickCount || undefined,
                 visibility: "PUBLIC",
             });
             alert(t.kids.steps.galleryModal.success);
             setIsGalleryModalOpen(false);
             setGalleryTitle("");
-            setIsRegisteredToGallery(true);  // ✅ 등록 완료 상태 업데이트
+            setIsRegisteredToGallery(true);
         } catch (err: any) {
             console.error(err);
-            // 중복 등록 에러 처리
             if (err.message?.includes("이미 갤러리에 등록")) {
                 alert(err.message);
                 setIsRegisteredToGallery(true);
             } else {
                 alert(t.kids.steps.galleryModal.fail);
             }
+        } finally {
+            setIsSubmitting(false);
         }
-        finally { setIsSubmitting(false); }
     };
 
     const total = stepBlobUrls.length || 1;
     const currentOverride = stepBlobUrls[Math.min(stepIdx, stepBlobUrls.length - 1)];
     const canPrev = stepIdx > 0;
     const canNext = stepIdx < total - 1;
-    const modelUrlToUse = isPreviewMode ? undefined : currentOverride;
-
+    const finalModelUrl = isPreviewMode ? undefined : currentOverride;
     const isPreset = searchParams.get("isPreset") === "true";
-
-    // Determine Logic for PDF vs Normal
-    const effectiveStepIdx = isPdfGenerating ? pdfStepIdx : stepIdx;
-    // PDF Loop controls model URL
-    const pdfCurrentOverride = stepBlobUrls[Math.min(pdfStepIdx, stepBlobUrls.length - 1)];
-
-    // Normal Mode URL
-    const normalModelUrl = isPreviewMode ? undefined : currentOverride;
-
-    // Final URL to pass
-    const finalModelUrl = isPdfGenerating ? pdfCurrentOverride : normalModelUrl;
 
     return (
         <div style={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
-            {/* 3D Background Bricks */}
             <BackgroundBricks />
 
-            {/* Content Container - Relative to center children */}
             <div className="kidsStep__mainContainer" style={{ paddingLeft: isPreset ? 0 : 260 }}>
-                {/* Floating Sidebar Overlay - Hide for Preset Models */}
                 {!isPreset && (
                     <div style={{
-                        position: "absolute",
-                        top: 100,
-                        left: 24,
-                        zIndex: 20,
-                        width: 260,
-                        background: "#fff",
-                        borderRadius: 32,
-                        color: "#000",
-                        display: "flex",
-                        flexDirection: "column",
-                        padding: "24px 16px",
-                        border: "3px solid #000",
-                        boxShadow: "0 20px 50px rgba(0, 0, 0, 0.1)"
+                        position: "absolute", top: 100, left: 24, zIndex: 20, width: 260,
+                        background: "#fff", borderRadius: 32, color: "#000",
+                        display: "flex", flexDirection: "column", padding: "24px 16px",
+                        border: "3px solid #000", boxShadow: "0 20px 50px rgba(0, 0, 0, 0.1)"
                     }}>
-                        <button
-                            onClick={() => router.back()}
-                            style={{
-                                alignSelf: "flex-start",
-                                marginBottom: 20,
-                                background: "#fff",
-                                color: "#000",
-                                border: "2px solid #000",
-                                borderRadius: 12,
-                                padding: "8px 16px",
-                                cursor: "pointer",
-                                fontSize: "0.85rem",
-                                fontWeight: 800,
-                                transition: "all 0.2s"
-                            }}
-                        >
+                        <button onClick={() => router.back()} className="kidsStep__backBtn">
                             ← {t.kids.steps.back}
                         </button>
 
-                        <h2 style={{ fontSize: "1.3rem", fontWeight: 900, marginBottom: 20, paddingLeft: 8, letterSpacing: "-0.5px" }}>
-                            BRICKERS
-                        </h2>
+                        <h2 style={{ fontSize: "1.3rem", fontWeight: 900, marginBottom: 20, paddingLeft: 8 }}>BRICKERS</h2>
 
-                        <div style={{ marginBottom: 10, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800, textTransform: "uppercase" }}>
+                        <div style={{ marginBottom: 10, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800 }}>
                             {t.kids.steps.viewModes}
                         </div>
 
                         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                            <button
-                                onClick={() => setActiveTab('LDR')}
-                                style={{
-                                    textAlign: "left",
-                                    padding: "16px 20px",
-                                    borderRadius: 20,
-                                    background: activeTab === 'LDR' ? "#ffe135" : "#fff",
-                                    color: "#000",
-                                    fontWeight: 900,
-                                    border: "3px solid #000",
-                                    cursor: "pointer",
-                                    transition: "all 0.2s",
-                                    boxShadow: activeTab === 'LDR' ? "4px 4px 0px #000" : "2px 2px 0px #000",
-                                    fontSize: "1rem"
-                                }}
-                            >
+                            <button onClick={() => setActiveTab('LDR')} className={`kidsStep__modeBtn ${activeTab === 'LDR' ? 'active' : ''}`}>
                                 {t.kids.steps.tabBrick}
                             </button>
-                            <button
-                                onClick={() => setActiveTab('GLB')}
-                                style={{
-                                    textAlign: "left",
-                                    padding: "16px 20px",
-                                    borderRadius: 20,
-                                    background: activeTab === 'GLB' ? "#ffe135" : "#fff",
-                                    color: "#000",
-                                    fontWeight: 900,
-                                    border: "3px solid #000",
-                                    cursor: "pointer",
-                                    transition: "all 0.2s",
-                                    boxShadow: activeTab === 'GLB' ? "4px 4px 0px #000" : "2px 2px 0px #000",
-                                    fontSize: "1rem"
-                                }}
-                            >
+                            <button onClick={() => setActiveTab('GLB')} className={`kidsStep__modeBtn ${activeTab === 'GLB' ? 'active' : ''}`}>
                                 {t.kids.steps.tabModeling}
                             </button>
                         </div>
 
-                        {/* 색상 변경 버튼 & 초기화 버튼 */}
                         <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-                            <button
-                                onClick={() => setIsColorModalOpen(true)}
-                                className="kidsStep__colorBtn"
-                            >
+                            <button onClick={() => setIsColorModalOpen(true)} className="kidsStep__colorBtn">
                                 색상 변경
                             </button>
-
                             {colorChangedLdrBase64 && (
                                 <>
-                                    <button
-                                        onClick={downloadColorChangedLdr}
-                                        className="kidsStep__downloadColorBtn"
-                                    >
-                                        ⬇ 변경된 LDR 다운로드
+                                    <button onClick={downloadColorChangedLdr} className="kidsStep__downloadColorBtn">
+                                        ⬇ LDR 다운로드
                                     </button>
-                                    <button
-                                        onClick={restoreOriginalColor}
-                                        className="kidsStep__restoreBtn"
-                                    >
-                                        ↺ 원본으로 되돌리기
+                                    <button onClick={restoreOriginalColor} className="kidsStep__restoreBtn">
+                                        ↺ 원본 복원
                                     </button>
                                 </>
                             )}
                         </div>
 
                         <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
-                            <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800, textTransform: "uppercase" }}>
+                            <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800 }}>
                                 {t.kids.steps.registerGallery}
                             </div>
-                            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                                <input
-                                    type="text"
-                                    className="kidsStep__sidebarInput"
-                                    placeholder={t.kids.steps.galleryModal.placeholder}
-                                    value={galleryTitle}
-                                    onChange={(e) => setGalleryTitle(e.target.value)}
-                                    disabled={isRegisteredToGallery}
-                                />
-                                <button
-                                    className="kidsStep__sidebarBtn"
-                                    onClick={handleRegisterGallery}
-                                    disabled={isSubmitting || isRegisteredToGallery}
-                                    style={isRegisteredToGallery ? { background: "#aaa", cursor: "not-allowed" } : {}}
-                                >
-                                    {isRegisteredToGallery ? "✓ 등록완료" : (isSubmitting ? "..." : t.kids.steps.registerGallery)}
-                                </button>
-                            </div>
+                            <input
+                                type="text" className="kidsStep__sidebarInput"
+                                placeholder={t.kids.steps.galleryModal.placeholder}
+                                value={galleryTitle} onChange={(e) => setGalleryTitle(e.target.value)}
+                                disabled={isRegisteredToGallery}
+                            />
+                            <button
+                                className="kidsStep__sidebarBtn" onClick={handleRegisterGallery}
+                                disabled={isSubmitting || isRegisteredToGallery}
+                            >
+                                {isRegisteredToGallery ? "✓ 등록완료" : (isSubmitting ? "..." : t.kids.steps.registerGallery)}
+                            </button>
                         </div>
 
-                        {/* PDF Download Button */}
                         <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
-                            <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800, textTransform: "uppercase" }}>
+                            <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800 }}>
                                 PDF Download
                             </div>
                             <button
-                                className="kidsStep__sidebarBtn"
-                                onClick={() => handleGeneratePDF()}
-                                disabled={isPdfGenerating || loading}
-                                style={{ background: "#444" }}
+                                className="kidsStep__sidebarBtn" onClick={handleDownloadPdf}
+                                disabled={!serverPdfUrl || loading}
+                                style={{ background: serverPdfUrl ? "#444" : "#aaa" }}
                             >
-                                {isPdfGenerating ? "Generating..." : "PDF 설명서 저장"}
+                                {serverPdfUrl ? "PDF 다운로드" : "PDF 준비중..."}
                             </button>
                         </div>
                     </div>
                 )}
 
-
-
-                {/* Main 3D Card Area */}
                 <div className="kidsStep__card kids-main-canvas">
-                    {(loading || isPdfGenerating) && (
-                        <div style={{
-                            position: "absolute", inset: 0, zIndex: 20,
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            background: "rgba(255,255,255,0.75)", fontWeight: 900,
-                        }}>
-                            <div className="flex flex-col items-center gap-3">
-                                {isPdfGenerating ? (
-                                    <>
-                                        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                                        <span>PDF 생성 중... ({pdfStepIdx + 1}/{total})</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
-                                        <span>{t.kids.steps.loading}</span>
-                                    </>
-                                )}
-                            </div>
+                    {loading && (
+                        <div className="kidsStep__loadingOverlay">
+                            <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
+                            <span>{t.kids.steps.loading}</span>
                         </div>
                     )}
 
                     {activeTab === 'LDR' ? (
                         <>
                             <div style={{ position: "absolute", inset: 0 }}>
-                                <Canvas
-                                    camera={{ position: [200, -200, 200], fov: 45 }}
-                                    dpr={[1, 2]}
-                                    gl={{ preserveDrawingBuffer: true }}
-                                >
+                                <Canvas camera={{ position: [200, -200, 200], fov: 45 }} dpr={[1, 2]} gl={{ preserveDrawingBuffer: true }}>
                                     <ambientLight intensity={0.9} />
                                     <directionalLight position={[3, 5, 2]} intensity={1} />
                                     <Center>
                                         <LdrModel
                                             url={ldrUrl}
                                             overrideMainLdrUrl={finalModelUrl}
-                                            onLoaded={(g) => {
-                                                setLoading(false);
-                                                modelGroupRef.current = g;
-                                                if (isPdfGenerating) setPdfModelLoaded(true);
-                                            }}
-                                            onError={() => {
-                                                setLoading(false);
-                                                if (isPdfGenerating) setPdfModelLoaded(true); // skip error
-                                            }}
+                                            onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }}
+                                            onError={() => setLoading(false)}
                                             customBounds={modelBounds}
                                             fitTrigger={`${ldrUrl}|${finalModelUrl ?? ''}`}
                                         />
                                     </Center>
-                                    <PDFRig
-                                        active={isPdfGenerating && pdfModelLoaded}
-                                        viewIndex={pdfViewIdx}
-                                        onReadyToCapture={handlePdfCapture}
-                                    />
-                                    {!isPdfGenerating && <OrbitControls makeDefault enablePan={false} enableZoom />}
+                                    <OrbitControls makeDefault enablePan={false} enableZoom />
                                 </Canvas>
                             </div>
 
-                            {/* LDR Overlays (Start Button or Step Nav) */}
                             {isPreviewMode ? (
-                                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 40, pointerEvents: "none" }}>
-                                    <button
-                                        onClick={() => { setIsPreviewMode(false); setStepIdx(0); }}
-                                        className="kidsStep__startNavBtn"
-                                    >
+                                <div className="kidsStep__previewOverlay">
+                                    <button onClick={() => { setIsPreviewMode(false); setStepIdx(0); }} className="kidsStep__startNavBtn">
                                         {t.kids.steps.startAssembly}
                                     </button>
                                 </div>
                             ) : (
-                                <div style={{
-                                    position: "absolute",
-                                    bottom: 40,
-                                    left: "50%",
-                                    transform: "translateX(-50%)",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 24,
-                                    background: "#fff",
-                                    padding: "8px 12px",
-                                    borderRadius: 999,
-                                    boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
-                                    border: "3px solid #000"
-                                }}>
-                                    <button
-                                        className="kidsStep__navBtn"
-                                        disabled={!canPrev}
-                                        onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}
-                                        style={{ border: 'none', background: '#f0f0f0', borderRadius: 999, padding: "12px 24px", height: "auto", minWidth: "auto", boxShadow: "none" }}
-                                    >
+                                <div className="kidsStep__navOverlay">
+                                    <button className="kidsStep__navBtn" disabled={!canPrev} onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}>
                                         ← {t.kids.steps.prev}
                                     </button>
-
-                                    <div style={{ fontSize: "1.2rem", fontWeight: 900, fontFamily: "sans-serif", padding: "0 8px" }}>
-                                        Step {stepIdx + 1} <span style={{ color: "#aaa", fontSize: "0.9em" }}>/ {total}</span>
+                                    <div className="kidsStep__stepInfo">
+                                        Step {stepIdx + 1} <span style={{ color: "#aaa" }}>/ {total}</span>
                                     </div>
-
-                                    <button
-                                        className="kidsStep__navBtn kidsStep__navBtn--next"
-                                        disabled={!canNext}
-                                        onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}
-                                        style={{ border: 'none', borderRadius: 999, padding: "12px 24px", height: "auto", minWidth: "auto", boxShadow: "none" }}
-                                    >
+                                    <button className="kidsStep__navBtn kidsStep__navBtn--next" disabled={!canNext} onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}>
                                         {t.kids.steps.next} →
                                     </button>
                                 </div>
                             )}
                         </>
                     ) : (
-                        // GLB Viewer
                         <div style={{ position: "absolute", inset: 0 }}>
                             <Canvas camera={{ position: [5, 5, 5], fov: 50 }} dpr={[1, 2]}>
                                 <ambientLight intensity={0.8} />
@@ -1117,16 +646,9 @@ function KidsStepPageContent() {
                                     </Center>
                                     <FitOnceOnLoad trigger={glbUrl ?? ''} />
                                 </Bounds>
-                                <OrbitControls
-                                    makeDefault
-                                    enablePan={false}
-                                    enableZoom
-                                    autoRotate
-                                    autoRotateSpeed={2.5}
-                                    enableDamping
-                                />
+                                <OrbitControls makeDefault enablePan={false} enableZoom autoRotate autoRotateSpeed={2.5} enableDamping />
                             </Canvas>
-                            {!glbUrl && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#888", fontWeight: 700 }}>3D Model not available</div>}
+                            {!glbUrl && <div className="kidsStep__noModel">3D Model not available</div>}
                         </div>
                     )}
                 </div>
@@ -1146,46 +668,25 @@ function KidsStepPageContent() {
                 </div>
             )}
 
-            {/* 색상 변경 모달 */}
+            {/* Color Modal */}
             {isColorModalOpen && (
                 <div className="galleryModalOverlay" onClick={() => setIsColorModalOpen(false)}>
                     <div className="galleryModal colorModal" onClick={(e) => e.stopPropagation()}>
-                        <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)} aria-label="close">✕</button>
-                        <h3 className="galleryModal__title">
-                            {t.kids.steps.colorThemeTitle || "색상 테마 선택"}
-                        </h3>
-
+                        <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)}>✕</button>
+                        <h3 className="galleryModal__title">{t.kids.steps.colorThemeTitle || "색상 테마 선택"}</h3>
                         <div className="colorModal__themes">
-                            {colorThemes.length === 0 ? (
-                                <div style={{ padding: "20px", textAlign: "center", color: "#888" }}>
-                                    테마 로딩 중...
-                                </div>
-                            ) : (
+                            {colorThemes.length === 0 ? <div className="colorModal__loading">테마 로딩 중...</div> : (
                                 colorThemes.map((theme: ThemeInfo) => (
-                                    <button
-                                        key={theme.name}
-                                        className={`colorModal__themeBtn ${selectedTheme === theme.name ? "colorModal__themeBtn--selected" : ""}`}
-                                        onClick={() => setSelectedTheme(theme.name)}
-                                    >
+                                    <button key={theme.name} className={`colorModal__themeBtn ${selectedTheme === theme.name ? "selected" : ""}`} onClick={() => setSelectedTheme(theme.name)}>
                                         <span className="colorModal__themeName">{theme.name}</span>
                                         <span className="colorModal__themeDesc">{theme.description}</span>
                                     </button>
                                 ))
                             )}
                         </div>
-
                         <div className="galleryModal__actions">
-                            <button
-                                className="galleryModal__btn galleryModal__btn--cancel"
-                                onClick={() => setIsColorModalOpen(false)}
-                            >
-                                {t.kids.steps.galleryModal.cancel}
-                            </button>
-                            <button
-                                className="galleryModal__btn galleryModal__btn--confirm"
-                                onClick={handleApplyColor}
-                                disabled={!selectedTheme || isApplyingColor}
-                            >
+                            <button className="galleryModal__btn galleryModal__btn--cancel" onClick={() => setIsColorModalOpen(false)}>{t.kids.steps.galleryModal.cancel}</button>
+                            <button className="galleryModal__btn galleryModal__btn--confirm" onClick={handleApplyColor} disabled={!selectedTheme || isApplyingColor}>
                                 {isApplyingColor ? "..." : (t.kids.steps.apply || "적용하기")}
                             </button>
                         </div>
