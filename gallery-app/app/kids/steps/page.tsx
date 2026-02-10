@@ -225,6 +225,44 @@ function FitOnceOnLoad({ trigger }: { trigger: string }) {
 
 // parseAndProcessSteps moved to @/lib/ldrUtils
 
+interface GalleryRegisterInputProps {
+    t: any;
+    isRegisteredToGallery: boolean;
+    isSubmitting: boolean;
+    onRegister: (title: string) => void;
+}
+
+function GalleryRegisterInput({ t, isRegisteredToGallery, isSubmitting, onRegister }: GalleryRegisterInputProps) {
+    const [title, setTitle] = useState("");
+
+    const handleClick = () => {
+        onRegister(title);
+    };
+
+    // 등록 완료되면 타이틀 초기화? or 유지? 기획상 유지하는게 나을듯 하지만
+    // isRegisteredToGallery가 true가 되면 input 비활성화됨. 
+
+    return (
+        <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
+            <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800 }}>
+                {t.kids.steps.registerGallery}
+            </div>
+            <input
+                type="text" className="kidsStep__sidebarInput"
+                placeholder={t.kids.steps.galleryModal.placeholder}
+                value={title} onChange={(e) => setTitle(e.target.value)}
+                disabled={isRegisteredToGallery}
+            />
+            <button
+                className="kidsStep__sidebarBtn" onClick={handleClick}
+                disabled={isSubmitting || isRegisteredToGallery}
+            >
+                {isRegisteredToGallery ? "✓ 등록완료" : (isSubmitting ? "..." : t.kids.steps.registerGallery)}
+            </button>
+        </div>
+    );
+}
+
 function KidsStepPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -245,7 +283,7 @@ function KidsStepPageContent() {
     const modelGroupRef = useRef<THREE.Group | null>(null);
 
     const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
-    const [galleryTitle, setGalleryTitle] = useState("");
+    // const [galleryTitle, setGalleryTitle] = useState(""); // -> Moved to child component
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [jobThumbnailUrl, setJobThumbnailUrl] = useState<string | null>(null);
     const [isRegisteredToGallery, setIsRegisteredToGallery] = useState(false);
@@ -431,13 +469,13 @@ function KidsStepPageContent() {
         }
     };
 
-    const handleRegisterGallery = async () => {
-        if (!galleryTitle.trim()) return alert(t.kids.steps.galleryModal.placeholder);
+    const handleRegisterGallery = async (inputTitle: string) => {
+        if (!inputTitle.trim()) return alert(t.kids.steps.galleryModal.placeholder);
         setIsSubmitting(true);
         try {
             await registerToGallery({
                 jobId: jobId || undefined,
-                title: galleryTitle,
+                title: inputTitle,
                 content: t.kids.steps.galleryModal.content,
                 tags: suggestedTags.length > 0 ? suggestedTags : ["Kids", "Brick"],
                 thumbnailUrl: jobThumbnailUrl || undefined,
@@ -449,7 +487,7 @@ function KidsStepPageContent() {
             });
             alert(t.kids.steps.galleryModal.success);
             setIsGalleryModalOpen(false);
-            setGalleryTitle("");
+            // setGalleryTitle(""); // Parent doesn't hold title anymore
             setIsRegisteredToGallery(true);
         } catch (err: any) {
             console.error(err);
@@ -518,23 +556,12 @@ function KidsStepPageContent() {
                             )}
                         </div>
 
-                        <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
-                            <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800 }}>
-                                {t.kids.steps.registerGallery}
-                            </div>
-                            <input
-                                type="text" className="kidsStep__sidebarInput"
-                                placeholder={t.kids.steps.galleryModal.placeholder}
-                                value={galleryTitle} onChange={(e) => setGalleryTitle(e.target.value)}
-                                disabled={isRegisteredToGallery}
-                            />
-                            <button
-                                className="kidsStep__sidebarBtn" onClick={handleRegisterGallery}
-                                disabled={isSubmitting || isRegisteredToGallery}
-                            >
-                                {isRegisteredToGallery ? "✓ 등록완료" : (isSubmitting ? "..." : t.kids.steps.registerGallery)}
-                            </button>
-                        </div>
+                        <GalleryRegisterInput
+                            t={t}
+                            isRegisteredToGallery={isRegisteredToGallery}
+                            isSubmitting={isSubmitting}
+                            onRegister={handleRegisterGallery}
+                        />
 
                         <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
                             <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800 }}>
@@ -629,16 +656,24 @@ function KidsStepPageContent() {
                 </div>
             </div>
 
-            {/* Gallery Modal */}
+            {/* Gallery Modal (모달에도 입력창이 있는데 이건 별도임. 아마 모바일용/다른 경로용?) */}
             {isGalleryModalOpen && (
                 <div className="galleryModalOverlay" onClick={() => setIsGalleryModalOpen(false)}>
                     <div className="galleryModal" onClick={(e) => e.stopPropagation()}>
                         <h3 className="galleryModal__title">{t.kids.steps.galleryModal.title}</h3>
-                        <input type="text" className="galleryModal__input" value={galleryTitle} onChange={(e) => setGalleryTitle(e.target.value)} placeholder={t.kids.steps.galleryModal.placeholder} autoFocus />
-                        <div className="galleryModal__actions">
-                            <button className="galleryModal__btn galleryModal__btn--cancel" onClick={() => setIsGalleryModalOpen(false)}>{t.kids.steps.galleryModal.cancel}</button>
-                            <button className="galleryModal__btn galleryModal__btn--confirm" onClick={handleRegisterGallery} disabled={isSubmitting}>{isSubmitting ? "..." : t.kids.steps.galleryModal.confirm}</button>
-                        </div>
+                        {/* 이 모달 내의 입력도 깜빡일 수 있으나 사이드바 문제가 급선무. 여기는 별도 state [galleryTitle state가 제거되었으므로 수정 필요] */}
+                        {/* 
+                           주의: galleryTitle state를 제거했으므로 여기도 수정해야 함.
+                           모달용 input state를 별도로 만들거나, GalleryRegisterInput를 재사용해야 함.
+                           하지만 모달 로직은 현재 보여지지 않는 듯함(사이드바에 박혀있음).
+                           혹시 모르니 로컬 state를 사용하는 방식으로 수정.
+                        */}
+                        <GalleryRegisterInputModalAdapter
+                            t={t}
+                            onRegister={handleRegisterGallery}
+                            isSubmitting={isSubmitting}
+                            onClose={() => setIsGalleryModalOpen(false)}
+                        />
                     </div>
                 </div>
             )}
@@ -669,6 +704,20 @@ function KidsStepPageContent() {
                 </div>
             )}
         </div>
+    );
+}
+
+// 모달용 어댑터 (기존 코드 호환성)
+function GalleryRegisterInputModalAdapter({ t, onRegister, isSubmitting, onClose }: any) {
+    const [title, setTitle] = useState("");
+    return (
+        <>
+            <input type="text" className="galleryModal__input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t.kids.steps.galleryModal.placeholder} autoFocus />
+            <div className="galleryModal__actions">
+                <button className="galleryModal__btn galleryModal__btn--cancel" onClick={onClose}>{t.kids.steps.galleryModal.cancel}</button>
+                <button className="galleryModal__btn galleryModal__btn--confirm" onClick={() => onRegister(title)} disabled={isSubmitting}>{isSubmitting ? "..." : t.kids.steps.galleryModal.confirm}</button>
+            </div>
+        </>
     );
 }
 
