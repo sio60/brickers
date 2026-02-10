@@ -12,6 +12,12 @@ import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawCondit
 const CDN_BASE =
     "https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/";
 
+/* ── Monkey-patch: null children을 원천 차단 ── */
+const _origAdd = THREE.Object3D.prototype.add;
+THREE.Object3D.prototype.add = function (...objects: THREE.Object3D[]) {
+    return _origAdd.apply(this, objects.filter(o => o != null));
+};
+
 type Props = {
     url: string;
     partsLibraryPath?: string;
@@ -149,6 +155,7 @@ function LdrModel({
                     worker.terminate();
                 };
 
+                await loader.preloadMaterials(ldconfigUrl);
                 const g = await loader.loadAsync(url);
                 if (cancelled) { disposeObject3D(g); return; }
                 if (g) {
