@@ -83,6 +83,7 @@ function LdrModel({
     onError,
     customBounds,
     fitTrigger,
+    noFit,
 }: {
     url: string;
     overrideMainLdrUrl?: string;
@@ -92,6 +93,7 @@ function LdrModel({
     onError?: (e: unknown) => void;
     customBounds?: THREE.Box3 | null;
     fitTrigger?: string;
+    noFit?: boolean;
 }) {
     const loader = useMemo(() => {
         THREE.Cache.enabled = true;
@@ -206,12 +208,12 @@ function LdrModel({
     }
 
     return (
-        <Bounds fit clip margin={1.35}>
+        <Bounds fit={!noFit} clip margin={1.35}>
             <Center>
                 <primitive object={group} />
                 {boundMesh}
             </Center>
-            <FitOnceOnLoad trigger={fitTrigger ?? ""} />
+            {!noFit && <FitOnceOnLoad trigger={fitTrigger ?? ""} />}
         </Bounds>
     );
 }
@@ -279,12 +281,12 @@ function BrickThumbnail({ partName, color }: { partName: string, color: string }
 
     return (
         <div className="kidsStep__brickCanvasContainer">
-            <Canvas camera={{ position: [100, 150, 100], fov: 45 }} gl={{ antialias: true, alpha: true }}>
+            <Canvas camera={{ position: [25, 35, 25], fov: 45 }} gl={{ antialias: true, alpha: true }}>
                 <ambientLight intensity={2} />
                 <directionalLight position={[5, 10, 5]} intensity={2} />
                 <LdrModel
                     url={url}
-                    fitTrigger={url}
+                    noFit
                 />
             </Canvas>
         </div>
