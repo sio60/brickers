@@ -181,7 +181,18 @@ export default function CarouselGallery({ items = [], loading = false }: Carouse
                                             <div className="flex items-center gap-1.5">
                                                 <span className="text-[11px] font-bold text-[#888] uppercase tracking-wider shrink-0">{t.main.landing.authorLabel}</span>
                                             </div>
-                                            <span className="text-[13px] font-medium text-[#444] truncate w-full block">{item.authorNickname || 'Anonymous'}</span>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden border border-gray-200">
+                                                    {(item as GalleryItem).authorProfileImage ? (
+                                                        <img src={(item as GalleryItem).authorProfileImage} alt={(item as GalleryItem).authorNickname || ''} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <span className="text-[9px] font-bold text-gray-500 leading-none">
+                                                            {(item as GalleryItem).authorNickname ? (item as GalleryItem).authorNickname![0].toUpperCase() : '?'}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className="text-[13px] font-medium text-[#444] truncate w-full block">{(item as GalleryItem).authorNickname || 'Anonymous'}</span>
+                                            </div>
                                         </div>
                                     </>
                                 )}

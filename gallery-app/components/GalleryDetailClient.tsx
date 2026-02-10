@@ -13,6 +13,7 @@ import { Bounds, Center, Gltf, Environment, OrbitControls } from "@react-three/d
 type Comment = {
     id: string;
     authorNickname: string;
+    authorProfileImage?: string;
     content: string;
     createdAt: string;
     parentId?: string;
@@ -215,9 +216,13 @@ export default function GalleryDetailClient({ item }: Props) {
                 {/* Instagram Style Row */}
                 <div className={`flex gap-3 py-2 ${depth > 0 ? 'ml-2' : ''}`}>
                     {/* Avatar */}
-                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200 shadow-sm overflow-hidden">
-                        <span className="text-[10px] font-bold text-gray-500">{c.authorNickname ? c.authorNickname[0].toUpperCase() : '?'}</span>
-                    </div>
+                    {c.authorProfileImage ? (
+                        <img src={c.authorProfileImage} alt={c.authorNickname || ''} className="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-200 shadow-sm" />
+                    ) : (
+                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200 shadow-sm overflow-hidden">
+                            <span className="text-[10px] font-bold text-gray-500">{c.authorNickname ? c.authorNickname[0].toUpperCase() : '?'}</span>
+                        </div>
+                    )}
 
                     {/* Content Section */}
                     <div className="flex flex-col flex-1 min-w-0">
@@ -408,9 +413,13 @@ export default function GalleryDetailClient({ item }: Props) {
                     <div className="flex-1 overflow-y-auto">
                         {/* User Info Header */}
                         <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center font-bold text-blue-600 text-sm">
-                                {item.authorNickname ? item.authorNickname[0].toUpperCase() : '?'}
-                            </div>
+                            {item.authorProfileImage ? (
+                                <img src={item.authorProfileImage} alt={item.authorNickname || ''} className="w-10 h-10 rounded-full object-cover border border-gray-200" />
+                            ) : (
+                                <div className="w-10 h-10 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center font-bold text-blue-600 text-sm">
+                                    {item.authorNickname ? item.authorNickname[0].toUpperCase() : '?'}
+                                </div>
+                            )}
                             <div className="flex flex-col">
                                 <span className="font-bold text-sm text-gray-900">@{item.authorNickname || t.common.anonymous}</span>
                                 <span className="text-[10px] text-gray-500 font-semibold tracking-wide">{t.detail.creator}</span>
