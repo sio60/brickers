@@ -23,12 +23,6 @@ const nextConfig = {
             // fallback: 동적 라우트([jobId] 등) 매칭 이후 적용
             // → SSE proxy route handler가 rewrite보다 먼저 매칭됨
             fallback: [
-                // AI Server (Chatbot) - Port 8000
-                {
-                    source: '/api/chat/:path*',
-                    destination: `${process.env.AI_API_BASE || 'http://localhost:8000'}/api/chat/:path*`,
-                },
-                // Spring Boot Backend - Port 8080 (Default)
                 {
                     source: '/api/:path*',
                     destination: `${backendUrl}/api/:path*`,
