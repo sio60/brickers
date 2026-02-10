@@ -311,6 +311,41 @@
     transform: scale(0.98) translateY(0);
 }
 
+.kidsStep__previewOverlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 50;
+    pointer-events: none;
+}
+
+.kidsStep__navOverlay {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 12px 24px;
+    border-radius: 999px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border: 2px solid #000;
+    z-index: 50;
+}
+
+.kidsStep__stepInfo {
+    font-size: 1.1rem;
+    font-weight: 800;
+    min-width: 120px;
+    text-align: center;
+}
+
 .modalCloseBtn {
     position: absolute;
     top: 16px;

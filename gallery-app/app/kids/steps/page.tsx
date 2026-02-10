@@ -203,102 +203,7 @@ function FitOnceOnLoad({ trigger }: { trigger: string }) {
     return null;
 }
 
-function parseAndProcessSteps(ldrText: string) {
-    const lines = ldrText.replace(/\r\n/g, "\n").split("\n");
-    let minX = Infinity, minY = Infinity, minZ = Infinity;
-    let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
-
-    const segments: { lines: string[], avgY: number }[] = [];
-    let curLines: string[] = [];
-    let curYSum = 0;
-    let curCount = 0;
-
-    const flush = () => {
-        const avgY = curCount > 0 ? curYSum / curCount : -Infinity;
-        segments.push({ lines: curLines, avgY });
-        curLines = [];
-        curYSum = 0;
-        curCount = 0;
-    };
-
-    for (const raw of lines) {
-        const line = raw.trim();
-        if (/^0\s+(STEP|ROTSTEP)\b/i.test(line)) {
-            flush();
-            continue;
-        }
-        if (line.startsWith('1 ')) {
-            const parts = line.split(/\s+/);
-            if (parts.length >= 15) {
-                const x = parseFloat(parts[2]);
-                const y = parseFloat(parts[3]);
-                const z = parseFloat(parts[4]);
-                if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
-                    minX = Math.min(minX, x); minY = Math.min(minY, y); minZ = Math.min(minZ, z);
-                    maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); maxZ = Math.max(maxZ, z);
-                    curYSum += y;
-                    curCount++;
-                }
-            }
-        }
-        curLines.push(raw);
-    }
-    flush();
-
-    let header = segments[0];
-    let body = segments.slice(1);
-    const headerHasGeometry = header.lines.some((line) => line.trim().startsWith("1 "));
-    if (headerHasGeometry) {
-        body = segments;
-        header = { lines: [], avgY: -Infinity };
-    }
-
-    body.sort((a, b) => {
-        if (a.avgY === -Infinity && b.avgY === -Infinity) return 0;
-        if (a.avgY === -Infinity) return 1;
-        if (b.avgY === -Infinity) return -1;
-        return b.avgY - a.avgY;
-    });
-
-    const LAYER_EPS = 8;
-    const merged: { lines: string[]; avgY: number }[] = [];
-    let curLinesMerge: string[] = [];
-    let curY = Number.NEGATIVE_INFINITY;
-
-    for (const seg of body) {
-        if (!curLinesMerge.length) {
-            curLinesMerge = seg.lines.slice();
-            curY = seg.avgY;
-            continue;
-        }
-        if (seg.avgY !== -Infinity && curY !== -Infinity && Math.abs(seg.avgY - curY) <= LAYER_EPS) {
-            curLinesMerge = curLinesMerge.concat(seg.lines);
-            curY = (curY + seg.avgY) / 2;
-        } else {
-            merged.push({ lines: curLinesMerge, avgY: curY });
-            curLinesMerge = seg.lines.slice();
-            curY = seg.avgY;
-        }
-    }
-    if (curLinesMerge.length) merged.push({ lines: curLinesMerge, avgY: curY });
-
-    const sortedSegments = [header, ...merged];
-    const out: string[] = [];
-    let acc: string[] = [];
-    for (const seg of sortedSegments) {
-        acc = acc.concat(seg.lines);
-        out.push(acc.join("\n"));
-    }
-
-    let bounds = null;
-    if (minX !== Infinity) {
-        bounds = new THREE.Box3(
-            new THREE.Vector3(minX, minY, minZ),
-            new THREE.Vector3(maxX, maxY, maxZ)
-        );
-    }
-    return { stepTexts: out, bounds };
-}
+// parseAndProcessSteps moved to @/lib/ldrUtils
 
 function KidsStepPageContent() {
     const router = useRouter();
@@ -308,7 +213,7 @@ function KidsStepPageContent() {
 
     const jobId = searchParams.get("jobId") || "";
     const urlParam = searchParams.get("url") || "";
-    const serverPdfUrl = searchParams.get("pdfUrl") || "";
+    const [serverPdfUrl, setServerPdfUrl] = useState<string>(searchParams.get("pdfUrl") || "");
 
     const [ldrUrl, setLdrUrl] = useState<string>(urlParam);
     const [originalLdrUrl] = useState<string>(urlParam);
@@ -357,16 +262,28 @@ function KidsStepPageContent() {
             const result = await applyColorVariant(ldrUrl, selectedTheme, authFetch);
             if (result.ok && result.ldrData) {
                 setColorChangedLdrBase64(result.ldrData);
+                // step blob들 재생성 (Worker 사용)
                 const text = atob(result.ldrData);
-                const { stepTexts, bounds } = parseAndProcessSteps(text);
-                const blobs = stepTexts.map(t => URL.createObjectURL(new Blob([t], { type: "text/plain" })));
-                revokeAll(blobRef.current);
-                blobRef.current = blobs;
-                setStepBlobUrls(blobs);
-                setStepIdx(stepTexts.length - 1);
-                setIsPreviewMode(false);
-                setIsColorModalOpen(false);
-                alert(`${result.themeApplied} 테마 적용 완료!`);
+                const worker = new Worker(new URL('@/lib/ldrWorker.ts', import.meta.url));
+                worker.postMessage({ type: 'PROCESS_LDR', text });
+                worker.onmessage = (e) => {
+                    if (e.data.type === 'SUCCESS') {
+                        const { stepTexts } = e.data.payload;
+                        const blobs = stepTexts.map((t_blob: string) =>
+                            URL.createObjectURL(new Blob([t_blob], { type: "text/plain" }))
+                        );
+                        revokeAll(blobRef.current);
+                        blobRef.current = blobs;
+                        setStepBlobUrls(blobs);
+                        setStepIdx(stepTexts.length - 1);
+                        setIsPreviewMode(false);
+                        setIsColorModalOpen(false);
+                        alert(`${result.themeApplied} 테마 적용 완료!`);
+                    } else {
+                        alert("색상 변경 후 모델 생성 중 오류가 발생했습니다.");
+                    }
+                    worker.terminate();
+                };
             } else {
                 alert(result.message || "색상 변경 실패");
             }
@@ -436,6 +353,7 @@ function KidsStepPageContent() {
                     if (data.suggestedTags && Array.isArray(data.suggestedTags)) setSuggestedTags(data.suggestedTags);
                     if (data.parts) setBrickCount(data.parts);
                     if (data.isPro) setIsProMode(true);
+                    if (data.pdfUrl || data.pdf_url) setServerPdfUrl(data.pdfUrl || data.pdf_url);
                 }
             } catch (e) { console.error(e); }
         })();
@@ -452,14 +370,28 @@ function KidsStepPageContent() {
             const res = await fetch(ldrUrl);
             if (!res.ok) throw new Error(`LDR fetch failed: ${res.status}`);
             const text = await res.text();
-            const { stepTexts, bounds } = parseAndProcessSteps(text);
-            if (alive) {
-                setModelBounds(bounds);
-                const blobs = stepTexts.map(t => URL.createObjectURL(new Blob([t], { type: "text/plain" })));
-                revokeAll(blobRef.current);
-                blobRef.current = blobs;
-                setStepBlobUrls(blobs);
-            }
+            // 정렬 및 Bounds 계산 적용 (Worker 사용)
+            const worker = new Worker(new URL('@/lib/ldrWorker.ts', import.meta.url));
+            worker.postMessage({ type: 'PROCESS_LDR', text });
+            worker.onmessage = (e) => {
+                if (e.data.type === 'SUCCESS' && alive) {
+                    const { stepTexts, bounds } = e.data.payload;
+                    if (bounds) {
+                        setModelBounds(new THREE.Box3(
+                            new THREE.Vector3(bounds.min.x, bounds.min.y, bounds.min.z),
+                            new THREE.Vector3(bounds.max.x, bounds.max.y, bounds.max.z)
+                        ));
+                    }
+                    const blobs = stepTexts.map((t_blob: string) => URL.createObjectURL(new Blob([t_blob], { type: "text/plain" })));
+                    revokeAll(blobRef.current);
+                    blobRef.current = blobs;
+                    setStepBlobUrls(blobs);
+                    setLoading(false);
+                } else if (alive) {
+                    setLoading(false);
+                }
+                worker.terminate();
+            };
         })().catch(e => {
             console.error(e);
             setLoading(false);
