@@ -97,6 +97,9 @@ public class GenerateJobEntity {
     /** PDF URL (S3) */
     private String pdfUrl; // [New]
 
+    /** 6면 스크린샷 URL 맵 (front, back, left, right, top, bottom) */
+    private java.util.Map<String, String> screenshotUrls;
+
     /** 최종 생성된 브릭 개수 */
     private Integer parts;
 
