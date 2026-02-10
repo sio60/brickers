@@ -264,6 +264,33 @@ function GalleryRegisterInput({ t, isRegisteredToGallery, isSubmitting, onRegist
     );
 }
 
+function BrickThumbnail({ partName, color }: { partName: string, color: string }) {
+    const [url, setUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        const ldr = `1 ${color} 0 0 0 1 0 0 0 1 0 0 0 1 ${partName}.dat`;
+        const blob = new Blob([ldr], { type: 'text/plain' });
+        const objectUrl = URL.createObjectURL(blob);
+        setUrl(objectUrl);
+        return () => URL.revokeObjectURL(objectUrl);
+    }, [partName, color]);
+
+    if (!url) return <div className="kidsStep__brickPlaceholder" />;
+
+    return (
+        <div className="kidsStep__brickCanvasContainer">
+            <Canvas camera={{ position: [100, -100, 100], fov: 45 }} gl={{ antialias: true }}>
+                <ambientLight intensity={1.5} />
+                <directionalLight position={[5, 10, 5]} intensity={2} />
+                <LdrModel
+                    url={url}
+                    fitTrigger={url}
+                />
+            </Canvas>
+        </div>
+    );
+}
+
 function KidsStepPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -650,7 +677,7 @@ function KidsStepPageContent() {
                                         </div>
                                         {stepBricks[stepIdx].map((b, i) => (
                                             <div key={i} className="kidsStep__brickItem">
-                                                <span className="kidsStep__brickName">{b.partName}</span>
+                                                <BrickThumbnail partName={b.partName} color={b.color} />
                                                 <span className="kidsStep__brickCount">x{b.count}</span>
                                             </div>
                                         ))}

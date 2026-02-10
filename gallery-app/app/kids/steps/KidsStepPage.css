@@ -639,51 +639,63 @@
     .kidsStep__splitContainer {
         flex-direction: column;
     }
+}
 
-    .kidsStep__brickList {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        z-index: 60;
-        background: rgba(255, 255, 255, 0.9);
-        border: 2px solid #000;
-        border-radius: 16px;
-        padding: 12px;
-        min-width: 120px;
-        max-height: 200px;
-        overflow-y: auto;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
+.kidsStep__brickList {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 60;
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid #000;
+    border-radius: 20px;
+    padding: 12px;
+    width: 220px;
+    /* Widened slightly for horizontal layout */
+    max-height: 420px;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
 
-    .kidsStep__brickListHeader {
-        font-size: 0.75rem;
-        font-weight: 900;
-        color: #666;
-        margin-bottom: 4px;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 4px;
-    }
+.kidsStep__brickListHeader {
+    font-size: 0.8rem;
+    font-weight: 900;
+    color: #444;
+    margin-bottom: 4px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 6px;
+    text-align: center;
+}
 
-    .kidsStep__brickItem {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-    }
+.kidsStep__brickItem {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border-radius: 12px;
+    padding: 4px 12px;
+    border: 1px solid #eee;
+    gap: 8px;
+}
 
-    .kidsStep__brickName {
-        font-size: 0.85rem;
-        font-weight: 700;
-        color: #333;
-    }
+.kidsStep__brickCanvasContainer {
+    width: 60px;
+    height: 60px;
+}
 
-    .kidsStep__brickCount {
-        font-size: 0.85rem;
-        font-weight: 900;
-        color: #000;
-    }
+.kidsStep__brickCount {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #000;
+}
 
+.kidsStep__brickPlaceholder {
+    width: 60px;
+    height: 60px;
+    background: #f0f0f0;
+    border-radius: 8px;
 }
