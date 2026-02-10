@@ -92,7 +92,7 @@ export default function GalleryDetailClient({ item }: Props) {
     }, [item.id, isAuthenticated]);
 
     const handleLikeToggle = async () => {
-        if (!isAuthenticated) return alert('로그인이 필요합니다.');
+        if (!isAuthenticated) return alert(t.common.loginRequired);
         try {
             const res = await authFetch(`/api/gallery/${item.id}/reaction`, {
                 method: 'POST',
@@ -109,7 +109,7 @@ export default function GalleryDetailClient({ item }: Props) {
     };
 
     const handleBookmarkToggle = async () => {
-        if (!isAuthenticated) return alert('로그인이 필요합니다.');
+        if (!isAuthenticated) return alert(t.common.loginRequired);
         try {
             const res = await authFetch(`/api/gallery/${item.id}/bookmark`, { method: 'POST' });
             if (res.ok) {
@@ -120,7 +120,7 @@ export default function GalleryDetailClient({ item }: Props) {
     };
 
     const handleCommentSubmit = async (parentId?: string, replyContent?: string) => {
-        if (!isAuthenticated) return alert('로그인이 필요합니다.');
+        if (!isAuthenticated) return alert(t.common.loginRequired);
 
         const content = parentId ? (replyContent || '') : commentInput;
         if (!content.trim()) return;
@@ -171,7 +171,7 @@ export default function GalleryDetailClient({ item }: Props) {
             setTimeout(() => setShowToast(false), 2000);
         } catch (err) {
             console.error('Failed to copy: ', err);
-            alert('URL 복사에 실패했습니다.');
+            alert(t.detail?.copyFailed || 'Failed to copy URL.');
         }
     };
 
@@ -370,7 +370,7 @@ export default function GalleryDetailClient({ item }: Props) {
                                     {/* Toast Notification */}
                                     {showToast && (
                                         <div className="absolute top-12 right-0 bg-gray-900 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg whitespace-nowrap z-50 animate-fade-in-up">
-                                            URL이 복사되었습니다
+                                            {t.detail?.copied || 'URL copied'}
                                         </div>
                                     )}
                                 </button>

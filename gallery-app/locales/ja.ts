@@ -35,7 +35,8 @@ export const ja = {
         gallery: "ギャラリー",
         admin: "管理者ページ",
         open: "メニューを開く",
-        iconAlt: "メニューアイコン"
+        iconAlt: "メニューアイコン",
+        hint: "ご質問はブリックボットにお問い合わせください！"
     },
     upgradeModal: {
         title: "UPGRADE",
@@ -109,7 +110,10 @@ export const ja = {
             previewImage: "元画像を見る",
             viewBlueprint: "組立説明書を見る",
             glbFile: "モデルファイル(glb)をダウンロード",
-            ldrFile: "図面ファイル(ldr)をダウンロード"
+            ldrFile: "図面ファイル(ldr)をダウンロード",
+            sourceImage: "元画像ダウンロード",
+            downloadPdf: "PDF説明書ダウンロード",
+            downloadEnhanced: "補正画像ダウンロード"
         },
         noGlbFile: "GLBファイルがありません。",
         noLdrFile: "LDRファイルがありません。",
@@ -120,6 +124,12 @@ export const ja = {
         modalNoData: "モデルデータを読み込めませんでした。",
         stillGenerating: "まだ生成中です。少々お待ちください。",
         retryConfirm: "生成に失敗したか中断された作業です。再試行しますか？",
+        cancelConfirm: "進行中の作業をキャンセルしますか？",
+        cancelFail: "作業のキャンセルに失敗しました。",
+        sortLatest: "最新順",
+        sortOldest: "古い順",
+        noPdfFile: "PDFがまだ生成されていません。組立ページで生成をお待ちください。",
+        noCapturedImage: "キャプチャ画像がありません。",
         settingsTbd: "設定機能準備中"
     },
     settings: {
@@ -174,10 +184,12 @@ export const ja = {
         labelType: "タイプ",
         labelReason: "理由",
         dataId: "データID",
+        noData: "報告履歴がありません。",
     },
     kids: {
         title: "難易度を選択してください",
         level: "L{lv}",
+        pro: "PRO",
         continueBtn: "進む",
         model1: "モデル 1",
         model2: "モデル 2",
@@ -198,7 +210,9 @@ export const ja = {
             loadingResult: "結果読み込み中...",
             serverDelay: "サーバー応答遅延中...",
             aiNoResponse: "AIサーバー応答なし",
-            errorOccurred: "エラー発生"
+            errorOccurred: "エラー発生",
+            completeTitle: "生成完了！",
+            completeBody: "ブリックモデルが完成しました。クリックして確認してください！"
         },
         modelSelect: {
             title: "ブリック生成",
@@ -213,8 +227,24 @@ export const ja = {
             uploadProSub: "クリックしてアップグレード",
             uploadProHint: "アップグレード後に使用可能",
             confirm: "生成する",
-            previewTitle: "3D プレビュー",
-            previewSub: "モデルを回転させて確認してください"
+            previewSub: "モデルを回転させて確認してください",
+            freeUserNotice: "* 無料会員はアップグレード後にご利用いただけます",
+            drawTitle: "お絵描きで作る",
+            drawSub: "ウェブで直接絵を描いてみましょう",
+            drawTool: {
+                brush: "ブラシ",
+                eraser: "消しゴム",
+                clear: "クリア",
+                done: "描き終わりました！",
+                color: "色",
+                size: "サイズ"
+            },
+            promptTitle: "テキストで作る",
+            promptSub: "想像したことを文字で書いてみましょう",
+            promptInputTitle: "何を作りたいですか？",
+            promptInputPlaceholder: "例：翼のある車、虹色のお城",
+            promptInputHint: "詳しく書くほど良い結果になります！",
+            promptConfirm: "このまま作る"
         },
         steps: {
             back: "戻る",
@@ -260,7 +290,15 @@ export const ja = {
             colorThemeTitle: "カラーテーマ選択",
             colorThemeApplied: "テーマの適用が完了しました！",
             colorThemeFailed: "色の変更に失敗しました",
-            colorThemeError: "色の変更中にエラーが発生しました。"
+            colorThemeError: "色の変更中にエラーが発生しました。",
+            changeColor: "色を変更",
+            restoreOriginal: "元に戻す",
+            pdfDownloadBtn: "PDFダウンロード",
+            pdfPreparing: "PDF準備中...",
+            pdfWait: "PDF準備中です。しばらくお待ちください。",
+            registered: "登録完了",
+            themeLoading: "テーマ読み込み中...",
+            colorChangeModelError: "色変更後のモデル生成中にエラーが発生しました。"
         },
         viewer: {
             noUrl: "モデルURLがありません",
@@ -271,19 +309,12 @@ export const ja = {
             viewSteps: "ステップ表示"
         }
     },
-    header: {
-        upgrade: "アップグレード",
-        login: "ログイン",
-        logout: "ログアウト",
-        gallery: "ギャラリー",
-        logoAlt: "ブリッカーズロゴ",
-        myGallery: "マイギャラリー"
-    },
     auth: {
         title: "ログイン",
         kakao: "Kakaoでログイン",
         google: "Googleでログイン",
         processing: "ログイン処理中... 少々お待ちください",
+        loggingOut: "ログアウト処理中...",
         failed: "ログインに失敗しました。",
         redirecting: "ホームへ移動しています..."
     },
@@ -378,7 +409,23 @@ export const ja = {
         anonymous: "匿名",
         confirm: "確認",
         cancel: "キャンセル",
-        later: "後で"
+        later: "後で",
+        apply: "適用する",
+        applying: "適用中...",
+        colorChangeComplete: "色変更完了",
+        themeApplied: "テーマが適用されました",
+        downloadChangedLdr: "変更されたLDRをダウンロード",
+        requestFailed: "リクエスト失敗",
+        networkError: "ネットワークエラー"
+    },
+    header: {
+        upgrade: "アップグレード",
+        login: "ログイン",
+        logout: "ログアウト",
+        gallery: "ギャラリー",
+        logoAlt: "ブリッカーズロゴ",
+        myGallery: "マイギャラリー",
+        myPage: "マイページ"
     },
     // gallery specific (from original gallery-app)
     detail: {
@@ -387,7 +434,28 @@ export const ja = {
         noDescription: "説明がありません。",
         views: "閲覧",
         likes: "いいね",
-        view3d: "3Dで見る＆作る"
+        view3d: "3Dで見る＆作る",
+        save: "保存",
+        share: "共有",
+        creator: "クリエイター",
+        comments: "コメント",
+        noComments: "コメントはまだありません。",
+        placeholderComment: "コメントを入力...",
+        loginToComment: "ログインしてコメントしてください",
+        post: "投稿",
+        noGlb: "3Dモデルファイルがありません。",
+        noImg: "元画像がありません。",
+        copied: "URLがコピーされました",
+        copyFailed: "URLのコピーに失敗しました。",
+        reply: "返信",
+        replyPlaceholder: "返信を入力...",
+        hideReplies: "返信を非表示",
+        showReplies: "返信{count}件を表示",
+        views3d: {
+            noLdrUrl: "LDR URLがありません。",
+            dragRotate: "ドラッグ: 回転",
+            scrollZoom: "スクロール: ズーム"
+        }
     },
     my: {
         title: "マイギャラリー",
@@ -420,5 +488,23 @@ export const ja = {
         REFLECT: "前回の試行と比較して改善点を整理しています。",
         EVOLVE: "形状と効率のバランスを調整しています。",
         COMPLETE: "設計が完了しました。次のステップに進みましょう。"
+    },
+    viewer3d: {
+        loading: "3Dモデル読み込み中...",
+        loadFailed: "3Dモデルの読み込みに失敗しました。",
+        loadingWait: "3Dモデル読み込み中...\nしばらくお待ちください",
+        loadError: "モデル読み込み失敗"
+    },
+    loginModal: {
+        title: "ログインが必要です",
+        bookmarkDesc: "ブックマーク機能を使うには\nログインしてください。",
+        loginBtn: "ログインする"
+    },
+    galleryCard: {
+        bookmarkRemove: "ブックマーク解除",
+        bookmarkAdd: "ブックマーク追加",
+        likeRemove: "いいね解除",
+        likeAdd: "いいね追加",
+        monthDay: "{month}月{day}日"
     }
 };
