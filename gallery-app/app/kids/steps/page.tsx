@@ -20,7 +20,9 @@ import './KidsStepPage.css';
 const CDN_BASE = "https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/";
 
 function disposeObject3D(root: THREE.Object3D) {
+    if (!root) return;
     root.traverse((obj: any) => {
+        if (!obj) return;
         if (obj.geometry) obj.geometry.dispose?.();
         const mat = obj.material;
         if (Array.isArray(mat)) mat.forEach((m) => m?.dispose?.());
@@ -154,10 +156,17 @@ function LdrModel({
             await loader.preloadMaterials(ldconfigUrl);
             const g = await loader.loadAsync(url);
             if (cancelled) { disposeObject3D(g); return; }
-            g.rotation.x = Math.PI;
+            if (g) {
+                g.traverse((obj) => {
+                    if (obj && obj.children) {
+                        obj.children = obj.children.filter(c => c !== null);
+                    }
+                });
+                g.rotation.x = Math.PI;
+            }
             prev = g;
             setGroup(g);
-            onLoaded?.(g);
+            if (g) onLoaded?.(g);
         })().catch((e) => {
             console.error("[LDraw] load failed:", e);
             onError?.(e);
@@ -541,7 +550,12 @@ function KidsStepPageContent() {
 
                     {/* LDR Viewer (Always mounted) */}
                     <div style={{ position: "absolute", inset: 0, display: activeTab === 'LDR' ? 'block' : 'none' }}>
-                        <Canvas camera={{ position: [200, -200, 200], fov: 45 }} dpr={[1, 2]} gl={{ preserveDrawingBuffer: true }}>
+                        <Canvas
+                            camera={{ position: [200, -200, 200], fov: 45 }}
+                            dpr={[1, 2]}
+                            gl={{ preserveDrawingBuffer: true }}
+                            frameloop={activeTab === 'LDR' ? 'always' : 'never'}
+                        >
                             <ambientLight intensity={0.9} />
                             <directionalLight position={[3, 5, 2]} intensity={1} />
                             {ldrUrl && (
@@ -580,7 +594,11 @@ function KidsStepPageContent() {
 
                     {/* GLB Viewer (Always mounted) */}
                     <div style={{ position: "absolute", inset: 0, display: activeTab === 'GLB' ? 'block' : 'none' }}>
-                        <Canvas camera={{ position: [5, 5, 5], fov: 50 }} dpr={[1, 2]}>
+                        <Canvas
+                            camera={{ position: [5, 5, 5], fov: 50 }}
+                            dpr={[1, 2]}
+                            frameloop={activeTab === 'GLB' ? 'always' : 'never'}
+                        >
                             <ambientLight intensity={0.8} />
                             <directionalLight position={[5, 10, 5]} intensity={1.5} />
                             <Environment preset="city" />

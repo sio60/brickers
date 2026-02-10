@@ -22,7 +22,9 @@ type Props = {
 };
 
 function disposeObject3D(root: THREE.Object3D) {
+    if (!root) return;
     root.traverse((obj: any) => {
+        if (!obj) return;
         if (obj.geometry) obj.geometry.dispose?.();
         const mat = obj.material;
         if (Array.isArray(mat)) mat.forEach((m) => m?.dispose?.());
@@ -140,7 +142,14 @@ function LdrModel({
 
                 const g = await loader.loadAsync(url);
                 if (cancelled) { disposeObject3D(g); return; }
-                g.rotation.x = Math.PI;
+                if (g) {
+                    g.traverse((obj) => {
+                        if (obj && obj.children) {
+                            obj.children = obj.children.filter(c => c !== null);
+                        }
+                    });
+                    g.rotation.x = Math.PI;
+                }
 
                 prev = g;
                 setGroup(g);
@@ -429,6 +438,7 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
                 camera={{ position: [0, 80, 500], fov: 45 }}
                 dpr={[1, 2]}
                 gl={{ alpha: true, preserveDrawingBuffer: true }} // 캡처를 위해 preserveDrawingBuffer 필수
+                frameloop="demand"
             >
                 <ambientLight intensity={1.2} />
                 <directionalLight position={[10, 20, 10]} intensity={1.5} />
