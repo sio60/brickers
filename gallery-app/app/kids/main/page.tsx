@@ -11,6 +11,7 @@ import { getColorThemes, applyColorVariant, base64ToBlobUrl, ThemeInfo } from "@
 import BrickStackMiniGame from "@/components/kids/BrickStackMiniGame";
 // import { registerToGallery } from "@/lib/api/myApi"; // Import API
 import { useJobStore } from "@/stores/jobStore";
+import { generatePdfFromServer } from "@/components/kids/PDFGenerator";
 
 // SSR 제외
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
@@ -18,7 +19,6 @@ const KidsLdrPreview = dynamic(() => import("@/components/kids/KidsLdrPreview"),
 const KidsModelSelectModal = dynamic(() => import("@/components/kids/KidsModelSelectModal"), { ssr: false });
 
 import { KidsLdrPreviewHandle } from "@/components/kids/KidsLdrPreview";
-import { generatePdfFromServer } from "@/components/kids/PDFGenerator";
 
 function KidsPageContent() {
     const router = useRouter();
@@ -69,6 +69,7 @@ function KidsPageContent() {
     const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
     const [ldrUrl, setLdrUrl] = useState<string | null>(null);
     const [glbUrl, setGlbUrl] = useState<string | null>(null);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [jobThumbnailUrl, setJobThumbnailUrl] = useState<string | null>(null);
     const [jobId, setJobId] = useState<string | null>(null);
     const [debugLog, setDebugLog] = useState<string>("");
@@ -84,7 +85,7 @@ function KidsPageContent() {
     // 다운로드 드롭다운 상태
     const [isDownloadOpen, setIsDownloadOpen] = useState(false);
 
-    // PDF 다운로드 관련 (Hooks는 반드시 리턴 이전에 선언되어야 함)
+    // 3D 프리뷰 ref 및 PDF 생성 상태
     const previewRef = useRef<KidsLdrPreviewHandle>(null);
     const [isPdfGenerating, setIsPdfGenerating] = useState(false);
 
@@ -280,6 +281,7 @@ function KidsPageContent() {
 
                 setLdrUrl(modelUrl);
                 setGlbUrl(finalData.glbUrl || finalData.glb_url);
+                if (finalData.pdfUrl) setPdfUrl(finalData.pdfUrl);
                 setStatus("done");
                 console.log("[KidsPage] ✅ 전체 프로세스 완료! | ldrUrl:", modelUrl);
             } catch (e) {
@@ -420,8 +422,14 @@ function KidsPageContent() {
     }
 
     // PDF 다운로드 핸들러
-
     const handleDownloadPdf = async () => {
+        // 이미 서버에서 생성된 PDF가 있으면 그냥 엶
+        if (pdfUrl) {
+            window.open(pdfUrl, "_blank");
+            return;
+        }
+
+        // 없으면 클라이언트 캡처 기반 생성 시도
         if (!ldrUrl || !previewRef.current || isPdfGenerating) return;
 
         try {
@@ -433,10 +441,10 @@ function KidsPageContent() {
             if (stepImages.length === 0) throw new Error("캡처된 이미지가 없습니다.");
 
             // 2. 서버 요청
-            const pdfUrl = await generatePdfFromServer(ldrUrl, jobId || "model", stepImages);
+            const generatedPdfUrl = await generatePdfFromServer(ldrUrl, jobId || "model", stepImages);
 
             // 3. 다운로드
-            window.open(pdfUrl, "_blank");
+            window.open(generatedPdfUrl, "_blank");
             setDebugLog(t.kids?.steps?.pdfDownloadComplete || "✅ PDF 다운로드 완료");
         } catch (e) {
             console.error("PDF Download Error:", e);
@@ -454,22 +462,7 @@ function KidsPageContent() {
             <div className="center">
                 {status === "loading" && (
                     <>
-                        <BrickStackMiniGame percent={percent} />
-                        {agentLogs.length > 0 && (
-                            <div className="agentLogPanel">
-                                <div className="agentLogPanel__header">CoScientist AI</div>
-                                <div className="agentLogPanel__logs">
-                                    {agentLogs.map((log, i) => (
-                                        <div
-                                            key={i}
-                                            className={`agentLogPanel__line ${i === agentLogs.length - 1 ? 'agentLogPanel__line--active' : ''}`}
-                                        >
-                                            {log}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                        <BrickStackMiniGame percent={percent} message={agentLogs.length > 0 ? agentLogs[agentLogs.length - 1].replace(/^\[.*?\]\s*/, '') : undefined} />
                     </>
                 )}
 
@@ -485,7 +478,7 @@ function KidsPageContent() {
                             <button
                                 className="nextBtn nextBtn--ab"
                                 onClick={() => {
-                                    router.push(`/kids/steps?url=${encodeURIComponent(ldrUrl)}&jobId=${jobId ?? ""}&age=${age}`);
+                                    router.push(`/kids/steps?url=${encodeURIComponent(ldrUrl)}&jobId=${jobId ?? ""}&age=${age}${pdfUrl ? `&pdfUrl=${encodeURIComponent(pdfUrl)}` : ""}`);
                                 }}
                             >
                                 {t.kids.generate.next}
@@ -583,4 +576,3 @@ export default function KidsPage() {
         </Suspense>
     );
 }
-

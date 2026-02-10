@@ -199,9 +199,10 @@ function CameraFollow({ stackHeight }: { stackHeight: number }) {
 
 interface BrickStackProps {
     percent?: number;
+    message?: string;
 }
 
-export default function BrickStackMiniGame({ percent }: BrickStackProps) {
+export default function BrickStackMiniGame({ percent, message }: BrickStackProps) {
     const { t } = useLanguage();
     const [bricks, setBricks] = useState<Brick[]>([]);
     const [fallingPieces, setFallingPieces] = useState<FallingPiece[]>([]);
@@ -382,7 +383,7 @@ export default function BrickStackMiniGame({ percent }: BrickStackProps) {
             {percent !== undefined && (
                 <div className={styles.brickGame__progress}>
                     <div className={styles.brickGame__progressText}>
-                        <span>{t.kids.generate.loading}</span>
+                        <span>{message || t.kids.generate.loading}</span>
                         <span>{percent}%</span>
                     </div>
                     <div className={styles.brickGame__progressBar}>
