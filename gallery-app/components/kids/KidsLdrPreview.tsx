@@ -125,27 +125,22 @@ function LdrModel({
             try {
                 setGroup(null);
 
-                await loader.preloadMaterials(ldconfigUrl);
+                // 정합성 확인을 위해 LDR 텍스트 파싱 (Worker 활용)
+                const res = await fetch(url);
+                const text = await res.text();
+                const worker = new Worker(new URL('@/lib/ldrWorker.ts', import.meta.url));
+                worker.postMessage({ type: 'PROCESS_LDR', text });
+                worker.onmessage = (e) => {
+                    if (e.data.type === 'SUCCESS' && !cancelled) {
+                        const { stepTexts } = e.data.payload;
+                        if (onStepCountChange) onStepCountChange(stepTexts.length);
+                    }
+                    worker.terminate();
+                };
+
                 const g = await loader.loadAsync(url);
-
-                if (cancelled) {
-                    disposeObject3D(g);
-                    return;
-                }
-
+                if (cancelled) { disposeObject3D(g); return; }
                 g.rotation.x = Math.PI;
-
-                // 층(Layer) 정보 계산: Y 좌표(높이) 기준
-                const layerSet = new Set<number>();
-                g.children.forEach(child => {
-                    layerSet.add(Math.round(child.position.y * 10) / 10);
-                });
-
-                const sortedLayers = Array.from(layerSet).sort((a, b) => a - b);
-
-                if (onStepCountChange) {
-                    onStepCountChange(sortedLayers.length);
-                }
 
                 prev = g;
                 setGroup(g);
