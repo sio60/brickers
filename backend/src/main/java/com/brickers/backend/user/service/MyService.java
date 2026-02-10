@@ -86,24 +86,36 @@ public class MyService {
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
 
-        // 닉네임이 변경된 경우 갤러리/댓글 닉네임 동기화
-        if (req.getNickname() != null) {
-            String newNickname = user.getNickname();
+        // 닉네임 또는 프로필 이미지가 변경된 경우 갤러리/댓글 동기화
+        boolean nicknameChanged = req.getNickname() != null;
+        boolean profileImageChanged = req.getProfileImage() != null && !req.getProfileImage().trim().isEmpty();
+
+        if (nicknameChanged || profileImageChanged) {
             String userId = user.getId();
 
-            // 1. 갤러리 포스트 닉네임 동기화
+            // 1. 갤러리 포스트 동기화
             List<com.brickers.backend.gallery.entity.GalleryPostEntity> posts = galleryPostRepository
                     .findByAuthorId(userId);
             if (!posts.isEmpty()) {
-                posts.forEach(p -> p.setAuthorNickname(newNickname));
+                posts.forEach(p -> {
+                    if (nicknameChanged)
+                        p.setAuthorNickname(user.getNickname());
+                    if (profileImageChanged)
+                        p.setAuthorProfileImage(user.getProfileImage());
+                });
                 galleryPostRepository.saveAll(posts);
             }
 
-            // 2. 갤러리 댓글 닉네임 동기화
+            // 2. 갤러리 댓글 동기화
             List<com.brickers.backend.gallery.entity.GalleryCommentEntity> comments = galleryCommentRepository
                     .findByAuthorId(userId);
             if (!comments.isEmpty()) {
-                comments.forEach(c -> c.setAuthorNickname(newNickname));
+                comments.forEach(c -> {
+                    if (nicknameChanged)
+                        c.setAuthorNickname(user.getNickname());
+                    if (profileImageChanged)
+                        c.setAuthorProfileImage(user.getProfileImage());
+                });
                 galleryCommentRepository.saveAll(comments);
             }
 

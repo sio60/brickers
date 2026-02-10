@@ -92,10 +92,20 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
 
                     {/* Meta info & Action */}
                     <div className="flex items-center justify-between gap-2">
-                        <div className="flex-1 flex items-center gap-1.5 text-[11px] font-bold text-gray-400 overflow-hidden whitespace-nowrap">
-                            {item.authorNickname && (
-                                <span className="truncate max-w-[80px] text-gray-500">@{item.authorNickname}</span>
-                            )}
+                        <div className="flex-1 flex items-center gap-2 overflow-hidden">
+                            {/* Profile Image / Avatar */}
+                            <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden border border-gray-200">
+                                {item.authorProfileImage ? (
+                                    <img src={item.authorProfileImage} alt={item.authorNickname || ''} className="w-full h-full object-cover" />
+                                ) : (
+                                    <span className="text-[9px] font-bold text-gray-500 leading-none">
+                                        {item.authorNickname ? item.authorNickname[0].toUpperCase() : '?'}
+                                    </span>
+                                )}
+                            </div>
+                            <span className="text-[11px] font-bold text-gray-500 truncate max-w-[80px]">
+                                @{item.authorNickname || 'Anonymous'}
+                            </span>
                         </div>
 
                         {/* Action Buttons */}

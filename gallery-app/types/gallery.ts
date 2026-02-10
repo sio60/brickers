@@ -2,7 +2,9 @@ export type GalleryItem = {
     id: string;
     title: string;
     thumbnailUrl: string;
+    authorId?: string;
     authorNickname?: string;
+    authorProfileImage?: string;
     createdAt?: string;
     brickCount?: number;
     parts?: number;        // ✅ 추가: 최종 브릭 개수

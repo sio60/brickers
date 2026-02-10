@@ -207,7 +207,15 @@ function ViewerContent() {
                             }}
                             onError={() => setLoading(false)}
                         />
-                        <OrbitControls makeDefault enablePan={false} enableZoom />
+                        <OrbitControls
+                            makeDefault
+                            autoRotate={false}
+                            enablePan={false}
+                            enableZoom={true}
+                            enableDamping={true}
+                            dampingFactor={0.1}
+                            target={[0, 0, 0]}
+                        />
                     </Canvas>
 
                     {/* Instructions overlay */}
