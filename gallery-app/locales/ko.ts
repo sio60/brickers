@@ -315,6 +315,7 @@ export const ko = {
         login: "로그인",
         logout: "로그아웃",
         gallery: "갤러리",
+        notifications: "알림",
         logoAlt: "브릭커스 로고",
         myGallery: "내 갤러리",
         myPage: "마이페이지"

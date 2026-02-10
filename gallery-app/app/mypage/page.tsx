@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import styles from "./MyPage.module.css";
@@ -39,6 +39,7 @@ type MenuItem = "profile" | "membership" | "jobs" | "inquiries" | "reports" | "s
 
 export default function MyPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { language, setLanguage, t } = useLanguage();
     const { isAuthenticated, isLoading, authFetch, setUser } = useAuth(); // Added setUser
 
@@ -110,6 +111,14 @@ export default function MyPage() {
         setJobsTotalPages(1);
         loadJobsPage(0, true);
     };
+
+    useEffect(() => {
+        const menu = searchParams.get('menu');
+        if (menu && ['profile', 'membership', 'jobs', 'inquiries', 'reports', 'settings', 'delete'].includes(menu)) {
+            setActiveMenu(menu as MenuItem);
+        }
+    }, [searchParams]);
+
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
             router.replace("/?login=true");
@@ -140,6 +149,7 @@ export default function MyPage() {
     useEffect(() => {
         if (activeMenu !== 'jobs') return;
         resetAndLoadJobs();
+        // Update URL without reload to reflect current tab (optional but good for UX)
     }, [activeMenu, jobSort]);
 
     useEffect(() => {
