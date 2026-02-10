@@ -19,6 +19,12 @@ import './KidsStepPage.css';
 // SSR 제외
 const CDN_BASE = "https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/";
 
+/* ── Monkey-patch: null children을 원천 차단 ── */
+const _origAdd = THREE.Object3D.prototype.add;
+THREE.Object3D.prototype.add = function (...objects: THREE.Object3D[]) {
+    return _origAdd.apply(this, objects.filter(o => o != null));
+};
+
 function removeNullChildren(obj: THREE.Object3D) {
     if (!obj) return;
     if (obj.children) {
