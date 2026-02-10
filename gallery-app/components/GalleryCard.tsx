@@ -57,10 +57,12 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
     const formatDate = (dateStr?: string) => {
         if (!dateStr) return '';
         const date = new Date(dateStr);
-        // 서버/클라이언트 hydration 일치를 위해 고정 포맷 사용
-        const month = date.getMonth() + 1;
-        const day = date.getDate();
-        return (t.galleryCard?.monthDay || '{month}/{day}').replace('{month}', String(month)).replace('{day}', String(day));
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hour = String(date.getHours()).padStart(2, '0');
+        const min = String(date.getMinutes()).padStart(2, '0');
+        return `${year}.${month}.${day} ${hour}:${min}`;
     };
 
     return (
@@ -91,6 +93,11 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
                     <h3 className="font-extrabold text-[#000] text-[15px] leading-tight line-clamp-1 group-hover:text-amber-500 transition-colors">
                         {item.title}
                     </h3>
+
+                    {/* Registration Date */}
+                    <div className="text-[10px] text-gray-400 font-medium">
+                        {formatDate(item.createdAt)}
+                    </div>
 
                     {/* Meta info & Action */}
                     <div className="flex items-center justify-between gap-2">
