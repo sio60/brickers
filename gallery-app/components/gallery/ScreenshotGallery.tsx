@@ -2,25 +2,19 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { GalleryItem } from '@/types/gallery';
 
 type ViewName = 'front' | 'back' | 'left' | 'right' | 'top' | 'bottom';
 
 const VIEW_ORDER: ViewName[] = ['front', 'back', 'left', 'right', 'top', 'bottom'];
-const VIEW_LABELS: Record<ViewName, string> = {
-    front: '\uc55e',
-    back: '\ub4a4',
-    left: '\uc88c',
-    right: '\uc6b0',
-    top: '\uc704',
-    bottom: '\uc544\ub798',
-};
 
 type ScreenshotGalleryProps = {
     item: GalleryItem;
 };
 
 export default function ScreenshotGallery({ item }: ScreenshotGalleryProps) {
+    const { t } = useLanguage();
     const [selectedView, setSelectedView] = useState<ViewName>('front');
 
     return (
@@ -30,7 +24,7 @@ export default function ScreenshotGallery({ item }: ScreenshotGalleryProps) {
                 {item.screenshotUrls?.[selectedView] ? (
                     <Image
                         src={item.screenshotUrls[selectedView]!}
-                        alt={VIEW_LABELS[selectedView] || selectedView}
+                        alt={selectedView}
                         fill
                         className="object-contain"
                     />
@@ -57,13 +51,10 @@ export default function ScreenshotGallery({ item }: ScreenshotGalleryProps) {
                             >
                                 <Image
                                     src={item.screenshotUrls[view]!}
-                                    alt={VIEW_LABELS[view]}
+                                    alt={view}
                                     fill
                                     className="object-cover"
                                 />
-                                <span className="absolute bottom-0 inset-x-0 bg-black/50 text-white text-[8px] text-center py-0.5 font-bold">
-                                    {VIEW_LABELS[view]}
-                                </span>
                             </button>
                         ) : null
                     ))}
@@ -80,7 +71,7 @@ export default function ScreenshotGallery({ item }: ScreenshotGalleryProps) {
                         }}
                         className="w-full py-2.5 bg-black text-white rounded-xl font-bold text-sm hover:bg-gray-800 transition-all"
                     >
-                        3D\ub85c \uc790\uc138\ud788 \ubcf4\uae30
+                        {t.detail.view3d}
                     </button>
                 )}
             </div>
