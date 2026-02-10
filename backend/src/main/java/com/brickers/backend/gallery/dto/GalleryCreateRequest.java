@@ -3,6 +3,7 @@ package com.brickers.backend.gallery.dto;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
 
 import com.brickers.backend.gallery.entity.Visibility;
 
@@ -18,5 +19,6 @@ public class GalleryCreateRequest {
     private String sourceImageUrl; // 원본 이미지 URL
     private String glbUrl; // GLB 파일 URL
     private Integer parts; // 최종 브릭 개수
+    private Map<String, String> screenshotUrls; // 6면 스크린샷 URL 맵
     private Visibility visibility; // null이면 PUBLIC
 }

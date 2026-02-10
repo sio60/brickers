@@ -20,6 +20,7 @@ import org.springframework.security.core.Authentication;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -59,6 +60,7 @@ public class GalleryService {
                 .sourceImageUrl(normalizeUrlOrNull(req.getSourceImageUrl()))
                 .glbUrl(normalizeUrlOrNull(req.getGlbUrl()))
                 .parts(req.getParts())
+                .screenshotUrls(req.getScreenshotUrls())
                 .visibility(req.getVisibility() == null ? Visibility.PUBLIC : req.getVisibility())
                 .deleted(false)
                 .createdAt(now)
@@ -221,6 +223,15 @@ public class GalleryService {
         return result.map(this::toResponse);
     }
 
+    /** 갤러리 포스트 screenshotUrls 업데이트 (내부 API용) */
+    public void updateScreenshotUrls(String postId, Map<String, String> screenshotUrls) {
+        GalleryPostEntity post = galleryPostRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다. id=" + postId));
+        post.setScreenshotUrls(screenshotUrls);
+        post.setUpdatedAt(LocalDateTime.now());
+        galleryPostRepository.save(post);
+    }
+
     // ========================= helpers =========================
 
     private void validateTitle(String title) {
@@ -280,6 +291,7 @@ public class GalleryService {
                 .sourceImageUrl(post.getSourceImageUrl())
                 .glbUrl(post.getGlbUrl())
                 .parts(post.getParts())
+                .screenshotUrls(post.getScreenshotUrls())
                 .isPro(post.getParts() != null && post.getParts() >= 1000)
                 .visibility(post.getVisibility())
                 .createdAt(post.getCreatedAt())
