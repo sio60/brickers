@@ -672,6 +672,24 @@ function KidsStepPageContent() {
                                 {serverPdfUrl ? t.kids.steps?.pdfDownloadBtn : t.kids.steps?.pdfPreparing}
                             </button>
                         </div>
+                        <div className="kidsStep__sidebarSection">
+                            <div className="kidsStep__sidebarSectionLabel">
+                                이동하기
+                            </div>
+                            <button className="kidsStep__sidebarBtn" onClick={() => router.push("/")}>
+                                홈으로
+                            </button>
+                            <button className="kidsStep__sidebarBtn" style={{ marginTop: 6 }} onClick={() => router.push("/gallery")}>
+                                갤러리 보기
+                            </button>
+                            <button className="kidsStep__sidebarBtn" style={{ marginTop: 6 }} onClick={() => {
+                                sessionStorage.removeItem('pendingUpload');
+                                sessionStorage.removeItem('pendingPrompt');
+                                router.push("/");
+                            }}>
+                                새로 만들기
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <div className="kidsStep__sidebarSpacer" />
