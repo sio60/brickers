@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -68,6 +68,18 @@ type User = {
     suspendedReason?: string;
 };
 
+// [NEW] 댓글 타입 정의
+type Comment = {
+    id: string;
+    postId: string;
+    authorId: string;
+    authorNickname: string;
+    content: string;
+    deleted: boolean;
+    createdAt: string;
+    updatedAt: string;
+};
+
 export default function AdminPage() {
     const router = useRouter();
     const { t } = useLanguage();
@@ -75,18 +87,22 @@ export default function AdminPage() {
 
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<AdminStats | null>(null);
-    const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "gallery" | "inquiries" | "reports" | "refunds">("dashboard");
+    const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "gallery" | "inquiries" | "reports" | "refunds" | "comments">("dashboard");
 
     // 데이터 상태
     const [inquiries, setInquiries] = useState<Inquiry[]>([]);
     const [reports, setReports] = useState<Report[]>([]);
     const [refunds, setRefunds] = useState<RefundRequest[]>([]);
-    const [users, setUsers] = useState<User[]>([]); // [NEW] 사용자 목록 상태
+    const [users, setUsers] = useState<User[]>([]);
 
     // 답변 입력 상태
     const [answerTexts, setAnswerTexts] = useState<Record<string, string>>({});
     // [NEW] 사용자 검색 상태
     const [searchTerm, setSearchTerm] = useState("");
+
+    const [comments, setComments] = useState<Comment[]>([]);
+    const [commentPage, setCommentPage] = useState(0);
+    const [commentTotalPages, setCommentTotalPages] = useState(0);
 
     useEffect(() => {
         getMyProfile()
@@ -114,8 +130,9 @@ export default function AdminPage() {
         if (activeTab === "inquiries") fetchInquiries();
         if (activeTab === "reports") fetchReports();
         if (activeTab === "refunds") fetchRefunds();
-        if (activeTab === "users") fetchUsers(); // [NEW]
-    }, [activeTab]);
+        if (activeTab === "users") fetchUsers();
+        if (activeTab === "comments") fetchComments(); // [NEW]
+    }, [activeTab, commentPage]);
 
     const fetchInquiries = async () => {
         try {
@@ -140,6 +157,36 @@ export default function AdminPage() {
             }
         } catch (e) {
             console.error(e);
+        }
+    };
+
+    // [NEW] 댓글 목록 조회
+    const fetchComments = async () => {
+        try {
+            const res = await authFetch(`/api/admin/comments?page=${commentPage}&size=20&sort=createdAt,desc`);
+            if (res.ok) {
+                const data = await res.json();
+                setComments(data.content || []);
+                setCommentTotalPages(data.totalPages || 0);
+            }
+        } catch (error) {
+            console.error("Failed to fetch comments", error);
+        }
+    };
+
+    // [NEW] 댓글 삭제
+    const handleDeleteComment = async (commentId: string) => {
+        if (!confirm("Are you sure you want to delete this comment?")) return;
+        try {
+            const res = await authFetch(`/api/admin/comments/${commentId}`, { method: 'DELETE' });
+            if (res.ok) {
+                // Remove from list or mark deleted
+                setComments(prev => prev.map(c => c.id === commentId ? { ...c, deleted: true } : c));
+            } else {
+                alert("Failed to delete comment");
+            }
+        } catch (error) {
+            console.error("Error deleting comment", error);
         }
     };
 
@@ -346,6 +393,12 @@ export default function AdminPage() {
                             {t.admin.sidebar.users}
                         </button>
                         <button
+                            className={`${styles.sidebarItem} ${activeTab === "comments" ? styles.active : ""}`}
+                            onClick={() => setActiveTab("comments")}
+                        >
+                            Comments
+                        </button>
+                        <button
                             className={`${styles.sidebarItem} ${activeTab === "inquiries" ? styles.active : ""}`}
                             onClick={() => setActiveTab("inquiries")}
                         >
@@ -379,6 +432,7 @@ export default function AdminPage() {
                                 {activeTab === "inquiries" && t.admin.sidebar.inquiries}
                                 {activeTab === "reports" && t.admin.sidebar.reports}
                                 {activeTab === "refunds" && t.admin.sidebar.refunds}
+                                {activeTab === "comments" && "Comments Management"}
                             </h1>
                             <button className={styles.closeBtn} onClick={() => router.back()}>✕</button>
                         </header>
@@ -403,6 +457,94 @@ export default function AdminPage() {
                             </div>
                         )}
 
+                        {/* [NEW] Comments Tab */}
+                        {activeTab === "comments" && (
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-xl font-bold text-gray-800">Comments Management</h2>
+                                    <button onClick={fetchComments} className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
+                                        Refresh
+                                    </button>
+                                </div>
+
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-500 font-semibold">
+                                                <th className="px-6 py-4">Content</th>
+                                                <th className="px-6 py-4 w-40">Author</th>
+                                                <th className="px-6 py-4 w-32">Post ID</th>
+                                                <th className="px-6 py-4 w-40">Date</th>
+                                                <th className="px-6 py-4 w-24">Status</th>
+                                                <th className="px-6 py-4 w-24 text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {comments.map((comment: Comment) => (
+                                                <tr key={comment.id} className="hover:bg-gray-50 transition-colors text-sm text-gray-700">
+                                                    <td className="px-6 py-4">
+                                                        <div className="max-w-md break-words">{comment.content}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 font-medium">{comment.authorNickname || 'Unknown'}</td>
+                                                    <td className="px-6 py-4 text-xs text-gray-500 font-mono">{comment.postId.substring(0, 8)}...</td>
+                                                    <td className="px-6 py-4 text-xs text-gray-500">
+                                                        {new Date(comment.createdAt).toLocaleDateString()} <br />
+                                                        {new Date(comment.createdAt).toLocaleTimeString()}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {comment.deleted ? (
+                                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                                Deleted
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                                Active
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        {!comment.deleted && (
+                                                            <button
+                                                                onClick={() => handleDeleteComment(comment.id)}
+                                                                className="text-red-500 hover:text-red-700 font-medium text-xs border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-all"
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {comments.length === 0 && (
+                                                <tr>
+                                                    <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                                                        No comments found.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                    {/* Pagination (Simple) */}
+                                    <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+                                        <button
+                                            disabled={commentPage === 0}
+                                            onClick={() => setCommentPage((p: number) => p - 1)}
+                                            className="px-3 py-1 rounded text-sm disabled:opacity-30 hover:bg-gray-100"
+                                        >
+                                            Previous
+                                        </button>
+                                        <span className="text-xs text-gray-500">Page {commentPage + 1} of {commentTotalPages || 1}</span>
+                                        <button
+                                            disabled={commentPage >= commentTotalPages - 1}
+                                            onClick={() => setCommentPage((p: number) => p + 1)}
+                                            className="px-3 py-1 rounded text-sm disabled:opacity-30 hover:bg-gray-100"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* [NEW] Users Tab */}
                         {activeTab === "users" && (
                             <div className={styles.list}>
@@ -411,7 +553,7 @@ export default function AdminPage() {
                                         type="text"
                                         placeholder={t.admin.users?.searchPlaceholder || "Search by email or nickname..."}
                                         value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                                         style={{ padding: "10px", borderRadius: "8px", border: "1px solid #ddd", flex: 1 }}
                                     />
                                     {/* 검색 기능은 백엔드 구현 필요 */}
@@ -429,9 +571,9 @@ export default function AdminPage() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {users.filter(u =>
+                                        {users.filter((u: User) =>
                                             u.email?.includes(searchTerm) || u.nickname?.includes(searchTerm)
-                                        ).map(user => (
+                                        ).map((user: User) => (
                                             <tr key={user.id} style={{ borderBottom: "1px solid #eee" }}>
                                                 <td style={{ padding: "12px" }}>
                                                     <div style={{ fontWeight: "bold" }}>{user.nickname}</div>
@@ -607,7 +749,7 @@ export default function AdminPage() {
                                                 <textarea
                                                     placeholder={t.admin.refund.rejectReason}
                                                     value={answerTexts[item.orderId] || ""}
-                                                    onChange={(e) => setAnswerTexts(prev => ({ ...prev, [item.orderId]: e.target.value }))}
+                                                    onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setAnswerTexts(prev => ({ ...prev, [item.orderId]: e.target.value }))}
                                                 />
                                                 <div className={styles.actions}>
                                                     <button
