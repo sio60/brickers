@@ -347,6 +347,7 @@ export const ja = {
             settings: "システム設定",
             inquiries: "問い合わせ管理",
             reports: "報告管理",
+            comments: "コメント管理",
             refunds: "払い戻し管理"
         },
         accessDenied: "管理者権限がありません。(現在の権限: {role})",
