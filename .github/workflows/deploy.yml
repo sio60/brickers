@@ -94,6 +94,16 @@ jobs:
             mkdir -p ~/brickers
             cd ~/brickers
 
+            echo "🔧 Ensuring docker compose is available..."
+            if ! docker compose version >/dev/null 2>&1; then
+              sudo apt-get update -y
+              sudo apt-get install -y docker-compose-plugin docker-buildx-plugin || true
+            fi
+            if ! docker-compose version >/dev/null 2>&1; then
+              sudo curl -L "https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+            fi
+
             echo "📄 Creating .env file..."
             cat > .env <<'EOF'
             DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
@@ -171,11 +181,14 @@ jobs:
             echo "🔐 Docker Hub login..."
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-            echo "🔁 Stopping old containers to free 'in-use' images..."
+            echo "🛑 Stopping old containers to free 'in-use' images..."
             docker compose down || docker-compose down
 
-            echo "🧹 Cleaning up all unused images to free space..."
-            docker system prune -af || true
+            echo "🧹 Aggressive cleanup to free disk..."
+            docker system prune -af --volumes || true
+            docker builder prune -af || true
+            docker volume prune -f || true
+            df -h
 
             echo "📦 Pulling fresh images..."
             docker compose pull || docker-compose pull
