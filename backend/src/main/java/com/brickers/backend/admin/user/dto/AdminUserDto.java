@@ -17,11 +17,12 @@ public class AdminUserDto {
     private String nickname;
     private String profileImage;
     private UserRole role;
-    private String provider;
     private MembershipPlan membershipPlan;
     private AccountState accountState;
     private LocalDateTime createdAt;
     private LocalDateTime lastLoginAt;
+
+    // 정지 관련
     private LocalDateTime suspendedAt;
     private String suspendedReason;
 
@@ -32,7 +33,6 @@ public class AdminUserDto {
                 .nickname(user.getNickname())
                 .profileImage(user.getProfileImage())
                 .role(user.getRole())
-                .provider(user.getProvider())
                 .membershipPlan(user.getMembershipPlan())
                 .accountState(user.getAccountState())
                 .createdAt(user.getCreatedAt())

@@ -9,7 +9,7 @@ import { getPresignUrl } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, ThemeInfo } from "@/lib/api/colorVariantApi";
 // import KidsLoadingScreen from "@/components/kids/KidsLoadingScreen";
 import BrickStackMiniGame from "@/components/kids/BrickStackMiniGame";
-// import { registerToGallery } from "@/lib/api/myApi"; // Import API
+import { registerToGallery } from "@/lib/api/myApi";
 import { useJobStore } from "@/stores/jobStore";
 import { generatePdfFromServer } from "@/components/kids/PDFGenerator";
 
@@ -28,9 +28,9 @@ function KidsPageContent() {
     const age = (searchParams.get("age") ?? "4-5") as "4-5" | "6-7" | "8-10" | "PRO";
 
     const budget = useMemo(() => {
-        if (age === "4-5") return 100;
-        if (age === "6-7") return 150;
-        if (age === "8-10") return 200;
+        if (age === "4-5") return 150;
+        if (age === "6-7") return 250;
+        if (age === "8-10") return 350;
         if (age === "PRO") return 5000;
         return 500;
     }, [age]);
@@ -82,6 +82,14 @@ function KidsPageContent() {
     const [debugLog, setDebugLog] = useState<string>("");
     const [currentStage, setCurrentStage] = useState<string>("QUEUED");
     const [agentLogs, setAgentLogs] = useState<string[]>([]);
+
+    // 공유하기 관련
+    const [isSharing, setIsSharing] = useState(false);
+    const [shareUrl, setShareUrl] = useState<string | null>(null);
+    const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
+    const [brickCount, setBrickCount] = useState<number>(0);
+    const [screenshotUrls, setScreenshotUrls] = useState<Record<string, string> | null>(null);
+    const [jobTitle, setJobTitle] = useState<string>("");
 
     // 색상 변경 관련
     const [isColorModalOpen, setIsColorModalOpen] = useState(false);
@@ -265,6 +273,12 @@ function KidsPageContent() {
                         finalData = statusData;
                         if (alive && statusData.glbUrl) setGlbUrl(statusData.glbUrl);
 
+                        // 공유용 추가 데이터 저장
+                        if (statusData.suggestedTags) setSuggestedTags(statusData.suggestedTags);
+                        if (statusData.parts) setBrickCount(statusData.parts);
+                        if (statusData.screenshotUrls) setScreenshotUrls(statusData.screenshotUrls);
+                        if (statusData.title) setJobTitle(statusData.title);
+
                         // 전역 토스트 표시 예약 (페이지 이탈 시 표시되도록)
                         useJobStore.getState().setShowDoneToast(true);
 
@@ -439,6 +453,46 @@ function KidsPageContent() {
         return <div className="page">Loading...</div>;
     }
 
+    // 공유하기 핸들러
+    const handleShare = async () => {
+        if (shareUrl) {
+            await navigator.clipboard.writeText(shareUrl);
+            alert("링크가 복사되었습니다!");
+            return;
+        }
+
+        setIsSharing(true);
+        try {
+            const res = await registerToGallery({
+                jobId: jobId || undefined,
+                title: jobTitle || "브릭 도안",
+                content: "생성된 브릭 도안입니다.",
+                tags: suggestedTags.length > 0 ? suggestedTags : ["Kids", "Brick"],
+                thumbnailUrl: jobThumbnailUrl || undefined,
+                ldrUrl: ldrUrl || undefined,
+                glbUrl: glbUrl || undefined,
+                parts: brickCount || undefined,
+                screenshotUrls: screenshotUrls || undefined,
+                visibility: "PUBLIC",
+            });
+
+            const safeTitle = (res.title || "brick").replace(/[^a-zA-Z0-9가-힣]/g, "-");
+            const url = `${window.location.origin}/gallery/${safeTitle}-${res.id}`;
+            setShareUrl(url);
+
+            await navigator.clipboard.writeText(url);
+            alert("링크가 복사되었습니다!");
+        } catch (err: unknown) {
+            if (err instanceof Error && err.message?.includes("이미 갤러리에 등록")) {
+                alert("이미 공유된 도안입니다.");
+            } else {
+                alert("공유에 실패했습니다.");
+            }
+        } finally {
+            setIsSharing(false);
+        }
+    };
+
     // PDF 다운로드 핸들러
     const handleDownloadPdf = async () => {
         // 이미 서버에서 생성된 PDF가 있으면 그냥 엶
@@ -528,6 +582,14 @@ function KidsPageContent() {
                                     </div>
                                 )}
                             </div>
+
+                            <button
+                                className="dlBtn"
+                                onClick={handleShare}
+                                disabled={isSharing}
+                            >
+                                {isSharing ? "공유 중..." : shareUrl ? "링크 복사" : "공유하기"}
+                            </button>
 
                             <button className="dlBtn colorBtn" onClick={openColorModal} style={{ display: 'none' }}>
                                 {t.kids.steps?.changeColor || '색상 변경'}

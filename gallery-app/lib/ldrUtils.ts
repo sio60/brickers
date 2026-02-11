@@ -8,6 +8,7 @@ export type StepBrickInfo = {
 
 export type LdrStepData = {
     stepTexts: string[];
+    stepOnlyTexts: string[]; // [NEW] 해당 스텝의 브릭만 포함
     bounds: THREE.Box3 | null;
     stepBricks: StepBrickInfo[][];
 };
@@ -80,7 +81,8 @@ export function parseAndProcessSteps(ldrText: string): LdrStepData {
     }
     flush();
 
-    // 2. 정렬 (LDraw 좌표계: Y가 아래쪽. 바닥부터 쌓으려면 Y 내림차순 정렬)
+    // 2. 정렬 (AI 엔진 생성 모델은 Y가 위쪽으로 증가함: 0이 바닥)
+    // 따라서 아래에서부터 위로 쌓으려면 Y 오름차순(Ascending) 정렬이 필요합니다.
     let header = segments[0] || { lines: [], avgY: -Infinity, bricks: new Map() };
     let body = segments.slice(1);
 
@@ -94,7 +96,7 @@ export function parseAndProcessSteps(ldrText: string): LdrStepData {
         if (a.avgY === -Infinity && b.avgY === -Infinity) return 0;
         if (a.avgY === -Infinity) return 1;
         if (b.avgY === -Infinity) return -1;
-        return b.avgY - a.avgY;
+        return a.avgY - b.avgY;
     });
 
     // Merge steps by layer
@@ -135,14 +137,21 @@ export function parseAndProcessSteps(ldrText: string): LdrStepData {
         sortedSegments.push(header); // Fallback for header-only file
     }
 
-    // 3. 누적 텍스트 및 브릭 정보 생성
-    const out: string[] = [];
+    // 3. 누적 및 개별 텍스트 및 브릭 정보 생성
+    const stepTexts: string[] = [];
+    const stepOnlyTexts: string[] = [];
     const stepBricks: StepBrickInfo[][] = [];
     let acc: string[] = [];
 
+    const headerText = header.lines.join("\n");
+
     for (const seg of sortedSegments) {
         acc = acc.concat(seg.lines);
-        out.push(acc.join("\n"));
+        stepTexts.push(acc.join("\n"));
+
+        // 개별 스텝 텍스트 (헤더 + 해당 세그먼트)
+        stepOnlyTexts.push(headerText + (headerText ? "\n" : "") + seg.lines.join("\n"));
+
         // Each entry in stepBricks corresponds to the bricks *newly added* in that step
         stepBricks.push(Array.from(seg.bricks.values()));
     }
@@ -156,7 +165,7 @@ export function parseAndProcessSteps(ldrText: string): LdrStepData {
         );
     }
 
-    return { stepTexts: out, bounds, stepBricks };
+    return { stepTexts, stepOnlyTexts, bounds, stepBricks };
 }
 
 export function buildCumulativeStepTexts(ldrText: string): string[] {

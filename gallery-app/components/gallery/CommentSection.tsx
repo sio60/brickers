@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 export type Comment = {
     id: string;
+    authorId: string; // Added authorId
     authorNickname: string;
     authorProfileImage?: string;
     content: string;
@@ -20,7 +21,15 @@ type CommentTranslations = {
         placeholderComment: string;
         loginToComment: string;
         post: string;
+        delete?: string; // Optional
+        deleteConfirm?: string; // Optional
     };
+};
+
+type User = {
+    id: string;
+    role?: string;
+    [key: string]: any;
 };
 
 type CommentSectionProps = {
@@ -29,8 +38,10 @@ type CommentSectionProps = {
     commentInput: string;
     commentLoading: boolean;
     isAuthenticated: boolean;
+    currentUser: User | null; // Added currentUser
     onCommentInputChange: (value: string) => void;
     onCommentSubmit: (parentId?: string, replyContent?: string) => void;
+    onCommentDelete: (commentId: string) => void; // Added onCommentDelete
     t: CommentTranslations;
 };
 
@@ -46,9 +57,11 @@ export function CommentList({
     comments,
     commentCount,
     isAuthenticated,
+    currentUser,
     onCommentSubmit,
+    onCommentDelete,
     t,
-}: Pick<CommentSectionProps, 'comments' | 'commentCount' | 'isAuthenticated' | 'onCommentSubmit' | 't'>) {
+}: Pick<CommentSectionProps, 'comments' | 'commentCount' | 'isAuthenticated' | 'currentUser' | 'onCommentSubmit' | 'onCommentDelete' | 't'>) {
     // Reply State (local to this component)
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
     const [replyInput, setReplyInput] = useState('');
@@ -78,9 +91,18 @@ export function CommentList({
         if (!expandedComments.has(parentId)) toggleExpand(parentId);
     };
 
+    const handleDeleteClick = (commentId: string) => {
+        if (confirm(t.detail.deleteConfirm || "Are you sure you want to delete this comment?")) {
+            onCommentDelete(commentId);
+        }
+    };
+
     const renderComment = (c: Comment, depth = 0, parentNickname?: string) => {
         const isExpanded = expandedComments.has(c.id);
         const hasChildren = c.children && c.children.length > 0;
+
+        // Permission check: Owner or Admin
+        const canDelete = currentUser && (currentUser.id === c.authorId || currentUser.role === 'ADMIN');
 
         return (
             <div key={c.id} className="w-full">
@@ -115,6 +137,14 @@ export function CommentList({
                             >
                                 {t.detail.reply || "\ub2f5\uae00 \ub2ec\uae30"}
                             </button>
+                            {canDelete && (
+                                <button
+                                    onClick={() => handleDeleteClick(c.id)}
+                                    className="text-[11px] font-bold text-red-400 hover:text-red-600 transition-colors"
+                                >
+                                    {t.detail.delete || "Delete"}
+                                </button>
+                            )}
                         </div>
 
                         {/* Reply Input */}

@@ -301,7 +301,8 @@ export const en = {
             pdfWait: "Preparing PDF. Please wait a moment.",
             registered: "Registered",
             themeLoading: "Loading themes...",
-            colorChangeModelError: "Error occurred while generating model after color change."
+            colorChangeModelError: "Error occurred while changing colors.",
+            viewAssembly: "View Assembly"
         },
         viewer: {
             noUrl: "Model URL not found",
@@ -416,6 +417,15 @@ export const en = {
             user: "User ID",
             requestDate: "Requested Date",
             orderNo: "Order No"
+        },
+        users: {
+            title: "User Management",
+            searchPlaceholder: "Search by email or nickname...",
+            suspendReason: "Enter suspension reason:",
+            suspended: "User has been suspended.",
+            confirmActivate: "Activate this user?",
+            activated: "User has been activated.",
+            empty: "No users found."
         },
         error: "An error occurred.",
         failed: "Processing failed.",
