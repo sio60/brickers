@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -79,5 +78,16 @@ public class AnalyticsController {
             return ResponseEntity.status(403).body("Unauthorized internal access");
         }
         return ResponseEntity.ok(gaService.getDailyEventStats(days, eventName));
+    }
+
+    @GetMapping("/user-activity")
+    public ResponseEntity<?> getUserActivity(
+            @RequestHeader(name = "X-Internal-Token", required = false) String token,
+            @RequestParam(name = "userId") String userId,
+            @RequestParam(name = "days", defaultValue = "30") int days) throws IOException {
+        if (!isInternalAuthorized(token)) {
+            return ResponseEntity.status(403).body("Unauthorized internal access");
+        }
+        return ResponseEntity.ok(gaService.getUserActivity(userId, days));
     }
 }

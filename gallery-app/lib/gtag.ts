@@ -24,3 +24,25 @@ export const event = ({ action, category, label, value }: {
         });
     }
 };
+
+/**
+ * 로그인한 사용자의 ID를 GA4에 설정합니다 (개인 식별 금지 원칙에 따라 DB ID 사용)
+ */
+export const setUserId = (userId: string | null) => {
+    if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("config", GA_TRACKING_ID, {
+            user_id: userId,
+        });
+        console.debug(`[GA4] User ID set to: ${userId}`);
+    }
+};
+
+/**
+ * 사용자 속성(User Properties)을 설정합니다 (예: nickname, membership 등)
+ */
+export const setUserProperties = (properties: Record<string, any>) => {
+    if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("set", "user_properties", properties);
+        console.debug(`[GA4] User Properties set:`, properties);
+    }
+};

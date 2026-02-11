@@ -152,6 +152,39 @@ public class GoogleAnalyticsService {
         return result;
     }
 
+    /**
+     * 특정 유저의 최근 상호작용 데이터를 조회합니다.
+     */
+    public List<Map<String, Object>> getUserActivity(String userId, int days) throws IOException {
+        if (analyticsDataClient == null)
+            return new ArrayList<>();
+
+        RunReportRequest request = RunReportRequest.newBuilder()
+                .setProperty("properties/" + propertyId)
+                .addDimensions(Dimension.newBuilder().setName("eventName"))
+                .addMetrics(Metric.newBuilder().setName("eventCount"))
+                .setDimensionFilter(FilterExpression.newBuilder()
+                        .setFilter(Filter.newBuilder()
+                                .setFieldName("userId")
+                                .setStringFilter(Filter.StringFilter.newBuilder()
+                                        .setValue(userId))
+                                .build())
+                        .build())
+                .addDateRanges(DateRange.newBuilder()
+                        .setStartDate(days + "daysAgo")
+                        .setEndDate("today"))
+                .build();
+
+        RunReportResponse response = analyticsDataClient.runReport(request);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Row row : response.getRowsList()) {
+            result.add(Map.of(
+                    "eventName", row.getDimensionValues(0).getValue(),
+                    "count", Long.parseLong(row.getMetricValues(0).getValue())));
+        }
+        return result;
+    }
+
     private long getMetricSum(int days, String metricName) throws IOException {
         if (analyticsDataClient == null)
             return 0;
