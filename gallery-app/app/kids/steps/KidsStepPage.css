@@ -543,3 +543,212 @@
     width: 80px;
     height: 80px;
 }
+
+/* ── Back Button ── */
+.kidsStep__backBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: #666;
+    padding: 4px 8px;
+    margin-bottom: 8px;
+    transition: color 0.2s;
+}
+
+.kidsStep__backBtn:hover {
+    color: #000;
+}
+
+/* ── Mode Buttons ── */
+.kidsStep__modeBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    background: #f5f5f5;
+    border: 2px solid #eee;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #666;
+}
+
+.kidsStep__modeBtn:hover {
+    background: #eee;
+    border-color: #ccc;
+    color: #333;
+}
+
+.kidsStep__modeBtn.active {
+    background: #000;
+    border-color: #000;
+    color: #fff;
+}
+
+/* ── Color Button ── */
+.kidsStep__colorBtn {
+    width: 100%;
+    background: linear-gradient(135deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+    background-size: 300% 300%;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #000;
+    cursor: pointer;
+    transition: all 0.2s;
+    animation: gradientShift 3s ease infinite;
+}
+
+.kidsStep__colorBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ── Download / Restore Buttons ── */
+.kidsStep__downloadColorBtn,
+.kidsStep__restoreBtn {
+    width: 100%;
+    background: #fff;
+    border: 2px solid #000;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #000;
+}
+
+.kidsStep__downloadColorBtn:hover,
+.kidsStep__restoreBtn:hover {
+    background: #000;
+    color: #fff;
+}
+
+/* ── Loading Overlay ── */
+.kidsStep__loadingOverlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background: rgba(255, 255, 255, 0.85);
+    z-index: 30;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #000;
+}
+
+/* ── Split Container (Left: Completed, Right: Steps) ── */
+.kidsStep__splitContainer {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+}
+
+.kidsStep__splitPane {
+    position: relative;
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.kidsStep__splitPane.left {
+    border-right: 2px solid #eee;
+}
+
+
+/* ── Pane Labels ── */
+.kidsStep__paneLabel {
+    position: absolute;
+    top: 12px;
+    left: 16px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #aaa;
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* ── Placeholder ── */
+.kidsStep__placeholder {
+    width: 0;
+    height: 0;
+}
+
+/* ── No Model Fallback ── */
+.kidsStep__noModel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-weight: 800;
+    color: #aaa;
+    font-size: 1rem;
+}
+
+/* ── Color Modal Extras ── */
+.colorModal__themes {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.colorModal__loading {
+    text-align: center;
+    padding: 20px;
+    color: #888;
+    font-weight: 700;
+}
+
+.colorModal__themeBtn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    background: #f9f9f9;
+    border: 2px solid #eee;
+    border-radius: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.colorModal__themeBtn:hover {
+    border-color: #000;
+    background: #fff;
+}
+
+.colorModal__themeBtn.selected {
+    border-color: #000;
+    background: #000;
+    color: #fff;
+}
+
+.colorModal__themeBtn.selected .colorModal__themeDesc {
+    color: #ccc;
+}
+
+.colorModal__themeName {
+    font-weight: 800;
+    font-size: 0.95rem;
+}
+
+.colorModal__themeDesc {
+    font-size: 0.8rem;
+    color: #888;
+}
