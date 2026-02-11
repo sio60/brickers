@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import * as gtag from '@/lib/gtag';
 import { GalleryItem } from '@/types/gallery';
 import Image from 'next/image';
 import Viewer3D from './Viewer3D';
@@ -104,6 +105,12 @@ export default function GalleryDetailClient({ item }: Props) {
                 const newLiked = data.myReaction === 'LIKE';
                 setIsLiked(newLiked);
                 if (data.likeCount !== undefined) setLikeCount(data.likeCount);
+
+                gtag.event({
+                    action: 'toggle_reaction',
+                    category: 'Engagement',
+                    label: newLiked ? 'like' : 'unlike'
+                });
             }
         } catch (error) { console.error(error); }
     };
@@ -114,7 +121,14 @@ export default function GalleryDetailClient({ item }: Props) {
             const res = await authFetch(`/api/gallery/${item.id}/bookmark`, { method: 'POST' });
             if (res.ok) {
                 const data = await res.json();
-                setIsBookmarked(data.bookmarked !== undefined ? data.bookmarked : !isBookmarked);
+                const newBookmarked = data.bookmarked !== undefined ? data.bookmarked : !isBookmarked;
+                setIsBookmarked(newBookmarked);
+
+                gtag.event({
+                    action: 'toggle_bookmark',
+                    category: 'Engagement',
+                    label: newBookmarked ? 'save' : 'unsave'
+                });
             }
         } catch (error) { console.error(error); }
     };
@@ -157,6 +171,12 @@ export default function GalleryDetailClient({ item }: Props) {
                     setCommentCount(prev => prev + 1);
                     setCommentInput('');
                 }
+
+                gtag.event({
+                    action: 'post_comment',
+                    category: 'Engagement',
+                    label: parentId ? 'reply' : 'new'
+                });
             }
         } catch (error) { console.error(error); }
         finally {
@@ -198,6 +218,7 @@ export default function GalleryDetailClient({ item }: Props) {
             await navigator.clipboard.writeText(window.location.href);
             setShowToast(true);
             setTimeout(() => setShowToast(false), 2000);
+            gtag.event({ action: 'share_gallery', category: 'Engagement', label: item.id });
         } catch (err) {
             console.error('Failed to copy: ', err);
             alert(t.detail?.copyFailed || 'Failed to copy URL.');

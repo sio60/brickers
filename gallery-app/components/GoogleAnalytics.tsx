@@ -2,8 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-
-const GA_ID = "G-GHSB43V8CL";
+import * as gtag from "@/lib/gtag";
 
 declare global {
     interface Window {
@@ -19,11 +18,7 @@ export default function GoogleAnalytics() {
     const pathname = usePathname();
 
     useEffect(() => {
-        if (typeof window !== "undefined" && window.gtag) {
-            window.gtag("config", GA_ID, {
-                page_path: pathname,
-            });
-        }
+        gtag.pageview(pathname);
     }, [pathname]);
 
     return null;
