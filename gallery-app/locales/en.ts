@@ -379,6 +379,7 @@ export const en = {
             settings: "System Settings",
             inquiries: "Inquiries",
             reports: "Reports",
+            comments: "Comments",
             refunds: "Refunds"
         },
         accessDenied: "Access denied. (Role: {role})",

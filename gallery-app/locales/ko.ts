@@ -378,6 +378,7 @@ export const ko = {
             settings: "시스템 설정",
             inquiries: "문의 관리",
             reports: "신고 관리",
+            comments: "댓글 관리",
             refunds: "환불 관리"
         },
         accessDenied: "관리자 권한이 없습니다. (현재 권한: {role})",

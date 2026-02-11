@@ -396,7 +396,7 @@ export default function AdminPage() {
                             className={`${styles.sidebarItem} ${activeTab === "comments" ? styles.active : ""}`}
                             onClick={() => setActiveTab("comments")}
                         >
-                            Comments
+                            {t.admin.sidebar.comments}
                         </button>
                         <button
                             className={`${styles.sidebarItem} ${activeTab === "inquiries" ? styles.active : ""}`}
@@ -432,7 +432,7 @@ export default function AdminPage() {
                                 {activeTab === "inquiries" && t.admin.sidebar.inquiries}
                                 {activeTab === "reports" && t.admin.sidebar.reports}
                                 {activeTab === "refunds" && t.admin.sidebar.refunds}
-                                {activeTab === "comments" && "Comments Management"}
+                                {activeTab === "comments" && t.admin.sidebar.comments}
                             </h1>
                             <button className={styles.closeBtn} onClick={() => router.back()}>✕</button>
                         </header>
