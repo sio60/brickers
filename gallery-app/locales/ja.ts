@@ -405,6 +405,9 @@ export const ja = {
             order: "注文番号",
             user: "ユーザー"
         },
+        brickJudge: {
+            title: "物理エンジン検証"
+        },
         gallery: {
             title: "ギャラリー管理",
             searchPlaceholder: "タイトルまたは作成者で検索...",
