@@ -10,7 +10,7 @@ type AgeGroup = "4-5" | "6-7" | "8-10" | "PRO" | null;
 interface AgeSelectionModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSelect: (url: string | null, file: File | null, age: string) => void;
+    onSelect: (url: string | null, file: File | null, age: string, prompt?: string) => void;
 }
 
 export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSelectionModalProps) {
@@ -53,9 +53,9 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
         }
     };
 
-    const handlePickModel = (url: string | null, file: File | null) => {
+    const handlePickModel = (url: string | null, file: File | null, prompt?: string) => {
         setOpenModelModal(false);
-        onSelect(url, file, selectedAge || "4-5");
+        onSelect(url, file, modalAge || "4-5", prompt);
         onClose();
     };
 
@@ -73,6 +73,7 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
                                 onClick={() => handleSelect("4-5")}
                             >
                                 <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "1")}</div>
+                                <div className={styles.brickCount}>100 {t.kids.bricks}</div>
                             </button>
 
                             <button
@@ -80,6 +81,7 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
                                 onClick={() => handleSelect("6-7")}
                             >
                                 <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "2")}</div>
+                                <div className={styles.brickCount}>150 {t.kids.bricks}</div>
                             </button>
 
                             <button
@@ -87,6 +89,7 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
                                 onClick={() => handleSelect("8-10")}
                             >
                                 <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "3")}</div>
+                                <div className={styles.brickCount}>200 {t.kids.bricks}</div>
                             </button>
 
                             <button
@@ -94,6 +97,7 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
                                 onClick={() => handleSelect("PRO")}
                             >
                                 <div className={styles.ageLabel}>PRO</div>
+                                <div className={styles.brickCount}>5000+ {t.kids.bricks}</div>
                             </button>
                         </div>
                     </div>

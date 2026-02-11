@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import com.brickers.backend.gallery.entity.Visibility;
 
@@ -25,6 +26,7 @@ public class GalleryResponse {
     private String sourceImageUrl;
     private String glbUrl;
     private Integer parts;
+    private Map<String, String> screenshotUrls;
     private boolean isPro;
 
     private Visibility visibility;

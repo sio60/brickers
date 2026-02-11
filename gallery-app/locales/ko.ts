@@ -35,7 +35,8 @@ export const ko = {
         gallery: "갤러리",
         admin: "관리자 페이지",
         open: "메뉴 열기",
-        iconAlt: "메뉴 아이콘"
+        iconAlt: "메뉴 아이콘",
+        hint: "궁금한 점은 브릭봇을 통해 문의주세요!"
     },
     upgradeModal: {
         title: "UPGRADE",
@@ -110,7 +111,9 @@ export const ko = {
             viewBlueprint: "조립 설명서 보기",
             sourceImage: "원본 이미지 다운로드",
             glbFile: "모델링 파일 다운(glb)",
-            ldrFile: "도면 파일 다운(ldr)"
+            ldrFile: "도면 파일 다운(ldr)",
+            downloadPdf: "PDF 설명서 다운로드",
+            downloadEnhanced: "보정 이미지 다운로드"
         },
         noGlbFile: "GLB 파일이 없습니다.",
         noLdrFile: "LDR 파일이 없습니다.",
@@ -123,6 +126,10 @@ export const ko = {
         retryConfirm: "생성에 실패했거나 중단된 작업입니다. 다시 시도하시겠습니까?",
         cancelConfirm: "진행 중인 작업을 취소하시겠습니까?",
         cancelFail: "작업 취소에 실패했습니다.",
+        sortLatest: "최신순",
+        sortOldest: "오래된순",
+        noPdfFile: "생성된 PDF가 없습니다. 조립 페이지에서 생성을 기다려주세요.",
+        noCapturedImage: "캡처된 이미지가 없습니다.",
         settingsTbd: "설정 기능 준비 중"
     },
     settings: {
@@ -182,6 +189,7 @@ export const ko = {
     kids: {
         title: "난이도를 선택해 보세요",
         level: "L{lv}",
+        bricks: "개",
         pro: "PRO",
         continueBtn: "계속하기",
         model1: "모델 1",
@@ -203,7 +211,9 @@ export const ko = {
             loadingResult: "결과물 로딩 중...",
             serverDelay: "서버 응답 지연 중...",
             aiNoResponse: "AI 서버 응답 없음",
-            errorOccurred: "오류 발생"
+            errorOccurred: "오류 발생",
+            completeTitle: "생성 완료!",
+            completeBody: "브릭 모델 생성이 완료되었습니다. 클릭해서 확인하세요!"
         },
         modelSelect: {
             title: "브릭 생성하기",
@@ -218,13 +228,30 @@ export const ko = {
             uploadProSub: "클릭하여 업그레이드하세요",
             uploadProHint: "업그레이드 시 사용 가능",
             confirm: "생성하기",
-            previewTitle: "3D 미리보기",
-            previewSub: "모델을 회전시켜 확인하세요"
+            previewSub: "모델을 회전시켜 확인하세요",
+            drawTitle: "그림으로 만들기",
+            drawSub: "웹에서 직접 그림을 그려보세요",
+            drawTool: {
+                brush: "브러시",
+                eraser: "지우개",
+                clear: "초기화",
+                done: "다 그렸어요!",
+                color: "색상",
+                size: "크기"
+            },
+            promptTitle: "글자로 만들기",
+            promptSub: "상상한 것을 글로 적어보세요",
+            promptInputTitle: "무엇을 만들고 싶나요?",
+            promptInputPlaceholder: "예: 날개 달린 자동차, 무지개 색깔의 성",
+            promptInputHint: "자세하게 적을수록 좋아요!",
+            promptConfirm: "이대로 만들기",
+            freeUserNotice: "* 무료 회원은 결제 후 이용 가능합니다"
         },
         steps: {
             back: "뒤로",
             noUrl: "스텝을 볼 URL이 없습니다.",
             title: "STEP {cur} / {total}",
+            bricksNeeded: "필요한 브릭",
             preview: "브릭 정보",
             loading: "스텝 로딩 중...",
             prev: "이전",
@@ -265,7 +292,15 @@ export const ko = {
             colorThemeTitle: "색상 테마 선택",
             colorThemeApplied: "테마 적용 완료!",
             colorThemeFailed: "색상 변경 실패",
-            colorThemeError: "색상 변경 중 오류가 발생했습니다."
+            colorThemeError: "색상 변경 중 오류가 발생했습니다.",
+            changeColor: "색상 변경",
+            restoreOriginal: "원본 복원",
+            pdfDownloadBtn: "PDF 다운로드",
+            pdfPreparing: "PDF 준비중...",
+            pdfWait: "PDF 준비중입니다. 잠시만 기다려주세요.",
+            registered: "등록완료",
+            themeLoading: "테마 로딩 중...",
+            colorChangeModelError: "색상 변경 후 모델 생성 중 오류가 발생했습니다."
         },
         viewer: {
             noUrl: "모델 URL이 없습니다",
@@ -281,6 +316,7 @@ export const ko = {
         login: "로그인",
         logout: "로그아웃",
         gallery: "갤러리",
+        notifications: "알림",
         logoAlt: "브릭커스 로고",
         myGallery: "내 갤러리",
         myPage: "마이페이지"
@@ -317,7 +353,14 @@ export const ko = {
         anonymous: "익명",
         confirm: "확인",
         cancel: "취소",
-        later: "나중에 할게요"
+        later: "나중에 할게요",
+        apply: "적용하기",
+        applying: "적용 중...",
+        colorChangeComplete: "색상 변경 완료",
+        themeApplied: "테마가 적용되었습니다",
+        downloadChangedLdr: "변경된 LDR 다운로드",
+        requestFailed: "요청 실패",
+        networkError: "네트워크 에러"
     },
     admin: {
         panelTitle: "관리자 패널",
@@ -404,7 +447,18 @@ export const ko = {
         loginToComment: "로그인 후 댓글을 남겨보세요",
         post: "등록",
         noGlb: "3D 모델 파일이 없습니다.",
-        noImg: "원본 이미지가 없습니다."
+        noImg: "원본 이미지가 없습니다.",
+        copied: "URL이 복사되었습니다",
+        copyFailed: "URL 복사에 실패했습니다.",
+        reply: "답글",
+        replyPlaceholder: "답글을 입력하세요...",
+        hideReplies: "답글 숨기기",
+        showReplies: "답글 {count}개 보기",
+        views3d: {
+            noLdrUrl: "LDR URL이 없습니다.",
+            dragRotate: "드래그: 회전",
+            scrollZoom: "스크롤: 줌"
+        }
     },
     my: {
         title: "내 갤러리",
@@ -420,5 +474,40 @@ export const ko = {
         playAgain: "다시 하기",
         gameOver: "게임 오버!",
         score: "점수"
+    },
+    sse: {
+        download: "이미지 수신 완료. 구조부터 살펴보겠습니다.",
+        gemini: "명암과 형태를 분석합니다. 브릭 색상으로 옮기기 좋은 상태로 보정하고 있어요.",
+        tripo: "2D 정보를 바탕으로 3D 형태를 잡아봅니다.",
+        brickify: "브릭 단위로 분해하면서 안정적인 조합을 탐색 중이에요.",
+        bom: "현재 설계를 기준으로 필요한 부품 수를 계산하고 있어요.",
+        pdf: "조립 순서를 정리해서 설명서로 옮기고 있어요.",
+        complete: "설계가 끝났어요. 결과를 한번 살펴볼까요?",
+        HYPOTHESIZE: "유사한 브릭 구조를 참고해서 가능한 형태를 가정하고 있어요.",
+        STRATEGY: "현재 조건에서 가장 합리적인 설계 전략을 세우고 있어요.",
+        GENERATE: "설계안을 하나씩 구현해 보는 중이에요.",
+        VERIFY: "내구성과 조립 가능성을 확인 중이에요.",
+        ANALYZE: "불필요한 복잡성이 있는지 검토하고 있어요.",
+        REFLECT: "이전 시도와 비교해서 개선된 점을 정리하고 있어요.",
+        EVOLVE: "형태와 효율 사이의 균형을 맞추고 있어요.",
+        COMPLETE: "설계가 완료됐어요. 다음 단계로 넘어가도 좋아요."
+    },
+    viewer3d: {
+        loading: "3D 모델 로딩 중...",
+        loadFailed: "3D 모델을 불러오는데 실패했습니다.",
+        loadingWait: "3D 모델 불러오는 중...\n잠시만 기다려주세요",
+        loadError: "모델 로딩 실패"
+    },
+    loginModal: {
+        title: "로그인이 필요합니다",
+        bookmarkDesc: "북마크 기능을 사용하려면\n로그인해 주세요.",
+        loginBtn: "로그인하기"
+    },
+    galleryCard: {
+        bookmarkRemove: "북마크 취소",
+        bookmarkAdd: "북마크 추가",
+        likeRemove: "좋아요 취소",
+        likeAdd: "좋아요 추가",
+        monthDay: "{month}월 {day}일"
     }
 };

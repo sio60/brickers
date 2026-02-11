@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { GalleryItem } from '../types/gallery';
 
 export type { GalleryItem };
@@ -21,6 +22,7 @@ function isValidImageUrl(url?: string): boolean {
 }
 
 export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmarkToggle, onLoginRequired }: Props) {
+    const { t } = useLanguage();
     const safeTitle = item.title.replace(/\s+/g, '-').replace(/[^\w\-\uAC00-\uD7A3]/g, '');
     const slug = `${safeTitle}-${item.id}`;
     const displayImageUrl = item.sourceImageUrl || item.thumbnailUrl;
@@ -55,10 +57,12 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
     const formatDate = (dateStr?: string) => {
         if (!dateStr) return '';
         const date = new Date(dateStr);
-        // 서버/클라이언트 hydration 일치를 위해 고정 포맷 사용
-        const month = date.getMonth() + 1;
-        const day = date.getDate();
-        return `${month}월 ${day}일`;
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hour = String(date.getHours()).padStart(2, '0');
+        const min = String(date.getMinutes()).padStart(2, '0');
+        return `${year}.${month}.${day} ${hour}:${min}`;
     };
 
     return (
@@ -90,6 +94,11 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
                         {item.title}
                     </h3>
 
+                    {/* Registration Date */}
+                    <div className="text-[10px] text-gray-400 font-medium">
+                        {formatDate(item.createdAt)}
+                    </div>
+
                     {/* Meta info & Action */}
                     <div className="flex items-center justify-between gap-2">
                         <div className="flex-1 flex items-center gap-2 overflow-hidden">
@@ -118,7 +127,7 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
                                         ? 'bg-[#ffe135] text-black shadow-[2px_2px_0px_#000]'
                                         : 'bg-white text-black hover:bg-gray-50'
                                         }`}
-                                    aria-label={item.bookmarked ? '북마크 취소' : '북마크 추가'}
+                                    aria-label={item.bookmarked ? (t.galleryCard?.bookmarkRemove || 'Remove bookmark') : (t.galleryCard?.bookmarkAdd || 'Add bookmark')}
                                 >
                                     <svg
                                         className={`w-4 h-4 ${item.bookmarked ? 'fill-black' : 'fill-none'}`}
@@ -142,7 +151,7 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
                                     ? 'bg-[#ffe135] text-black shadow-[2px_2px_0px_#000]'
                                     : 'bg-white text-black hover:bg-gray-50'
                                     }`}
-                                aria-label={item.myReaction === 'LIKE' ? '좋아요 취소' : '좋아요 추가'}
+                                aria-label={item.myReaction === 'LIKE' ? (t.galleryCard?.likeRemove || 'Remove like') : (t.galleryCard?.likeAdd || 'Add like')}
                             >
                                 <svg
                                     className={`w-4 h-4 ${item.myReaction === 'LIKE' ? 'fill-black' : 'fill-none text-black'}`}

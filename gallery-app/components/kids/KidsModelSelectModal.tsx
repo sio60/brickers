@@ -8,6 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginModal from "@/components/common/LoginModal";
 import UpgradeModal from "@/components/UpgradeModal";
+import KidsDrawingCanvas from "./KidsDrawingCanvas";
 import styles from "./KidsModelSelectModal.module.css";
 
 // SSR 제외
@@ -16,7 +17,7 @@ const KidsLdrPreview = dynamic(() => import("./KidsLdrPreview"), { ssr: false })
 type Props = {
     open: boolean;
     onClose: () => void;
-    onSelect: (url: string | null, file: File | null) => void;
+    onSelect: (url: string | null, file: File | null, prompt?: string) => void;
     items: { title: string; url: string; thumbnail?: string }[];
 };
 
@@ -31,7 +32,8 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
     const [dragOver, setDragOver] = useState(false);
     const inputRef = useRef<HTMLInputElement | null>(null);
 
-    const [step, setStep] = useState<'select' | 'preview'>('select');
+    const [prompt, setPrompt] = useState<string>("");
+    const [step, setStep] = useState<'select' | 'preview' | 'draw' | 'prompt'>('select');
 
     const isPro = user?.membershipPlan === "PRO";
     const [showUpgrade, setShowUpgrade] = useState(false);
@@ -116,56 +118,47 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                 <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
                     {step === 'select' ? (
                         <>
-                            {items.length > 0 && (
-                                <>
-                                    <div className={styles.head}>
-                                        <div className={styles.title}>{t.kids.modelSelect.title}</div>
-                                        <div className={styles.sub}>{t.kids.modelSelect.sub}</div>
-                                        <button className={styles.close} onClick={onClose} aria-label="close">
-                                            ✕
-                                        </button>
-                                    </div>
+                            <div className={styles.head}>
+                                <div className={styles.title}>{t.kids.modelSelect.title}</div>
+                                <div className={styles.sub}>{t.kids.modelSelect.sub}</div>
+                                <button className={styles.close} onClick={onClose} aria-label="close">
+                                    ✕
+                                </button>
+                            </div>
 
-                                    <div className={styles.grid}>
-                                        {items.map((it) => (
-                                            <div
-                                                key={it.url}
-                                                className={`${styles.card} ${selectedUrl === it.url ? styles.isSelected : ""}`}
-                                                onClick={() => handleModelClick(it.url)}
-                                            >
-                                                <div className={styles.cardViewer}>
-                                                    {it.thumbnail ? (
-                                                        <Image
-                                                            src={it.thumbnail}
-                                                            alt={it.title}
-                                                            fill
-                                                            style={{ objectFit: "contain" }}
-                                                        />
-                                                    ) : (
-                                                        <div className={styles.noPreview}>
-                                                            {t.common.noPreview}
-                                                        </div>
-                                                    )}
+                            <div className={styles.grid}>
+
+
+                                {items.map((it) => (
+                                    <div
+                                        key={it.url}
+                                        className={`${styles.card} ${selectedUrl === it.url ? styles.isSelected : ""}`}
+                                        onClick={() => handleModelClick(it.url)}
+                                    >
+                                        <div className={styles.cardViewer}>
+                                            {it.thumbnail ? (
+                                                <Image
+                                                    src={it.thumbnail}
+                                                    alt={it.title}
+                                                    fill
+                                                    style={{ objectFit: "contain" }}
+                                                />
+                                            ) : (
+                                                <div className={styles.noPreview}>
+                                                    {t.common.noPreview}
                                                 </div>
+                                            )}
+                                        </div>
 
-                                                <div className={styles.cardFooter}>
-                                                    <div className={styles.cardLabel}>{it.title}</div>
-                                                    <div className={styles.cardPick}>{t.kids.modelSelect.pick}</div>
-                                                </div>
-                                            </div>
-                                        ))}
+                                        <div className={styles.cardFooter}>
+                                            <div className={styles.cardLabel}>{it.title}</div>
+                                            <div className={styles.cardPick}>{t.kids.modelSelect.pick}</div>
+                                        </div>
                                     </div>
-                                </>
-                            )}
+                                ))}
+                            </div>
 
-                            {items.length === 0 && (
-                                <div className={styles.head}>
-                                    <div className={styles.title}>{t.kids.modelSelect.uploadTitle}</div>
-                                    <button className={styles.close} onClick={onClose} aria-label="close">
-                                        ✕
-                                    </button>
-                                </div>
-                            )}
+
 
                             {/* 이미지 업로드 영역 */}
                             <div
@@ -198,13 +191,80 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                         <div className={styles.uploadSub}>{t.kids.modelSelect.uploadSub}</div>
                                         <div className={styles.uploadHint}>{t.kids.modelSelect.uploadHint}</div>
                                         <div className={styles.uploadNotice} style={{ marginTop: '8px', fontSize: '13px', color: '#ff4444', fontWeight: 'bold' }}>
-                                            * 무료 회원은 결제 후 이용 가능합니다
+                                            {t.kids.modelSelect?.freeUserNotice || '* Free users need to upgrade'}
                                         </div>
                                     </>
                                 )}
                             </div>
 
-                            <div className={styles.actions}>
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '10px', width: '100%', padding: '0 20px', boxSizing: 'border-box' }}>
+                                <button
+                                    onClick={() => {
+                                        if (!isAuthenticated) { router.push('?login=true'); return; }
+                                        setStep('draw');
+                                    }}
+                                    style={{
+                                        flex: 1,
+                                        background: '#fff',
+                                        color: '#000',
+                                        border: '2px solid #000',
+                                        borderRadius: '12px',
+                                        padding: '14px',
+                                        fontSize: '1rem',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = '#000';
+                                        e.currentTarget.style.color = '#fff';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = '#fff';
+                                        e.currentTarget.style.color = '#000';
+                                    }}
+                                >
+                                    {t.kids.modelSelect.drawTitle || "그림으로 만들기"}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (!isAuthenticated) { router.push('?login=true'); return; }
+                                        setStep('prompt');
+                                    }}
+                                    style={{
+                                        flex: 1,
+                                        background: '#fff',
+                                        color: '#000',
+                                        border: '2px solid #000',
+                                        borderRadius: '12px',
+                                        padding: '14px',
+                                        fontSize: '1rem',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = '#000';
+                                        e.currentTarget.style.color = '#fff';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = '#fff';
+                                        e.currentTarget.style.color = '#000';
+                                    }}
+                                >
+                                    {t.kids.modelSelect.promptTitle || "글자로 만들기"}
+                                </button>
+                            </div>
+
+                            <div className={styles.actions} style={{ marginTop: '10px' }}>
                                 <button
                                     className={styles.confirmBtn}
                                     disabled={!canSubmit}
@@ -212,6 +272,53 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                 >
                                     {t.kids.modelSelect.confirm}
                                 </button>
+                            </div>
+                        </>
+                    ) : step === 'draw' ? (
+                        <>
+                            <div className={styles.head}>
+                                <div className={styles.title}>{t.kids.modelSelect.drawTitle}</div>
+                                <div className={styles.sub}>{t.kids.modelSelect.drawSub}</div>
+                                <button className={styles.close} onClick={onClose} aria-label="close">
+                                    ✕
+                                </button>
+                            </div>
+                            <div style={{ height: '70vh', padding: '0 20px 20px', display: 'flex', flexDirection: 'column' }}>
+                                <KidsDrawingCanvas
+                                    onCancel={() => setStep('select')}
+                                    onDone={(f) => {
+                                        onSelect(null, f);
+                                    }}
+                                />
+                            </div>
+                        </>
+                    ) : step === 'prompt' ? (
+                        <>
+                            <div className={styles.head}>
+                                <div className={styles.title}>{t.kids.modelSelect.promptTitle}</div>
+                                <div className={styles.sub}>{t.kids.modelSelect.promptSub}</div>
+                                <button className={styles.close} onClick={onClose} aria-label="close">
+                                    ✕
+                                </button>
+                            </div>
+                            <div className={styles.promptInputArea}>
+                                <div className={styles.uploadTitle}>{t.kids.modelSelect.promptInputTitle}</div>
+                                <textarea
+                                    className={styles.promptInput}
+                                    placeholder={t.kids.modelSelect.promptInputPlaceholder}
+                                    value={prompt}
+                                    onChange={(e) => setPrompt(e.target.value)}
+                                />
+                                <div className={styles.uploadHint}>{t.kids.modelSelect.promptInputHint}</div>
+                                <div className={styles.actions}>
+                                    <button
+                                        className={styles.confirmBtn}
+                                        disabled={!prompt.trim()}
+                                        onClick={() => onSelect(null, null, prompt)}
+                                    >
+                                        {t.kids.modelSelect.promptConfirm}
+                                    </button>
+                                </div>
                             </div>
                         </>
                     ) : (
@@ -239,7 +346,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                         </>
                     )}
                 </div>
-            </div>
+            </div >
 
             <UpgradeModal isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} />
             <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />

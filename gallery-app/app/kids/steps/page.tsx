@@ -13,6 +13,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { registerToGallery } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
+import { type StepBrickInfo } from "@/lib/ldrUtils";
 import BackgroundBricks from "@/components/BackgroundBricks";
 import './KidsStepPage.css';
 
@@ -73,6 +74,20 @@ function buildCumulativeStepTexts(ldrText: string): string[] {
     return out;
 }
 
+// 모달용 어댑터 (기존 코드 호환성)
+function GalleryRegisterInputModalAdapter({ t, onRegister, isSubmitting, onClose }: any) {
+    const [title, setTitle] = useState("");
+    return (
+        <>
+            <input type="text" className="galleryModal__input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t.kids.steps.galleryModal.placeholder} autoFocus />
+            <div className="galleryModal__actions">
+                <button className="galleryModal__btn galleryModal__btn--cancel" onClick={onClose}>{t.kids.steps.galleryModal.cancel}</button>
+                <button className="galleryModal__btn galleryModal__btn--confirm" onClick={() => onRegister(title)} disabled={isSubmitting}>{isSubmitting ? "..." : t.kids.steps.galleryModal.confirm}</button>
+            </div>
+        </>
+    );
+}
+
 function LdrModel({
     url,
     overrideMainLdrUrl,
@@ -82,6 +97,7 @@ function LdrModel({
     onError,
     customBounds,
     fitTrigger,
+    noFit,
 }: {
     url: string;
     overrideMainLdrUrl?: string;
@@ -91,6 +107,7 @@ function LdrModel({
     onError?: (e: unknown) => void;
     customBounds?: THREE.Box3 | null;
     fitTrigger?: string;
+    noFit?: boolean;
 }) {
     const loader = useMemo(() => {
         THREE.Cache.enabled = true;
@@ -205,12 +222,12 @@ function LdrModel({
     }
 
     return (
-        <Bounds fit clip margin={1.35}>
+        <Bounds fit={!noFit} clip margin={1.35}>
             <Center>
                 <primitive object={group} />
                 {boundMesh}
             </Center>
-            <FitOnceOnLoad trigger={fitTrigger ?? ""} />
+            {!noFit && <FitOnceOnLoad trigger={fitTrigger ?? ""} />}
         </Bounds>
     );
 }
@@ -224,6 +241,71 @@ function FitOnceOnLoad({ trigger }: { trigger: string }) {
 }
 
 // parseAndProcessSteps moved to @/lib/ldrUtils
+
+interface GalleryRegisterInputProps {
+    t: any;
+    isRegisteredToGallery: boolean;
+    isSubmitting: boolean;
+    onRegister: (title: string) => void;
+}
+
+function GalleryRegisterInput({ t, isRegisteredToGallery, isSubmitting, onRegister }: GalleryRegisterInputProps) {
+    const [title, setTitle] = useState("");
+
+    const handleClick = () => {
+        onRegister(title);
+    };
+
+    // 등록 완료되면 타이틀 초기화? or 유지? 기획상 유지하는게 나을듯 하지만
+    // isRegisteredToGallery가 true가 되면 input 비활성화됨. 
+
+    return (
+        <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
+            <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800 }}>
+                {t.kids.steps.registerGallery}
+            </div>
+            <input
+                type="text" className="kidsStep__sidebarInput"
+                placeholder={t.kids.steps.galleryModal.placeholder}
+                value={title} onChange={(e) => setTitle(e.target.value)}
+                disabled={isRegisteredToGallery}
+            />
+            <button
+                className="kidsStep__sidebarBtn" onClick={handleClick}
+                disabled={isSubmitting || isRegisteredToGallery}
+            >
+                {isRegisteredToGallery ? `✓ ${t.kids.steps?.registered || '등록완료'}` : (isSubmitting ? "..." : t.kids.steps.registerGallery)}
+            </button>
+        </div>
+    );
+}
+
+function BrickThumbnail({ partName, color }: { partName: string, color: string }) {
+    const [url, setUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        const ldr = `1 ${color} 0 0 0 1 0 0 0 1 0 0 0 1 ${partName}.dat`;
+        const blob = new Blob([ldr], { type: 'text/plain' });
+        const objectUrl = URL.createObjectURL(blob);
+        setUrl(objectUrl);
+        return () => URL.revokeObjectURL(objectUrl);
+    }, [partName, color]);
+
+    if (!url) return <div className="kidsStep__brickPlaceholder" />;
+
+    return (
+        <div className="kidsStep__brickCanvasContainer">
+            <Canvas camera={{ position: [100, 120, 100], fov: 30 }} gl={{ antialias: true, alpha: true }}>
+                <ambientLight intensity={2} />
+                <directionalLight position={[5, 10, 5]} intensity={2} />
+                <LdrModel
+                    url={url}
+                    noFit
+                />
+            </Canvas>
+        </div>
+    );
+}
 
 function KidsStepPageContent() {
     const router = useRouter();
@@ -240,20 +322,22 @@ function KidsStepPageContent() {
     const [loading, setLoading] = useState(true);
     const [stepIdx, setStepIdx] = useState(0);
     const [stepBlobUrls, setStepBlobUrls] = useState<string[]>([]);
+    const [stepBricks, setStepBricks] = useState<StepBrickInfo[][]>([]);
     const [modelBounds, setModelBounds] = useState<THREE.Box3 | null>(null);
     const blobRef = useRef<string[]>([]);
     const modelGroupRef = useRef<THREE.Group | null>(null);
 
     const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
-    const [galleryTitle, setGalleryTitle] = useState("");
+    // const [galleryTitle, setGalleryTitle] = useState(""); // -> Moved to child component
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [jobThumbnailUrl, setJobThumbnailUrl] = useState<string | null>(null);
     const [isRegisteredToGallery, setIsRegisteredToGallery] = useState(false);
     const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
     const [brickCount, setBrickCount] = useState<number>(0);
     const [isProMode, setIsProMode] = useState(false);
+    const [jobScreenshotUrls, setJobScreenshotUrls] = useState<Record<string, string> | null>(null);
 
-    const [isPreviewMode, setIsPreviewMode] = useState(true);
+
     const [activeTab, setActiveTab] = useState<'LDR' | 'GLB'>('LDR');
     const [glbUrl, setGlbUrl] = useState<string | null>(null);
 
@@ -288,28 +372,28 @@ function KidsStepPageContent() {
                 worker.postMessage({ type: 'PROCESS_LDR', text });
                 worker.onmessage = (e) => {
                     if (e.data.type === 'SUCCESS') {
-                        const { stepTexts } = e.data.payload;
+                        const { stepTexts, stepBricks: bricks } = e.data.payload;
                         const blobs = stepTexts.map((t_blob: string) =>
                             URL.createObjectURL(new Blob([t_blob], { type: "text/plain" }))
                         );
                         revokeAll(blobRef.current);
                         blobRef.current = blobs;
                         setStepBlobUrls(blobs);
+                        setStepBricks(bricks || []);
                         setStepIdx(stepTexts.length - 1);
-                        setIsPreviewMode(false);
                         setIsColorModalOpen(false);
-                        alert(`${result.themeApplied} 테마 적용 완료!`);
+                        alert(`${result.themeApplied} ${t.kids.steps.colorThemeApplied}`);
                     } else {
-                        alert("색상 변경 후 모델 생성 중 오류가 발생했습니다.");
+                        alert(t.kids.steps?.colorChangeModelError);
                     }
                     worker.terminate();
                 };
             } else {
-                alert(result.message || "색상 변경 실패");
+                alert(result.message || t.kids.steps.colorThemeFailed);
             }
         } catch (e) {
             console.error(e);
-            alert("색상 변경 중 오류가 발생했습니다.");
+            alert(t.kids.steps.colorThemeError);
         } finally {
             setIsApplyingColor(false);
         }
@@ -333,10 +417,12 @@ function KidsStepPageContent() {
                             new THREE.Vector3(bounds.max.x, bounds.max.y, bounds.max.z)
                         ));
                     }
+                    const { stepBricks: bricks } = e.data.payload;
                     const blobs = stepTexts.map((t: string) => URL.createObjectURL(new Blob([t], { type: "text/plain" })));
                     revokeAll(blobRef.current);
                     blobRef.current = blobs;
                     setStepBlobUrls(blobs);
+                    setStepBricks(bricks || []);
                     setStepIdx(stepTexts.length - 1);
                 }
                 worker.terminate();
@@ -374,6 +460,7 @@ function KidsStepPageContent() {
                     if (data.parts) setBrickCount(data.parts);
                     if (data.isPro) setIsProMode(true);
                     if (data.pdfUrl || data.pdf_url) setServerPdfUrl(data.pdfUrl || data.pdf_url);
+                    if (data.screenshotUrls) setJobScreenshotUrls(data.screenshotUrls);
                 }
             } catch (e) { console.error(e); }
         })();
@@ -395,7 +482,7 @@ function KidsStepPageContent() {
             worker.postMessage({ type: 'PROCESS_LDR', text });
             worker.onmessage = (e) => {
                 if (e.data.type === 'SUCCESS' && alive) {
-                    const { stepTexts, bounds } = e.data.payload;
+                    const { stepTexts, bounds, stepBricks: bricks } = e.data.payload;
                     if (bounds) {
                         setModelBounds(new THREE.Box3(
                             new THREE.Vector3(bounds.min.x, bounds.min.y, bounds.min.z),
@@ -406,6 +493,7 @@ function KidsStepPageContent() {
                     revokeAll(blobRef.current);
                     blobRef.current = blobs;
                     setStepBlobUrls(blobs);
+                    setStepBricks(bricks || []);
                     setLoading(false);
                 } else if (alive) {
                     setLoading(false);
@@ -427,17 +515,17 @@ function KidsStepPageContent() {
         if (serverPdfUrl) {
             window.open(serverPdfUrl, "_blank");
         } else {
-            alert("PDF 준비중입니다. 잠시만 기다려주세요.");
+            alert(t.kids.steps?.pdfWait);
         }
     };
 
-    const handleRegisterGallery = async () => {
-        if (!galleryTitle.trim()) return alert(t.kids.steps.galleryModal.placeholder);
+    const handleRegisterGallery = async (inputTitle: string) => {
+        if (!inputTitle.trim()) return alert(t.kids.steps.galleryModal.placeholder);
         setIsSubmitting(true);
         try {
             await registerToGallery({
                 jobId: jobId || undefined,
-                title: galleryTitle,
+                title: inputTitle,
                 content: t.kids.steps.galleryModal.content,
                 tags: suggestedTags.length > 0 ? suggestedTags : ["Kids", "Brick"],
                 thumbnailUrl: jobThumbnailUrl || undefined,
@@ -445,11 +533,12 @@ function KidsStepPageContent() {
                 sourceImageUrl: jobThumbnailUrl || undefined,
                 glbUrl: glbUrl || undefined,
                 parts: brickCount || undefined,
+                screenshotUrls: jobScreenshotUrls || undefined,
                 visibility: "PUBLIC",
             });
             alert(t.kids.steps.galleryModal.success);
             setIsGalleryModalOpen(false);
-            setGalleryTitle("");
+            // setGalleryTitle(""); // Parent doesn't hold title anymore
             setIsRegisteredToGallery(true);
         } catch (err: any) {
             console.error(err);
@@ -468,32 +557,27 @@ function KidsStepPageContent() {
     const currentOverride = stepBlobUrls[Math.min(stepIdx, stepBlobUrls.length - 1)];
     const canPrev = stepIdx > 0;
     const canNext = stepIdx < total - 1;
-    const finalModelUrl = isPreviewMode ? undefined : currentOverride;
+
     const isPreset = searchParams.get("isPreset") === "true";
 
     return (
         <div style={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
             <BackgroundBricks />
 
-            <div className="kidsStep__mainContainer" style={{ paddingLeft: isPreset ? 0 : 260 }}>
-                {!isPreset && (
-                    <div style={{
-                        position: "absolute", top: 100, left: 24, zIndex: 20, width: 260,
-                        background: "#fff", borderRadius: 32, color: "#000",
-                        display: "flex", flexDirection: "column", padding: "24px 16px",
-                        border: "3px solid #000", boxShadow: "0 20px 50px rgba(0, 0, 0, 0.1)"
-                    }}>
+            <div className="kidsStep__mainContainer">
+                {!isPreset ? (
+                    <div className="kidsStep__sidebar">
                         <button onClick={() => router.back()} className="kidsStep__backBtn">
                             ← {t.kids.steps.back}
                         </button>
 
-                        <h2 style={{ fontSize: "1.3rem", fontWeight: 900, marginBottom: 20, paddingLeft: 8 }}>BRICKERS</h2>
+                        <h2 className="kidsStep__sidebarTitle">BRICKERS</h2>
 
-                        <div style={{ marginBottom: 10, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800 }}>
+                        <div className="kidsStep__sidebarSectionLabel">
                             {t.kids.steps.viewModes}
                         </div>
 
-                        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        <div className="kidsStep__modeContainer">
                             <button onClick={() => setActiveTab('LDR')} className={`kidsStep__modeBtn ${activeTab === 'LDR' ? 'active' : ''}`}>
                                 {t.kids.steps.tabBrick}
                             </button>
@@ -502,42 +586,31 @@ function KidsStepPageContent() {
                             </button>
                         </div>
 
-                        <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+                        <div className="kidsStep__colorContainer">
                             <button onClick={() => setIsColorModalOpen(true)} className="kidsStep__colorBtn">
-                                색상 변경
+                                {t.kids.steps?.changeColor || '색상 변경'}
                             </button>
                             {colorChangedLdrBase64 && (
                                 <>
                                     <button onClick={downloadColorChangedLdr} className="kidsStep__downloadColorBtn">
-                                        ⬇ LDR 다운로드
+                                        ⬇ {t.kids.steps.downloadLdr}
                                     </button>
                                     <button onClick={restoreOriginalColor} className="kidsStep__restoreBtn">
-                                        ↺ 원본 복원
+                                        ↺ {t.kids.steps?.restoreOriginal || '원본 복원'}
                                     </button>
                                 </>
                             )}
                         </div>
 
-                        <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
-                            <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800 }}>
-                                {t.kids.steps.registerGallery}
-                            </div>
-                            <input
-                                type="text" className="kidsStep__sidebarInput"
-                                placeholder={t.kids.steps.galleryModal.placeholder}
-                                value={galleryTitle} onChange={(e) => setGalleryTitle(e.target.value)}
-                                disabled={isRegisteredToGallery}
-                            />
-                            <button
-                                className="kidsStep__sidebarBtn" onClick={handleRegisterGallery}
-                                disabled={isSubmitting || isRegisteredToGallery}
-                            >
-                                {isRegisteredToGallery ? "✓ 등록완료" : (isSubmitting ? "..." : t.kids.steps.registerGallery)}
-                            </button>
-                        </div>
+                        <GalleryRegisterInput
+                            t={t}
+                            isRegisteredToGallery={isRegisteredToGallery}
+                            isSubmitting={isSubmitting}
+                            onRegister={handleRegisterGallery}
+                        />
 
-                        <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
-                            <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800 }}>
+                        <div className="kidsStep__sidebarSection">
+                            <div className="kidsStep__sidebarSectionLabel">
                                 PDF Download
                             </div>
                             <button
@@ -545,132 +618,180 @@ function KidsStepPageContent() {
                                 disabled={!serverPdfUrl || loading}
                                 style={{ background: serverPdfUrl ? "#444" : "#aaa" }}
                             >
-                                {serverPdfUrl ? "PDF 다운로드" : "PDF 준비중..."}
+                                {serverPdfUrl ? t.kids.steps?.pdfDownloadBtn : t.kids.steps?.pdfPreparing}
                             </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="kidsStep__sidebarSpacer" />
+                )}
+
+                <div className="kidsStep__layoutCenter">
+                    <div className="kidsStep__card kids-main-canvas">
+                        {loading && (
+                            <div className="kidsStep__loadingOverlay">
+                                <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
+                                <span>{t.kids.steps.loading}</span>
+                            </div>
+                        )}
+
+                        {activeTab === 'LDR' && (
+                            <div className="kidsStep__splitContainer">
+                                {/* Left: Full Model */}
+                                <div className="kidsStep__splitPane left">
+                                    <div className="kidsStep__paneLabel">완성 모습</div>
+                                    <Canvas
+                                        camera={{ position: [200, -200, 200], fov: 45 }}
+                                        dpr={[1, 2]}
+                                        gl={{ preserveDrawingBuffer: true }}
+                                    >
+                                        <ambientLight intensity={0.9} />
+                                        <directionalLight position={[3, 5, 2]} intensity={1} />
+                                        {ldrUrl && (
+                                            <LdrModel
+                                                url={ldrUrl}
+                                                // No override -> Full model
+                                                onLoaded={(g) => { setLoading(false); }}
+                                                onError={() => setLoading(false)}
+                                                customBounds={modelBounds}
+                                                fitTrigger={`${ldrUrl}|left`}
+                                            />
+                                        )}
+                                        <OrbitControls makeDefault enablePan={false} enableZoom />
+                                    </Canvas>
+                                </div>
+
+                                {/* Right: Step Model */}
+                                <div className="kidsStep__splitPane right">
+                                    <div className="kidsStep__paneLabel">조립 순서</div>
+                                    <Canvas
+                                        camera={{ position: [200, -200, 200], fov: 45 }}
+                                        dpr={[1, 2]}
+                                        gl={{ preserveDrawingBuffer: true }}
+                                    >
+                                        <ambientLight intensity={0.9} />
+                                        <directionalLight position={[3, 5, 2]} intensity={1} />
+                                        {ldrUrl && (
+                                            <LdrModel
+                                                url={ldrUrl}
+                                                overrideMainLdrUrl={currentOverride}
+                                                onLoaded={(g) => { modelGroupRef.current = g; }}
+                                                onError={() => setLoading(false)}
+                                                customBounds={modelBounds}
+                                                fitTrigger={`${ldrUrl}|${currentOverride}|right`}
+                                            />
+                                        )}
+                                        <OrbitControls makeDefault enablePan={false} enableZoom />
+                                    </Canvas>
+
+                                    <div className="kidsStep__placeholder" />
+
+
+                                    <div className="kidsStep__navOverlay">
+                                        <button className="kidsStep__navBtn" disabled={!canPrev} onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}>
+                                            ← {t.kids.steps.prev}
+                                        </button>
+                                        <div className="kidsStep__stepInfo">
+                                            Step {stepIdx + 1} <span style={{ color: "#aaa" }}>/ {total}</span>
+                                        </div>
+                                        <button className="kidsStep__navBtn kidsStep__navBtn--next" disabled={!canNext} onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}>
+                                            {t.kids.steps.next} →
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* GLB Viewer */}
+                        {activeTab === 'GLB' && (
+                            <Canvas
+                                camera={{ position: [5, 5, 5], fov: 50 }}
+                                dpr={[1, 2]}
+                            >
+                                <ambientLight intensity={0.8} />
+                                <directionalLight position={[5, 10, 5]} intensity={1.5} />
+                                <Environment preset="city" />
+                                {glbUrl && (
+                                    <Bounds fit clip margin={1.35}>
+                                        <Center>
+                                            <Gltf src={glbUrl} />
+                                        </Center>
+                                        <FitOnceOnLoad trigger={glbUrl} />
+                                    </Bounds>
+                                )}
+                                <OrbitControls makeDefault enablePan={false} enableZoom autoRotate autoRotateSpeed={2.5} enableDamping />
+                            </Canvas>
+                        )}
+                        {activeTab === 'GLB' && !glbUrl && <div className="kidsStep__noModel">3D Model not available</div>}
+                    </div>
+                </div>
+
+                <div className="kidsStep__rightSidebar">
+                    <div className="kidsStep__rightSidebarHeader">
+                        {t.kids.steps.tabBrick}
+                    </div>
+                    {stepBricks[stepIdx] && stepBricks[stepIdx].length > 0 ? (
+                        <div className="kidsStep__brickList">
+                            {stepBricks[stepIdx].map((b, i) => (
+                                <div key={i} className="kidsStep__brickItem">
+                                    <BrickThumbnail partName={b.partName} color={b.color} />
+                                    <span className="kidsStep__brickCount">x{b.count}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="kidsStep__noBricks">
+                            No bricks needed for this step.
+                        </div>
+                    )}
+                </div>
+
+                {/* Gallery Modal */}
+                {isGalleryModalOpen && (
+                    <div className="galleryModalOverlay" onClick={() => setIsGalleryModalOpen(false)}>
+                        <div className="galleryModal" onClick={(e) => e.stopPropagation()}>
+                            <h3 className="galleryModal__title">{t.kids.steps.galleryModal.title}</h3>
+                            <GalleryRegisterInputModalAdapter
+                                t={t}
+                                onRegister={handleRegisterGallery}
+                                isSubmitting={isSubmitting}
+                                onClose={() => setIsGalleryModalOpen(false)}
+                            />
                         </div>
                     </div>
                 )}
 
-                <div className="kidsStep__card kids-main-canvas">
-                    {loading && (
-                        <div className="kidsStep__loadingOverlay">
-                            <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
-                            <span>{t.kids.steps.loading}</span>
+                {/* Color Modal */}
+                {isColorModalOpen && (
+                    <div className="galleryModalOverlay" onClick={() => setIsColorModalOpen(false)}>
+                        <div className="galleryModal colorModal" onClick={(e) => e.stopPropagation()}>
+                            <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)}>✕</button>
+                            <h3 className="galleryModal__title">{t.kids.steps.colorThemeTitle || "색상 테마 선택"}</h3>
+                            <div className="colorModal__themes">
+                                {colorThemes.length === 0 ? <div className="colorModal__loading">{t.kids.steps?.themeLoading || t.common.loading}</div> : (
+                                    colorThemes.map((theme: ThemeInfo) => (
+                                        <button key={theme.name} className={`colorModal__themeBtn ${selectedTheme === theme.name ? "selected" : ""}`} onClick={() => setSelectedTheme(theme.name)}>
+                                            <span className="colorModal__themeName">{theme.name}</span>
+                                            <span className="colorModal__themeDesc">{theme.description}</span>
+                                        </button>
+                                    ))
+                                )}
+                            </div>
+                            <div className="galleryModal__actions">
+                                <button className="galleryModal__btn galleryModal__btn--cancel" onClick={() => setIsColorModalOpen(false)}>{t.kids.steps.galleryModal.cancel}</button>
+                                <button className="galleryModal__btn galleryModal__btn--confirm" onClick={handleApplyColor} disabled={!selectedTheme || isApplyingColor}>
+                                    {isApplyingColor ? "..." : t.common?.apply}
+                                </button>
+                            </div>
                         </div>
-                    )}
-
-                    {activeTab === 'LDR' && (
-                        <Canvas
-                            camera={{ position: [200, -200, 200], fov: 45 }}
-                            dpr={[1, 2]}
-                            gl={{ preserveDrawingBuffer: true }}
-                        >
-                            <ambientLight intensity={0.9} />
-                            <directionalLight position={[3, 5, 2]} intensity={1} />
-                            {ldrUrl && (
-                                <LdrModel
-                                    url={ldrUrl}
-                                    overrideMainLdrUrl={finalModelUrl}
-                                    onLoaded={(g) => { setLoading(false); modelGroupRef.current = g; }}
-                                    onError={() => setLoading(false)}
-                                    customBounds={modelBounds}
-                                    fitTrigger={`${ldrUrl}|${finalModelUrl ?? ''}`}
-                                />
-                            )}
-                            <OrbitControls makeDefault enablePan={false} enableZoom />
-                        </Canvas>
-                    )}
-
-                    {activeTab === 'LDR' && (
-                        <>
-                            {isPreviewMode ? (
-                                <div className="kidsStep__previewOverlay">
-                                    <button onClick={() => { setIsPreviewMode(false); setStepIdx(0); }} className="kidsStep__startNavBtn">
-                                        {t.kids.steps.startAssembly}
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="kidsStep__navOverlay">
-                                    <button className="kidsStep__navBtn" disabled={!canPrev} onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}>
-                                        ← {t.kids.steps.prev}
-                                    </button>
-                                    <div className="kidsStep__stepInfo">
-                                        Step {stepIdx + 1} <span style={{ color: "#aaa" }}>/ {total}</span>
-                                    </div>
-                                    <button className="kidsStep__navBtn kidsStep__navBtn--next" disabled={!canNext} onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}>
-                                        {t.kids.steps.next} →
-                                    </button>
-                                </div>
-                            )}
-                        </>
-                    )}
-
-                    {/* GLB Viewer */}
-                    {activeTab === 'GLB' && (
-                        <Canvas
-                            camera={{ position: [5, 5, 5], fov: 50 }}
-                            dpr={[1, 2]}
-                        >
-                            <ambientLight intensity={0.8} />
-                            <directionalLight position={[5, 10, 5]} intensity={1.5} />
-                            <Environment preset="city" />
-                            {glbUrl && (
-                                <Bounds fit clip margin={1.35}>
-                                    <Center>
-                                        <Gltf src={glbUrl} />
-                                    </Center>
-                                    <FitOnceOnLoad trigger={glbUrl} />
-                                </Bounds>
-                            )}
-                            <OrbitControls makeDefault enablePan={false} enableZoom autoRotate autoRotateSpeed={2.5} enableDamping />
-                        </Canvas>
-                    )}
-                    {activeTab === 'GLB' && !glbUrl && <div className="kidsStep__noModel">3D Model not available</div>}
-                </div>
+                    </div>
+                )}
             </div>
-
-            {/* Gallery Modal */}
-            {isGalleryModalOpen && (
-                <div className="galleryModalOverlay" onClick={() => setIsGalleryModalOpen(false)}>
-                    <div className="galleryModal" onClick={(e) => e.stopPropagation()}>
-                        <h3 className="galleryModal__title">{t.kids.steps.galleryModal.title}</h3>
-                        <input type="text" className="galleryModal__input" value={galleryTitle} onChange={(e) => setGalleryTitle(e.target.value)} placeholder={t.kids.steps.galleryModal.placeholder} autoFocus />
-                        <div className="galleryModal__actions">
-                            <button className="galleryModal__btn galleryModal__btn--cancel" onClick={() => setIsGalleryModalOpen(false)}>{t.kids.steps.galleryModal.cancel}</button>
-                            <button className="galleryModal__btn galleryModal__btn--confirm" onClick={handleRegisterGallery} disabled={isSubmitting}>{isSubmitting ? "..." : t.kids.steps.galleryModal.confirm}</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Color Modal */}
-            {isColorModalOpen && (
-                <div className="galleryModalOverlay" onClick={() => setIsColorModalOpen(false)}>
-                    <div className="galleryModal colorModal" onClick={(e) => e.stopPropagation()}>
-                        <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)}>✕</button>
-                        <h3 className="galleryModal__title">{t.kids.steps.colorThemeTitle || "색상 테마 선택"}</h3>
-                        <div className="colorModal__themes">
-                            {colorThemes.length === 0 ? <div className="colorModal__loading">테마 로딩 중...</div> : (
-                                colorThemes.map((theme: ThemeInfo) => (
-                                    <button key={theme.name} className={`colorModal__themeBtn ${selectedTheme === theme.name ? "selected" : ""}`} onClick={() => setSelectedTheme(theme.name)}>
-                                        <span className="colorModal__themeName">{theme.name}</span>
-                                        <span className="colorModal__themeDesc">{theme.description}</span>
-                                    </button>
-                                ))
-                            )}
-                        </div>
-                        <div className="galleryModal__actions">
-                            <button className="galleryModal__btn galleryModal__btn--cancel" onClick={() => setIsColorModalOpen(false)}>{t.kids.steps.galleryModal.cancel}</button>
-                            <button className="galleryModal__btn galleryModal__btn--confirm" onClick={handleApplyColor} disabled={!selectedTheme || isApplyingColor}>
-                                {isApplyingColor ? "..." : (t.kids.steps.apply || "적용하기")}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
+
+
 
 export default function KidsStepPage() {
     return (

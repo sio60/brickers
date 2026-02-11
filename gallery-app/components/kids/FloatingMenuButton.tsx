@@ -91,7 +91,7 @@ export default function FloatingMenuButton() {
                         >
                             ✕
                         </button>
-                        <span className={styles.hintText}>궁금한 점은 브릭봇을 통해 문의주세요!</span>
+                        <span className={styles.hintText}>{t.floatingMenu?.hint || ''}</span>
                     </div>
                 )}
                 {/* 메뉴 모달 */}

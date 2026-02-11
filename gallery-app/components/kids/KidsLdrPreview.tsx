@@ -315,10 +315,9 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
                     background: "rgba(248,249,250,0.8)",
                     zIndex: 10,
                 }}>
-                    <div style={{ textAlign: "center", color: "#666", fontWeight: "bold" }}>
-                        3D 모델 불러오는 중...<br />
-                        <span style={{ fontSize: "0.8em", fontWeight: "normal" }}>잠시만 기다려주세요</span>
-                    </div>
+                    <div style={{ textAlign: "center", color: "#666", fontWeight: "bold" }}
+                        dangerouslySetInnerHTML={{ __html: t.viewer3d?.loadingWait || t.common.loading }}
+                    />
                 </div>
             )}
 
@@ -333,7 +332,7 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
                     zIndex: 20,
                 }}>
                     <div style={{ textAlign: "center", color: "#d32f2f" }}>
-                        <div style={{ fontWeight: "bold", marginBottom: "8px" }}>모델 로딩 실패</div>
+                        <div style={{ fontWeight: "bold", marginBottom: "8px" }}>{t.viewer3d?.loadError || 'Model loading failed'}</div>
                         <div style={{ fontSize: "0.8em" }}>{errorMSG}</div>
                     </div>
                 </div>

@@ -14,6 +14,7 @@ interface JobStore {
     activeJob: JobInfo | null;
     isPolling: boolean;
     showDoneToast: boolean;
+    notifications: Notification[];
 
     // 내부 상태 (module-level 아닌 store 내부)
     _pollingTimeoutId: ReturnType<typeof setTimeout> | null;
@@ -25,20 +26,43 @@ interface JobStore {
     startPolling: (jobId: string, age?: string) => void;
     stopPolling: () => void;
     clearJob: () => void;
+    addNotification: (note: Notification) => void;
+    markAsRead: (id: string) => void;
+    clearNotifications: () => void;
 }
 
-const POLL_INTERVAL = 3000; // 3초
-const MAX_POLLING_COUNT = 400; // 최대 20분 (3초 * 400 = 1200초)
+export interface Notification {
+    id: string; // jobId
+    title: string;
+    completedAt: string; // ISO string
+    isRead: boolean;
+}
+
+const POLL_INTERVAL = 3000;
+const MAX_POLLING_COUNT = 400;
 
 export const useJobStore = create<JobStore>((set, get) => ({
     activeJob: null,
     isPolling: false,
     showDoneToast: false,
+    notifications: [],
     _pollingTimeoutId: null,
     _pollingCount: 0,
 
     setActiveJob: (job) => set({ activeJob: job }),
     setShowDoneToast: (show) => set({ showDoneToast: show }),
+
+    addNotification: (note) => set((state) => ({
+        notifications: [note, ...state.notifications]
+    })),
+
+    markAsRead: (id) => set((state) => ({
+        notifications: state.notifications.map(n =>
+            n.id === id ? { ...n, isRead: true } : n
+        )
+    })),
+
+    clearNotifications: () => set({ notifications: [] }),
 
     startPolling: (jobId: string, age?: string) => {
         // 이미 폴링 중이면 중지
@@ -89,7 +113,6 @@ export const useJobStore = create<JobStore>((set, get) => ({
                         });
                         return;
                     }
-                    // 다른 에러는 다음 폴링에서 재시도
                     scheduleNextPoll();
                     return;
                 }
@@ -113,37 +136,43 @@ export const useJobStore = create<JobStore>((set, get) => ({
                 });
 
                 if (data.status === 'DONE') {
-                    // 완료 알림 - 동적 import로 SSR 에러 방지
-                    const stepsUrl = `/kids/steps?url=${encodeURIComponent(data.ldrUrl || '')}&jobId=${jobId}&age=${age || ''}`;
+                    // 완료 알림 추가
+                    get().addNotification({
+                        id: jobId,
+                        title: currentJob.title || '새로운 브릭 생성 완료',
+                        completedAt: new Date().toISOString(),
+                        isRead: false
+                    });
 
-                    // 브라우저 환경에서만 알림
+                    // 브라우저 알림 (기존)
+                    const stepsUrl = `/kids/steps?url=${encodeURIComponent(data.ldrUrl || '')}&jobId=${jobId}&age=${age || ''}`;
                     if (typeof window !== 'undefined') {
                         import('@/lib/toast-utils').then(({ showToastNotification }) => {
                             showToastNotification(
-                                '생성 완료!',
-                                '브릭 모델 생성이 완료되었습니다. 클릭해서 확인하세요!',
+                                'Generation Complete!',
+                                'Brick model is ready. Click to check it out!',
                                 '/logo.png',
                                 stepsUrl
                             );
                         }).catch(console.error);
                     }
+
+                    // 기존 토스트 표시 (옵션)
+                    set({ showDoneToast: true });
+
                     get().stopPolling();
                 } else if (data.status === 'FAILED') {
                     get().stopPolling();
                 } else {
-                    // QUEUED, RUNNING이면 계속 폴링
                     scheduleNextPoll();
                 }
             } catch (e) {
                 console.error('[JobStore] Polling error:', e);
-                // 네트워크 에러 시 다음 폴링에서 재시도
                 scheduleNextPoll();
             }
         };
 
-        // 다음 폴링 스케줄 (setTimeout 체인으로 race condition 방지)
         const scheduleNextPoll = () => {
-            // 폴링이 중지됐으면 스케줄하지 않음
             if (!get().isPolling) {
                 return;
             }
@@ -151,7 +180,6 @@ export const useJobStore = create<JobStore>((set, get) => ({
             set({ _pollingTimeoutId: timeoutId });
         };
 
-        // 즉시 1회 실행
         poll();
     },
 

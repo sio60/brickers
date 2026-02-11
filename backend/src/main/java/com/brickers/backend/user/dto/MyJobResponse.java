@@ -9,6 +9,7 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -53,6 +54,9 @@ public class MyJobResponse {
     /** 엔진이 시도한 최종 타겟 해상도 */
     private Integer finalTarget;
 
+    /** 6면 스크린샷 URL 맵 */
+    private Map<String, String> screenshotUrls;
+
     /** PRO 모드 여부 (보통 1000개 이상) */
     private boolean isPro;
 
@@ -86,6 +90,7 @@ public class MyJobResponse {
                 .hasResult(hasResult)
                 .errorMessage(j.getErrorMessage())
                 .suggestedTags(j.getSuggestedTags())
+                .screenshotUrls(j.getScreenshotUrls())
                 .parts(j.getParts())
                 .finalTarget(j.getFinalTarget())
                 .isPro(j.getParts() != null && j.getParts() >= 1000)

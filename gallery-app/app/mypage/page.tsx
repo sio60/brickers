@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import styles from "./MyPage.module.css";
@@ -37,8 +37,9 @@ const Icons = {
 // types
 type MenuItem = "profile" | "membership" | "jobs" | "inquiries" | "reports" | "settings" | "delete";
 
-export default function MyPage() {
+function MyPageContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { language, setLanguage, t } = useLanguage();
     const { isAuthenticated, isLoading, authFetch, setUser } = useAuth(); // Added setUser
 
@@ -110,6 +111,14 @@ export default function MyPage() {
         setJobsTotalPages(1);
         loadJobsPage(0, true);
     };
+
+    useEffect(() => {
+        const menu = searchParams.get('menu');
+        if (menu && ['profile', 'membership', 'jobs', 'inquiries', 'reports', 'settings', 'delete'].includes(menu)) {
+            setActiveMenu(menu as MenuItem);
+        }
+    }, [searchParams]);
+
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
             router.replace("/?login=true");
@@ -140,6 +149,7 @@ export default function MyPage() {
     useEffect(() => {
         if (activeMenu !== 'jobs') return;
         resetAndLoadJobs();
+        // Update URL without reload to reflect current tab (optional but good for UX)
     }, [activeMenu, jobSort]);
 
     useEffect(() => {
@@ -291,21 +301,21 @@ export default function MyPage() {
                 if (menuJob.correctedImageUrl) {
                     downloadFile(menuJob.correctedImageUrl, `${menuJob.title || 'corrected'}_enhanced.png`);
                 } else {
-                    alert(t.jobs.noEnhancedImage || '개선 이미지가 없습니다.');
+                    alert(t.jobs.noEnhancedImage);
                 }
                 break;
             case 'glb':
                 if (menuJob.glbUrl) {
                     downloadFile(menuJob.glbUrl, `${menuJob.title || 'model'}.glb`);
                 } else {
-                    alert(t.jobs.noGlbFile || 'GLB 파일이 없습니다.');
+                    alert(t.jobs.noGlbFile);
                 }
                 break;
             case 'ldr':
                 if (menuJob.ldrUrl) {
                     downloadFile(menuJob.ldrUrl, `${menuJob.title || 'model'}.ldr`);
                 } else {
-                    alert(t.jobs.noLdrFile || 'LDR 파일이 없습니다.');
+                    alert(t.jobs.noLdrFile);
                 }
                 break;
             case 'view':
@@ -321,7 +331,7 @@ export default function MyPage() {
                 if (menuJob.instructionsPdfUrl) {
                     downloadFile(menuJob.instructionsPdfUrl, `${menuJob.title || 'guide'}.pdf`);
                 } else {
-                    alert('생성된 PDF가 없습니다. 조립 페이지에서 생성을 기다려주세요.');
+                    alert(t.jobs?.noPdfFile || 'No PDF generated yet.');
                 }
                 break;
         }
@@ -569,8 +579,8 @@ export default function MyPage() {
                                     background: '#fff',
                                 }}
                             >
-                                <option value="latest">최신순</option>
-                                <option value="oldest">오래된순</option>
+                                <option value="latest">{t.jobs?.sortLatest || '최신순'}</option>
+                                <option value="oldest">{t.jobs?.sortOldest || '오래된순'}</option>
                             </select>
                         </div>
                         {jobsList.length > 0 ? (
@@ -887,7 +897,7 @@ export default function MyPage() {
                                     onClick={() => handleMenuAction('pdf')}
                                 >
                                     <Icons.DownloadFile className={styles.mypage__menuIcon2} />
-                                    <span>PDF 설명서 다운로드</span>
+                                    <span>{t.jobs?.menu?.downloadPdf || 'Download PDF'}</span>
                                 </button>
                             )}
 
@@ -907,7 +917,7 @@ export default function MyPage() {
                                 disabled={!menuJob.correctedImageUrl}
                             >
                                 <Icons.DownloadImage className={styles.mypage__menuIcon2} />
-                                <span>보정 이미지 다운로드</span>
+                                <span>{t.jobs?.menu?.downloadEnhanced || 'Download Enhanced Image'}</span>
                             </button>
 
                             <div className={styles.mypage__menuDivider} /> */}
@@ -940,7 +950,7 @@ export default function MyPage() {
                                 disabled={!menuJob.ldrUrl}
                             >
                                 <Icons.Edit className={styles.mypage__menuIcon2} />
-                                <span>색상 변경</span>
+                                <span>{t.kids.steps?.changeColor || '색상 변경'}</span>
                             </button>
                             */}
                         </div>
@@ -1023,11 +1033,11 @@ export default function MyPage() {
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-[4px] grid place-items-center z-[2000]" onClick={() => setIsColorModalOpen(false)}>
                     <div className="bg-white border-[3px] border-black rounded-[20px] p-8 w-[min(400px,90vw)] flex flex-col gap-5 shadow-[0_20px_40px_rgba(0,0,0,0.2)] relative" onClick={(e) => e.stopPropagation()}>
                         <button className="absolute top-4 right-4 w-11 h-11 border-none bg-transparent cursor-pointer text-[24px] font-bold flex items-center justify-center transition-all duration-100 text-black z-[100] hover:rotate-90 hover:scale-110" onClick={() => setIsColorModalOpen(false)}>✕</button>
-                        <h3 className="text-[24px] font-black m-0 text-center">색상 테마 선택</h3>
+                        <h3 className="text-[24px] font-black m-0 text-center">{t.kids.steps.colorThemeTitle}</h3>
 
                         <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
                             {colorThemes.length === 0 ? (
-                                <div className="p-5 text-center text-[#888]">테마 로딩 중...</div>
+                                <div className="p-5 text-center text-[#888]">{t.kids.steps?.themeLoading || t.common.loading}</div>
                             ) : (
                                 colorThemes.map((theme: any) => (
                                     <button
@@ -1047,14 +1057,14 @@ export default function MyPage() {
                                 className="flex-1 p-3 rounded-xl border-2 border-black font-[800] cursor-pointer transition-all duration-200 bg-white hover:-translate-y-[0.5]"
                                 onClick={() => setIsColorModalOpen(false)}
                             >
-                                취소
+                                {t.common.cancel}
                             </button>
                             <button
                                 className="flex-1 p-3 rounded-xl border-2 border-black font-[800] cursor-pointer transition-all duration-200 bg-black text-white hover:-translate-y-[0.5] disabled:opacity-50"
                                 onClick={handleApplyColor}
                                 disabled={!selectedTheme || isApplyingColor}
                             >
-                                {isApplyingColor ? "..." : "적용하기"}
+                                {isApplyingColor ? (t.common?.applying || '...') : (t.common?.apply || '적용')}
                             </button>
                         </div>
                     </div>
@@ -1066,18 +1076,26 @@ export default function MyPage() {
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-[4px] grid place-items-center z-[2000]" onClick={() => setColorChangedLdrBase64(null)}>
                     <div className="bg-white border-[3px] border-black rounded-[20px] p-8 w-[min(400px,90vw)] flex flex-col gap-5 shadow-[0_20px_40px_rgba(0,0,0,0.2)] relative" onClick={(e) => e.stopPropagation()}>
                         <button className="absolute top-4 right-4 w-11 h-11 border-none bg-transparent cursor-pointer text-[24px] font-bold flex items-center justify-center transition-all duration-100 text-black z-[100] hover:rotate-90 hover:scale-110" onClick={() => setColorChangedLdrBase64(null)}>✕</button>
-                        <h3 className="text-[24px] font-black m-0 text-center">색상 변경 완료</h3>
-                        <p className="text-center text-[#666]">{selectedTheme} 테마가 적용되었습니다.</p>
+                        <h3 className="text-[24px] font-black m-0 text-center">{t.common?.colorChangeComplete}</h3>
+                        <p className="text-center text-[#666]">{selectedTheme} {t.common?.themeApplied}</p>
                         <button
                             className="w-full p-4 rounded-xl border-2 border-black font-[800] cursor-pointer transition-all duration-200 bg-[#4CAF50] text-white hover:-translate-y-[2px]"
                             onClick={() => { downloadColorChangedLdr(); setColorChangedLdrBase64(null); }}
                         >
-                            변경된 LDR 다운로드
+                            {t.common?.downloadChangedLdr}
                         </button>
                     </div>
                 </div>
             )}
                 */}
         </div>
+    );
+}
+
+export default function MyPage() {
+    return (
+        <Suspense fallback={<div className={styles.mypage__loading}>Loading...</div>}>
+            <MyPageContent />
+        </Suspense>
     );
 }
