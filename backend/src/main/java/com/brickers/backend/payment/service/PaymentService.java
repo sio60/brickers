@@ -102,7 +102,8 @@ public class PaymentService {
         }
 
         if (order.getStatus() == PaymentStatus.COMPLETED) {
-            order.markRefunded("User refund requested");
+            // 관리자 승인 대기 상태로 변경 (즉시 환불 X)
+            order.markRefundRequested("User refund requested");
         } else {
             order.markCanceled("User cancel requested");
         }

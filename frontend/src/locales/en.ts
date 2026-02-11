@@ -300,9 +300,20 @@ export const en = {
         },
         refund: {
             approve: "Approve",
+            reject: "Reject",
             empty: "No refund requests.",
             amount: "Amount",
-            inProgress: "Feature in progress"
+            inProgress: "Feature in progress",
+            orderNo: "Order No",
+            planName: "Plan",
+            user: "Requester",
+            reason: "Reason",
+            requestDate: "Request Date",
+            rejectReason: "Enter rejection reason...",
+            confirmApprove: "Are you sure you want to approve this refund?",
+            approved: "Refund has been approved.",
+            rejected: "Refund has been rejected.",
+            inputRequired: "Please enter a rejection reason."
         },
         error: "An error occurred.",
         failed: "Processing failed."

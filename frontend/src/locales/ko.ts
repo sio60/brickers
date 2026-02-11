@@ -301,9 +301,20 @@ export const ko = {
         },
         refund: {
             approve: "승인",
+            reject: "거절",
             empty: "환불 요청이 없습니다.",
             amount: "금액",
-            inProgress: "기능 구현 중"
+            inProgress: "기능 구현 중",
+            orderNo: "주문번호",
+            planName: "상품명",
+            user: "요청자",
+            reason: "사유",
+            requestDate: "요청일",
+            rejectReason: "거절 사유를 입력하세요...",
+            confirmApprove: "환불을 승인하시겠습니까?",
+            approved: "환불이 승인되었습니다.",
+            rejected: "환불이 거절되었습니다.",
+            inputRequired: "거절 사유를 입력하세요."
         },
         error: "오류가 발생했습니다.",
         failed: "처리에 실패했습니다."

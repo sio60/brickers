@@ -276,9 +276,20 @@ export const ja = {
         },
         refund: {
             approve: "承認",
+            reject: "却下",
             empty: "払い戻し要請がありません。",
             amount: "金額",
-            inProgress: "機能開発中"
+            inProgress: "機能開発中",
+            orderNo: "注文番号",
+            planName: "商品名",
+            user: "要請者",
+            reason: "事由",
+            requestDate: "要請日",
+            rejectReason: "却下理由を入力してください...",
+            confirmApprove: "払い戻しを承認しますか？",
+            approved: "払い戻しが承認されました。",
+            rejected: "払い戻しが却下されました。",
+            inputRequired: "却下理由を入力してください。"
         },
         error: "エラーが発生しました。",
         failed: "処理に失敗しました。"

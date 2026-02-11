@@ -53,10 +53,51 @@ public class AdminPaymentService {
         // COMPLETED면 환불(REFUNDED), PENDING이면 취소(CANCELED)
         if (order.getStatus() == PaymentStatus.COMPLETED) {
             order.markRefunded(finalReason);
+        } else if (order.getStatus() == PaymentStatus.REFUND_REQUESTED) {
+            order.markRefunded(finalReason);
         } else {
             order.markCanceled(finalReason);
         }
 
+        paymentOrderRepository.save(order);
+        return AdminPaymentDto.from(order);
+    }
+
+    // 환불 요청 목록 조회 (REFUND_REQUESTED 상태만)
+    @Transactional(readOnly = true)
+    public Page<AdminPaymentDto> getRefundRequests(int page, int size) {
+        return paymentOrderRepository
+                .findByStatus(PaymentStatus.REFUND_REQUESTED,
+                        PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt")))
+                .map(AdminPaymentDto::from);
+    }
+
+    // 환불 승인 (REFUND_REQUESTED → REFUNDED)
+    @Transactional
+    public AdminPaymentDto approveRefund(String orderId) {
+        PaymentOrder order = paymentOrderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found. id=" + orderId));
+
+        if (!order.canRefundByAdmin()) {
+            throw new IllegalStateException("Cannot approve refund. status=" + order.getStatus());
+        }
+
+        order.markRefunded(order.getCancelReason() != null ? order.getCancelReason() : "Admin approved refund");
+        paymentOrderRepository.save(order);
+        return AdminPaymentDto.from(order);
+    }
+
+    // 환불 거절 (REFUND_REQUESTED → COMPLETED 원복)
+    @Transactional
+    public AdminPaymentDto rejectRefund(String orderId, String reason) {
+        PaymentOrder order = paymentOrderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found. id=" + orderId));
+
+        if (!order.canRefundByAdmin()) {
+            throw new IllegalStateException("Cannot reject refund. status=" + order.getStatus());
+        }
+
+        order.revertToCompleted();
         paymentOrderRepository.save(order);
         return AdminPaymentDto.from(order);
     }
