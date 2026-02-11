@@ -508,7 +508,7 @@ function OffscreenBrickRenderer() {
             <LdrModel
                 url={url}
                 fitTrigger={url}
-                fitMargin={2.2}
+                fitMargin={3.0}
                 onLoaded={onLoaded}
                 onError={() => {
                     // Skip error
