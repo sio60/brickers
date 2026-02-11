@@ -97,7 +97,7 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
                                 onClick={() => handleSelect("PRO")}
                             >
                                 <div className={styles.ageLabel}>PRO</div>
-                                <div className={styles.brickCount}>5000+ {t.kids.bricks}</div>
+                                <div className={styles.brickCount}>1000+ {t.kids.bricks}</div>
                             </button>
                         </div>
                     </div>
