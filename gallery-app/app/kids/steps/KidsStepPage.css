@@ -385,19 +385,19 @@
 /* Sidebar Styling (Left) */
 .kidsStep__sidebar,
 .kidsStep__sidebarSpacer {
-    width: 200px;
+    width: 240px;
     flex-shrink: 0;
 }
 
 .kidsStep__sidebar {
     background: #fff;
     border-radius: 20px;
-    padding: 18px 14px;
+    padding: 20px 16px;
     border: 2px solid #e0e0e0;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
     height: auto;
     max-height: 85vh;
     z-index: 20;
@@ -426,14 +426,14 @@
 .kidsStep__modeContainer {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
 }
 
 .kidsStep__colorContainer {
-    margin-top: 6px;
+    margin-top: 8px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
 }
 
 .kidsStep__sidebarSection {
@@ -453,14 +453,14 @@
 
 /* Right Sidebar (Brick List) */
 .kidsStep__rightSidebar {
-    width: 200px;
+    width: 240px;
     /* Matched width with left sidebar */
     flex-shrink: 0;
     background: #fff;
-    border-radius: 24px;
+    border-radius: 20px;
     padding: 0;
-    border: 3px solid #000;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border: 2px solid #e0e0e0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     display: flex;
     flex-direction: column;
     height: auto;
@@ -521,22 +521,22 @@
     flex-direction: row;
     align-items: center;
     background: #f9f9f9;
-    border: 2px solid #eee;
+    border: 1.5px solid #eee;
     border-radius: 12px;
-    padding: 2px 6px;
-    gap: 2px;
-    transition: all 0.2s;
-    min-height: 56px;
+    padding: 6px 8px;
+    gap: 6px;
+    transition: all 0.15s;
+    min-height: 64px;
 }
 
 .kidsStep__brickItem:hover {
-    border-color: #000;
+    border-color: #ccc;
     background: #fff;
 }
 
 .kidsStep__brickCanvasContainer {
-    width: 60px;
-    height: 60px;
+    width: 72px;
+    height: 64px;
     flex-shrink: 0;
     overflow: visible;
 }
@@ -547,12 +547,12 @@
     color: #000;
     flex: 1;
     text-align: right;
-    padding-right: 4px;
+    padding-right: 6px;
 }
 
 .kidsStep__brickPlaceholder {
-    width: 60px;
-    height: 60px;
+    width: 72px;
+    height: 64px;
     flex-shrink: 0;
     background: #f0f0f0;
     border-radius: 8px;
