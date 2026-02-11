@@ -39,8 +39,18 @@ type Report = {
     resolutionNote?: string;
 };
 
-createdAt ?: string;
-updatedAt ?: string;
+type RefundRequest = {
+    id: string;
+    orderId: string;
+    orderNo: string;
+    amount: number;
+    status: string;
+    requestedAt: string;
+    userId: string;
+    itemName?: string;
+    cancelReason?: string;
+    createdAt: string;
+    updatedAt: string;
 };
 
 // [NEW] 사용자 타입 정의
