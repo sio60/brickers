@@ -385,6 +385,15 @@ export const ja = {
             requestDate: "要請日",
             orderNo: "注文番号"
         },
+        users: {
+            title: "ユーザー管理",
+            searchPlaceholder: "メールまたはニックネームで検索...",
+            suspendReason: "停止理由を入力してください:",
+            suspended: "ユーザーが停止されました。",
+            confirmActivate: "このユーザーの停止を解除しますか？",
+            activated: "ユーザーの停止が解除されました。",
+            empty: "ユーザーが見つかりません。"
+        },
         error: "エラーが発生しました。",
         failed: "処理に失敗しました。",
         label: {
