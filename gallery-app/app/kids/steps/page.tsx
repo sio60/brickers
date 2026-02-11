@@ -439,12 +439,14 @@ function BrickThumbnail({ partName, color }: { partName: string, color: string }
             <View track={ref as any}>
                 <ambientLight intensity={2} />
                 <directionalLight position={[5, 10, 5]} intensity={2} />
-                <PerspectiveCamera makeDefault position={[300, 300, 300]} fov={25} />
-                <LdrModel
-                    url={url}
-                    noFit
-                    onError={() => setHasError(true)}
-                />
+                <PerspectiveCamera makeDefault position={[300, 300, 300]} fov={25} onUpdate={(c) => c.lookAt(0, 0, 0)} />
+                <Center>
+                    <LdrModel
+                        url={url}
+                        noFit
+                        onError={() => setHasError(true)}
+                    />
+                </Center>
             </View>
         </div>
     );
