@@ -58,8 +58,8 @@ function KidsPageContent() {
                 console.error('Failed to restore file:', e);
                 setIsFileLoaded(true);
             }
-        } else if (storedPrompt) {
-            setTargetPrompt(storedPrompt);
+        } else if (storedPrompt || searchParams.get("prompt")) {
+            setTargetPrompt(storedPrompt || searchParams.get("prompt"));
             setIsFileLoaded(true);
             sessionStorage.removeItem('pendingPrompt');
         } else {

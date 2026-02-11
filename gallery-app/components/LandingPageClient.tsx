@@ -56,8 +56,8 @@ function LandingPageContent({ initialItems }: Props) {
 
     const handleLevelSelect = (url: string | null, file: File | null, age: string, prompt?: string) => {
         if (prompt) {
-            sessionStorage.setItem('pendingPrompt', prompt);
-            router.push(`/kids/main?age=${age}`);
+            // sessionStorage.setItem('pendingPrompt', prompt);
+            router.push(`/kids/main?age=${age}&prompt=${encodeURIComponent(prompt)}`);
         } else if (file) {
             const reader = new FileReader();
             reader.onload = () => {
