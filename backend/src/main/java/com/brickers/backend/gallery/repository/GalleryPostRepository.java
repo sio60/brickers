@@ -53,4 +53,23 @@ public interface GalleryPostRepository extends MongoRepository<GalleryPostEntity
       "{ '$limit': 50 }"
   })
   List<String> findAllTags();
+  // ✅ 관리자용 검색 (키워드 + 상태)
+  // 키워드(title/nickname), visibility, deleted 여부
+  // QueryDSL 없이 동적 쿼리가 어려우므로, 상황별 메서드 정의 또는 Custom Repository 권장.
+  // 여기서는 가장 많이 쓸 패턴(키워드 검색)만 추가하고, 필터링은 Service에서 스트림으로 하거나
+  // 메서드를 여러 개 만듭니다. 하지만 Pagination 때문에 DB레벨 필터링이 필수입니다.
+
+  // 1. 키워드 O, Visibility O, Deleted O
+  @Query("{ '$and': [ { '$or': [ { 'title': { '$regex': ?0, '$options': 'i' } }, { 'authorNickname': { '$regex': ?0, '$options': 'i' } } ] }, { 'visibility': ?1 }, { 'deleted': ?2 } ] }")
+  Page<GalleryPostEntity> searchAdmin(String keyword, Visibility visibility, boolean deleted, Pageable pageable);
+
+  // 2. 키워드 O, Visibility X (전체), Deleted O
+  @Query("{ '$and': [ { '$or': [ { 'title': { '$regex': ?0, '$options': 'i' } }, { 'authorNickname': { '$regex': ?0, '$options': 'i' } } ] }, { 'deleted': ?1 } ] }")
+  Page<GalleryPostEntity> searchAdminNoVisibility(String keyword, boolean deleted, Pageable pageable);
+
+  // 3. 키워드 X, Visibility O, Deleted O
+  Page<GalleryPostEntity> findByVisibilityAndDeleted(Visibility visibility, boolean deleted, Pageable pageable);
+
+  // 4. 키워드 X, Visibility X, Deleted O
+  Page<GalleryPostEntity> findByDeleted(boolean deleted, Pageable pageable);
 }

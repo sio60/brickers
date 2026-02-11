@@ -2,6 +2,7 @@ package com.brickers.backend.admin.gallery;
 
 import com.brickers.backend.admin.gallery.dto.AdminGalleryPostDto;
 import com.brickers.backend.admin.gallery.service.AdminGalleryService;
+import com.brickers.backend.gallery.entity.Visibility;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -18,12 +19,15 @@ public class AdminGalleryController {
 
     private final AdminGalleryService adminGalleryService;
 
-    /** 전체 게시글 목록 (삭제된 것 포함) */
+    /** 전체 게시글 목록 (삭제된 것 포함) + 검색/필터 */
     @GetMapping
     public Page<AdminGalleryPostDto> getAllPosts(
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @RequestParam(name = "visibility", required = false) Visibility visibility,
+            @RequestParam(name = "deleted", required = false) Boolean deleted,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size) {
-        return adminGalleryService.getAllPosts(page, size);
+        return adminGalleryService.getAllPosts(keyword, visibility, deleted, page, size);
     }
 
     /** 게시글 상세 */

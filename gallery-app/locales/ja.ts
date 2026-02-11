@@ -476,6 +476,7 @@ export const ja = {
         replyPlaceholder: "返信を入力...",
         hideReplies: "返信を非表示",
         showReplies: "返信{count}件を表示",
+        deleteConfirm: "本当にコメントを削除しますか？",
         views3d: {
             noLdrUrl: "LDR URLがありません。",
             dragRotate: "ドラッグ: 回転",
