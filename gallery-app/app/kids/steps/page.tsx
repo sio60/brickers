@@ -260,8 +260,8 @@ function GalleryRegisterInput({ t, isRegisteredToGallery, isSubmitting, onRegist
     // isRegisteredToGallery가 true가 되면 input 비활성화됨. 
 
     return (
-        <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
-            <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800 }}>
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: "2px solid #eee" }}>
+            <div style={{ marginBottom: 6, paddingLeft: 4, fontSize: "0.7rem", color: "#888", fontWeight: 800 }}>
                 {t.kids.steps.registerGallery}
             </div>
             <input
@@ -282,16 +282,18 @@ function GalleryRegisterInput({ t, isRegisteredToGallery, isSubmitting, onRegist
 
 function BrickThumbnail({ partName, color }: { partName: string, color: string }) {
     const [url, setUrl] = useState<string | null>(null);
+    const [hasError, setHasError] = useState(false);
 
     useEffect(() => {
         const ldr = `1 ${color} 0 0 0 1 0 0 0 1 0 0 0 1 ${partName}.dat`;
         const blob = new Blob([ldr], { type: 'text/plain' });
         const objectUrl = URL.createObjectURL(blob);
         setUrl(objectUrl);
+        setHasError(false);
         return () => URL.revokeObjectURL(objectUrl);
     }, [partName, color]);
 
-    if (!url) return <div className="kidsStep__brickPlaceholder" />;
+    if (!url || hasError) return <div className="kidsStep__brickPlaceholder" />;
 
     return (
         <div className="kidsStep__brickCanvasContainer">
@@ -300,7 +302,7 @@ function BrickThumbnail({ partName, color }: { partName: string, color: string }
                 <directionalLight position={[5, 10, 5]} intensity={2} />
                 <LdrModel
                     url={url}
-                    noFit
+                    onError={() => setHasError(true)}
                 />
             </Canvas>
         </div>
@@ -616,7 +618,6 @@ function KidsStepPageContent() {
                             <button
                                 className="kidsStep__sidebarBtn" onClick={handleDownloadPdf}
                                 disabled={!serverPdfUrl || loading}
-                                style={{ background: serverPdfUrl ? "#444" : "#aaa" }}
                             >
                                 {serverPdfUrl ? t.kids.steps?.pdfDownloadBtn : t.kids.steps?.pdfPreparing}
                             </button>
