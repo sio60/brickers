@@ -38,6 +38,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./backend
+          platforms: linux/amd64
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/brickers-backend:latest
@@ -53,6 +54,7 @@ jobs:
         with:
           context: .
           file: ./frontend/Dockerfile
+          platforms: linux/amd64
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/brickers-frontend:latest
