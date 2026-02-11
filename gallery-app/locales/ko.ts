@@ -455,6 +455,7 @@ export const ko = {
             searchPlaceholder: "제목 또는 작성자 검색...",
             filter: {
                 all: "전체 상태",
+                active: "활성",
                 public: "공개",
                 private: "비공개",
                 deleted: "삭제됨"
