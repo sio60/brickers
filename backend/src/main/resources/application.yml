@@ -103,6 +103,12 @@ aws:
       max-messages: 10         # 배치 크기
       wait-time: 10            # Long polling
 
+# ✅ Google Analytics 설정
+google:
+  analytics:
+    property-id: ${GA4_PROPERTY_ID:}
+    credentials-json: ${GA4_CREDENTIALS_JSON:}
+
 openai:
   api-key: ${APP_OPENAI_API_KEY}
 

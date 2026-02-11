@@ -55,6 +55,9 @@ implementation 'me.paulschwarz:spring-dotenv:4.0.0'
     
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+
+    // Google Analytics 4 (GA4) Data API
+    implementation 'com.google.analytics:google-analytics-data:0.56.0'
 }
 
 
