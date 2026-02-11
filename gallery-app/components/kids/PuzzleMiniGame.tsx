@@ -3,6 +3,7 @@
 import styles from "./PuzzleMiniGame.module.css";
 import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { savePuzzleRank, getPuzzleRanking, PuzzleRank } from "../../lib/api/kidsApi";
 
 interface PuzzleMiniGameProps {
@@ -16,6 +17,7 @@ const BACKGROUND_IMAGE = "/game.png";
 
 export default function PuzzleMiniGame({ percent, message }: PuzzleMiniGameProps) {
     const { t } = useLanguage();
+    const { user } = useAuth(); // 사용자 정보 가져오기
 
     // 타일 위치 상태 (0 ~ 8)
     const [tiles, setTiles] = useState<number[]>([]);
@@ -110,7 +112,10 @@ export default function PuzzleMiniGame({ percent, message }: PuzzleMiniGameProps
 
     const handleWin = async () => {
         setIsWin(true);
-        const userId = localStorage.getItem('userId') || 'guest';
+        // 로그인되어 있으면 닉네임 사용, 아니면 Guest
+        const nickname = user?.nickname || localStorage.getItem('nickname') || 'Guest';
+        // userId는 고유 식별자가 필요하지만, API가 닉네임을 표시용으로 쓴다면 닉네임을 보냄
+        const userId = nickname;
 
         try {
             // 랭킹 저장
@@ -200,10 +205,14 @@ export default function PuzzleMiniGame({ percent, message }: PuzzleMiniGameProps
                         <div className={styles.rankingList}>
                             <p style={{ fontWeight: 'bold', marginBottom: 10 }}>TOP 10 랭킹</p>
                             {ranking.map((r, i) => (
-                                <div key={r.id || i} className={styles.rankingItem} style={i + 1 === myRank ? { background: '#222' } : {}}>
+                                <div
+                                    key={r.id || i}
+                                    className={styles.rankingItem}
+                                    style={i + 1 === myRank ? { background: '#f5f5f5', fontWeight: 'bold' } : {}}
+                                >
                                     <span>
                                         <span className={styles.rankNumber}>{i + 1}</span>
-                                        {r.nickname}
+                                        {r.userId}
                                     </span>
                                     <span>{formatTime(r.timeSpent)}</span>
                                 </div>
