@@ -152,29 +152,40 @@ export default function PuzzleMiniGame({ percent, message }: PuzzleMiniGameProps
                 <div className={styles.timer}>{formatTime(seconds)}</div>
             </div>
 
-            <div className={styles.board}>
-                {tiles.map((tileIdx, currentPos) => {
-                    const isEmpty = tileIdx === TOTAL_TILES - 1;
-                    const row = Math.floor(tileIdx / SIZE);
-                    const col = tileIdx % SIZE;
-                    const posX = (col / (SIZE - 1)) * 100;
-                    const posY = (row / (SIZE - 1)) * 100;
+            <div className={styles.gameArea}>
+                <div className={styles.board}>
+                    {tiles.map((tileIdx, currentPos) => {
+                        const isEmpty = tileIdx === TOTAL_TILES - 1;
+                        const row = Math.floor(tileIdx / SIZE);
+                        const col = tileIdx % SIZE;
+                        const posX = (col / (SIZE - 1)) * 100;
+                        const posY = (row / (SIZE - 1)) * 100;
 
-                    return (
-                        <div
-                            key={currentPos}
-                            className={`${styles.tile} ${isEmpty ? styles.tileEmpty : ""}`}
-                            style={!isEmpty ? {
-                                backgroundImage: `url(${BACKGROUND_IMAGE})`,
-                                backgroundPosition: `${posX}% ${posY}%`,
-                                backgroundSize: `${SIZE * 100}% ${SIZE * 100}%`
-                            } : {}}
-                            onClick={() => handleTileClick(currentPos)}
-                        >
-                            {!isEmpty && tileIdx + 1}
-                        </div>
-                    );
-                })}
+                        return (
+                            <div
+                                key={currentPos}
+                                className={`${styles.tile} ${isEmpty ? styles.tileEmpty : ""}`}
+                                style={!isEmpty ? {
+                                    backgroundImage: `url(${BACKGROUND_IMAGE})`,
+                                    backgroundPosition: `${posX}% ${posY}%`,
+                                    backgroundSize: `${SIZE * 100}% ${SIZE * 100}%`
+                                } : {}}
+                                onClick={() => handleTileClick(currentPos)}
+                            >
+                                {!isEmpty && tileIdx + 1}
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <div className={styles.referenceSection}>
+                    <span className={styles.referenceLabel}>원본</span>
+                    <img
+                        src={BACKGROUND_IMAGE}
+                        alt="원본 이미지"
+                        className={styles.referenceImage}
+                    />
+                </div>
             </div>
 
             {isWin && (
