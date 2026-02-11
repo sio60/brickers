@@ -434,21 +434,6 @@ export const ko = {
             reporter: "신고자",
             order: "주문 번호",
             user: "사용자"
-        }
-    },
-    mypage: {
-        stats: {
-            jobs: "내 작업",
-            gallery: "내 갤러리",
-            joinedAt: "가입일"
-        },
-        bioPlaceholder: "자기소개를 입력해주세요!",
-        nicknamePlaceholder: "닉네임을 입력하세요",
-        bioInputPlaceholder: "자기소개를 입력하세요",
-        noTitle: "제목 없음",
-        payment: {
-            date: "결제일",
-            nextDate: "다음 결제일"
         },
         gallery: {
             title: "갤러리 관리",
@@ -479,7 +464,23 @@ export const ko = {
                 hide: "이 게시글을 숨기시겠습니까?",
                 unhide: "이 게시글을 다시 공개하시겠습니까?"
             }
+        }
+    },
+    mypage: {
+        stats: {
+            jobs: "내 작업",
+            gallery: "내 갤러리",
+            joinedAt: "가입일"
         },
+        bioPlaceholder: "자기소개를 입력해주세요!",
+        nicknamePlaceholder: "닉네임을 입력하세요",
+        bioInputPlaceholder: "자기소개를 입력하세요",
+        noTitle: "제목 없음",
+        payment: {
+            date: "결제일",
+            nextDate: "다음 결제일"
+        },
+
         preparing: "콘텐츠 준비 중입니다..."
     },
     // gallery 전용 (기존 gallery-app)

@@ -435,21 +435,6 @@ export const en = {
             reporter: "Reporter",
             order: "Order",
             user: "User"
-        }
-    },
-    mypage: {
-        stats: {
-            jobs: "My Jobs",
-            gallery: "My Gallery",
-            joinedAt: "Joined"
-        },
-        bioPlaceholder: "Enter your bio!",
-        nicknamePlaceholder: "Enter nickname",
-        bioInputPlaceholder: "Enter your bio",
-        noTitle: "No Title",
-        payment: {
-            date: "Payment Date",
-            nextDate: "Next Payment"
         },
         gallery: {
             title: "Gallery Management",
@@ -480,7 +465,23 @@ export const en = {
                 hide: "Are you sure you want to hide this post?",
                 unhide: "Are you sure you want to unhide this post?"
             }
+        }
+    },
+    mypage: {
+        stats: {
+            jobs: "My Jobs",
+            gallery: "My Gallery",
+            joinedAt: "Joined"
         },
+        bioPlaceholder: "Enter your bio!",
+        nicknamePlaceholder: "Enter nickname",
+        bioInputPlaceholder: "Enter your bio",
+        noTitle: "No Title",
+        payment: {
+            date: "Payment Date",
+            nextDate: "Next Payment"
+        },
+
         preparing: "Content is coming soon..."
     },
     // gallery specific (from original gallery-app)
