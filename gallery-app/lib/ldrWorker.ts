@@ -17,6 +17,7 @@ self.onmessage = async (e: MessageEvent) => {
                     stepTexts: result.stepTexts,
                     stepOnlyTexts: result.stepOnlyTexts,
                     stepBricks: result.stepBricks,
+                    sortedFullText: result.sortedFullText,
                     bounds: result.bounds ? {
                         min: result.bounds.min,
                         max: result.bounds.max

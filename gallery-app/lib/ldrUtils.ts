@@ -11,6 +11,7 @@ export type LdrStepData = {
     stepOnlyTexts: string[]; // [NEW] 해당 스텝의 브릭만 포함
     bounds: THREE.Box3 | null;
     stepBricks: StepBrickInfo[][];
+    sortedFullText: string; // 스텝이 Y 기준으로 정렬된 전체 LDR 텍스트 (0 STEP 포함)
 };
 
 export function parseAndProcessSteps(ldrText: string): LdrStepData {
@@ -96,7 +97,7 @@ export function parseAndProcessSteps(ldrText: string): LdrStepData {
         if (a.avgY === -Infinity && b.avgY === -Infinity) return 0;
         if (a.avgY === -Infinity) return 1;
         if (b.avgY === -Infinity) return -1;
-        return a.avgY - b.avgY;
+        return b.avgY - a.avgY;
     });
 
     // Merge steps by layer
@@ -145,6 +146,12 @@ export function parseAndProcessSteps(ldrText: string): LdrStepData {
 
     const headerText = header.lines.join("\n");
 
+    // 4. 정렬된 전체 LDR 텍스트 생성 (0 STEP 마커 포함)
+    const sortedParts: string[] = [];
+    if (header.lines.length > 0) {
+        sortedParts.push(header.lines.join("\n"));
+    }
+
     for (const seg of sortedSegments) {
         acc = acc.concat(seg.lines);
         stepTexts.push(acc.join("\n"));
@@ -154,7 +161,12 @@ export function parseAndProcessSteps(ldrText: string): LdrStepData {
 
         // Each entry in stepBricks corresponds to the bricks *newly added* in that step
         stepBricks.push(Array.from(seg.bricks.values()));
+
+        // 정렬된 전체 텍스트에 추가
+        sortedParts.push(seg.lines.join("\n"));
+        sortedParts.push("0 STEP");
     }
+    const sortedFullText = sortedParts.join("\n");
 
     // Bounds 생성
     let bounds: THREE.Box3 | null = null;
@@ -165,7 +177,7 @@ export function parseAndProcessSteps(ldrText: string): LdrStepData {
         );
     }
 
-    return { stepTexts, stepOnlyTexts, bounds, stepBricks };
+    return { stepTexts, stepOnlyTexts, bounds, stepBricks, sortedFullText };
 }
 
 export function buildCumulativeStepTexts(ldrText: string): string[] {
