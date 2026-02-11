@@ -113,7 +113,10 @@ public class GalleryCommentService {
         GalleryCommentEntity comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
-        if (!comment.getAuthorId().equals(userId)) {
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!comment.getAuthorId().equals(userId) && !isAdmin) {
             throw new SecurityException("본인의 댓글만 삭제할 수 있습니다.");
         }
 

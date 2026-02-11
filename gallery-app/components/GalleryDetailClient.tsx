@@ -164,6 +164,35 @@ export default function GalleryDetailClient({ item }: Props) {
         }
     };
 
+    // [New] Comment Delete Handler
+    const handleCommentDelete = async (commentId: string) => {
+        // Optimistic UI update or wait for server? Wait for server is safer.
+        try {
+            const res = await authFetch(`/api/gallery/comments/${commentId}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                // Remove from state
+                const removeCommentRecursive = (list: Comment[]): Comment[] => {
+                    return list.filter(c => c.id !== commentId)
+                        .map(c => ({
+                            ...c,
+                            children: c.children ? removeCommentRecursive(c.children) : c.children
+                        }));
+                };
+
+                setComments(prev => removeCommentRecursive(prev));
+                setCommentCount(prev => Math.max(0, prev - 1)); // Decrement count
+            } else {
+                alert("Failed to delete comment.");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error deleting comment.");
+        }
+    };
+
     const handleShare = async () => {
         try {
             await navigator.clipboard.writeText(window.location.href);
@@ -382,7 +411,9 @@ export default function GalleryDetailClient({ item }: Props) {
                             comments={comments}
                             commentCount={commentCount}
                             isAuthenticated={isAuthenticated}
+                            currentUser={user}
                             onCommentSubmit={handleCommentSubmit}
+                            onCommentDelete={handleCommentDelete}
                             t={t}
                         />
                     </div>
