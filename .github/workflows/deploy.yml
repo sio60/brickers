@@ -171,12 +171,15 @@ jobs:
             echo "🔐 Docker Hub login..."
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
+            echo "🧹 Cleaning up old images to free space..."
+            docker system prune -af || true
+
             echo "📦 Pulling latest images..."
             docker compose pull || docker-compose pull
 
             echo "🔁 Restarting containers..."
             docker compose down || docker-compose down
-            docker compose up -d --build || docker-compose up -d --build
+            docker compose up -d || docker-compose up -d
 
             echo "🧹 Cleaning up unused images..."
             docker image prune -f
