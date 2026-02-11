@@ -142,7 +142,7 @@ export default function GalleryManagement() {
                         onChange={(e: ChangeEvent<HTMLSelectElement>) => { setStatus(e.target.value); setPage(0); }}
                         className="p-2 border border-gray-300 rounded-lg text-sm"
                     >
-                        <option value="ACTIVE">{t.admin.users?.accountState?.active || "Active"}</option>
+                        <option value="ACTIVE">{t.admin.gallery.filter.active}</option>
                         <option value="DELETED">{t.admin.gallery.filter.deleted}</option>
                     </select>
                 </div>

@@ -456,6 +456,7 @@ export const en = {
             searchPlaceholder: "Search by title or author...",
             filter: {
                 all: "All Status",
+                active: "Active",
                 public: "Public",
                 private: "Private",
                 deleted: "Deleted"
