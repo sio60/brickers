@@ -222,7 +222,7 @@ function LdrModel({
     }
 
     return (
-        <Bounds fit={!noFit} clip margin={1.35}>
+        <Bounds fit={!noFit} clip margin={1.5}>
             <Center>
                 <primitive object={group} />
                 {boundMesh}
@@ -260,22 +260,24 @@ function GalleryRegisterInput({ t, isRegisteredToGallery, isSubmitting, onRegist
     // isRegisteredToGallery가 true가 되면 input 비활성화됨. 
 
     return (
-        <div style={{ marginTop: 12, paddingTop: 12, borderTop: "2px solid #eee" }}>
-            <div style={{ marginBottom: 6, paddingLeft: 4, fontSize: "0.7rem", color: "#888", fontWeight: 800 }}>
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #eee" }}>
+            <div style={{ marginBottom: 8, paddingLeft: 2, fontSize: "0.65rem", color: "#999", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
                 {t.kids.steps.registerGallery}
             </div>
-            <input
-                type="text" className="kidsStep__sidebarInput"
-                placeholder={t.kids.steps.galleryModal.placeholder}
-                value={title} onChange={(e) => setTitle(e.target.value)}
-                disabled={isRegisteredToGallery}
-            />
-            <button
-                className="kidsStep__sidebarBtn" onClick={handleClick}
-                disabled={isSubmitting || isRegisteredToGallery}
-            >
-                {isRegisteredToGallery ? `✓ ${t.kids.steps?.registered || '등록완료'}` : (isSubmitting ? "..." : t.kids.steps.registerGallery)}
-            </button>
+            <div style={{ display: "flex", flexDirection: "column" as const, gap: "8px" }}>
+                <input
+                    type="text" className="kidsStep__sidebarInput"
+                    placeholder={t.kids.steps.galleryModal.placeholder}
+                    value={title} onChange={(e) => setTitle(e.target.value)}
+                    disabled={isRegisteredToGallery}
+                />
+                <button
+                    className="kidsStep__sidebarBtn" onClick={handleClick}
+                    disabled={isSubmitting || isRegisteredToGallery}
+                >
+                    {isRegisteredToGallery ? `✓ ${t.kids.steps?.registered || '등록완료'}` : (isSubmitting ? "..." : t.kids.steps.registerGallery)}
+                </button>
+            </div>
         </div>
     );
 }
@@ -297,11 +299,12 @@ function BrickThumbnail({ partName, color }: { partName: string, color: string }
 
     return (
         <div className="kidsStep__brickCanvasContainer">
-            <Canvas camera={{ position: [100, 120, 100], fov: 30 }} gl={{ antialias: true, alpha: true }}>
+            <Canvas camera={{ position: [200, 240, 200], fov: 25 }} gl={{ antialias: true, alpha: true }}>
                 <ambientLight intensity={2} />
                 <directionalLight position={[5, 10, 5]} intensity={2} />
                 <LdrModel
                     url={url}
+                    noFit
                     onError={() => setHasError(true)}
                 />
             </Canvas>
