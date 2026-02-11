@@ -33,7 +33,7 @@ if [ ! -d "../brickers-ai" ]; then
   exit 1
 fi
 
-docker build -t $IMAGE_TAG -f ../brickers-ai/Dockerfile ../brickers-ai
+docker build --platform linux/amd64 -t $IMAGE_TAG -f ../brickers-ai/Dockerfile ../brickers-ai
 
 if [ $? -ne 0 ]; then
     echo "❌ Docker build failed"
