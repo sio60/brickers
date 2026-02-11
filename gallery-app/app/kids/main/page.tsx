@@ -9,7 +9,7 @@ import * as gtag from "@/lib/gtag";
 import { getPresignUrl } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, ThemeInfo } from "@/lib/api/colorVariantApi";
 // import KidsLoadingScreen from "@/components/kids/KidsLoadingScreen";
-import BrickStackMiniGame from "@/components/kids/BrickStackMiniGame";
+import PuzzleMiniGame from "@/components/kids/PuzzleMiniGame";
 import { registerToGallery } from "@/lib/api/myApi";
 import { useJobStore } from "@/stores/jobStore";
 import { generatePdfFromServer } from "@/components/kids/PDFGenerator";
@@ -29,9 +29,9 @@ function KidsPageContent() {
     const age = (searchParams.get("age") ?? "4-5") as "4-5" | "6-7" | "8-10" | "PRO";
 
     const budget = useMemo(() => {
-        if (age === "4-5") return 150;
-        if (age === "6-7") return 250;
-        if (age === "8-10") return 350;
+        if (age === "4-5") return 250;
+        if (age === "6-7") return 450;
+        if (age === "8-10") return 700;
         if (age === "PRO") return 5000;
         return 500;
     }, [age]);
@@ -556,7 +556,7 @@ function KidsPageContent() {
             <div className="center">
                 {status === "loading" && (
                     <>
-                        <BrickStackMiniGame percent={percent} message={agentLogs.length > 0 ? (() => {
+                        <PuzzleMiniGame percent={percent} message={agentLogs.length > 0 ? (() => {
                             const last = agentLogs[agentLogs.length - 1];
                             const match = last.match(/^\[(.+?)\]\s*/);
                             const step = match?.[1];
