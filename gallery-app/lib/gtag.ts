@@ -12,18 +12,21 @@ export const pageview = (url: string) => {
 };
 
 // https://developers.google.com/analytics/devguides/collection/gtagjs/events
-export const event = ({ action, category, label, value }: {
+export const event = ({ action, category, label, value, ...rest }: {
     action: string;
     category?: string;
     label?: string;
     value?: number;
+    [key: string]: any;
 }) => {
     if (typeof window !== "undefined" && window.gtag) {
         window.gtag("event", action, {
             event_category: category,
             event_label: label,
             value: value,
+            ...rest,
         });
+        console.info(`🎯 [GA4] Event: ${action}`, { category, label, value, ...rest });
     }
 };
 

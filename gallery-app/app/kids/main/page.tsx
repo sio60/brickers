@@ -135,7 +135,8 @@ function KidsPageContent() {
                 action: 'generate_start',
                 category: 'Kids',
                 label: targetPrompt ? 'prompt' : 'image',
-                value: budget
+                value: budget,
+                prompt: targetPrompt || undefined
             });
 
             try {
@@ -334,7 +335,10 @@ function KidsPageContent() {
                 gtag.event({
                     action: 'generate_success',
                     category: 'Kids',
-                    label: jobId || 'unknown'
+                    label: jobId || 'unknown',
+                    prompt: targetPrompt || undefined,
+                    suggested_tags: finalData.suggestedTags?.join(', ') || undefined,
+                    brick_count: finalData.parts || undefined
                 });
             } catch (e) {
                 if (!alive) return;
