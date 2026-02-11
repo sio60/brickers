@@ -34,4 +34,7 @@ public interface PaymentOrderRepository extends MongoRepository<PaymentOrder, St
 
     // [New] 상태별 결제 내역 조회 (통계용)
     List<PaymentOrder> findByStatus(PaymentStatus status);
+
+    // 상태별 결제 내역 페이징 조회 (관리자 환불 관리용)
+    Page<PaymentOrder> findByStatus(PaymentStatus status, Pageable pageable);
 }

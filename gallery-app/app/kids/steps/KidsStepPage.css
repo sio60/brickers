@@ -14,10 +14,10 @@
     max-width: 1000px;
     height: 75vh;
     background: #ffffff;
-    border: 3px solid #000;
-    border-radius: 40px;
-    overflow: hidden;
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.15);
+    border: 2px solid #e0e0e0;
+    border-radius: 24px;
+    overflow: visible;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
     z-index: 10;
 }
 
@@ -192,66 +192,64 @@
 
 /* Navigation Buttons */
 .kidsStep__navBtn {
-    padding: 14px 36px;
-    min-width: 140px;
-    height: 60px;
-    border-radius: 20px;
-    border: 3px solid #000;
+    padding: 8px 20px;
+    min-width: 100px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1.5px solid #e0e0e0;
     background: #fff;
     cursor: pointer;
-    font-weight: 800;
-    font-size: 1.1rem;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    color: #000;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.15s;
+    color: #555;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    box-shadow: 0 6px 0px rgba(0, 0, 0, 0.15);
+    gap: 6px;
 }
 
 .kidsStep__navBtn:hover:not(:disabled) {
-    background: #f8f8f8;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 0px rgba(0, 0, 0, 0.15);
+    background: #f5f5f5;
+    color: #000;
 }
 
 .kidsStep__navBtn:active:not(:disabled) {
-    transform: translateY(2px);
-    box-shadow: 0 2px 0px rgba(0, 0, 0, 0.15);
+    background: #eee;
 }
 
 .kidsStep__navBtn:disabled {
     cursor: not-allowed;
-    opacity: 0.3;
+    opacity: 0.25;
 }
 
 .kidsStep__navBtn--next {
-    background: #000;
+    background: #111;
+    border-color: #111;
     color: #fff;
 }
 
 .kidsStep__navBtn--next:hover:not(:disabled) {
-    background: #222;
+    background: #333;
     color: #fff;
 }
 
-/* Sidebar Registration Input */
 .kidsStep__sidebarInput {
     width: 100%;
-    background: #fff;
-    border: 2px solid #000;
-    border-radius: 12px;
-    padding: 14px;
+    background: #f7f7f7;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    padding: 9px 10px;
     color: #000;
-    font-size: 0.95rem;
+    font-size: 0.8rem;
     outline: none;
-    font-weight: 700;
-    transition: all 0.2s;
+    font-weight: 600;
+    transition: border-color 0.2s;
 }
 
 .kidsStep__sidebarInput:focus {
     border-color: #000;
+    background: #fff;
 }
 
 .kidsStep__sidebarInput::placeholder {
@@ -260,31 +258,27 @@
 
 .kidsStep__sidebarBtn {
     width: 100%;
-    background: #ffe135;
-    color: #000;
-    border: 2px solid #000;
-    border-radius: 12px;
-    padding: 14px;
-    font-weight: 900;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px;
+    font-weight: 700;
     cursor: pointer;
-    font-size: 0.95rem;
-    transition: all 0.2s;
-    box-shadow: 4px 4px 0px #000;
+    font-size: 0.8rem;
+    transition: opacity 0.15s;
 }
 
 .kidsStep__sidebarBtn:hover:not(:disabled) {
-    background: #ffd700;
-    transform: translate(-3px, -3px);
-    box-shadow: 6px 6px 0px #000;
+    opacity: 0.8;
 }
 
 .kidsStep__sidebarBtn:active:not(:disabled) {
-    transform: translate(1px, 1px);
-    box-shadow: 0px 0px 0px #000;
+    opacity: 0.65;
 }
 
 .kidsStep__sidebarBtn:disabled {
-    opacity: 0.6;
+    opacity: 0.35;
     cursor: not-allowed;
 }
 
@@ -325,25 +319,26 @@
 
 .kidsStep__navOverlay {
     position: absolute;
-    bottom: 32px;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     align-items: center;
-    gap: 20px;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 12px 24px;
-    border-radius: 999px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    border: 2px solid #000;
+    gap: 14px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 8px 16px;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    border: 1.5px solid #e0e0e0;
     z-index: 50;
 }
 
 .kidsStep__stepInfo {
-    font-size: 1.1rem;
-    font-weight: 800;
-    min-width: 120px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    min-width: 90px;
     text-align: center;
+    color: #333;
 }
 
 .modalCloseBtn {
@@ -390,18 +385,19 @@
 /* Sidebar Styling (Left) */
 .kidsStep__sidebar,
 .kidsStep__sidebarSpacer {
-    width: 260px;
+    width: 240px;
     flex-shrink: 0;
 }
 
 .kidsStep__sidebar {
     background: #fff;
-    border-radius: 32px;
-    padding: 24px 16px;
-    border: 3px solid #000;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    padding: 20px 16px;
+    border: 2px solid #e0e0e0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     display: flex;
     flex-direction: column;
+    gap: 4px;
     height: auto;
     max-height: 85vh;
     z-index: 20;
@@ -409,37 +405,41 @@
 }
 
 .kidsStep__sidebarTitle {
-    font-size: 1.3rem;
+    font-size: 1rem;
     font-weight: 900;
-    margin-bottom: 20px;
-    padding-left: 8px;
+    margin-bottom: 10px;
+    padding-left: 2px;
+    letter-spacing: -0.02em;
 }
 
 .kidsStep__sidebarSectionLabel {
-    margin-bottom: 10px;
-    padding-left: 8px;
-    font-size: 0.75rem;
-    color: #888;
-    font-weight: 800;
+    margin-top: 4px;
+    margin-bottom: 5px;
+    padding-left: 2px;
+    font-size: 0.65rem;
+    color: #999;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
 .kidsStep__modeContainer {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 6px;
 }
 
 .kidsStep__colorContainer {
-    margin-top: 16px;
+    margin-top: 8px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
 .kidsStep__sidebarSection {
-    margin-top: 24px;
-    padding-top: 24px;
-    border-top: 2px solid #eee;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
 }
 
 /* Layout Center Area */
@@ -453,36 +453,44 @@
 
 /* Right Sidebar (Brick List) */
 .kidsStep__rightSidebar {
-    width: 260px;
-    /* Matched width for perfect centering */
+    width: 240px;
+    /* Matched width with left sidebar */
     flex-shrink: 0;
     background: #fff;
-    border-radius: 32px;
-    padding: 24px 16px;
-    border: 3px solid #000;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    padding: 0;
+    border: 2px solid #e0e0e0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     display: flex;
     flex-direction: column;
     height: auto;
     max-height: 85vh;
     z-index: 20;
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 .kidsStep__rightSidebarHeader {
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: 900;
-    margin-bottom: 16px;
     text-align: center;
     border-bottom: 2px solid #eee;
-    padding-bottom: 12px;
+    padding: 14px 12px 10px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 5;
+    border-radius: 24px 24px 0 0;
 }
 
 .kidsStep__brickList {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 6px;
     width: 100%;
+    padding: 8px 10px 14px;
+    overflow-y: auto;
+    flex: 1;
 }
 
 .kidsStep__noBricks {
@@ -513,33 +521,291 @@
     flex-direction: row;
     align-items: center;
     background: #f9f9f9;
-    border: 2px solid #eee;
-    border-radius: 16px;
-    padding: 4px 8px;
-    gap: 4px;
-    transition: all 0.2s;
+    border: 1.5px solid #eee;
+    border-radius: 12px;
+    padding: 6px 8px;
+    gap: 6px;
+    transition: all 0.15s;
+    min-height: 64px;
 }
 
 .kidsStep__brickItem:hover {
-    border-color: #000;
+    border-color: #ccc;
     background: #fff;
 }
 
 .kidsStep__brickCanvasContainer {
-    width: 80px;
-    height: 80px;
+    width: 72px;
+    height: 64px;
+    flex-shrink: 0;
+    overflow: visible;
 }
 
 .kidsStep__brickCount {
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: 900;
     color: #000;
     flex: 1;
     text-align: right;
-    padding-right: 8px;
+    padding-right: 6px;
 }
 
 .kidsStep__brickPlaceholder {
-    width: 80px;
-    height: 80px;
+    width: 72px;
+    height: 64px;
+    flex-shrink: 0;
+    background: #f0f0f0;
+    border-radius: 8px;
+}
+
+/* ── Back Button ── */
+.kidsStep__backBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: #999;
+    padding: 2px 0;
+    margin-bottom: 4px;
+    transition: color 0.15s;
+    text-align: left;
+}
+
+.kidsStep__backBtn:hover {
+    color: #000;
+}
+
+/* ── Mode Buttons ── */
+.kidsStep__modeBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    background: transparent;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: #888;
+}
+
+.kidsStep__modeBtn:hover {
+    background: #f5f5f5;
+    color: #333;
+}
+
+.kidsStep__modeBtn.active {
+    background: #111;
+    border-color: #111;
+    color: #fff;
+}
+
+/* ── Color Button ── */
+.kidsStep__colorBtn {
+    width: 100%;
+    background: #f0f0f0;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.kidsStep__colorBtn:hover {
+    background: #e8e8e8;
+    color: #000;
+}
+
+/* ── Download / Restore Buttons ── */
+.kidsStep__downloadColorBtn,
+.kidsStep__restoreBtn {
+    width: 100%;
+    background: transparent;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: #666;
+}
+
+.kidsStep__downloadColorBtn:hover,
+.kidsStep__restoreBtn:hover {
+    background: #f5f5f5;
+    color: #000;
+    border-color: #ccc;
+}
+
+/* ── Loading Overlay ── */
+.kidsStep__loadingOverlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background: rgba(255, 255, 255, 0.85);
+    z-index: 30;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #000;
+}
+
+/* ── Split Container (Left: Completed, Right: Steps) ── */
+.kidsStep__splitContainer {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 22px;
+}
+
+.kidsStep__splitPane {
+    position: relative;
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.kidsStep__splitPane.left {
+    border-right: 2px solid #eee;
+}
+
+
+/* ── Pane Labels ── */
+.kidsStep__paneLabel {
+    position: absolute;
+    top: 12px;
+    left: 16px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #aaa;
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* ── Placeholder ── */
+.kidsStep__placeholder {
+    width: 0;
+    height: 0;
+}
+
+/* ── No Model Fallback ── */
+.kidsStep__noModel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-weight: 800;
+    color: #aaa;
+    font-size: 1rem;
+}
+
+/* ── Color Modal Extras ── */
+.colorModal__themes {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.colorModal__loading {
+    text-align: center;
+    padding: 20px;
+    color: #888;
+    font-weight: 700;
+}
+
+.colorModal__themeBtn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    background: #f9f9f9;
+    border: 2px solid #eee;
+    border-radius: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.colorModal__themeBtn:hover {
+    border-color: #000;
+    background: #fff;
+}
+
+.colorModal__themeBtn.selected {
+    border-color: #000;
+    background: #000;
+    color: #fff;
+}
+
+.colorModal__themeBtn.selected .colorModal__themeDesc {
+    color: #ccc;
+}
+
+.colorModal__themeName {
+    font-weight: 800;
+    font-size: 0.95rem;
+}
+
+.colorModal__themeDesc {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+/* ── View Assembly Button Overlay ── */
+.kidsStep__splitPane.left.full {
+    border-right: none;
+}
+
+.kidsStep__viewAssemblyOverlay {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    pointer-events: auto;
+}
+
+.kidsStep__viewAssemblyBtn {
+    padding: 14px 36px;
+    font-size: 1.2rem;
+    font-weight: 800;
+    border-radius: 999px;
+    background: #000;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+}
+
+.kidsStep__viewAssemblyBtn:hover {
+    transform: scale(1.05) translateY(-4px);
+    background: #222;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+.kidsStep__viewAssemblyBtn:active {
+    transform: scale(0.98) translateY(0);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }

@@ -90,23 +90,33 @@ public class PaymentService {
     @Transactional
     public void cancelOrder(Authentication auth, String orderId) {
         String userId = (String) auth.getPrincipal();
+        log.info("Cancel order requested: orderId={}, userId={}", orderId, userId);
+
         PaymentOrder order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 
         if (!order.getUserId().equals(userId)) {
+            log.warn("Cancel order failed: Unauthorized access. orderUserId={}, requestUserId={}", order.getUserId(),
+                    userId);
             throw new IllegalArgumentException("접근 권한이 없습니다.");
         }
 
         if (!order.canCancelByUser()) {
+            log.warn("Cancel order failed: Invalid status for user cancel. orderId={}, status={}", orderId,
+                    order.getStatus());
             throw new IllegalStateException("취소 가능한 상태가 아닙니다.");
         }
 
         if (order.getStatus() == PaymentStatus.COMPLETED) {
-            order.markRefunded("User refund requested");
+            // 관리자 승인 대기 상태로 변경 (즉시 환불 X)
+            log.info("Marking order as REFUND_REQUESTED: orderId={}", orderId);
+            order.markRefundRequested("User refund requested");
         } else {
+            log.info("Marking order as CANCELED: orderId={}", orderId);
             order.markCanceled("User cancel requested");
         }
         orderRepository.save(order);
+        log.info("Cancel order completed: orderId={}, newStatus={}", orderId, order.getStatus());
     }
 
     /** 내 결제 내역 조회 */

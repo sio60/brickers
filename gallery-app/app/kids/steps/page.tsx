@@ -165,9 +165,7 @@ function LdrModel({
                     else fixed = fixed.replace("/ldraw/", "/ldraw/parts/");
                 }
             }
-            if (fixed.startsWith(CDN_BASE)) {
-                return `/api/proxy/ldr?url=${encodeURIComponent(fixed)}`;
-            }
+
             return fixed;
         });
 
@@ -222,7 +220,7 @@ function LdrModel({
     }
 
     return (
-        <Bounds fit={!noFit} clip margin={1.35}>
+        <Bounds fit={!noFit} clip margin={1.5}>
             <Center>
                 <primitive object={group} />
                 {boundMesh}
@@ -260,47 +258,56 @@ function GalleryRegisterInput({ t, isRegisteredToGallery, isSubmitting, onRegist
     // isRegisteredToGallery가 true가 되면 input 비활성화됨. 
 
     return (
-        <div style={{ marginTop: 24, paddingTop: 24, borderTop: "2px solid #eee" }}>
-            <div style={{ marginBottom: 12, paddingLeft: 8, fontSize: "0.75rem", color: "#888", fontWeight: 800 }}>
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #eee" }}>
+            <div style={{ marginBottom: 8, paddingLeft: 2, fontSize: "0.65rem", color: "#999", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
                 {t.kids.steps.registerGallery}
             </div>
-            <input
-                type="text" className="kidsStep__sidebarInput"
-                placeholder={t.kids.steps.galleryModal.placeholder}
-                value={title} onChange={(e) => setTitle(e.target.value)}
-                disabled={isRegisteredToGallery}
-            />
-            <button
-                className="kidsStep__sidebarBtn" onClick={handleClick}
-                disabled={isSubmitting || isRegisteredToGallery}
-            >
-                {isRegisteredToGallery ? `✓ ${t.kids.steps?.registered || '등록완료'}` : (isSubmitting ? "..." : t.kids.steps.registerGallery)}
-            </button>
+            <div style={{ display: "flex", flexDirection: "column" as const, gap: "8px" }}>
+                <input
+                    type="text" className="kidsStep__sidebarInput"
+                    placeholder={t.kids.steps.galleryModal.placeholder}
+                    value={title} onChange={(e) => setTitle(e.target.value)}
+                    disabled={isRegisteredToGallery}
+                />
+                <button
+                    className="kidsStep__sidebarBtn" onClick={handleClick}
+                    disabled={isSubmitting || isRegisteredToGallery}
+                >
+                    {isRegisteredToGallery ? `✓ ${t.kids.steps?.registered || '등록완료'}` : (isSubmitting ? "..." : t.kids.steps.registerGallery)}
+                </button>
+            </div>
         </div>
     );
 }
 
 function BrickThumbnail({ partName, color }: { partName: string, color: string }) {
     const [url, setUrl] = useState<string | null>(null);
+    const [hasError, setHasError] = useState(false);
 
     useEffect(() => {
         const ldr = `1 ${color} 0 0 0 1 0 0 0 1 0 0 0 1 ${partName}.dat`;
         const blob = new Blob([ldr], { type: 'text/plain' });
         const objectUrl = URL.createObjectURL(blob);
         setUrl(objectUrl);
+        setHasError(false);
         return () => URL.revokeObjectURL(objectUrl);
     }, [partName, color]);
 
-    if (!url) return <div className="kidsStep__brickPlaceholder" />;
+    if (!url || hasError) return (
+        <div className="kidsStep__brickPlaceholder">
+            <span style={{ fontSize: '0.6rem', color: '#f00' }}>Error: {partName} ({color})</span>
+        </div>
+    );
 
     return (
         <div className="kidsStep__brickCanvasContainer">
-            <Canvas camera={{ position: [100, 120, 100], fov: 30 }} gl={{ antialias: true, alpha: true }}>
+            <Canvas camera={{ position: [200, 240, 200], fov: 25 }} gl={{ antialias: true, alpha: true }}>
                 <ambientLight intensity={2} />
                 <directionalLight position={[5, 10, 5]} intensity={2} />
                 <LdrModel
                     url={url}
                     noFit
+                    onError={() => setHasError(true)}
                 />
             </Canvas>
         </div>
@@ -339,6 +346,7 @@ function KidsStepPageContent() {
 
 
     const [activeTab, setActiveTab] = useState<'LDR' | 'GLB'>('LDR');
+    const [isAssemblyMode, setIsAssemblyMode] = useState(false);
     const [glbUrl, setGlbUrl] = useState<string | null>(null);
 
     // Color Variant State
@@ -616,7 +624,6 @@ function KidsStepPageContent() {
                             <button
                                 className="kidsStep__sidebarBtn" onClick={handleDownloadPdf}
                                 disabled={!serverPdfUrl || loading}
-                                style={{ background: serverPdfUrl ? "#444" : "#aaa" }}
                             >
                                 {serverPdfUrl ? t.kids.steps?.pdfDownloadBtn : t.kids.steps?.pdfPreparing}
                             </button>
@@ -638,67 +645,82 @@ function KidsStepPageContent() {
                         {activeTab === 'LDR' && (
                             <div className="kidsStep__splitContainer">
                                 {/* Left: Full Model */}
-                                <div className="kidsStep__splitPane left">
-                                    <div className="kidsStep__paneLabel">완성 모습</div>
-                                    <Canvas
-                                        camera={{ position: [200, -200, 200], fov: 45 }}
-                                        dpr={[1, 2]}
-                                        gl={{ preserveDrawingBuffer: true }}
-                                    >
-                                        <ambientLight intensity={0.9} />
-                                        <directionalLight position={[3, 5, 2]} intensity={1} />
-                                        {ldrUrl && (
-                                            <LdrModel
-                                                url={ldrUrl}
-                                                // No override -> Full model
-                                                onLoaded={(g) => { setLoading(false); }}
-                                                onError={() => setLoading(false)}
-                                                customBounds={modelBounds}
-                                                fitTrigger={`${ldrUrl}|left`}
-                                            />
+                                {!isAssemblyMode && (
+                                    <div className="kidsStep__splitPane left full">
+                                        <div className="kidsStep__paneLabel">완성 모습</div>
+                                        <Canvas
+                                            camera={{ position: [200, -200, 200], fov: 45 }}
+                                            dpr={[1, 2]}
+                                            gl={{ preserveDrawingBuffer: true }}
+                                        >
+                                            <ambientLight intensity={0.9} />
+                                            <directionalLight position={[3, 5, 2]} intensity={1} />
+                                            {ldrUrl && (
+                                                <LdrModel
+                                                    url={ldrUrl}
+                                                    // No override -> Full model
+                                                    onLoaded={(g) => { setLoading(false); }}
+                                                    onError={() => setLoading(false)}
+                                                    customBounds={modelBounds}
+                                                    fitTrigger={`${ldrUrl}|left`}
+                                                />
+                                            )}
+                                            <OrbitControls makeDefault enablePan={false} enableZoom />
+                                        </Canvas>
+
+                                        {!isAssemblyMode && (
+                                            <div className="kidsStep__viewAssemblyOverlay">
+                                                <button
+                                                    className="kidsStep__viewAssemblyBtn"
+                                                    onClick={() => { setLoading(true); setTimeout(() => { setIsAssemblyMode(true); setLoading(false); }, 100); }}
+                                                >
+                                                    🧩 {t.kids.steps?.viewAssembly || "조립서 보기"}
+                                                </button>
+                                            </div>
                                         )}
-                                        <OrbitControls makeDefault enablePan={false} enableZoom />
-                                    </Canvas>
-                                </div>
+                                    </div>
+                                )}
 
                                 {/* Right: Step Model */}
-                                <div className="kidsStep__splitPane right">
-                                    <div className="kidsStep__paneLabel">조립 순서</div>
-                                    <Canvas
-                                        camera={{ position: [200, -200, 200], fov: 45 }}
-                                        dpr={[1, 2]}
-                                        gl={{ preserveDrawingBuffer: true }}
-                                    >
-                                        <ambientLight intensity={0.9} />
-                                        <directionalLight position={[3, 5, 2]} intensity={1} />
-                                        {ldrUrl && (
-                                            <LdrModel
-                                                url={ldrUrl}
-                                                overrideMainLdrUrl={currentOverride}
-                                                onLoaded={(g) => { modelGroupRef.current = g; }}
-                                                onError={() => setLoading(false)}
-                                                customBounds={modelBounds}
-                                                fitTrigger={`${ldrUrl}|${currentOverride}|right`}
-                                            />
-                                        )}
-                                        <OrbitControls makeDefault enablePan={false} enableZoom />
-                                    </Canvas>
+                                {isAssemblyMode && (
+                                    <div className="kidsStep__splitPane right full">
+                                        <div className="kidsStep__paneLabel">조립 순서</div>
+                                        <Canvas
+                                            camera={{ position: [200, -200, 200], fov: 45 }}
+                                            dpr={[1, 2]}
+                                            gl={{ preserveDrawingBuffer: true }}
+                                        >
+                                            <ambientLight intensity={0.9} />
+                                            <directionalLight position={[3, 5, 2]} intensity={1} />
+                                            {ldrUrl && (
+                                                <LdrModel
+                                                    url={ldrUrl}
+                                                    overrideMainLdrUrl={currentOverride}
+                                                    onLoaded={(g) => { modelGroupRef.current = g; }}
+                                                    onError={() => setLoading(false)}
+                                                    customBounds={modelBounds}
+                                                    fitTrigger={`${ldrUrl}|${currentOverride}|right`}
+                                                />
+                                            )}
+                                            <OrbitControls makeDefault enablePan={false} enableZoom />
+                                        </Canvas>
 
-                                    <div className="kidsStep__placeholder" />
+                                        <div className="kidsStep__placeholder" />
 
 
-                                    <div className="kidsStep__navOverlay">
-                                        <button className="kidsStep__navBtn" disabled={!canPrev} onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}>
-                                            ← {t.kids.steps.prev}
-                                        </button>
-                                        <div className="kidsStep__stepInfo">
-                                            Step {stepIdx + 1} <span style={{ color: "#aaa" }}>/ {total}</span>
+                                        <div className="kidsStep__navOverlay">
+                                            <button className="kidsStep__navBtn" disabled={!canPrev} onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}>
+                                                ← {t.kids.steps.prev}
+                                            </button>
+                                            <div className="kidsStep__stepInfo">
+                                                Step {stepIdx + 1} <span style={{ color: "#aaa" }}>/ {total}</span>
+                                            </div>
+                                            <button className="kidsStep__navBtn kidsStep__navBtn--next" disabled={!canNext} onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}>
+                                                {t.kids.steps.next} →
+                                            </button>
                                         </div>
-                                        <button className="kidsStep__navBtn kidsStep__navBtn--next" disabled={!canNext} onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}>
-                                            {t.kids.steps.next} →
-                                        </button>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         )}
 
@@ -726,25 +748,27 @@ function KidsStepPageContent() {
                     </div>
                 </div>
 
-                <div className="kidsStep__rightSidebar">
-                    <div className="kidsStep__rightSidebarHeader">
-                        {t.kids.steps.tabBrick}
+                {isAssemblyMode && (
+                    <div className="kidsStep__rightSidebar">
+                        <div className="kidsStep__rightSidebarHeader">
+                            {t.kids.steps.tabBrick}
+                        </div>
+                        {stepBricks[stepIdx] && stepBricks[stepIdx].length > 0 ? (
+                            <div className="kidsStep__brickList">
+                                {stepBricks[stepIdx].map((b, i) => (
+                                    <div key={i} className="kidsStep__brickItem">
+                                        <BrickThumbnail partName={b.partName} color={b.color} />
+                                        <span className="kidsStep__brickCount">x{b.count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="kidsStep__noBricks">
+                                No bricks needed for this step.
+                            </div>
+                        )}
                     </div>
-                    {stepBricks[stepIdx] && stepBricks[stepIdx].length > 0 ? (
-                        <div className="kidsStep__brickList">
-                            {stepBricks[stepIdx].map((b, i) => (
-                                <div key={i} className="kidsStep__brickItem">
-                                    <BrickThumbnail partName={b.partName} color={b.color} />
-                                    <span className="kidsStep__brickCount">x{b.count}</span>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="kidsStep__noBricks">
-                            No bricks needed for this step.
-                        </div>
-                    )}
-                </div>
+                )}
 
                 {/* Gallery Modal */}
                 {isGalleryModalOpen && (
