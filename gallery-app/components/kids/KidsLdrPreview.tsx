@@ -178,27 +178,95 @@ function LdrModel({
         };
     }, [url, ldconfigUrl, loader, onStepCountChange, onLoaded, onError]);
 
+    // 원본 머티리얼 저장 (투명화 후 복원용)
+    const originalMaterialsRef = useRef<Map<number, THREE.Material | THREE.Material[]>>(new Map());
+
     useEffect(() => {
         if (!group || !stepMode) return;
 
+        // 원본 머티리얼 백업 (최초 1회)
+        if (originalMaterialsRef.current.size === 0) {
+            group.children.forEach((child) => {
+                child.traverse((obj: any) => {
+                    if (obj.isMesh && obj.material) {
+                        if (!originalMaterialsRef.current.has(obj.id)) {
+                            originalMaterialsRef.current.set(
+                                obj.id,
+                                Array.isArray(obj.material)
+                                    ? obj.material.map((m: THREE.Material) => m.clone())
+                                    : obj.material.clone()
+                            );
+                        }
+                    }
+                });
+            });
+        }
+
         if (isPreview) {
-            // 프리뷰 모드일 때는 모든 파트 보임
+            // 프리뷰 모드: 모든 파트 보이고, 원래 머티리얼 복원
             group.children.forEach((child) => {
                 child.visible = true;
+                child.traverse((obj: any) => {
+                    if (obj.isMesh && originalMaterialsRef.current.has(obj.id)) {
+                        const orig = originalMaterialsRef.current.get(obj.id)!;
+                        obj.material = Array.isArray(orig)
+                            ? orig.map((m: THREE.Material) => m.clone())
+                            : orig.clone();
+                    }
+                });
             });
             return;
         }
 
-        const layerSet = new Set<number>();
-        group.children.forEach(child => {
-            layerSet.add(Math.round(child.position.y * 10) / 10);
+        // startingBuildingStep 기반으로 스텝 그룹 생성
+        const stepGroups: THREE.Object3D[][] = [[]];
+        group.children.forEach((child) => {
+            if ((child as any).userData?.startingBuildingStep && stepGroups[stepGroups.length - 1].length > 0) {
+                stepGroups.push([]);
+            }
+            stepGroups[stepGroups.length - 1].push(child);
         });
-        const sortedLayers = Array.from(layerSet).sort((a, b) => a - b);
-        const currentLayerY = sortedLayers[currentStep - 1];
+
+        // 현재 스텝에 해당하는 children 집합 계산
+        const currentStepChildren = new Set<THREE.Object3D>(stepGroups[currentStep - 1] || []);
+        const previousStepChildren = new Set<THREE.Object3D>();
+        for (let i = 0; i < currentStep - 1; i++) {
+            (stepGroups[i] || []).forEach(c => previousStepChildren.add(c));
+        }
 
         group.children.forEach((child) => {
-            const childY = Math.round(child.position.y * 10) / 10;
-            child.visible = childY <= currentLayerY;
+            const isCurrent = currentStepChildren.has(child);
+            const isPrevious = previousStepChildren.has(child);
+
+            child.visible = isCurrent || isPrevious;
+
+            child.traverse((obj: any) => {
+                if (!obj.isMesh) return;
+
+                if (isCurrent) {
+                    // 현재 스텝: 원본 머티리얼 복원
+                    if (originalMaterialsRef.current.has(obj.id)) {
+                        const orig = originalMaterialsRef.current.get(obj.id)!;
+                        obj.material = Array.isArray(orig)
+                            ? orig.map((m: THREE.Material) => m.clone())
+                            : orig.clone();
+                    }
+                } else if (isPrevious) {
+                    // 이전 스텝: 투명 머티리얼 적용
+                    const makeTrans = (mat: THREE.Material): THREE.Material => {
+                        const m = mat.clone();
+                        m.transparent = true;
+                        m.opacity = 0.15;
+                        m.depthWrite = false;
+                        return m;
+                    };
+                    if (Array.isArray(obj.material)) {
+                        obj.material = obj.material.map(makeTrans);
+                    } else {
+                        obj.material = makeTrans(obj.material);
+                    }
+                }
+            });
         });
     }, [group, currentStep, stepMode, isPreview]);
 
