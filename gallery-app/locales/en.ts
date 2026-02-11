@@ -301,7 +301,8 @@ export const en = {
             pdfWait: "Preparing PDF. Please wait a moment.",
             registered: "Registered",
             themeLoading: "Loading themes...",
-            colorChangeModelError: "Error occurred while generating model after color change."
+            colorChangeModelError: "Error occurred while changing colors.",
+            viewAssembly: "View Assembly"
         },
         viewer: {
             noUrl: "Model URL not found",
