@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
-import { Bounds, OrbitControls, Center, Gltf, Environment, useBounds, View, PerspectiveCamera } from "@react-three/drei";
+import { Bounds, OrbitControls, Center, Gltf, Environment, useBounds } from "@react-three/drei";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
@@ -417,7 +417,6 @@ function GalleryRegisterInput({ t, isRegisteredToGallery, isSubmitting, onRegist
 function BrickThumbnail({ partName, color }: { partName: string, color: string }) {
     const [url, setUrl] = useState<string | null>(null);
     const [hasError, setHasError] = useState(false);
-    const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const ldr = `1 ${color} 0 0 0 1 0 0 0 1 0 0 0 1 ${partName}.dat`;
@@ -428,18 +427,23 @@ function BrickThumbnail({ partName, color }: { partName: string, color: string }
         return () => URL.revokeObjectURL(objectUrl);
     }, [partName, color]);
 
-    if (!url || hasError) return (
-        <div className="kidsStep__brickPlaceholder">
-            <span style={{ fontSize: '0.6rem', color: '#f00' }}>Error: {partName} ({color})</span>
-        </div>
-    );
+    if (!url || hasError) {
+        return (
+            <div className="kidsStep__brickPlaceholder">
+                <span style={{ fontSize: '0.6rem', color: '#f00' }}>Error: {partName} ({color})</span>
+            </div>
+        );
+    }
 
     return (
-        <div ref={ref} className="kidsStep__brickCanvasContainer">
-            <View track={ref as any}>
-                <ambientLight intensity={2} />
+        <div className="kidsStep__brickCanvasContainer">
+            <Canvas
+                camera={{ position: [140, 140, 140], fov: 30 }}
+                dpr={[1, 2]}
+                gl={{ alpha: true }}
+            >
+                <ambientLight intensity={1.5} />
                 <directionalLight position={[5, 10, 5]} intensity={2} />
-                <PerspectiveCamera makeDefault position={[300, 300, 300]} fov={25} onUpdate={(c) => c.lookAt(0, 0, 0)} />
                 <Center>
                     <LdrModel
                         url={url}
@@ -447,7 +451,7 @@ function BrickThumbnail({ partName, color }: { partName: string, color: string }
                         onError={() => setHasError(true)}
                     />
                 </Center>
-            </View>
+            </Canvas>
         </div>
     );
 }
@@ -1011,25 +1015,6 @@ function KidsStepPageContent() {
                     </div>
                 )}
 
-                {/* Shared Canvas for View components (Thumbnails) */}
-                <Canvas
-                    className="kidsStep__viewCanvas"
-                    eventSource={containerRef as any}
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        pointerEvents: 'none',
-                        zIndex: 9999
-                    }}
-                    gl={{ alpha: true, antialias: true }}
-                >
-                    <Suspense fallback={null}>
-                        <View.Port />
-                    </Suspense>
-                </Canvas>
             </div>
         </div>
     );

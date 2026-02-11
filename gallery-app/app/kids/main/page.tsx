@@ -108,7 +108,8 @@ function KidsPageContent() {
     const processingRef = useRef(false);
 
     useEffect(() => {
-        if (!rawFile && !targetPrompt) return;
+        const promptText = (targetPrompt ?? "").trim();
+        if (!rawFile && !promptText) return;
         if (processingRef.current || status !== "idle") return;
 
         let alive = true;
@@ -180,23 +181,28 @@ function KidsPageContent() {
                     }
                     sourceImageUrl = presign.publicUrl;
                     fileTitle = rawFile.name.replace(/\.[^/.]+$/, "");
-                } else if (targetPrompt) {
+                } else if (promptText) {
                     console.log("[KidsPage] 🚀 Prompt 모드 진입: S3 업로드 스킵");
-                    fileTitle = targetPrompt.substring(0, 10);
+                    fileTitle = promptText.substring(0, 10);
+                } else {
+                    setStatus("error");
+                    setDebugLog(t.kids.modelSelect.promptInputPlaceholder || "sourceImageUrl 또는 prompt가 필요합니다.");
+                    processingRef.current = false;
+                    return;
                 }
 
                 // 3. Backend에 S3 URL or Prompt 전달 (JSON)
                 setDebugLog(t.kids.generate.creating2);
 
                 console.log("[KidsPage] 📤 Step 3: /api/kids/generate 호출 시작...");
-                console.log("[KidsPage]    payload:", { sourceImageUrl, prompt: targetPrompt, age, budget, title: fileTitle });
+                console.log("[KidsPage]    payload:", { sourceImageUrl, prompt: promptText, age, budget, title: fileTitle });
 
                 const startRes = await authFetch('/api/kids/generate', {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         sourceImageUrl: sourceImageUrl || undefined, // prompt 모드면 undefined
-                        prompt: targetPrompt || undefined,
+                        prompt: promptText || undefined,
                         age,
                         budget,
                         title: fileTitle,
