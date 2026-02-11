@@ -272,6 +272,7 @@ export const ja = {
             glbNotFound: "サーバーにGLBファイルが見つかりません。",
             glbDownloadFail: "GLBファイルのダウンロードに失敗しました。",
             emptyGallery: "登録された作品がありません。",
+
             galleryTable: {
                 title: "タイトル",
                 author: "作成者",
@@ -347,6 +348,7 @@ export const ja = {
             settings: "システム設定",
             inquiries: "問い合わせ管理",
             reports: "報告管理",
+            comments: "コメント管理",
             refunds: "払い戻し管理"
         },
         accessDenied: "管理者権限がありません。(現在の権限: {role})",
@@ -402,6 +404,39 @@ export const ja = {
             reporter: "報告者",
             order: "注文番号",
             user: "ユーザー"
+        },
+        brickJudge: {
+            title: "物理エンジン検証"
+        },
+        gallery: {
+            title: "ギャラリー管理",
+            searchPlaceholder: "タイトルまたは作成者で検索...",
+            filter: {
+                all: "すべてのステータス",
+                active: "有効",
+                public: "公開",
+                private: "非公開",
+                deleted: "削除済み"
+            },
+            table: {
+                thumbnail: "サムネイル",
+                info: "情報",
+                stats: "統計",
+                status: "ステータス",
+                date: "日付",
+                actions: "管理"
+            },
+            action: {
+                view: "表示",
+                hide: "非公開",
+                unhide: "再公開",
+                delete: "削除"
+            },
+            confirm: {
+                delete: "本当にこの投稿を削除しますか？",
+                hide: "この投稿を非公開にしますか？",
+                unhide: "この投稿を再公開しますか？"
+            }
         }
     },
     mypage: {
@@ -475,6 +510,7 @@ export const ja = {
         replyPlaceholder: "返信を入力...",
         hideReplies: "返信を非表示",
         showReplies: "返信{count}件を表示",
+        deleteConfirm: "本当にコメントを削除しますか？",
         views3d: {
             noLdrUrl: "LDR URLがありません。",
             dragRotate: "ドラッグ: 回転",

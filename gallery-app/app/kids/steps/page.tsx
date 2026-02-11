@@ -1,11 +1,11 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, Suspense, useLayoutEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
-import { Bounds, OrbitControls, Center, Gltf, Environment, useBounds } from "@react-three/drei";
+import { Bounds, OrbitControls, Center, Gltf, Environment, useBounds, View, PerspectiveCamera } from "@react-three/drei";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
@@ -98,7 +98,8 @@ function LdrModel({
     customBounds,
     fitTrigger,
     noFit,
-    opacity = 1, // [NEW] 불투명도 조절용
+    currentStep,
+    stepMode = false,
 }: {
     url: string;
     overrideMainLdrUrl?: string;
@@ -109,7 +110,8 @@ function LdrModel({
     customBounds?: THREE.Box3 | null;
     fitTrigger?: string;
     noFit?: boolean;
-    opacity?: number;
+    currentStep?: number;
+    stepMode?: boolean;
 }) {
     const loader = useMemo(() => {
         THREE.Cache.enabled = true;
@@ -179,6 +181,7 @@ function LdrModel({
     }, [partsLibraryPath, url, overrideMainLdrUrl]);
 
     const [group, setGroup] = useState<THREE.Group | null>(null);
+    const originalMaterialsRef = useRef<Map<string, THREE.Material | THREE.Material[]>>(new Map());
 
     useEffect(() => {
         let cancelled = false;
@@ -191,6 +194,13 @@ function LdrModel({
             if (g) {
                 removeNullChildren(g);
                 g.rotation.x = Math.PI;
+
+                // Clone materials for restoration
+                g.traverse((child: any) => {
+                    if (child.isMesh) {
+                        originalMaterialsRef.current.set(child.uuid, Array.isArray(child.material) ? child.material.slice() : child.material);
+                    }
+                });
             }
             prev = g;
             setGroup(g);
@@ -202,21 +212,130 @@ function LdrModel({
         return () => {
             cancelled = true;
             if (prev) disposeObject3D(prev);
+            originalMaterialsRef.current.clear();
         };
     }, [url, ldconfigUrl, loader, onLoaded, onError]);
 
-    useEffect(() => {
-        if (group && opacity < 1) {
-            group.traverse((c: any) => {
-                if (c.isMesh) {
-                    c.material = c.material.clone();
-                    c.material.transparent = true;
-                    c.material.opacity = opacity;
-                    c.material.depthWrite = false; // 투명 브릭 겹침 시 시각적 향상
+    // Step Mode Logic: Group by startingBuildingStep & apply transparency
+    useLayoutEffect(() => {
+        if (!group) return;
+
+        // If not in stepMode, ensure full visibility
+        if (!stepMode || currentStep === undefined) {
+            group.traverse((child: any) => {
+                if (child.isMesh) {
+                    child.visible = true;
+                    if (originalMaterialsRef.current.has(child.uuid)) {
+                        (child as any).material = originalMaterialsRef.current.get(child.uuid);
+                    }
                 }
             });
+            // Also ensure group children are visible
+            group.children.forEach(child => { child.visible = true; });
+            return;
         }
-    }, [group, opacity]);
+
+        // Group children by startingBuildingStep
+        const stepGroups: THREE.Object3D[][] = [[]];
+        group.children.forEach((child) => {
+            if ((child as any).userData?.startingBuildingStep && stepGroups[stepGroups.length - 1].length > 0) {
+                stepGroups.push([]);
+            }
+            stepGroups[stepGroups.length - 1].push(child);
+        });
+
+        const currentStepIndex = currentStep - 1; // 1-based to 0-based
+        const activeStepsCount = stepGroups.length;
+
+        // Identify children in current step vs previous steps
+        const currentStepChildren = new Set<THREE.Object3D>(stepGroups[currentStepIndex] || []);
+        const previousStepChildren = new Set<THREE.Object3D>();
+        for (let i = 0; i < currentStepIndex; i++) {
+            (stepGroups[i] || []).forEach(c => previousStepChildren.add(c));
+        }
+
+        group.traverse((child) => {
+            // Find root child (direct descendant of group)
+            let rootChild = child;
+            while (rootChild.parent && rootChild.parent !== group) {
+                rootChild = rootChild.parent;
+            }
+
+            if (rootChild.parent !== group) return; // Should not happen
+
+            // Determine visibility
+            const isCurrent = currentStepChildren.has(rootChild);
+            const isPrevious = previousStepChildren.has(rootChild);
+
+            if (isCurrent) {
+                child.visible = true;
+                if ((child as any).isMesh && originalMaterialsRef.current.has(child.uuid)) {
+                    (child as any).material = originalMaterialsRef.current.get(child.uuid);
+                }
+            } else if (isPrevious) {
+                child.visible = true;
+                // Make transparent
+                if ((child as any).isMesh) {
+                    const originalMat = originalMaterialsRef.current.get(child.uuid);
+                    if (originalMat) {
+                        const mat = Array.isArray(originalMat) ? originalMat[0].clone() : (originalMat as THREE.Material).clone();
+                        mat.transparent = true;
+                        mat.opacity = 0.15;
+                        mat.depthWrite = false;
+                        (child as any).material = mat;
+                    }
+                }
+            } else {
+                // Future step
+                // Hide purely
+                child.visible = false;
+                // If deep child, we might need to recursively hide, but traversing handles it if we hide rootChild?
+                // The loop iterates ALL descendants.
+                // If rootChild is hidden, descendants are hidden.
+                // But we are setting .visible on descendants?
+                // Wait, traverse hits everything.
+                // If I set rootChild.visible = false, do I need to set children?
+                // Three.js respects hierarchy.
+            }
+        });
+
+        // Optimization: just set visibility on group.children (top level)
+        group.children.forEach(child => {
+            const isCurrent = currentStepChildren.has(child);
+            const isPrevious = previousStepChildren.has(child);
+            child.visible = isCurrent || isPrevious;
+        });
+
+        // Apply materials only to visible meshes
+        group.traverse((child) => {
+            if (!child.visible) return;
+            // Check if it belongs to current or previous
+            let root = child;
+            while (root.parent && root.parent !== group) root = root.parent;
+
+            const isCurrent = currentStepChildren.has(root);
+            const isPrevious = previousStepChildren.has(root);
+
+            if (isCurrent) {
+                if ((child as any).isMesh && originalMaterialsRef.current.has(child.uuid)) {
+                    (child as any).material = originalMaterialsRef.current.get(child.uuid);
+                }
+            } else if (isPrevious) {
+                if ((child as any).isMesh) {
+                    const originalMat = originalMaterialsRef.current.get(child.uuid);
+                    if (originalMat) {
+                        const baseMat = Array.isArray(originalMat) ? originalMat[0] : originalMat;
+                        const mat = baseMat.clone();
+                        mat.transparent = true;
+                        mat.opacity = 0.15;
+                        mat.depthWrite = false;
+                        (child as any).material = mat;
+                    }
+                }
+            }
+        });
+
+    }, [group, currentStep, stepMode]);
 
     if (!group) return null;
 
@@ -298,6 +417,7 @@ function GalleryRegisterInput({ t, isRegisteredToGallery, isSubmitting, onRegist
 function BrickThumbnail({ partName, color }: { partName: string, color: string }) {
     const [url, setUrl] = useState<string | null>(null);
     const [hasError, setHasError] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const ldr = `1 ${color} 0 0 0 1 0 0 0 1 0 0 0 1 ${partName}.dat`;
@@ -315,16 +435,19 @@ function BrickThumbnail({ partName, color }: { partName: string, color: string }
     );
 
     return (
-        <div className="kidsStep__brickCanvasContainer">
-            <Canvas camera={{ position: [200, 240, 200], fov: 25 }} gl={{ antialias: true, alpha: true }}>
+        <div ref={ref} className="kidsStep__brickCanvasContainer">
+            <View track={ref as any}>
                 <ambientLight intensity={2} />
                 <directionalLight position={[5, 10, 5]} intensity={2} />
-                <LdrModel
-                    url={url}
-                    noFit
-                    onError={() => setHasError(true)}
-                />
-            </Canvas>
+                <PerspectiveCamera makeDefault position={[300, 300, 300]} fov={25} onUpdate={(c) => c.lookAt(0, 0, 0)} />
+                <Center>
+                    <LdrModel
+                        url={url}
+                        noFit
+                        onError={() => setHasError(true)}
+                    />
+                </Center>
+            </View>
         </div>
     );
 }
@@ -344,12 +467,13 @@ function KidsStepPageContent() {
     const [loading, setLoading] = useState(true);
     const [stepIdx, setStepIdx] = useState(0);
     const [stepBlobUrls, setStepBlobUrls] = useState<string[]>([]);
-    const [stepOnlyBlobUrls, setStepOnlyBlobUrls] = useState<string[]>([]); // [NEW] 해당 스텝의 브릭만 포함
+    const [sortedBlobUrl, setSortedBlobUrl] = useState<string | null>(null); // [NEW] 전체 정렬된 LDR Blob
     const [stepBricks, setStepBricks] = useState<StepBrickInfo[][]>([]);
     const [modelBounds, setModelBounds] = useState<THREE.Box3 | null>(null);
     const blobRef = useRef<string[]>([]);
-    const onlyBlobRef = useRef<string[]>([]); // [NEW]
+    const sortedBlobRef = useRef<string | null>(null);
     const modelGroupRef = useRef<THREE.Group | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
     // const [galleryTitle, setGalleryTitle] = useState(""); // -> Moved to child component
@@ -397,22 +521,23 @@ function KidsStepPageContent() {
                 worker.postMessage({ type: 'PROCESS_LDR', text });
                 worker.onmessage = (e) => {
                     if (e.data.type === 'SUCCESS') {
-                        const { stepTexts, stepOnlyTexts, stepBricks: bricks } = e.data.payload;
+                        const { stepTexts, sortedFullText, stepBricks: bricks } = e.data.payload;
                         const blobs = stepTexts.map((t_blob: string) =>
                             URL.createObjectURL(new Blob([t_blob], { type: "text/plain" }))
                         );
-                        const onlyBlobs = (stepOnlyTexts || []).map((t_blob: string) =>
-                            URL.createObjectURL(new Blob([t_blob], { type: "text/plain" }))
-                        );
+                        let sortedBlob = null;
+                        if (sortedFullText) {
+                            sortedBlob = URL.createObjectURL(new Blob([sortedFullText], { type: "text/plain" }));
+                        }
 
                         revokeAll(blobRef.current);
-                        revokeAll(onlyBlobRef.current);
+                        if (sortedBlobRef.current) URL.revokeObjectURL(sortedBlobRef.current);
 
                         blobRef.current = blobs;
-                        onlyBlobRef.current = onlyBlobs;
+                        sortedBlobRef.current = sortedBlob;
 
                         setStepBlobUrls(blobs);
-                        setStepOnlyBlobUrls(onlyBlobs);
+                        setSortedBlobUrl(sortedBlob);
                         setStepBricks(bricks || []);
                         setStepIdx(stepTexts.length - 1);
                         setIsColorModalOpen(false);
@@ -444,7 +569,7 @@ function KidsStepPageContent() {
             worker.postMessage({ type: 'PROCESS_LDR', text });
             worker.onmessage = (e) => {
                 if (e.data.type === 'SUCCESS') {
-                    const { stepTexts, stepOnlyTexts, bounds } = e.data.payload;
+                    const { stepTexts, sortedFullText, bounds } = e.data.payload;
                     if (bounds) {
                         setModelBounds(new THREE.Box3(
                             new THREE.Vector3(bounds.min.x, bounds.min.y, bounds.min.z),
@@ -453,16 +578,19 @@ function KidsStepPageContent() {
                     }
                     const { stepBricks: bricks } = e.data.payload;
                     const blobs = stepTexts.map((t: string) => URL.createObjectURL(new Blob([t], { type: "text/plain" })));
-                    const onlyBlobs = (stepOnlyTexts || []).map((t: string) => URL.createObjectURL(new Blob([t], { type: "text/plain" })));
+                    let sortedBlob = null;
+                    if (sortedFullText) {
+                        sortedBlob = URL.createObjectURL(new Blob([sortedFullText], { type: "text/plain" }));
+                    }
 
                     revokeAll(blobRef.current);
-                    revokeAll(onlyBlobRef.current);
+                    if (sortedBlobRef.current) URL.revokeObjectURL(sortedBlobRef.current);
 
                     blobRef.current = blobs;
-                    onlyBlobRef.current = onlyBlobs;
+                    sortedBlobRef.current = sortedBlob;
 
                     setStepBlobUrls(blobs);
-                    setStepOnlyBlobUrls(onlyBlobs);
+                    setSortedBlobUrl(sortedBlob);
                     setStepBricks(bricks || []);
                     setStepIdx(stepTexts.length - 1);
                 }
@@ -523,7 +651,7 @@ function KidsStepPageContent() {
             worker.postMessage({ type: 'PROCESS_LDR', text });
             worker.onmessage = (e) => {
                 if (e.data.type === 'SUCCESS' && alive) {
-                    const { stepTexts, stepOnlyTexts, bounds, stepBricks: bricks } = e.data.payload;
+                    const { stepTexts, sortedFullText, bounds, stepBricks: bricks } = e.data.payload;
                     if (bounds) {
                         setModelBounds(new THREE.Box3(
                             new THREE.Vector3(bounds.min.x, bounds.min.y, bounds.min.z),
@@ -531,16 +659,19 @@ function KidsStepPageContent() {
                         ));
                     }
                     const blobs = stepTexts.map((t_blob: string) => URL.createObjectURL(new Blob([t_blob], { type: "text/plain" })));
-                    const onlyBlobs = (stepOnlyTexts || []).map((t_blob: string) => URL.createObjectURL(new Blob([t_blob], { type: "text/plain" })));
+                    let sortedBlob = null;
+                    if (sortedFullText) {
+                        sortedBlob = URL.createObjectURL(new Blob([sortedFullText], { type: "text/plain" }));
+                    }
 
                     revokeAll(blobRef.current);
-                    revokeAll(onlyBlobRef.current);
+                    if (sortedBlobRef.current) URL.revokeObjectURL(sortedBlobRef.current);
 
                     blobRef.current = blobs;
-                    onlyBlobRef.current = onlyBlobs;
+                    sortedBlobRef.current = sortedBlob;
 
                     setStepBlobUrls(blobs);
-                    setStepOnlyBlobUrls(onlyBlobs);
+                    setSortedBlobUrl(sortedBlob);
                     setStepBricks(bricks || []);
                     setLoading(false);
                 } else if (alive) {
@@ -558,7 +689,9 @@ function KidsStepPageContent() {
     useEffect(() => {
         return () => {
             revokeAll(blobRef.current);
-            revokeAll(onlyBlobRef.current);
+            if (sortedBlobRef.current) {
+                URL.revokeObjectURL(sortedBlobRef.current);
+            }
         };
     }, []);
 
@@ -605,15 +738,13 @@ function KidsStepPageContent() {
     };
 
     const total = stepBlobUrls.length || 1;
-    const currentPrevOverride = stepIdx > 0 ? stepBlobUrls[stepIdx - 1] : null;
-    const currentStepOnlyOverride = stepOnlyBlobUrls[Math.min(stepIdx, stepOnlyBlobUrls.length - 1)];
     const canPrev = stepIdx > 0;
     const canNext = stepIdx < total - 1;
 
     const isPreset = searchParams.get("isPreset") === "true";
 
     return (
-        <div style={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
+        <div ref={containerRef} style={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
             <BackgroundBricks />
 
             <div className="kidsStep__mainContainer">
@@ -719,8 +850,8 @@ function KidsStepPageContent() {
                                             <directionalLight position={[3, 5, 2]} intensity={1} />
                                             {ldrUrl && (
                                                 <LdrModel
-                                                    url={ldrUrl}
                                                     // No override -> Full model
+                                                    url={sortedBlobUrl || ldrUrl}
                                                     onLoaded={(g) => { setLoading(false); }}
                                                     onError={() => setLoading(false)}
                                                     customBounds={modelBounds}
@@ -747,6 +878,12 @@ function KidsStepPageContent() {
                                 {isAssemblyMode && (
                                     <div className="kidsStep__splitPane right full">
                                         <div className="kidsStep__paneLabel">조립 순서</div>
+                                        <button
+                                            className="kidsStep__viewFullBtn"
+                                            onClick={() => { setLoading(true); setTimeout(() => { setIsAssemblyMode(false); setLoading(false); }, 100); }}
+                                        >
+                                            전체 3D 보기
+                                        </button>
                                         <Canvas
                                             camera={{ position: [200, -200, 200], fov: 45 }}
                                             dpr={[1, 2]}
@@ -755,26 +892,15 @@ function KidsStepPageContent() {
                                             <ambientLight intensity={0.9} />
                                             <directionalLight position={[3, 5, 2]} intensity={1} />
                                             {ldrUrl && (
-                                                <>
-                                                    {/* [NEW] 이전 스텝들 (투명하게) */}
-                                                    {canPrev && currentPrevOverride && (
-                                                        <LdrModel
-                                                            url={ldrUrl}
-                                                            overrideMainLdrUrl={currentPrevOverride}
-                                                            opacity={0.2}
-                                                            noFit
-                                                        />
-                                                    )}
-                                                    {/* [NEW] 현재 스텝의 브릭들 (불투명하게) */}
-                                                    <LdrModel
-                                                        url={ldrUrl}
-                                                        overrideMainLdrUrl={currentStepOnlyOverride}
-                                                        onLoaded={(g) => { modelGroupRef.current = g; setLoading(false); }}
-                                                        onError={() => setLoading(false)}
-                                                        customBounds={modelBounds}
-                                                        fitTrigger={`${ldrUrl}|${stepIdx}|right`}
-                                                    />
-                                                </>
+                                                <LdrModel
+                                                    url={sortedBlobUrl || ldrUrl}
+                                                    currentStep={stepIdx + 1}
+                                                    stepMode={true}
+                                                    onLoaded={(g) => { modelGroupRef.current = g; setLoading(false); }}
+                                                    onError={() => setLoading(false)}
+                                                    customBounds={modelBounds}
+                                                    fitTrigger={`${ldrUrl}|${stepIdx}|right`}
+                                                />
                                             )}
                                             <OrbitControls makeDefault enablePan={false} enableZoom />
                                         </Canvas>
@@ -884,6 +1010,26 @@ function KidsStepPageContent() {
                         </div>
                     </div>
                 )}
+
+                {/* Shared Canvas for View components (Thumbnails) */}
+                <Canvas
+                    className="kidsStep__viewCanvas"
+                    eventSource={containerRef as any}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        pointerEvents: 'none',
+                        zIndex: 9999
+                    }}
+                    gl={{ alpha: true, antialias: true }}
+                >
+                    <Suspense fallback={null}>
+                        <View.Port />
+                    </Suspense>
+                </Canvas>
             </div>
         </div>
     );

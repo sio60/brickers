@@ -379,6 +379,7 @@ export const en = {
             settings: "System Settings",
             inquiries: "Inquiries",
             reports: "Reports",
+            comments: "Comments",
             refunds: "Refunds"
         },
         accessDenied: "Access denied. (Role: {role})",
@@ -434,6 +435,39 @@ export const en = {
             reporter: "Reporter",
             order: "Order",
             user: "User"
+        },
+        brickJudge: {
+            title: "Brick Judge"
+        },
+        gallery: {
+            title: "Gallery Management",
+            searchPlaceholder: "Search by title or author...",
+            filter: {
+                all: "All Status",
+                active: "Active",
+                public: "Public",
+                private: "Private",
+                deleted: "Deleted"
+            },
+            table: {
+                thumbnail: "Thumbnail",
+                info: "Info",
+                stats: "Stats",
+                status: "Status",
+                date: "Date",
+                actions: "Actions"
+            },
+            action: {
+                view: "View",
+                hide: "Hide",
+                unhide: "Unhide",
+                delete: "Delete"
+            },
+            confirm: {
+                delete: "Are you sure you want to delete this post?",
+                hide: "Are you sure you want to hide this post?",
+                unhide: "Are you sure you want to unhide this post?"
+            }
         }
     },
     mypage: {
@@ -450,6 +484,7 @@ export const en = {
             date: "Payment Date",
             nextDate: "Next Payment"
         },
+
         preparing: "Content is coming soon..."
     },
     // gallery specific (from original gallery-app)
@@ -476,6 +511,7 @@ export const en = {
         replyPlaceholder: "Write a reply...",
         hideReplies: "Hide replies",
         showReplies: "Show {count} replies",
+        deleteConfirm: "Are you sure you want to delete this comment?",
         views3d: {
             noLdrUrl: "LDR URL not found.",
             dragRotate: "Drag: Rotate",

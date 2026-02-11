@@ -168,7 +168,7 @@ export default function GalleryDetailClient({ item }: Props) {
     const handleCommentDelete = async (commentId: string) => {
         // Optimistic UI update or wait for server? Wait for server is safer.
         try {
-            const res = await authFetch(`/api/gallery/comments/${commentId}`, {
+            const res = await authFetch(`/api/gallery/${item.id}/comments/${commentId}`, {
                 method: 'DELETE'
             });
 
