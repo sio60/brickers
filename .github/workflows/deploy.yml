@@ -181,6 +181,11 @@ jobs:
             echo "🔐 Docker Hub login..."
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
+            echo "🔁 Stopping old containers to free 'in-use' images..."
+            docker-compose down || true
+
+            echo "🧹 Cleaning up unused images to free space..."
+            docker system prune -af || true
             echo "🛑 Stopping old containers to free 'in-use' images..."
             docker compose down || docker-compose down
 
@@ -196,7 +201,13 @@ jobs:
             echo "🚀 Starting containers..."
             docker compose up -d || docker-compose up -d
 
-            echo "🧹 Cleaning up unused images..."
+            echo "📦 Pulling fresh images..."
+            docker-compose pull
+
+            echo "🚀 Starting containers..."
+            docker-compose up -d
+
+            echo "🧹 Final cleaning..."
             docker image prune -f
 
             echo "✅ Deployment completed successfully!"
