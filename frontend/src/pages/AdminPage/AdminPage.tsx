@@ -32,7 +32,19 @@ type Report = {
     reporterEmail?: string; // ✅ 추가
     resolutionNote?: string;
 };
-type RefundRequest = { orderId: string; amount: number; status: string; requestedAt: string; userId: string };
+type RefundRequest = {
+    id: string;
+    orderId: string;
+    orderNo: string;
+    amount: number;
+    status: string;
+    requestedAt: string;
+    userId: string;
+    itemName?: string;
+    cancelReason?: string;
+    createdAt?: string;
+    updatedAt?: string;
+};
 
 export default function AdminPage() {
     const { t } = useLanguage();
@@ -158,9 +170,68 @@ export default function AdminPage() {
             const res = await authFetch("/api/admin/payments/refund-requests?page=0&size=20");
             if (res.ok) {
                 const data = await res.json();
-                setRefunds(data.content || []);
+                // 백엔드 AdminPaymentDto를 RefundRequest 형태로 매핑
+                const mapped = (data.content || []).map((item: any) => ({
+                    id: item.id,
+                    orderId: item.id,
+                    orderNo: item.orderNo || item.id,
+                    amount: item.amount,
+                    status: item.status,
+                    requestedAt: item.updatedAt || item.createdAt,
+                    userId: item.userId,
+                    itemName: item.itemName,
+                    cancelReason: item.cancelReason,
+                    createdAt: item.createdAt,
+                    updatedAt: item.updatedAt
+                }));
+                setRefunds(mapped);
             }
         } catch (e) { console.error(e); }
+    };
+
+    // 환불 승인 처리
+    const handleRefundApprove = async (orderId: string) => {
+        if (!confirm(t.admin.refund.confirmApprove)) return;
+        try {
+            const res = await authFetch(`/api/admin/payments/orders/${orderId}/approve-refund`, {
+                method: "POST",
+                body: JSON.stringify({})
+            });
+            if (res.ok) {
+                alert(t.admin.refund.approved);
+                fetchRefunds();
+            } else {
+                alert(t.admin.failed);
+            }
+        } catch (e) {
+            console.error(e);
+            alert(t.admin.error);
+        }
+    };
+
+    // 환불 거절 처리
+    const handleRefundReject = async (orderId: string) => {
+        const reason = answerTexts[orderId];
+        if (!reason || !reason.trim()) {
+            alert(t.admin.refund.inputRequired);
+            return;
+        }
+        try {
+            const res = await authFetch(`/api/admin/payments/orders/${orderId}/reject-refund`, {
+                method: "POST",
+                body: JSON.stringify({ reason })
+            });
+            if (res.ok) {
+                alert(t.admin.refund.rejected);
+                setAnswerTexts(prev => ({ ...prev, [orderId]: "" }));
+                fetchRefunds();
+            } else {
+                alert(t.admin.failed);
+            }
+        } catch (e) {
+            console.error(e);
+            alert(t.admin.error);
+        }
     };
 
     if (loading) return null;
@@ -295,12 +366,43 @@ export default function AdminPage() {
                         {activeTab === "refunds" && (
                             <div className="admin__list">
                                 {refunds.map(item => (
-                                    <div key={item.orderId} className="admin__listItem">
-                                        <h4>Order #{item.orderId} <span className={`status-badge ${item.status}`}>{item.status}</span></h4>
-                                        <p>{t.admin.refund.amount}: {item.amount}</p>
-                                        <div className="meta">User: {item.userId} • {new Date(item.requestedAt).toLocaleDateString()}</div>
-                                        <div className="actions">
-                                            <button onClick={() => alert(t.admin.refund.inProgress)}>{t.admin.refund.approve}</button>
+                                    <div key={item.id} className="admin__listItem inquiry">
+                                        <div className="inquiry__main">
+                                            <h4>
+                                                {t.admin.refund.orderNo}: {item.orderNo}
+                                                <span className={`status-badge ${item.status}`}>{item.status}</span>
+                                            </h4>
+                                            <p>
+                                                {item.itemName && <><strong>{t.admin.refund.planName}:</strong> {item.itemName}<br /></>}
+                                                <strong>{t.admin.refund.amount}:</strong> {item.amount?.toLocaleString()}
+                                            </p>
+                                            {item.cancelReason && (
+                                                <p><strong>{t.admin.refund.reason}:</strong> {item.cancelReason}</p>
+                                            )}
+                                            <div className="meta">
+                                                {t.admin.refund.user}: {item.userId} • {t.admin.refund.requestDate}: {new Date(item.requestedAt).toLocaleDateString()}
+                                            </div>
+                                        </div>
+
+                                        <div className="inquiry__answer-section">
+                                            <div className="answer__form">
+                                                <textarea
+                                                    placeholder={t.admin.refund.rejectReason}
+                                                    value={answerTexts[item.orderId] || ""}
+                                                    onChange={(e) => setAnswerTexts(prev => ({ ...prev, [item.orderId]: e.target.value }))}
+                                                />
+                                                <div className="actions" style={{ display: 'flex', gap: '8px', alignSelf: 'flex-end' }}>
+                                                    <button
+                                                        onClick={() => handleRefundReject(item.orderId)}
+                                                        style={{ background: '#eee', color: '#000' }}
+                                                    >
+                                                        {t.admin.refund.reject}
+                                                    </button>
+                                                    <button onClick={() => handleRefundApprove(item.orderId)}>
+                                                        {t.admin.refund.approve}
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
