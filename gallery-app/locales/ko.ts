@@ -416,6 +416,15 @@ export const ko = {
             requestDate: "요청일",
             orderNo: "주문번호"
         },
+        users: {
+            title: "사용자 관리",
+            searchPlaceholder: "이메일 또는 닉네임 검색...",
+            suspendReason: "정지 사유를 입력하세요:",
+            suspended: "사용자가 정지되었습니다.",
+            confirmActivate: "이 사용자의 정지를 해제하시겠습니까?",
+            activated: "사용자 정지가 해제되었습니다.",
+            empty: "사용자가 없습니다."
+        },
         error: "오류가 발생했습니다.",
         failed: "처리에 실패했습니다.",
         label: {

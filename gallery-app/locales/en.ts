@@ -417,6 +417,15 @@ export const en = {
             requestDate: "Requested Date",
             orderNo: "Order No"
         },
+        users: {
+            title: "User Management",
+            searchPlaceholder: "Search by email or nickname...",
+            suspendReason: "Enter suspension reason:",
+            suspended: "User has been suspended.",
+            confirmActivate: "Activate this user?",
+            activated: "User has been activated.",
+            empty: "No users found."
+        },
         error: "An error occurred.",
         failed: "Processing failed.",
         label: {
