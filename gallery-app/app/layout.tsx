@@ -7,8 +7,8 @@ import { AuthProvider } from '../contexts/AuthContext'
 import LayoutContent from '../components/LayoutContent'
 import GoogleAnalytics from '../components/GoogleAnalytics'
 
-const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_ID || ''
-const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || ''
+const GA_TRACKING_ID = process.env['NEXT_PUBLIC_GA_ID'] || ''
+const GTM_ID = process.env['NEXT_PUBLIC_GTM_ID'] || ''
 
 const bebasNeue = Bebas_Neue({
     weight: '400',
