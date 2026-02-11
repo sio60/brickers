@@ -4,6 +4,8 @@ import com.brickers.backend.admin.payment.dto.AdminPaymentDto;
 import com.brickers.backend.payment.entity.PaymentOrder;
 import com.brickers.backend.payment.entity.PaymentStatus;
 import com.brickers.backend.payment.repository.PaymentOrderRepository;
+import com.brickers.backend.user.entity.MembershipPlan;
+import com.brickers.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminPaymentService {
 
     private final PaymentOrderRepository paymentOrderRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public Page<AdminPaymentDto> getAllPayments(int page, int size) {
@@ -84,6 +87,16 @@ public class AdminPaymentService {
 
         order.markRefunded(order.getCancelReason() != null ? order.getCancelReason() : "Admin approved refund");
         paymentOrderRepository.save(order);
+
+        // ✅ 환불 승인 시 즉시 멤버십 해제 (PRO -> FREE)
+        userRepository.findById(order.getUserId()).ifPresent(user -> {
+            if (user.getMembershipPlan() == MembershipPlan.PRO) {
+                user.setMembershipPlan(MembershipPlan.FREE);
+                user.setUpdatedAt(java.time.LocalDateTime.now());
+                userRepository.save(user);
+            }
+        });
+
         return AdminPaymentDto.from(order);
     }
 
