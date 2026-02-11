@@ -127,7 +127,13 @@ export function parseAndProcessSteps(ldrText: string): LdrStepData {
     }
     if (curLinesMerge.length) merged.push({ lines: curLinesMerge, avgY: curY, bricks: new Map(curBricksMerge) });
 
-    const sortedSegments = [header, ...merged];
+    if (merged.length > 0 && header.lines.length > 0) {
+        merged[0].lines = [...header.lines, ...merged[0].lines];
+    }
+    const sortedSegments = [...merged];
+    if (sortedSegments.length === 0 && header.lines.length > 0) {
+        sortedSegments.push(header); // Fallback for header-only file
+    }
 
     // 3. 누적 텍스트 및 브릭 정보 생성
     const out: string[] = [];

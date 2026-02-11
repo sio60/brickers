@@ -300,7 +300,8 @@ export const ko = {
             pdfWait: "PDF 준비중입니다. 잠시만 기다려주세요.",
             registered: "등록완료",
             themeLoading: "테마 로딩 중...",
-            colorChangeModelError: "색상 변경 후 모델 생성 중 오류가 발생했습니다."
+            colorChangeModelError: "색상 변경 후 모델 생성 중 오류가 발생했습니다.",
+            viewAssembly: "조립서 보기"
         },
         viewer: {
             noUrl: "모델 URL이 없습니다",
