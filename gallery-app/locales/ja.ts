@@ -301,7 +301,8 @@ export const ja = {
             pdfWait: "PDF準備中です。しばらくお待ちください。",
             registered: "登録完了",
             themeLoading: "テーマ読み込み中...",
-            colorChangeModelError: "色変更後のモデル生成中にエラーが発生しました。"
+            colorChangeModelError: "色変更後のモデル生成中にエラーが発生しました。",
+            viewAssembly: "組み立て図を表示"
         },
         viewer: {
             noUrl: "モデルURLがありません",
