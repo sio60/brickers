@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, Suspense, useLayoutEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import * as THREE from "three";
@@ -216,17 +216,22 @@ function LdrModel({
         };
     }, [url, ldconfigUrl, loader, onLoaded, onError]);
 
-    useEffect(() => {
+    // Step Mode Logic: Group by startingBuildingStep & apply transparency
+    useLayoutEffect(() => {
         if (!group) return;
 
-        // Reset visibility first
+        // If not in stepMode, ensure full visibility
         if (!stepMode || currentStep === undefined) {
             group.traverse((child: any) => {
-                child.visible = true;
-                if (child.isMesh && originalMaterialsRef.current.has(child.uuid)) {
-                    child.material = originalMaterialsRef.current.get(child.uuid);
+                if (child.isMesh) {
+                    child.visible = true;
+                    if (originalMaterialsRef.current.has(child.uuid)) {
+                        (child as any).material = originalMaterialsRef.current.get(child.uuid);
+                    }
                 }
             });
+            // Also ensure group children are visible
+            group.children.forEach(child => { child.visible = true; });
             return;
         }
 
@@ -434,7 +439,7 @@ function BrickThumbnail({ partName, color }: { partName: string, color: string }
             <View track={ref as any}>
                 <ambientLight intensity={2} />
                 <directionalLight position={[5, 10, 5]} intensity={2} />
-                <PerspectiveCamera makeDefault position={[200, 240, 200]} fov={25} />
+                <PerspectiveCamera makeDefault position={[300, 300, 300]} fov={25} />
                 <LdrModel
                     url={url}
                     noFit
@@ -1001,7 +1006,9 @@ function KidsStepPageContent() {
                     }}
                     gl={{ alpha: true, antialias: true }}
                 >
-                    <View.Port />
+                    <Suspense fallback={null}>
+                        <View.Port />
+                    </Suspense>
                 </Canvas>
             </div>
         </div>
