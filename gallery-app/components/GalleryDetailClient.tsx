@@ -20,7 +20,7 @@ type Props = {
 export default function GalleryDetailClient({ item }: Props) {
     const { t } = useLanguage();
     const router = useRouter();
-    const { isAuthenticated, authFetch } = useAuth();
+    const { user, isAuthenticated, authFetch } = useAuth();
 
     // Interaction State
     const [likeCount, setLikeCount] = useState(item.likeCount || 0);
