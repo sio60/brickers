@@ -100,6 +100,7 @@ function LdrModel({
     noFit,
     currentStep,
     stepMode = false,
+    fitMargin = 1.5,
 }: {
     url: string;
     overrideMainLdrUrl?: string;
@@ -112,6 +113,7 @@ function LdrModel({
     noFit?: boolean;
     currentStep?: number;
     stepMode?: boolean;
+    fitMargin?: number;
 }) {
     const loader = useMemo(() => {
         THREE.Cache.enabled = true;
@@ -354,7 +356,7 @@ function LdrModel({
     }
 
     return (
-        <Bounds fit={!noFit} clip margin={1.5}>
+        <Bounds fit={!noFit} clip margin={fitMargin}>
             <Center>
                 <primitive object={group} />
                 {boundMesh}
@@ -505,6 +507,8 @@ function OffscreenBrickRenderer() {
         <Center>
             <LdrModel
                 url={url}
+                fitTrigger={url}
+                fitMargin={2.2}
                 onLoaded={onLoaded}
                 onError={() => {
                     // Skip error
