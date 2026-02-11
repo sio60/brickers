@@ -5,6 +5,7 @@ export const pageview = (url: string) => {
     if (typeof window !== "undefined" && window.gtag) {
         window.gtag("config", GA_TRACKING_ID, {
             page_path: url,
+            debug_mode: true,
         });
     }
 };
@@ -32,6 +33,7 @@ export const setUserId = (userId: string | null) => {
     if (typeof window !== "undefined" && window.gtag) {
         window.gtag("config", GA_TRACKING_ID, {
             user_id: userId,
+            debug_mode: true,
         });
         console.debug(`[GA4] User ID set to: ${userId}`);
     }
