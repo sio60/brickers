@@ -7,6 +7,7 @@ export const pageview = (url: string) => {
             page_path: url,
             debug_mode: true,
         });
+        console.info(`🚩 [GA4] Pageview sent to: ${url}`);
     }
 };
 
@@ -35,7 +36,9 @@ export const setUserId = (userId: string | null) => {
             user_id: userId,
             debug_mode: true,
         });
-        console.debug(`[GA4] User ID set to: ${userId}`);
+        console.info(`📊 [GA4] User ID set to: ${userId}`);
+    } else {
+        console.warn("⚠️ [GA4] gtag is not defined. Cannot set User ID.");
     }
 };
 
@@ -45,6 +48,6 @@ export const setUserId = (userId: string | null) => {
 export const setUserProperties = (properties: Record<string, any>) => {
     if (typeof window !== "undefined" && window.gtag) {
         window.gtag("set", "user_properties", properties);
-        console.debug(`[GA4] User Properties set:`, properties);
+        console.info(`📊 [GA4] User Properties set:`, properties);
     }
 };
