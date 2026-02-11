@@ -71,17 +71,14 @@ services:
 
   # ✅ AI Server (Brick Judge + Chatbot)
   ai-server:
-    build:
-      context: ../brickers-ai
-      dockerfile: Dockerfile
+    # 🚀 Docker Hub 이미지 사용 (배포 시 소스 빌드 불필요)
+    image: ${DOCKER_USERNAME}/brickers-ai:latest
     container_name: brickers-ai
     ports:
       - "8000:8000"
     environment:
       - TZ=Asia/Seoul
       - OPENAI_API_KEY=${APP_OPENAI_API_KEY}
-    volumes:
-      - ../brickers-ai:/app
     networks:
       - brickers-network
 
