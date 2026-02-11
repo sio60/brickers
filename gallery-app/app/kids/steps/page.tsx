@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo, Suspense, useLayoutEffect } from 
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import * as THREE from "three";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import { Bounds, OrbitControls, Center, Gltf, Environment, useBounds } from "@react-three/drei";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
@@ -414,44 +414,151 @@ function GalleryRegisterInput({ t, isRegisteredToGallery, isSubmitting, onRegist
     );
 }
 
-function BrickThumbnail({ partName, color }: { partName: string, color: string }) {
+// =============================================================================
+// Offscreen Brick Renderer Strategy
+// =============================================================================
+// WebGL Context limit issue (max 8~16) prevents rendering many small Canvases.
+// Solution: Use ONE offscreen Canvas to render bricks sequentially and capture image.
+
+type RenderRequest = {
+    partName: string;
+    color: string;
+    resolve: (url: string) => void;
+};
+
+// Global Render Queue
+const renderQueue: RenderRequest[] = [];
+let isRendering = false;
+let processQueueInternal: (() => void) | null = null;
+
+function processQueue() {
+    if (isRendering || renderQueue.length === 0 || !processQueueInternal) return;
+    isRendering = true;
+    processQueueInternal();
+}
+
+function requestBrickImage(partName: string, color: string): Promise<string> {
+    return new Promise((resolve) => {
+        // Check cache (SessionStorage or Memory)
+        const cacheKey = `brick_thumb_${partName}_${color}`;
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+            resolve(cached);
+            return;
+        }
+
+        renderQueue.push({ partName, color, resolve });
+        processQueue();
+    });
+}
+
+function OffscreenBrickRenderer() {
+    const [currentReq, setCurrentReq] = useState<RenderRequest | null>(null);
     const [url, setUrl] = useState<string | null>(null);
-    const [hasError, setHasError] = useState(false);
+    const { gl, scene, camera } = useThree();
 
     useEffect(() => {
-        const ldr = `1 ${color} 0 0 0 1 0 0 0 1 0 0 0 1 ${partName}.dat`;
-        const blob = new Blob([ldr], { type: 'text/plain' });
-        const objectUrl = URL.createObjectURL(blob);
-        setUrl(objectUrl);
-        setHasError(false);
-        return () => URL.revokeObjectURL(objectUrl);
+        processQueueInternal = () => {
+            const req = renderQueue.shift();
+            if (req) {
+                const ldr = `1 ${req.color} 0 0 0 1 0 0 0 1 0 0 0 1 ${req.partName}.dat`;
+                const blob = new Blob([ldr], { type: 'text/plain' });
+                const objUrl = URL.createObjectURL(blob);
+                setCurrentReq(req);
+                setUrl(objUrl);
+            } else {
+                isRendering = false;
+            }
+        };
+        processQueue();
+        return () => { processQueueInternal = null; };
+    }, []);
+
+    // When model loaded & rendered -> Capture
+    const onLoaded = () => {
+        // Wait a small tick for render
+        setTimeout(() => {
+            if (!currentReq) return;
+
+            gl.render(scene, camera);
+            const dataUrl = gl.domElement.toDataURL("image/png");
+
+            // Cache & Resolve
+            const cacheKey = `brick_thumb_${currentReq.partName}_${currentReq.color}`;
+            try { sessionStorage.setItem(cacheKey, dataUrl); } catch { } // Quota limit safe
+            currentReq.resolve(dataUrl);
+
+            // Cleanup
+            if (url) URL.revokeObjectURL(url);
+            setUrl(null);
+            setCurrentReq(null);
+
+            // Next
+            isRendering = false;
+            processQueue();
+        }, 50);
+    };
+
+    if (!url) return null;
+
+    return (
+        <Center>
+            <LdrModel
+                url={url}
+                onLoaded={onLoaded}
+                onError={() => {
+                    // Skip error
+                    if (currentReq) currentReq.resolve(""); // Empty on error
+                    isRendering = false;
+                    processQueue();
+                }}
+            />
+        </Center>
+    );
+}
+
+// Global Renderer Component (Mounted once in page)
+function OffscreenRenderer() {
+    return (
+        <div style={{ position: "absolute", top: -9999, left: -9999, width: 64, height: 64, visibility: "visible" }}>
+            <Canvas
+                gl={{ preserveDrawingBuffer: true, alpha: true }}
+                camera={{ position: [100, 100, 100], fov: 35 }}
+                dpr={1} // Low DPI for speed
+            >
+                <ambientLight intensity={1.5} />
+                <directionalLight position={[5, 10, 5]} intensity={2} />
+                <OffscreenBrickRenderer />
+            </Canvas>
+        </div>
+    );
+}
+
+function BrickThumbnail({ partName, color }: { partName: string, color: string }) {
+    const [imgUrl, setImgUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        let alive = true;
+        requestBrickImage(partName, color).then(url => {
+            if (alive) setImgUrl(url);
+        });
+        return () => { alive = false; };
     }, [partName, color]);
 
-    if (!url || hasError) {
+    if (!imgUrl) {
+        // Loading state
         return (
-            <div className="kidsStep__brickPlaceholder">
-                <span style={{ fontSize: '0.6rem', color: '#f00' }}>Error: {partName} ({color})</span>
-            </div>
+            <div className="kidsStep__brickColorBlock" style={{ background: "#eee", width: 48, height: 48, borderRadius: 6 }} />
         );
     }
 
     return (
-        <div className="kidsStep__brickCanvasContainer">
-            <Canvas
-                camera={{ position: [140, 140, 140], fov: 30 }}
-                dpr={[1, 2]}
-                gl={{ alpha: true }}
-            >
-                <ambientLight intensity={1.5} />
-                <directionalLight position={[5, 10, 5]} intensity={2} />
-                <Center>
-                    <LdrModel
-                        url={url}
-                        noFit
-                        onError={() => setHasError(true)}
-                    />
-                </Center>
-            </Canvas>
+        <div className="kidsStep__brickColorBlock" style={{
+            width: 48, height: 48,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "#fff", borderRadius: 6, border: "1px solid #eee"
+        }}>
+            <img src={imgUrl} alt={partName} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
         </div>
     );
 }
@@ -749,6 +856,7 @@ function KidsStepPageContent() {
 
     return (
         <div ref={containerRef} style={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
+            <OffscreenRenderer />
             <BackgroundBricks />
 
             <div className="kidsStep__mainContainer">
