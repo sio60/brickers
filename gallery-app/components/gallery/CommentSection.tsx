@@ -142,7 +142,7 @@ export function CommentList({
                                     onClick={() => handleDeleteClick(c.id)}
                                     className="text-[11px] font-bold text-red-400 hover:text-red-600 transition-colors"
                                 >
-                                    {t.detail.delete || "Delete"}
+                                    {t.detail.delete || "삭제"}
                                 </button>
                             )}
                         </div>
