@@ -3,9 +3,7 @@ package com.brickers.backend.color.service;
 import com.brickers.backend.color.dto.ColorVariantRequest;
 import com.brickers.backend.color.dto.ColorVariantResponse;
 import com.brickers.backend.color.dto.ThemeInfo;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -14,23 +12,21 @@ import java.util.Map;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ColorVariantService {
 
-    private final WebClient.Builder webClientBuilder;
+    private final WebClient aiWebClient;
 
-    @Value("${ai.server.url:http://localhost:8000}")
-    private String aiServerUrl;
+    public ColorVariantService(WebClient aiWebClient) {
+        this.aiWebClient = aiWebClient;
+    }
 
     /**
      * 사용 가능한 색상 테마 목록 조회
      */
     public List<ThemeInfo> getThemes() {
-        WebClient webClient = webClientBuilder.build();
-
         try {
-            Map<String, Object> response = webClient.get()
-                    .uri(aiServerUrl + "/api/v1/color-variant/themes")
+            Map<String, Object> response = aiWebClient.get()
+                    .uri("/api/v1/color-variant/themes")
                     .retrieve()
                     .bodyToMono(Map.class)
                     .block();
@@ -67,13 +63,11 @@ public class ColorVariantService {
      * LDR 파일에 색상 테마 적용
      */
     public ColorVariantResponse applyColorVariant(ColorVariantRequest request) {
-        WebClient webClient = webClientBuilder.build();
-
         log.info("[ColorVariant] Applying theme '{}' to LDR: {}", request.getTheme(), request.getLdrUrl());
 
         try {
-            ColorVariantResponse response = webClient.post()
-                    .uri(aiServerUrl + "/api/v1/color-variant")
+            ColorVariantResponse response = aiWebClient.post()
+                    .uri("/api/v1/color-variant")
                     .bodyValue(Map.of(
                             "ldr_url", request.getLdrUrl(),
                             "theme", request.getTheme()
