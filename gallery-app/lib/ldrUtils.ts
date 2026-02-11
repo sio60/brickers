@@ -8,6 +8,7 @@ export type StepBrickInfo = {
 
 export type LdrStepData = {
     stepTexts: string[];
+    stepOnlyTexts: string[]; // [NEW] 해당 스텝의 브릭만 포함
     bounds: THREE.Box3 | null;
     stepBricks: StepBrickInfo[][];
 };
@@ -135,14 +136,21 @@ export function parseAndProcessSteps(ldrText: string): LdrStepData {
         sortedSegments.push(header); // Fallback for header-only file
     }
 
-    // 3. 누적 텍스트 및 브릭 정보 생성
-    const out: string[] = [];
+    // 3. 누적 및 개별 텍스트 및 브릭 정보 생성
+    const stepTexts: string[] = [];
+    const stepOnlyTexts: string[] = [];
     const stepBricks: StepBrickInfo[][] = [];
     let acc: string[] = [];
 
+    const headerText = header.lines.join("\n");
+
     for (const seg of sortedSegments) {
         acc = acc.concat(seg.lines);
-        out.push(acc.join("\n"));
+        stepTexts.push(acc.join("\n"));
+
+        // 개별 스텝 텍스트 (헤더 + 해당 세그먼트)
+        stepOnlyTexts.push(headerText + (headerText ? "\n" : "") + seg.lines.join("\n"));
+
         // Each entry in stepBricks corresponds to the bricks *newly added* in that step
         stepBricks.push(Array.from(seg.bricks.values()));
     }
@@ -156,7 +164,7 @@ export function parseAndProcessSteps(ldrText: string): LdrStepData {
         );
     }
 
-    return { stepTexts: out, bounds, stepBricks };
+    return { stepTexts, stepOnlyTexts, bounds, stepBricks };
 }
 
 export function buildCumulativeStepTexts(ldrText: string): string[] {

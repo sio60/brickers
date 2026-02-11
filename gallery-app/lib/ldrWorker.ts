@@ -15,6 +15,7 @@ self.onmessage = async (e: MessageEvent) => {
                 type: "SUCCESS",
                 payload: {
                     stepTexts: result.stepTexts,
+                    stepOnlyTexts: result.stepOnlyTexts,
                     stepBricks: result.stepBricks,
                     bounds: result.bounds ? {
                         min: result.bounds.min,
