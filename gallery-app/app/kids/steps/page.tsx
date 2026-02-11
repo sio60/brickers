@@ -674,7 +674,7 @@ function KidsStepPageContent() {
                                                     className="kidsStep__viewAssemblyBtn"
                                                     onClick={() => { setLoading(true); setTimeout(() => { setIsAssemblyMode(true); setLoading(false); }, 100); }}
                                                 >
-                                                    🧩 {t.kids.steps?.viewAssembly || "조립서 보기"}
+                                                    {t.kids.steps?.viewAssembly || "조립서 보기"}
                                                 </button>
                                             </div>
                                         )}
