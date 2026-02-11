@@ -48,4 +48,34 @@ public class AdminPaymentController {
             throw new IllegalArgumentException(e.getMessage());
         }
     }
+
+    /** 환불 요청 목록 조회 (REFUND_REQUESTED 상태) */
+    @GetMapping("/refund-requests")
+    public Page<AdminPaymentDto> getRefundRequests(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
+        return adminPaymentService.getRefundRequests(page, size);
+    }
+
+    /** 환불 승인 (REFUND_REQUESTED → REFUNDED) */
+    @PostMapping("/orders/{orderId}/approve-refund")
+    public AdminPaymentDto approveRefund(@PathVariable("orderId") String orderId) {
+        try {
+            return adminPaymentService.approveRefund(orderId);
+        } catch (IllegalStateException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
+    }
+
+    /** 환불 거절 (REFUND_REQUESTED → COMPLETED 원복) */
+    @PostMapping("/orders/{orderId}/reject-refund")
+    public AdminPaymentDto rejectRefund(
+            @PathVariable("orderId") String orderId,
+            @RequestBody Map<String, String> body) {
+        try {
+            return adminPaymentService.rejectRefund(orderId, body.get("reason"));
+        } catch (IllegalStateException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
+    }
 }

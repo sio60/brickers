@@ -8,5 +8,6 @@ public enum PaymentStatus {
     COMPLETED, // 결제 완료
     FAILED, // 결제 실패
     CANCELED, // 결제 취소
+    REFUND_REQUESTED, // 환불 요청됨 (관리자 승인 대기)
     REFUNDED // 환불됨
 }

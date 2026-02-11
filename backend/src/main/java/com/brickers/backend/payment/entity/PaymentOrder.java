@@ -88,6 +88,25 @@ public class PaymentOrder {
         this.updatedAt = LocalDateTime.now();
     }
 
+    // 환불 요청 (관리자 승인 대기 상태로 전환)
+    public void markRefundRequested(String reason) {
+        this.status = PaymentStatus.REFUND_REQUESTED;
+        this.cancelReason = reason;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // 환불 거절 시 COMPLETED 상태로 원복
+    public void revertToCompleted() {
+        this.status = PaymentStatus.COMPLETED;
+        this.cancelReason = null;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // 관리자 환불 승인 가능 여부 (REFUND_REQUESTED 상태에서만)
+    public boolean canRefundByAdmin() {
+        return this.status == PaymentStatus.REFUND_REQUESTED;
+    }
+
     public void markFailed() {
         this.status = PaymentStatus.FAILED;
         this.updatedAt = LocalDateTime.now();
@@ -98,6 +117,7 @@ public class PaymentOrder {
     }
 
     public boolean canCancelByAdmin() {
-        return this.status == PaymentStatus.PENDING || this.status == PaymentStatus.COMPLETED;
+        return this.status == PaymentStatus.PENDING || this.status == PaymentStatus.COMPLETED
+                || this.status == PaymentStatus.REFUND_REQUESTED;
     }
 }
