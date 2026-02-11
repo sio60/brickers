@@ -450,6 +450,35 @@ export const ko = {
             date: "결제일",
             nextDate: "다음 결제일"
         },
+        gallery: {
+            title: "갤러리 관리",
+            searchPlaceholder: "제목 또는 작성자 검색...",
+            filter: {
+                all: "전체 상태",
+                public: "공개",
+                private: "비공개",
+                deleted: "삭제됨"
+            },
+            table: {
+                thumbnail: "썸네일",
+                info: "정보",
+                stats: "통계",
+                status: "상태",
+                date: "날짜",
+                actions: "관리"
+            },
+            action: {
+                view: "보기",
+                hide: "숨김",
+                unhide: "숨김 해제",
+                delete: "삭제"
+            },
+            confirm: {
+                delete: "정말 이 게시글을 삭제하시겠습니까?",
+                hide: "이 게시글을 숨기시겠습니까?",
+                unhide: "이 게시글을 다시 공개하시겠습니까?"
+            }
+        },
         preparing: "콘텐츠 준비 중입니다..."
     },
     // gallery 전용 (기존 gallery-app)
@@ -476,6 +505,7 @@ export const ko = {
         replyPlaceholder: "답글을 입력하세요...",
         hideReplies: "답글 숨기기",
         showReplies: "답글 {count}개 보기",
+        deleteConfirm: "정말 댓글을 삭제하시겠습니까?",
         views3d: {
             noLdrUrl: "LDR URL이 없습니다.",
             dragRotate: "드래그: 회전",

@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { getMyProfile, getAdminStats, AdminStats } from "@/lib/api/myApi";
+import GalleryManagement from "@/components/admin/GalleryManagement";
 import styles from "./AdminPage.module.css";
 
 // SSR 제외
@@ -767,6 +768,12 @@ export default function AdminPage() {
                                     </div>
                                 ))}
                                 {refunds.length === 0 && <p className={styles.emptyMsg}>{t.admin.refund.empty}</p>}
+                            </div>
+                        )}
+
+                        {activeTab === "gallery" && (
+                            <div className={styles.list}>
+                                <GalleryManagement />
                             </div>
                         )}
                     </main>
