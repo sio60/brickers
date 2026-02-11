@@ -696,7 +696,7 @@ function KidsStepPageContent() {
                                                 <LdrModel
                                                     url={ldrUrl}
                                                     overrideMainLdrUrl={currentOverride}
-                                                    onLoaded={(g) => { modelGroupRef.current = g; }}
+                                                    onLoaded={(g) => { modelGroupRef.current = g; setLoading(false); }}
                                                     onError={() => setLoading(false)}
                                                     customBounds={modelBounds}
                                                     fitTrigger={`${ldrUrl}|${currentOverride}|right`}
