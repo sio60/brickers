@@ -178,7 +178,7 @@ function KidsPageContent() {
                     fileTitle = promptText.substring(0, 10);
                 } else {
                     setStatus("error");
-                    setDebugLog(t.kids.modelSelect.promptInputPlaceholder || "프롬프트를 입력해주세요.");
+                    setDebugLog(t.kids.modelSelect.promptInputPlaceholder || "sourceImageUrl 또는 prompt가 필요합니다.");
                     processingRef.current = false;
                     return;
                 }
