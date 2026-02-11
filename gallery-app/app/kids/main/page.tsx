@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import * as gtag from "@/lib/gtag";
 import { getPresignUrl } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, ThemeInfo } from "@/lib/api/colorVariantApi";
 // import KidsLoadingScreen from "@/components/kids/KidsLoadingScreen";
@@ -129,6 +130,13 @@ function KidsPageContent() {
 
             setDebugLog(t.kids.generate.starting);
             console.log("[KidsPage] 🚀 runProcess 시작 | file:", rawFile?.name, "prompt:", targetPrompt);
+
+            gtag.event({
+                action: 'generate_start',
+                category: 'Kids',
+                label: targetPrompt ? 'prompt' : 'image',
+                value: budget
+            });
 
             try {
                 let sourceImageUrl = "";
@@ -322,6 +330,12 @@ function KidsPageContent() {
                 if (finalData.pdfUrl) setPdfUrl(finalData.pdfUrl);
                 setStatus("done");
                 console.log("[KidsPage] ✅ 전체 프로세스 완료! | ldrUrl:", modelUrl);
+
+                gtag.event({
+                    action: 'generate_success',
+                    category: 'Kids',
+                    label: jobId || 'unknown'
+                });
             } catch (e) {
                 if (!alive) return;
                 console.error("[KidsPage] ❌ Brick generation failed:", e);
@@ -408,6 +422,7 @@ function KidsPageContent() {
             link.download = `brickers_${jobId || 'model'}.ldr`;
             link.click();
             URL.revokeObjectURL(dUrl);
+            gtag.event({ action: 'download_ldr', category: 'Download', label: jobId || 'model' });
         } catch (err) { console.error(err); }
     };
 
@@ -417,6 +432,7 @@ function KidsPageContent() {
         link.href = glbUrl;
         link.download = `brickers_${jobId || 'model'}.glb`;
         link.click();
+        gtag.event({ action: 'download_glb', category: 'Download', label: jobId || 'model' });
     };
 
     // 색상 모달 열 때 테마 로드

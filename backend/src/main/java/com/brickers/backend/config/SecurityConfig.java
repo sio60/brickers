@@ -80,7 +80,9 @@ public class SecurityConfig {
                                                 // .permitAll()
                                                 .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
                                                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                                                .requestMatchers("/api/auth/refresh", "/api/auth/logout", "/api/auth/mobile/**").permitAll()
+                                                .requestMatchers("/api/auth/refresh", "/api/auth/logout",
+                                                                "/api/auth/mobile/**")
+                                                .permitAll()
                                                 // 토큰 상태 확인 (공개 - 토큰 없어도 확인 가능)
                                                 .requestMatchers(HttpMethod.GET, "/api/auth/status").permitAll()
                                                 // 모든 세션 로그아웃 (인증 필요)
@@ -169,7 +171,8 @@ public class SecurityConfig {
                                                 // ✅ Color Variant API
                                                 // -------------------------------
                                                 // 테마 목록은 공개
-                                                .requestMatchers(HttpMethod.GET, "/api/color-variant/themes").permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/color-variant/themes")
+                                                .permitAll()
                                                 // 색상 변경은 인증 필요
                                                 .requestMatchers(HttpMethod.POST, "/api/color-variant").authenticated()
 
@@ -186,6 +189,7 @@ public class SecurityConfig {
                                                 // -------------------------------
                                                 // ✅ Admin API
                                                 // -------------------------------
+                                                .requestMatchers("/api/admin/analytics/**").permitAll()
                                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                                                 // -------------------------------
