@@ -142,21 +142,39 @@ function LdrModel({
             try {
                 setGroup(null);
 
-                // 정합성 확인을 위해 LDR 텍스트 파싱 (Worker 활용)
+                // 1. LDR 텍스트 가져오기
                 const res = await fetch(url);
                 const text = await res.text();
-                const worker = new Worker(new URL('@/lib/ldrWorker.ts', import.meta.url));
-                worker.postMessage({ type: 'PROCESS_LDR', text });
-                worker.onmessage = (e) => {
-                    if (e.data.type === 'SUCCESS' && !cancelled) {
-                        const { stepTexts } = e.data.payload;
-                        if (onStepCountChange) onStepCountChange(stepTexts.length);
-                    }
-                    worker.terminate();
-                };
+
+                // 2. Worker로 정렬된 텍스트 생성
+                const workerResult = await new Promise<{ stepTexts: string[]; sortedFullText: string }>((resolve, reject) => {
+                    const worker = new Worker(new URL('@/lib/ldrWorker.ts', import.meta.url));
+                    worker.postMessage({ type: 'PROCESS_LDR', text });
+                    worker.onmessage = (e) => {
+                        if (e.data.type === 'SUCCESS') {
+                            resolve(e.data.payload);
+                        } else {
+                            reject(new Error(e.data.payload));
+                        }
+                        worker.terminate();
+                    };
+                    worker.onerror = (err) => {
+                        reject(err);
+                        worker.terminate();
+                    };
+                });
+
+                if (cancelled) return;
+                if (onStepCountChange) onStepCountChange(workerResult.stepTexts.length);
+
+                // 3. 정렬된 LDR 텍스트를 Blob URL로 변환하여 LDrawLoader에 로드
+                const sortedBlob = new Blob([workerResult.sortedFullText], { type: 'text/plain' });
+                const sortedUrl = URL.createObjectURL(sortedBlob);
 
                 await loader.preloadMaterials(ldconfigUrl);
-                const g = await loader.loadAsync(url);
+                const g = await loader.loadAsync(sortedUrl);
+                URL.revokeObjectURL(sortedUrl);
+
                 if (cancelled) { disposeObject3D(g); return; }
                 if (g) {
                     removeNullChildren(g);
