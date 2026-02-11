@@ -35,11 +35,6 @@ const nextConfig = {
                     source: '/uploads/:path*',
                     destination: `${backendUrl}/uploads/:path*`,
                 },
-                // ✅ Brick Judge Viewer (Production Proxy)
-                {
-                    source: '/api/judge-viewer',
-                    destination: process.env.BRICK_JUDGE_URL || 'https://brickers.shop/api/judge-viewer',
-                },
             ],
         }
     },
