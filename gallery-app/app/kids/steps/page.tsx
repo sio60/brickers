@@ -98,6 +98,7 @@ function LdrModel({
     customBounds,
     fitTrigger,
     noFit,
+    opacity = 1, // [NEW] 불투명도 조절용
 }: {
     url: string;
     overrideMainLdrUrl?: string;
@@ -108,6 +109,7 @@ function LdrModel({
     customBounds?: THREE.Box3 | null;
     fitTrigger?: string;
     noFit?: boolean;
+    opacity?: number;
 }) {
     const loader = useMemo(() => {
         THREE.Cache.enabled = true;
@@ -202,6 +204,19 @@ function LdrModel({
             if (prev) disposeObject3D(prev);
         };
     }, [url, ldconfigUrl, loader, onLoaded, onError]);
+
+    useEffect(() => {
+        if (group && opacity < 1) {
+            group.traverse((c: any) => {
+                if (c.isMesh) {
+                    c.material = c.material.clone();
+                    c.material.transparent = true;
+                    c.material.opacity = opacity;
+                    c.material.depthWrite = false; // 투명 브릭 겹침 시 시각적 향상
+                }
+            });
+        }
+    }, [group, opacity]);
 
     if (!group) return null;
 
@@ -329,9 +344,11 @@ function KidsStepPageContent() {
     const [loading, setLoading] = useState(true);
     const [stepIdx, setStepIdx] = useState(0);
     const [stepBlobUrls, setStepBlobUrls] = useState<string[]>([]);
+    const [stepOnlyBlobUrls, setStepOnlyBlobUrls] = useState<string[]>([]); // [NEW] 해당 스텝의 브릭만 포함
     const [stepBricks, setStepBricks] = useState<StepBrickInfo[][]>([]);
     const [modelBounds, setModelBounds] = useState<THREE.Box3 | null>(null);
     const blobRef = useRef<string[]>([]);
+    const onlyBlobRef = useRef<string[]>([]); // [NEW]
     const modelGroupRef = useRef<THREE.Group | null>(null);
 
     const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
@@ -380,13 +397,22 @@ function KidsStepPageContent() {
                 worker.postMessage({ type: 'PROCESS_LDR', text });
                 worker.onmessage = (e) => {
                     if (e.data.type === 'SUCCESS') {
-                        const { stepTexts, stepBricks: bricks } = e.data.payload;
+                        const { stepTexts, stepOnlyTexts, stepBricks: bricks } = e.data.payload;
                         const blobs = stepTexts.map((t_blob: string) =>
                             URL.createObjectURL(new Blob([t_blob], { type: "text/plain" }))
                         );
+                        const onlyBlobs = (stepOnlyTexts || []).map((t_blob: string) =>
+                            URL.createObjectURL(new Blob([t_blob], { type: "text/plain" }))
+                        );
+
                         revokeAll(blobRef.current);
+                        revokeAll(onlyBlobRef.current);
+
                         blobRef.current = blobs;
+                        onlyBlobRef.current = onlyBlobs;
+
                         setStepBlobUrls(blobs);
+                        setStepOnlyBlobUrls(onlyBlobs);
                         setStepBricks(bricks || []);
                         setStepIdx(stepTexts.length - 1);
                         setIsColorModalOpen(false);
@@ -418,7 +444,7 @@ function KidsStepPageContent() {
             worker.postMessage({ type: 'PROCESS_LDR', text });
             worker.onmessage = (e) => {
                 if (e.data.type === 'SUCCESS') {
-                    const { stepTexts, bounds } = e.data.payload;
+                    const { stepTexts, stepOnlyTexts, bounds } = e.data.payload;
                     if (bounds) {
                         setModelBounds(new THREE.Box3(
                             new THREE.Vector3(bounds.min.x, bounds.min.y, bounds.min.z),
@@ -427,9 +453,16 @@ function KidsStepPageContent() {
                     }
                     const { stepBricks: bricks } = e.data.payload;
                     const blobs = stepTexts.map((t: string) => URL.createObjectURL(new Blob([t], { type: "text/plain" })));
+                    const onlyBlobs = (stepOnlyTexts || []).map((t: string) => URL.createObjectURL(new Blob([t], { type: "text/plain" })));
+
                     revokeAll(blobRef.current);
+                    revokeAll(onlyBlobRef.current);
+
                     blobRef.current = blobs;
+                    onlyBlobRef.current = onlyBlobs;
+
                     setStepBlobUrls(blobs);
+                    setStepOnlyBlobUrls(onlyBlobs);
                     setStepBricks(bricks || []);
                     setStepIdx(stepTexts.length - 1);
                 }
@@ -490,7 +523,7 @@ function KidsStepPageContent() {
             worker.postMessage({ type: 'PROCESS_LDR', text });
             worker.onmessage = (e) => {
                 if (e.data.type === 'SUCCESS' && alive) {
-                    const { stepTexts, bounds, stepBricks: bricks } = e.data.payload;
+                    const { stepTexts, stepOnlyTexts, bounds, stepBricks: bricks } = e.data.payload;
                     if (bounds) {
                         setModelBounds(new THREE.Box3(
                             new THREE.Vector3(bounds.min.x, bounds.min.y, bounds.min.z),
@@ -498,9 +531,16 @@ function KidsStepPageContent() {
                         ));
                     }
                     const blobs = stepTexts.map((t_blob: string) => URL.createObjectURL(new Blob([t_blob], { type: "text/plain" })));
+                    const onlyBlobs = (stepOnlyTexts || []).map((t_blob: string) => URL.createObjectURL(new Blob([t_blob], { type: "text/plain" })));
+
                     revokeAll(blobRef.current);
+                    revokeAll(onlyBlobRef.current);
+
                     blobRef.current = blobs;
+                    onlyBlobRef.current = onlyBlobs;
+
                     setStepBlobUrls(blobs);
+                    setStepOnlyBlobUrls(onlyBlobs);
                     setStepBricks(bricks || []);
                     setLoading(false);
                 } else if (alive) {
@@ -516,7 +556,10 @@ function KidsStepPageContent() {
     }, [ldrUrl]);
 
     useEffect(() => {
-        return () => revokeAll(blobRef.current);
+        return () => {
+            revokeAll(blobRef.current);
+            revokeAll(onlyBlobRef.current);
+        };
     }, []);
 
     const handleDownloadPdf = () => {
@@ -562,7 +605,8 @@ function KidsStepPageContent() {
     };
 
     const total = stepBlobUrls.length || 1;
-    const currentOverride = stepBlobUrls[Math.min(stepIdx, stepBlobUrls.length - 1)];
+    const currentPrevOverride = stepIdx > 0 ? stepBlobUrls[stepIdx - 1] : null;
+    const currentStepOnlyOverride = stepOnlyBlobUrls[Math.min(stepIdx, stepOnlyBlobUrls.length - 1)];
     const canPrev = stepIdx > 0;
     const canNext = stepIdx < total - 1;
 
@@ -693,14 +737,26 @@ function KidsStepPageContent() {
                                             <ambientLight intensity={0.9} />
                                             <directionalLight position={[3, 5, 2]} intensity={1} />
                                             {ldrUrl && (
-                                                <LdrModel
-                                                    url={ldrUrl}
-                                                    overrideMainLdrUrl={currentOverride}
-                                                    onLoaded={(g) => { modelGroupRef.current = g; setLoading(false); }}
-                                                    onError={() => setLoading(false)}
-                                                    customBounds={modelBounds}
-                                                    fitTrigger={`${ldrUrl}|${currentOverride}|right`}
-                                                />
+                                                <>
+                                                    {/* [NEW] 이전 스텝들 (투명하게) */}
+                                                    {canPrev && currentPrevOverride && (
+                                                        <LdrModel
+                                                            url={ldrUrl}
+                                                            overrideMainLdrUrl={currentPrevOverride}
+                                                            opacity={0.2}
+                                                            noFit
+                                                        />
+                                                    )}
+                                                    {/* [NEW] 현재 스텝의 브릭들 (불투명하게) */}
+                                                    <LdrModel
+                                                        url={ldrUrl}
+                                                        overrideMainLdrUrl={currentStepOnlyOverride}
+                                                        onLoaded={(g) => { modelGroupRef.current = g; setLoading(false); }}
+                                                        onError={() => setLoading(false)}
+                                                        customBounds={modelBounds}
+                                                        fitTrigger={`${ldrUrl}|${stepIdx}|right`}
+                                                    />
+                                                </>
                                             )}
                                             <OrbitControls makeDefault enablePan={false} enableZoom />
                                         </Canvas>
