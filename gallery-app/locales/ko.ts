@@ -435,6 +435,9 @@ export const ko = {
             order: "주문 번호",
             user: "사용자"
         },
+        brickJudge: {
+            title: "물리 엔진 검증"
+        },
         gallery: {
             title: "갤러리 관리",
             searchPlaceholder: "제목 또는 작성자 검색...",

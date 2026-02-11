@@ -69,6 +69,22 @@ services:
     networks:
       - brickers-network
 
+  # ✅ AI Server (Brick Judge + Chatbot)
+  ai-server:
+    build:
+      context: ../brickers-ai
+      dockerfile: Dockerfile
+    container_name: brickers-ai
+    ports:
+      - "8000:8000"
+    environment:
+      - TZ=Asia/Seoul
+      - OPENAI_API_KEY=${APP_OPENAI_API_KEY}
+    volumes:
+      - ../brickers-ai:/app
+    networks:
+      - brickers-network
+
   # ✅ 통합된 Next.js 앱 (Kids + Gallery 모두 포함)
   frontend:
     image: ${DOCKER_USERNAME}/brickers-frontend:latest

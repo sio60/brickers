@@ -436,6 +436,9 @@ export const en = {
             order: "Order",
             user: "User"
         },
+        brickJudge: {
+            title: "Brick Judge"
+        },
         gallery: {
             title: "Gallery Management",
             searchPlaceholder: "Search by title or author...",
