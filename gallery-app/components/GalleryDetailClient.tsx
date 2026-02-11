@@ -411,7 +411,7 @@ export default function GalleryDetailClient({ item }: Props) {
                             comments={comments}
                             commentCount={commentCount}
                             isAuthenticated={isAuthenticated}
-                            currentUser={user}
+                            currentUser={user as any}
                             onCommentSubmit={handleCommentSubmit}
                             onCommentDelete={handleCommentDelete}
                             t={t}
