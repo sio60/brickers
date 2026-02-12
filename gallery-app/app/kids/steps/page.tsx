@@ -1065,9 +1065,24 @@ function KidsStepPageContent() {
                                             <div className="kidsStep__stepInfo">
                                                 Step {stepIdx + 1} <span style={{ color: "#aaa" }}>/ {total}</span>
                                             </div>
-                                            <button className="kidsStep__navBtn kidsStep__navBtn--next" disabled={!canNext} onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}>
-                                                {t.kids.steps.next} →
-                                            </button>
+                                            {canNext ? (
+                                                <button className="kidsStep__navBtn kidsStep__navBtn--next" onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}>
+                                                    {t.kids.steps.next} →
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    className="kidsStep__navBtn kidsStep__navBtn--complete"
+                                                    style={{ backgroundColor: "#4CAF50", color: "white", fontWeight: "bold" }}
+                                                    onClick={() => {
+                                                        const tagsParam = suggestedTags.length > 0 ? `&tags=${encodeURIComponent(suggestedTags.join(','))}` : '';
+                                                        /* Job Title이 없으면 기본값 */
+                                                        const titleParam = `&title=${encodeURIComponent("My Brick Model")}`;
+                                                        router.push(`/kids/viewer?url=${encodeURIComponent(ldrUrl)}&jobId=${jobId}${tagsParam}${titleParam}`);
+                                                    }}
+                                                >
+                                                    ✨ {t.kids.steps?.complete || "완성! 꾸미기"}
+                                                </button>
+                                            )}
                                         </div>
                                         <div style={{ textAlign: "center", fontSize: "0.7rem", color: "#aaa", marginTop: 4 }}>
                                             Shift + Scroll / ← → {t.kids.steps?.stepNavHint || '키로 단계 이동'}

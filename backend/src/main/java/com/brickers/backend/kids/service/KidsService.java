@@ -35,6 +35,7 @@ public class KidsService {
     private final GenerateJobRepository generateJobRepository;
     private final StorageService storageService;
     private final KidsAsyncWorker kidsAsyncWorker;
+    private final com.brickers.backend.kids.client.AiRenderClient aiRenderClient; // ✅ [NEW]
     private final UserRepository userRepository;
     private final SqsProducerService sqsProducerService;
 
@@ -361,5 +362,18 @@ public class KidsService {
                 log.debug("[AgentLog] Cleaned up stale buffer for jobId={}", jobId);
             }
         });
+    }
+
+    /**
+     * ✅ 배경 합성 생성 (AI Server Proxy)
+     */
+    public Map<String, Object> createBackgroundComposition(org.springframework.web.multipart.MultipartFile file,
+            String subject) {
+        try {
+            return aiRenderClient.generateBackgroundComposite(file, subject);
+        } catch (Exception e) {
+            log.error("[Brickers] 배경 합성 실패: {}", e.getMessage());
+            throw new RuntimeException("배경 합성 실패: " + e.getMessage());
+        }
     }
 }
