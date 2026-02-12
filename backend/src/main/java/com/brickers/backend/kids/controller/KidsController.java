@@ -56,7 +56,8 @@ public class KidsController {
                 request.getSourceImageUrl(),
                 request.getAge(),
                 request.getBudget(),
-                request.getTitle());
+                request.getTitle(),
+                request.getPrompt());
         log.info("✅ [KidsController] 응답: {}", result);
         return ResponseEntity.ok(result);
     }
