@@ -670,7 +670,7 @@ function KidsStepPageContent() {
                         setStepBlobUrls(blobs);
                         setSortedBlobUrl(sortedBlob);
                         setStepBricks(bricks || []);
-                        setStepIdx(stepTexts.length - 1);
+                        setStepIdx(prev => prev < stepTexts.length ? prev : 0);
                         setIsColorModalOpen(false);
                         alert(`${result.themeApplied} ${t.kids.steps.colorThemeApplied}`);
                     } else {
