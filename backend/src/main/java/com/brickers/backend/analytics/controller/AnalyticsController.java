@@ -92,6 +92,28 @@ public class AnalyticsController {
         return ResponseEntity.ok(gaService.getUserActivity(userId, days));
     }
 
+    @GetMapping("/top-tags")
+    public ResponseEntity<?> getTopTags(
+            @RequestHeader(name = "X-Internal-Token", required = false) String token,
+            @RequestParam(name = "days", defaultValue = "30") int days,
+            @RequestParam(name = "limit", defaultValue = "10") int limit) throws IOException {
+        if (!isInternalAuthorized(token)) {
+            return ResponseEntity.status(403).body("Unauthorized internal access");
+        }
+        return ResponseEntity.ok(gaService.getTopTags(days, limit));
+    }
+
+    @GetMapping("/heavy-users")
+    public ResponseEntity<?> getHeavyUsers(
+            @RequestHeader(name = "X-Internal-Token", required = false) String token,
+            @RequestParam(name = "days", defaultValue = "30") int days,
+            @RequestParam(name = "limit", defaultValue = "10") int limit) throws IOException {
+        if (!isInternalAuthorized(token)) {
+            return ResponseEntity.status(403).body("Unauthorized internal access");
+        }
+        return ResponseEntity.ok(gaService.getHeavyUsers(days, limit));
+    }
+
     /**
      * AI 서버의 분석 리포트를 중계합니다.
      * 프론트엔드 -> 자바 백엔드 -> AI 서버
