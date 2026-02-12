@@ -474,6 +474,7 @@ export const ko = {
             analyze: "분석",
             analyzing: "분석 중...",
             score: "안정성 점수",
+            brickBot: "브릭봇",
             brickCount: "브릭 수",
             issueCount: "이슈",
             stable: "안정",

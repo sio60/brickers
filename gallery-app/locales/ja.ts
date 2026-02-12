@@ -189,6 +189,7 @@ export const ja = {
     kids: {
         title: "難易度を選択してください",
         level: "L{lv}",
+        brickBot: "BrickBot",
         bricks: "個",
 
         pro: "PRO",

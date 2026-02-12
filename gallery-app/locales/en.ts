@@ -306,7 +306,7 @@ export const en = {
         },
         viewer: {
             noUrl: "Model URL not found",
-            back: "Go Back",
+            brickBot: "BrickBot",
             loading: "Loading 3D model...",
             completeModel: "Completed Model",
             instructions: "Drag to rotate • Scroll to zoom",
