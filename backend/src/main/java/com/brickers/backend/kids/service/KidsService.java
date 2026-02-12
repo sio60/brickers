@@ -308,7 +308,7 @@ public class KidsService {
                 try {
                     emitter.send(SseEmitter.event()
                             .name("agent-log")
-                            .data(logEntry));
+                            .data(logEntry, org.springframework.http.MediaType.TEXT_PLAIN));
                 } catch (IOException e) {
                     dead.add(emitter);
                 }
@@ -335,7 +335,7 @@ public class KidsService {
                     try {
                         emitter.send(SseEmitter.event()
                                 .name("agent-log")
-                                .data(logEntry));
+                                .data(logEntry, org.springframework.http.MediaType.TEXT_PLAIN));
                     } catch (IOException e) {
                         break;
                     }
