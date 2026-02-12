@@ -482,12 +482,6 @@ function KidsPageContent() {
     const [shareModalOpen, setShareModalOpen] = useState(false);
     const [shareBackgroundUrl, setShareBackgroundUrl] = useState<string | null>(null);
 
-    // 완성 시 ShareModal 자동 열기
-    useEffect(() => {
-        if (status === "done" && shareBackgroundUrl && ldrUrl) {
-            setShareModalOpen(true);
-        }
-    }, [status, shareBackgroundUrl, ldrUrl]);
 
     if (!isFileLoaded) {
         return <div className="page">Loading...</div>;
