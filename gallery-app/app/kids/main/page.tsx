@@ -147,16 +147,17 @@ function KidsPageContent() {
                     // 1. Presigned URL 요청
 
                     setDebugLog(t.kids.generate.uploadPrepare);
-                    console.log("[KidsPage] 📤 Step 1: Presigned URL 요청 중...");
+                    console.error("[KidsPage DEBUG] 📤 Step 1: Presigned URL 요청 중...");
                     const presign = await getPresignUrl(rawFile.type, rawFile.name);
-                    console.log("[KidsPage] ✅ Step 1 완료 | uploadUrl:", presign.uploadUrl?.substring(0, 80) + "...");
-                    console.log("[KidsPage]    publicUrl:", presign.publicUrl);
+                    console.error("[KidsPage DEBUG] ✅ Step 1 완료 | uploadUrl:", presign.uploadUrl?.substring(0, 80) + "...");
+                    console.error("[KidsPage DEBUG]    presign object:", JSON.stringify(presign, null, 2));
+                    console.error("[KidsPage DEBUG]    publicUrl:", presign.publicUrl);
                     if (alive) setJobThumbnailUrl(presign.publicUrl);
 
                     // 2. S3에 직접 업로드
                     setDebugLog(t.kids.generate.uploading);
-                    console.log("[KidsPage] 📤 Step 2: S3 업로드 시작...");
-                    console.log("[KidsPage] 📤 fetch 호출 직전 | url:", presign.uploadUrl?.substring(0, 100));
+                    console.error("[KidsPage DEBUG] 📤 Step 2: S3 업로드 시작...");
+                    console.error("[KidsPage DEBUG] 📤 fetch 호출 직전 | url:", presign.uploadUrl?.substring(0, 100));
 
                     let uploadRes: Response;
                     try {
@@ -166,15 +167,13 @@ function KidsPageContent() {
                             headers: { "Content-Type": rawFile.type },
                             signal: abort.signal,
                         });
-                        console.log("[KidsPage] ✅ fetch 완료 | status:", uploadRes.status);
+                        console.error("[KidsPage DEBUG] ✅ fetch 완료 | status:", uploadRes.status);
                     } catch (fetchError) {
                         console.error("[KidsPage] ❌ fetch 자체 에러:", fetchError);
-                        console.error("[KidsPage] ❌ 에러 타입:", fetchError instanceof Error ? fetchError.name : "unknown");
-                        console.error("[KidsPage] ❌ 에러 메시지:", fetchError instanceof Error ? fetchError.message : String(fetchError));
                         throw fetchError;
                     }
 
-                    console.log("[KidsPage] ✅ Step 2 완료 | S3 Upload status:", uploadRes.status);
+                    console.error("[KidsPage DEBUG] ✅ Step 2 완료 | S3 Upload status:", uploadRes.status);
 
                     if (!uploadRes.ok) {
                         console.error("[KidsPage] ❌ S3 Upload 실패 | status:", uploadRes.status);
@@ -183,7 +182,7 @@ function KidsPageContent() {
                     sourceImageUrl = presign.publicUrl;
                     fileTitle = rawFile.name.replace(/\.[^/.]+$/, "");
                 } else if (promptText) {
-                    console.log("[KidsPage] 🚀 Prompt 모드 진입: S3 업로드 스킵");
+                    console.error("[KidsPage DEBUG] 🚀 Prompt 모드 진입: S3 업로드 스킵");
                     fileTitle = promptText.substring(0, 10);
                 } else {
                     setStatus("error");
@@ -195,22 +194,23 @@ function KidsPageContent() {
                 // 3. Backend에 S3 URL or Prompt 전달 (JSON)
                 setDebugLog(t.kids.generate.creating2);
 
-                console.log("[KidsPage] 📤 Step 3: /api/kids/generate 호출 시작...");
-                console.log("[KidsPage]    payload:", { sourceImageUrl, prompt: promptText, age, budget, title: fileTitle });
+                console.error("[KidsPage DEBUG] 📤 Step 3: /api/kids/generate 호출 시작...");
+                const payload = {
+                    sourceImageUrl: sourceImageUrl || undefined,
+                    prompt: promptText || undefined,
+                    age,
+                    budget,
+                    title: fileTitle,
+                };
+                console.error("[KidsPage DEBUG]    payload:", JSON.stringify(payload, null, 2));
 
                 const startRes = await authFetch('/api/kids/generate', {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        sourceImageUrl: sourceImageUrl || undefined, // prompt 모드면 undefined
-                        prompt: promptText || undefined,
-                        age,
-                        budget,
-                        title: fileTitle,
-                    }),
+                    body: JSON.stringify(payload),
                     signal: abort.signal,
                 });
-                console.log("[KidsPage] ✅ Step 3 응답 받음 | status:", startRes.status);
+                console.error("[KidsPage DEBUG] ✅ Step 3 응답 받음 | status:", startRes.status);
 
                 if (!startRes.ok) {
                     const errText = await startRes.text();
