@@ -13,7 +13,7 @@ import java.util.EnumSet;
 /**
  * 레고 생성 작업(Job)
  *
- * - Kids only (레벨 1~3)
+ * - Kids/Pro 전용 (Kids 레벨 1~3 + PRO)
  * - status(큰 상태) + stage(세부 단계)로 진행 표시
  * - DB에는 "메타/포인터"만 저장 (파일 바이너리 저장 X)
  * - 코어 기능 붙으면 stage별 산출물 key/url을 채우고 stage/status 업데이트
