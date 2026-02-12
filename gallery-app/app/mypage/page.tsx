@@ -282,6 +282,36 @@ function MyPageContent() {
         }
     };
 
+    const handleReportJob = async (job: MyJob) => {
+        if (!confirm(t.jobs.reportConfirm)) return;
+
+        try {
+            const res = await authFetch("/api/reports", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    targetType: "JOB",
+                    targetId: job.id,
+                    reason: "GENERAL",
+                    details: "Reported from MyPage"
+                }),
+            });
+
+            if (res.ok) {
+                alert(t.jobs.reportSuccess);
+                setMenuJob(null);
+            } else {
+                const errData = await res.json();
+                alert(`${t.jobs.reportFail}\n${errData.message || ''}`);
+            }
+        } catch (e) {
+            console.error("Report error:", e);
+            alert(t.jobs.reportFail);
+        }
+    };
+
     const handleMenuAction = (action: string) => {
         if (!menuJob) return;
 
@@ -937,6 +967,17 @@ function MyPageContent() {
                             >
                                 <Icons.DownloadFile className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.ldrFile}</span>
+                            </button>
+
+                            <div className={styles.mypage__menuDivider} />
+
+                            <button
+                                className={`${styles.mypage__menuItem2} ${styles.danger}`}
+                                onClick={() => handleReportJob(menuJob)}
+                                style={{ color: '#ef4444' }}
+                            >
+                                <Icons.AlertTriangle className={styles.mypage__menuIcon2} />
+                                <span>{t.jobs.menu?.report}</span>
                             </button>
 
                             <div className={styles.mypage__menuDivider} />

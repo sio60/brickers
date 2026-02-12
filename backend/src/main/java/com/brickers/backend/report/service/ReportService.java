@@ -76,8 +76,8 @@ public class ReportService {
             throw new IllegalArgumentException("신고가 너무 빠르게 반복되었습니다. 1분 후 다시 시도해주세요.");
         }
 
-        // ✅ 신고 대상 존재 여부 검증
-        validateTargetExists(req.getTargetType(), req.getTargetId());
+        // ✅ 신고 대상 존재 여부 검증 및 Job 신고 시 reported 플래그 처리
+        validateTargetExistsAndFlag(req.getTargetType(), req.getTargetId());
 
         Report report = Report.builder()
                 .reporterId(userId)
@@ -96,13 +96,24 @@ public class ReportService {
     }
 
     /**
-     * ✅ 신고 대상이 실제로 존재하는지 검증
+     * ✅ 신고 대상이 실제로 존재하는지 검증하고 필요시 플래그 업데이트
      */
-    private void validateTargetExists(ReportTargetType type, String targetId) {
+    private void validateTargetExistsAndFlag(ReportTargetType type, String targetId) {
         boolean exists = switch (type) {
             case USER -> userRepository.existsById(targetId);
             case GALLERY_POST -> galleryPostRepository.existsById(targetId);
-            case JOB -> generateJobRepository.existsById(targetId);
+            case JOB -> {
+                GenerateJobEntity job = generateJobRepository.findById(targetId).orElse(null);
+                if (job != null) {
+                    // ✅ 신고된 작업임을 표시 (관리자 필터링용)
+                    if (!job.isReported()) {
+                        job.setReported(true);
+                        generateJobRepository.save(job);
+                    }
+                    yield true;
+                }
+                yield false;
+            }
             case INQUIRY -> inquiryRepository.existsById(targetId);
             case UPLOAD_FILE -> uploadFileRepository.existsById(targetId);
             case PAYMENT_ORDER -> paymentOrderRepository.existsById(targetId);
