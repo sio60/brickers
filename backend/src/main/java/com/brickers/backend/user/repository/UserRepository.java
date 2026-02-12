@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.List; // [New]
 
 /**
  * 사용자 MongoDB Repository
@@ -39,4 +40,7 @@ public interface UserRepository extends MongoRepository<User, String> {
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
     long countByRole(UserRole role);
+
+    // [New] 닉네임 또는 이메일 부분 일치 검색 (관리자용)
+    List<User> findByNicknameContainingOrEmailContaining(String nickname, String email);
 }

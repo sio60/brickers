@@ -24,9 +24,10 @@ public class AdminJobController {
     @GetMapping
     public Page<AdminJobDto> getAllJobs(
             @RequestParam(name = "status", required = false) JobStatus status,
+            @RequestParam(name = "userSearch", required = false) String userSearch,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size) {
-        return adminJobService.getAllJobs(status, page, size);
+        return adminJobService.getAllJobs(status, userSearch, page, size);
     }
 
     /** 작업 상세 */
