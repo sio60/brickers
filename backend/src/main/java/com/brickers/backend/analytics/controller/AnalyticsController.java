@@ -14,6 +14,7 @@ import java.util.Map;
 public class AnalyticsController {
 
     private final GoogleAnalyticsService gaService;
+    private final org.springframework.web.reactive.function.client.WebClient aiWebClient;
 
     @org.springframework.beans.factory.annotation.Value("${INTERNAL_API_TOKEN:}")
     private String internalApiToken;
@@ -89,5 +90,29 @@ public class AnalyticsController {
             return ResponseEntity.status(403).body("Unauthorized internal access");
         }
         return ResponseEntity.ok(gaService.getUserActivity(userId, days));
+    }
+
+    /**
+     * AI 서버의 분석 리포트를 중계합니다.
+     * 프론트엔드 -> 자바 백엔드 -> AI 서버
+     */
+    @GetMapping("/ai-report")
+    public ResponseEntity<?> getAiReport(
+            @RequestParam(name = "days", defaultValue = "7") int days) {
+        log.info("[AnalyticsBridge] Requesting AI analysis report for last {} days", days);
+        try {
+            return aiWebClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/ai-admin/analytics/ai-report")
+                            .queryParam("days", days)
+                            .build())
+                    .retrieve()
+                    .toEntity(Object.class)
+                    .block();
+        } catch (Exception e) {
+            log.error("[AnalyticsBridge] AI Server connection failed: {}", e.getMessage());
+            return ResponseEntity.status(502)
+                    .body(Map.of("error", "AI Server connection failed", "details", e.getMessage()));
+        }
     }
 }
