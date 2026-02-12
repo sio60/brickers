@@ -255,6 +255,7 @@ public class KidsService {
             case "3-5", "35" -> KidsLevel.LEVEL_1;
             case "6-7", "67" -> KidsLevel.LEVEL_2;
             case "8-10", "810" -> KidsLevel.LEVEL_3;
+            case "pro" -> KidsLevel.PRO;
             default -> KidsLevel.LEVEL_1;
         };
     }
