@@ -593,6 +593,7 @@ function KidsStepPageContent() {
     const [selectedTheme, setSelectedTheme] = useState<string>("");
     const [isApplyingColor, setIsApplyingColor] = useState(false);
     const [colorChangedLdrBase64, setColorChangedLdrBase64] = useState<string | null>(null);
+    const [customThemeInput, setCustomThemeInput] = useState("");
 
     // 공유하기 관련
     const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -1195,12 +1196,26 @@ function KidsStepPageContent() {
                             <div className="colorModal__themes">
                                 {colorThemes.length === 0 ? <div className="colorModal__loading">{t.kids.steps?.themeLoading || t.common.loading}</div> : (
                                     colorThemes.map((theme: ThemeInfo) => (
-                                        <button key={theme.name} className={`colorModal__themeBtn ${selectedTheme === theme.name ? "selected" : ""}`} onClick={() => setSelectedTheme(theme.name)}>
+                                        <button key={theme.name} className={`colorModal__themeBtn ${selectedTheme === theme.name && !customThemeInput ? "selected" : ""}`} onClick={() => { setSelectedTheme(theme.name); setCustomThemeInput(""); }}>
                                             <span className="colorModal__themeName">{theme.name}</span>
                                             <span className="colorModal__themeDesc">{theme.description}</span>
                                         </button>
                                     ))
                                 )}
+                            </div>
+                            <div className="colorModal__divider">직접 입력</div>
+                            <div className="colorModal__customSection">
+                                <input
+                                    type="text"
+                                    className="colorModal__customInput"
+                                    placeholder="크리스마스, 사이버펑크, 파스텔..."
+                                    value={customThemeInput}
+                                    onChange={(e) => {
+                                        setCustomThemeInput(e.target.value);
+                                        setSelectedTheme(e.target.value);
+                                    }}
+                                    onFocus={() => setSelectedTheme(customThemeInput)}
+                                />
                             </div>
                             <div className="galleryModal__actions">
                                 <button className="galleryModal__btn galleryModal__btn--cancel" onClick={() => setIsColorModalOpen(false)}>{t.kids.steps.galleryModal.cancel}</button>
