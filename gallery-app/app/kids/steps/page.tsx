@@ -18,6 +18,7 @@ import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase
 import { type StepBrickInfo } from "@/lib/ldrUtils";
 import { CDN_BASE, createLDrawURLModifier } from "@/lib/ldrawUrlModifier";
 import { preloadPartsBundle } from "@/lib/ldrawBundleLoader";
+import LDrawLoadingIndicator from "@/components/LDrawLoadingIndicator";
 import BackgroundBricks from "@/components/BackgroundBricks";
 import { generatePdfFromServer } from "@/components/kids/PDFGenerator";
 import ShareModal from "@/components/kids/ShareModal";
@@ -98,6 +99,7 @@ function LdrModel({
     ldconfigUrl = `${CDN_BASE}LDConfig.ldr`,
     onLoaded,
     onError,
+    onProgress,
     customBounds,
     fitTrigger,
     noFit,
@@ -111,6 +113,7 @@ function LdrModel({
     ldconfigUrl?: string;
     onLoaded?: (group: THREE.Group) => void;
     onError?: (e: unknown) => void;
+    onProgress?: (loaded: number, total: number) => void;
     customBounds?: THREE.Box3 | null;
     fitTrigger?: string;
     noFit?: boolean;
@@ -118,6 +121,9 @@ function LdrModel({
     stepMode?: boolean;
     fitMargin?: number;
 }) {
+    const onProgressRef = useRef(onProgress);
+    onProgressRef.current = onProgress;
+
     const loader = useMemo(() => {
         THREE.Cache.enabled = true;
         const manager = new THREE.LoadingManager();
@@ -126,6 +132,9 @@ function LdrModel({
             overrideMainLdrUrl,
             useProxy: false,
         }));
+        manager.onProgress = (_url, loaded, total) => {
+            onProgressRef.current?.(loaded, total);
+        };
 
         const l = new LDrawLoader(manager);
         l.setPartsLibraryPath(partsLibraryPath);
@@ -595,6 +604,7 @@ function KidsStepPageContent() {
     const [ldrUrl, setLdrUrl] = useState<string>(urlParam);
     const [originalLdrUrl] = useState<string>(urlParam);
     const [loading, setLoading] = useState(true);
+    const [loadProgress, setLoadProgress] = useState({ loaded: 0, total: 0 });
     const [stepIdx, setStepIdx] = useState(0);
     const [stepBlobUrls, setStepBlobUrls] = useState<string[]>([]);
     const [sortedBlobUrl, setSortedBlobUrl] = useState<string | null>(null); // [NEW] 전체 정렬된 LDR Blob
@@ -1064,10 +1074,11 @@ function KidsStepPageContent() {
                 <div className="kidsStep__layoutCenter">
                     <div className="kidsStep__card kids-main-canvas">
                         {loading && (
-                            <div className="kidsStep__loadingOverlay" style={{ pointerEvents: "none" }}>
-                                <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
-                                <span>{t.kids.steps.loading}</span>
-                            </div>
+                            <LDrawLoadingIndicator
+                                loaded={loadProgress.loaded}
+                                total={loadProgress.total}
+                                label={t.kids.steps.loading}
+                            />
                         )}
 
                         {activeTab === 'LDR' && (
@@ -1091,6 +1102,7 @@ function KidsStepPageContent() {
                                                     url={sortedBlobUrl || ldrUrl}
                                                     onLoaded={(g) => { setLoading(false); }}
                                                     onError={() => setLoading(false)}
+                                                    onProgress={(loaded, total) => setLoadProgress({ loaded, total })}
                                                     customBounds={modelBounds}
                                                     fitTrigger={`${ldrUrl}|left`}
                                                 />
