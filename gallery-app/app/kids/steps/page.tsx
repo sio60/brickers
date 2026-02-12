@@ -591,6 +591,9 @@ function BrickThumbnail({ partName, color }: { partName: string, color: string }
     );
 }
 
+type ViewName = 'front' | 'back' | 'left' | 'right' | 'top' | 'bottom';
+const VIEW_ORDER: ViewName[] = ['front', 'back', 'left', 'right', 'top', 'bottom'];
+
 function KidsStepPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -603,7 +606,7 @@ function KidsStepPageContent() {
 
     const [ldrUrl, setLdrUrl] = useState<string>(urlParam);
     const [originalLdrUrl] = useState<string>(urlParam);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [loadProgress, setLoadProgress] = useState({ loaded: 0, total: 0 });
     const [stepIdx, setStepIdx] = useState(0);
     const [stepBlobUrls, setStepBlobUrls] = useState<string[]>([]);
@@ -624,7 +627,8 @@ function KidsStepPageContent() {
     const [brickCount, setBrickCount] = useState<number>(0);
     const [isProMode, setIsProMode] = useState(false);
     const [jobScreenshotUrls, setJobScreenshotUrls] = useState<Record<string, string> | null>(null);
-
+    const [selectedView, setSelectedView] = useState<ViewName>('front');
+    const [jobLoaded, setJobLoaded] = useState(false);
 
     const [activeTab, setActiveTab] = useState<'LDR' | 'GLB'>('LDR');
     const [isAssemblyMode, setIsAssemblyMode] = useState(false);
@@ -800,17 +804,33 @@ function KidsStepPageContent() {
                     if (data.pdfUrl || data.pdf_url) setServerPdfUrl(data.pdfUrl || data.pdf_url);
                     if (data.screenshotUrls) setJobScreenshotUrls(data.screenshotUrls);
                     if (data.backgroundUrl) setShareBackgroundUrl(data.backgroundUrl);
+                    setJobLoaded(true);
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                console.error(e);
+                if (alive) setJobLoaded(true);
+            }
         })();
         return () => { alive = false; };
     }, [jobId, ldrUrl]);
+
+    // 스크린샷 없으면 자동으로 3D 모드 전환
+    useEffect(() => {
+        if (isAssemblyMode) return;
+        if (!jobId) {
+            setIsAssemblyMode(true);
+            return;
+        }
+        if (jobLoaded && !jobScreenshotUrls) {
+            setIsAssemblyMode(true);
+        }
+    }, [jobId, jobLoaded, jobScreenshotUrls, isAssemblyMode]);
 
     // LDR 파싱 및 Steps 생성
     useEffect(() => {
         let alive = true;
         (async () => {
-            if (!ldrUrl) return;
+            if (!ldrUrl || !isAssemblyMode) return;
             setLoading(true);
             setStepIdx(0);
             const res = await fetch(ldrUrl);
@@ -854,7 +874,7 @@ function KidsStepPageContent() {
             setLoading(false);
         });
         return () => { alive = false; };
-    }, [ldrUrl]);
+    }, [ldrUrl, isAssemblyMode]);
 
     useEffect(() => {
         return () => {
@@ -1083,43 +1103,64 @@ function KidsStepPageContent() {
 
                         {activeTab === 'LDR' && (
                             <div className="kidsStep__splitContainer">
-                                {/* Left: Full Model */}
+                                {/* Left: Screenshot Gallery (스크린샷 우선 표시) */}
                                 {!isAssemblyMode && (
-                                    <div className="kidsStep__splitPane left full">
-                                        <div className="kidsStep__paneLabel">완성 모습</div>
-                                        <Canvas
-                                            camera={{ position: [200, -200, 200], fov: 45, near: 0.1, far: 100000 }}
-                                            dpr={[1, 2]}
-                                            gl={{ preserveDrawingBuffer: true }}
-                                            frameloop="demand"
-                                        >
-                                            <ThrottledDriver />
-                                            <ambientLight intensity={0.9} />
-                                            <directionalLight position={[3, 5, 2]} intensity={1} />
-                                            {ldrUrl && (
-                                                <LdrModel
-                                                    // No override -> Full model
-                                                    url={sortedBlobUrl || ldrUrl}
-                                                    onLoaded={(g) => { setLoading(false); }}
-                                                    onError={() => setLoading(false)}
-                                                    onProgress={(loaded, total) => setLoadProgress({ loaded, total })}
-                                                    customBounds={modelBounds}
-                                                    fitTrigger={`${ldrUrl}|left`}
-                                                />
-                                            )}
-                                            <OrbitControls makeDefault enablePan={false} enableZoom />
-                                        </Canvas>
-
-                                        {!isAssemblyMode && (
-                                            <div className="kidsStep__viewAssemblyOverlay">
+                                    <div className="kidsStep__splitPane left full" style={{ position: 'relative' }}>
+                                        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }}>
+                                            {/* 메인 이미지 */}
+                                            <div style={{ flex: 1, position: 'relative', background: '#fff', minHeight: 0 }}>
+                                                {jobScreenshotUrls?.[selectedView] ? (
+                                                    <img
+                                                        src={jobScreenshotUrls[selectedView]}
+                                                        alt={selectedView}
+                                                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
+                                                    />
+                                                ) : (
+                                                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
+                                                        {jobLoaded ? 'No Screenshot' : 'Loading...'}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {/* 썸네일 + 조립서 보기 버튼 */}
+                                            <div style={{ background: '#fff', borderTop: '1px solid #e5e7eb', padding: '12px 16px' }}>
+                                                <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 12 }}>
+                                                    {VIEW_ORDER.map(view => (
+                                                        jobScreenshotUrls?.[view] ? (
+                                                            <button
+                                                                key={view}
+                                                                onClick={() => setSelectedView(view)}
+                                                                style={{
+                                                                    width: 56, height: 56, position: 'relative',
+                                                                    border: selectedView === view ? '2px solid #000' : '2px solid #e5e7eb',
+                                                                    borderRadius: 8, overflow: 'hidden', padding: 0,
+                                                                    cursor: 'pointer', background: '#fff',
+                                                                    opacity: selectedView === view ? 1 : 0.7,
+                                                                    transition: 'all 0.15s',
+                                                                }}
+                                                            >
+                                                                <img
+                                                                    src={jobScreenshotUrls[view]}
+                                                                    alt={view}
+                                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                                />
+                                                            </button>
+                                                        ) : null
+                                                    ))}
+                                                </div>
                                                 <button
-                                                    className="kidsStep__viewAssemblyBtn"
-                                                    onClick={() => { setLoading(true); setTimeout(() => { setIsAssemblyMode(true); setLoading(false); }, 100); }}
+                                                    onClick={() => setIsAssemblyMode(true)}
+                                                    style={{
+                                                        width: '100%', padding: '12px 0',
+                                                        background: '#000', color: '#fff',
+                                                        borderRadius: 16, fontWeight: 700,
+                                                        fontSize: '1rem', border: 'none',
+                                                        cursor: 'pointer',
+                                                    }}
                                                 >
                                                     {t.kids.steps?.viewAssembly || "조립서 보기"}
                                                 </button>
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
                                 )}
 
