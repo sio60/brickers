@@ -32,6 +32,16 @@ public interface GenerateJobRepository extends MongoRepository<GenerateJobEntity
 
     Page<GenerateJobEntity> findByStatusOrderByCreatedAtDesc(JobStatus status, Pageable pageable);
 
+    // ✅ 관리자용: 신고된 작업 필터링
+    Page<GenerateJobEntity> findByReportedTrueOrderByCreatedAtDesc(Pageable pageable);
+
+    // ✅ 관리자용: 사용자 검색 + 신고된 작업
+    Page<GenerateJobEntity> findByUserIdInAndReportedTrueOrderByCreatedAtDesc(java.util.Collection<String> userIds,
+            Pageable pageable);
+
+    // ✅ 관리자용: 상태 + 신고된 작업
+    Page<GenerateJobEntity> findByStatusAndReportedTrueOrderByCreatedAtDesc(JobStatus status, Pageable pageable);
+
     long countByStatusAndUpdatedAtAfter(JobStatus status, LocalDateTime after);
 
     // [New] 여러 사용자 ID로 작업 조회 (필터링용)

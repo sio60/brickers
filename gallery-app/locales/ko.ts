@@ -113,7 +113,8 @@ export const ko = {
             glbFile: "모델링 파일 다운(glb)",
             ldrFile: "도면 파일 다운(ldr)",
             downloadPdf: "PDF 설명서 다운로드",
-            downloadEnhanced: "보정 이미지 다운로드"
+            downloadEnhanced: "보정 이미지 다운로드",
+            report: "신고하기"
         },
         noGlbFile: "GLB 파일이 없습니다.",
         noLdrFile: "LDR 파일이 없습니다.",
@@ -130,7 +131,10 @@ export const ko = {
         sortOldest: "오래된순",
         noPdfFile: "생성된 PDF가 없습니다. 조립 페이지에서 생성을 기다려주세요.",
         noCapturedImage: "캡처된 이미지가 없습니다.",
-        settingsTbd: "설정 기능 준비 중"
+        settingsTbd: "설정 기능 준비 중",
+        reportSuccess: "작업물이 신고되었습니다.",
+        reportConfirm: "이 작업물을 신고하시겠습니까? (부적절한 콘텐츠 신고)",
+        reportFail: "신고에 실패했습니다."
     },
     settings: {
         title: "설정",
@@ -426,6 +430,34 @@ export const ko = {
             confirmActivate: "이 사용자의 정지를 해제하시겠습니까?",
             activated: "사용자 정지가 해제되었습니다.",
             empty: "사용자가 없습니다."
+        },
+        jobs: {
+            title: "통합 작업 관리",
+            searchPlaceholder: "사용자 검색 (닉네임/이메일)",
+            filter: {
+                all: "전체 상태",
+                queued: "대기중",
+                running: "실행 중",
+                done: "완료",
+                failed: "실패",
+                canceled: "취소됨",
+                reportedOnly: "신고된 항목만 보기"
+            },
+            table: {
+                user: "사용자",
+                jobId: "작업 ID",
+                status: "상태",
+                stage: "진행 단계",
+                dates: "생성/수정",
+                actions: "관리"
+            },
+            action: {
+                refresh: "새로고침",
+                retry: "재시도",
+                cancel: "취소",
+                confirmRetry: "이 작업을 재시도하시겠습니까?",
+                confirmCancel: "이 작업을 취소하시겠습니까?"
+            }
         },
         error: "오류가 발생했습니다.",
         failed: "처리에 실패했습니다.",
