@@ -9,6 +9,7 @@ import ThrottledDriver from "@/components/three/ThrottledDriver";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { CDN_BASE, createLDrawURLModifier } from "@/lib/ldrawUrlModifier";
+import { preloadPartsBundle } from "@/lib/ldrawBundleLoader";
 import LDrawLoadingIndicator from "@/components/LDrawLoadingIndicator";
 
 function disposeObject3D(root: THREE.Object3D) {
@@ -71,6 +72,7 @@ function LdrModel({
         (async () => {
             console.log("[LDraw] Starting load for URL:", url);
             try {
+                await preloadPartsBundle(url);
                 await loader.preloadMaterials(ldconfigUrl); // Required for correct colors
                 const g = await loader.loadAsync(url);
                 console.log("[LDraw] Load successful:", url);

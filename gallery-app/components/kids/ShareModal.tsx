@@ -19,6 +19,8 @@ interface ShareModalProps {
 export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loading }: ShareModalProps) {
     const { t } = useLanguage();
     const [working, setWorking] = useState(false);
+    const [compositeBlob, setCompositeBlob] = useState<Blob | null>(null);
+    const [isPreparing, setIsPreparing] = useState(false);
     const stageRef = useRef<HTMLDivElement>(null);
     const previewRef = useRef<any>(null);
 
@@ -68,10 +70,41 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
         });
     };
 
+    // Pre-generate blob as soon as possible to preserve user gesture context for Share API
+    useEffect(() => {
+        if (!isOpen || loading || !backgroundUrl || !ldrUrl) {
+            setCompositeBlob(null);
+            return;
+        }
+
+        let alive = true;
+        const prepare = async () => {
+            setIsPreparing(true);
+            try {
+                // Give a bit of time for 3D model to render first frame stably
+                await new Promise(r => setTimeout(r, 1000));
+                if (!alive) return;
+
+                const blob = await captureComposite();
+                if (alive) {
+                    setCompositeBlob(blob);
+                    console.log("[ShareModal] Composite blob ready");
+                }
+            } catch (e) {
+                console.error("[ShareModal] Pre-generation failed:", e);
+            } finally {
+                if (alive) setIsPreparing(false);
+            }
+        };
+        prepare();
+        return () => { alive = false; };
+    }, [isOpen, loading, backgroundUrl, ldrUrl]);
+
     const handleDownload = async () => {
+        if (!compositeBlob) return;
         setWorking(true);
         try {
-            const blob = await captureComposite();
+            const blob = compositeBlob;
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
@@ -89,11 +122,12 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
     };
 
     const handleShare = async () => {
+        if (!compositeBlob) return;
         setWorking(true);
         try {
-            const blob = await captureComposite();
-            if (navigator.share && navigator.canShare?.({ files: [new File([blob], "brick-model.png", { type: "image/png" })] })) {
-                const file = new File([blob], "brick-model.png", { type: "image/png" });
+            const blob = compositeBlob;
+            const file = new File([blob], "brick-model.png", { type: "image/png" });
+            if (navigator.share && navigator.canShare?.({ files: [file] })) {
                 await navigator.share({
                     title: "Check out my Brickers model!",
                     text: "I made this with Brickers AI!",
@@ -162,11 +196,11 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
 
                     {!loading && backgroundUrl && ldrUrl && (
                         <div className="flex gap-3">
-                            <Button onClick={handleDownload} variant="secondary" disabled={working}>
-                                {working ? "Saving..." : (t.kids?.share?.save || "Save")}
+                            <Button onClick={handleDownload} variant="secondary" disabled={working || isPreparing || !compositeBlob}>
+                                {isPreparing ? "Wait..." : (working ? "Saving..." : (t.kids?.share?.save || "Save"))}
                             </Button>
-                            <Button onClick={handleShare} variant="primary" disabled={working}>
-                                {working ? "Processing..." : (t.kids?.share?.share || "Share")}
+                            <Button onClick={handleShare} variant="primary" disabled={working || isPreparing || !compositeBlob}>
+                                {isPreparing ? "Wait..." : (working ? "Processing..." : (t.kids?.share?.share || "Share"))}
                             </Button>
                         </div>
                     )}
