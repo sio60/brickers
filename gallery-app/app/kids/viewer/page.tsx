@@ -9,6 +9,7 @@ import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Link from "next/link";
+import ShareModal from "@/components/kids/ShareModal"; // Import ShareModal
 
 const CDN_BASE = "https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/";
 
@@ -136,6 +137,8 @@ function LdrModel({
     );
 }
 
+
+
 function ViewerContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -144,13 +147,137 @@ function ViewerContent() {
     const urlParam = searchParams.get("url") || "";
     const isPreset = searchParams.get("isPreset") === "true";
     const title = searchParams.get("title") || "BRICK Model";
+    // Subject for background generation (simple logic: use title or "lego creation")
+    const subject = title || "lego creation";
 
     const [loading, setLoading] = useState(true);
     const modelGroupRef = useRef<THREE.Group | null>(null);
 
+    // Share Modal State
+    const [shareModalOpen, setShareModalOpen] = useState(false);
+    const [shareLoading, setShareLoading] = useState(false);
+    const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
+    const hasGeneratedRef = useRef(false); // Prevent duplicate generation
+
+    const autoGenerateBackground = async () => {
+        if (hasGeneratedRef.current) return;
+        hasGeneratedRef.current = true;
+
+        setShareModalOpen(true);
+        setShareLoading(true);
+        setShareImageUrl(null);
+
+        // Wait a bit for the model to render fully
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        try {
+            // 1. Capture Canvas
+            const canvas = document.querySelector("canvas");
+            if (!canvas) throw new Error("Canvas not found");
+
+            const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/png"));
+            if (!blob) throw new Error("Failed to capture canvas");
+
+            // 2. Upload & Generate
+            const formData = new FormData();
+            formData.append("file", blob, "model.png");
+
+            // Enhance subject with tags if available
+            const tagsParam = searchParams.get("tags");
+            let finalSubject = subject;
+            if (tagsParam) {
+                finalSubject += `, ${tagsParam}`;
+            }
+            formData.append("subject", finalSubject);
+
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+            const endpoint = `${apiBase}/api/kids/share/background`;
+
+            const response = await fetch(endpoint, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to generate background");
+            }
+
+            const data = await response.json();
+            if (data.url) {
+                setShareImageUrl(data.url);
+            } else {
+                throw new Error("No URL in response");
+            }
+        } catch (e) {
+            console.error(e);
+            // alert("Failed to create magic background. Try again!");
+            // setShareModalOpen(false); 
+        } finally {
+            setShareLoading(false);
+        }
+    };
+
+    // Auto-trigger disabled per user request (Only on Main Page)
+    // useEffect(() => {
+    //     if (!loading && !hasGeneratedRef.current) {
+    //         autoGenerateBackground();
+    //     }
+    // }, [loading]);
+
+    const handleShareClick = async () => {
+        setShareModalOpen(true);
+        setShareLoading(true);
+        setShareImageUrl(null);
+
+        try {
+            // 1. Capture Canvas
+            const canvas = document.querySelector("canvas");
+            if (!canvas) throw new Error("Canvas not found");
+
+            const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/png"));
+            if (!blob) throw new Error("Failed to capture canvas");
+
+            // 2. Upload & Generate
+            const formData = new FormData();
+            formData.append("file", blob, "model.png");
+            // Subject for background generation (simple logic: use title or "lego creation")
+            formData.append("subject", title || "lego creation");
+
+            // Use relative path - Next.js rewrite or direct backend call
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+            const endpoint = `${apiBase}/api/kids/share/background`;
+
+            const response = await fetch(endpoint, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to generate background");
+            }
+
+            const data = await response.json();
+            if (data.url) {
+                setShareImageUrl(data.url);
+            } else {
+                throw new Error("No URL in response");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Failed to create magic background. Try again!");
+            setShareModalOpen(false);
+        } finally {
+            setShareLoading(false);
+        }
+    };
+
+
+
     if (!urlParam) {
+        // ... (no change to error view)
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+                {/* ... existing error view ... */}
                 <div className="text-center">
                     <p className="text-xl font-bold text-gray-800 mb-6">{t.kids?.viewer?.noUrl || "모델 URL이 없습니다"}</p>
                     <button
@@ -169,7 +296,12 @@ function ViewerContent() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
-
+            <ShareModal
+                isOpen={shareModalOpen}
+                onClose={() => setShareModalOpen(false)}
+                imageUrl={shareImageUrl}
+                loading={shareLoading}
+            />
 
             {/* 3D Viewer */}
             <div className="flex-1 flex items-center justify-center p-6">
@@ -196,7 +328,13 @@ function ViewerContent() {
                         {t.kids?.viewer?.completeModel || "완성된 모델"}
                     </div>
 
-                    <Canvas camera={{ position: [200, -200, 200], fov: 45 }} dpr={[1, 2]}>
+
+
+                    <Canvas
+                        camera={{ position: [200, -200, 200], fov: 45 }}
+                        dpr={[1, 2]}
+                        gl={{ preserveDrawingBuffer: true }} // ✅ Important for screenshot
+                    >
                         <ambientLight intensity={0.9} />
                         <directionalLight position={[3, 5, 2]} intensity={1} />
                         <LdrModel
@@ -230,7 +368,7 @@ function ViewerContent() {
                 <div className="max-w-2xl mx-auto flex gap-4">
                     <Link
                         href={`/kids/steps?url=${encodeURIComponent(urlParam)}${isPreset ? '&isPreset=true' : ''}`}
-                        className="flex-1 py-4 bg-black text-white font-bold text-lg rounded-2xl hover:bg-gray-800 transition-all text-center flex items-center justify-center gap-3 shadow-lg hover:shadow-xl active:scale-[0.98]"
+                        className="flex-1 py-4 bg-gray-100 text-black font-bold text-lg rounded-2xl hover:bg-gray-200 transition-all text-center flex items-center justify-center gap-3 shadow-md border-2 border-black"
                     >
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                             <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
@@ -239,6 +377,7 @@ function ViewerContent() {
                         </svg>
                         {t.kids?.viewer?.viewSteps || "스텝 보기"}
                     </Link>
+
                 </div>
             </div>
         </div>

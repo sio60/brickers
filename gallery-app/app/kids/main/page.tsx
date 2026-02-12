@@ -13,6 +13,7 @@ import PuzzleMiniGame from "@/components/kids/PuzzleMiniGame";
 import { registerToGallery } from "@/lib/api/myApi";
 import { useJobStore } from "@/stores/jobStore";
 import { generatePdfFromServer } from "@/components/kids/PDFGenerator";
+import ShareModal from "@/components/kids/ShareModal";
 
 // SSR 제외
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
@@ -553,8 +554,85 @@ function KidsPageContent() {
         }
     };
 
+    // Auto-Background Generation & Share Modal
+    const [shareModalOpen, setShareModalOpen] = useState(false);
+    const [shareLoading, setShareLoading] = useState(false);
+    const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
+    const hasGeneratedRef = useRef(false);
+
+    const autoGenerateBackground = async () => {
+        if (hasGeneratedRef.current) return;
+
+        // Wait for ref to be ready
+        if (!previewRef.current) return;
+
+        hasGeneratedRef.current = true;
+        setShareModalOpen(true);
+        setShareLoading(true);
+        setShareImageUrl(null);
+
+        // Allow some time for the model to render fully
+        await new Promise(r => setTimeout(r, 1500));
+
+        try {
+            const dataUrl = previewRef.current.captureScreenshot();
+            if (!dataUrl) throw new Error("Failed to capture screenshot");
+
+            const res = await fetch(dataUrl);
+            const blob = await res.blob();
+
+            const formData = new FormData();
+            formData.append("file", blob, "model.png");
+
+            // Build subject with title + tags
+            let subject = jobTitle || "lego creation";
+            if (suggestedTags.length > 0) {
+                subject += `, ${suggestedTags.join(", ")}`;
+            }
+            formData.append("subject", subject);
+
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+            const response = await fetch(`${apiBase}/api/kids/share/background`, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) throw new Error("Failed to generate background");
+
+            const data = await response.json();
+            if (data.url) {
+                setShareImageUrl(data.url);
+            } else {
+                throw new Error("No URL in response");
+            }
+        } catch (e) {
+            console.error("Auto-Gen Error:", e);
+            // Optionally close or show error in modal
+        } finally {
+            setShareLoading(false);
+        }
+    };
+
+    // Trigger when DONE and LDR URL is valid
+    useEffect(() => {
+        if (status === "done" && ldrUrl && !hasGeneratedRef.current) {
+            // Need to wait until KidsLdrPreview is mounted and ref is set.
+            // Simple timeout for now, or check in a loop/interval
+            const timer = setTimeout(() => {
+                autoGenerateBackground();
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [status, ldrUrl]);
+
     return (
         <div className="page">
+            <ShareModal
+                isOpen={shareModalOpen}
+                onClose={() => setShareModalOpen(false)}
+                imageUrl={shareImageUrl}
+                loading={shareLoading}
+            />
             <Background3D entryDirection="float" />
 
             <div className="center">
@@ -608,21 +686,10 @@ function KidsPageContent() {
                                     </div>
                                 )}
                             </div>
-
-                            <button
-                                className="dlBtn"
-                                onClick={handleShare}
-                                disabled={isSharing}
-                            >
-                                {isSharing ? "공유 중..." : shareUrl ? "링크 복사" : "공유하기"}
-                            </button>
-
-                            <button className="dlBtn colorBtn" onClick={openColorModal} style={{ display: 'none' }}>
-                                {t.kids.steps?.changeColor || '색상 변경'}
-                            </button>
                         </div>
                     </>
                 )}
+
 
                 {status === "error" && (
                     <div className="error">
@@ -638,7 +705,7 @@ function KidsPageContent() {
                     <div className="colorModalOverlay" onClick={() => setIsColorModalOpen(false)}>
                         <div className="colorModal" onClick={(e) => e.stopPropagation()}>
                             <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)} aria-label="close">✕</button>
-                            <h3 className="colorModal__title">🎨 {t.kids.steps?.colorThemeTitle || "색상 테마 선택"}</h3>
+                            <h3 className="colorModal__title">{t.kids.steps?.colorThemeTitle || "색상 테마 선택"}</h3>
 
                             <div className="colorModal__themes">
                                 {colorThemes.length === 0 ? (

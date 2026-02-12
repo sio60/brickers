@@ -175,4 +175,16 @@ public class KidsController {
         kidsService.updateSuggestedTags(jobId, tags);
         return ResponseEntity.ok().build();
     }
+
+    /**
+     * ✅ 배경 생성 및 합성 (공유용)
+     */
+    @PostMapping(value = "/share/background", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> createBackground(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+            @RequestParam("subject") String subject) {
+        log.info("📥 [KidsController] /share/background 요청: subject={}", subject);
+        Map<String, Object> result = kidsService.createBackgroundComposition(file, subject);
+        return ResponseEntity.ok(result);
+    }
 }
