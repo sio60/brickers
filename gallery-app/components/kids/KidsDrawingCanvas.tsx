@@ -168,7 +168,7 @@ export default function KidsDrawingCanvas({ onCancel, onDone }: Props) {
                 </div>
             </div>
 
-            <div className={styles.canvasArea} style={{ flex: 1, minHeight: 0 }}>
+            <div className={styles.canvasArea}>
                 <canvas
                     ref={canvasRef}
                     width={1200}
@@ -181,7 +181,6 @@ export default function KidsDrawingCanvas({ onCancel, onDone }: Props) {
                     onTouchMove={draw}
                     onTouchEnd={stopDrawing}
                     className={styles.canvas}
-                    style={{ width: '100%', height: '100%', objectFit: 'contain', border: '1px solid #ddd', borderRadius: '8px' }}
                 />
             </div>
 
