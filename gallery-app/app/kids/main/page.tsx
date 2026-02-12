@@ -476,6 +476,25 @@ function KidsPageContent() {
             setIsApplyingColor(false);
         }
     };
+
+    // Auto-Background Generation & Share Modal
+    const [shareModalOpen, setShareModalOpen] = useState(false);
+    const [shareLoading, setShareLoading] = useState(false);
+    const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
+    const hasGeneratedRef = useRef(false);
+
+    // Trigger when DONE and LDR URL is valid
+    useEffect(() => {
+        if (status === "done" && ldrUrl && !hasGeneratedRef.current) {
+            // Need to wait until KidsLdrPreview is mounted and ref is set.
+            // Simple timeout for now, or check in a loop/interval
+            const timer = setTimeout(() => {
+                autoGenerateBackground();
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [status, ldrUrl]);
+
     if (!isFileLoaded) {
         return <div className="page">Loading...</div>;
     }
@@ -554,11 +573,6 @@ function KidsPageContent() {
         }
     };
 
-    // Auto-Background Generation & Share Modal
-    const [shareModalOpen, setShareModalOpen] = useState(false);
-    const [shareLoading, setShareLoading] = useState(false);
-    const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
-    const hasGeneratedRef = useRef(false);
 
     const autoGenerateBackground = async () => {
         if (hasGeneratedRef.current) return;
@@ -613,17 +627,6 @@ function KidsPageContent() {
         }
     };
 
-    // Trigger when DONE and LDR URL is valid
-    useEffect(() => {
-        if (status === "done" && ldrUrl && !hasGeneratedRef.current) {
-            // Need to wait until KidsLdrPreview is mounted and ref is set.
-            // Simple timeout for now, or check in a loop/interval
-            const timer = setTimeout(() => {
-                autoGenerateBackground();
-            }, 500);
-            return () => clearTimeout(timer);
-        }
-    }, [status, ldrUrl]);
 
     return (
         <div className="page">
