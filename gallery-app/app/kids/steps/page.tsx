@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import * as THREE from "three";
 import { Canvas, useThree } from "@react-three/fiber";
 import { Bounds, OrbitControls, Center, Gltf, Environment, useBounds } from "@react-three/drei";
+import ThrottledDriver from "@/components/three/ThrottledDriver";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
@@ -1034,6 +1035,7 @@ function KidsStepPageContent() {
                                             gl={{ preserveDrawingBuffer: true }}
                                             frameloop="demand"
                                         >
+                                            <ThrottledDriver />
                                             <ambientLight intensity={0.9} />
                                             <directionalLight position={[3, 5, 2]} intensity={1} />
                                             {ldrUrl && (
@@ -1078,6 +1080,7 @@ function KidsStepPageContent() {
                                             gl={{ preserveDrawingBuffer: true }}
                                             frameloop="demand"
                                         >
+                                            <ThrottledDriver />
                                             <ambientLight intensity={0.9} />
                                             <directionalLight position={[3, 5, 2]} intensity={1} />
                                             {ldrUrl && (
@@ -1125,6 +1128,7 @@ function KidsStepPageContent() {
                                 dpr={[1, 2]}
                                 frameloop="demand"
                             >
+                                <ThrottledDriver />
                                 <ambientLight intensity={0.8} />
                                 <directionalLight position={[5, 10, 5]} intensity={1.5} />
                                 <Environment preset="city" />

@@ -2,6 +2,7 @@
 
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
+import ThrottledDriver from "@/components/three/ThrottledDriver";
 import * as THREE from "three";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -437,6 +438,7 @@ export default function BrickJudgeViewer() {
                             dpr={[1, 2]}
                             frameloop="demand"
                         >
+                            <ThrottledDriver />
                             <color attach="background" args={["#f8f9fa"]} />
                             <ambientLight intensity={1.2} />
                             <directionalLight position={[10, 20, 10]} intensity={1.5} />
