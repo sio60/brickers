@@ -23,6 +23,7 @@ function disposeObject3D(root: THREE.Object3D) {
 
 function LdrModel({
     url,
+    bundleSourceUrl,
     partsLibraryPath = CDN_BASE,
     ldconfigUrl = `${CDN_BASE}LDConfig.ldr`,
     onLoaded,
@@ -30,6 +31,7 @@ function LdrModel({
     onProgress,
 }: {
     url: string;
+    bundleSourceUrl?: string;
     partsLibraryPath?: string;
     ldconfigUrl?: string;
     onLoaded?: (group: THREE.Group) => void;
@@ -72,7 +74,7 @@ function LdrModel({
         (async () => {
             console.log("[LDraw] Starting load for URL:", url);
             try {
-                await preloadPartsBundle(url);
+                await preloadPartsBundle(bundleSourceUrl || url);
                 await loader.preloadMaterials(ldconfigUrl); // Required for correct colors
                 const g = await loader.loadAsync(url);
                 console.log("[LDraw] Load successful:", url);
@@ -166,6 +168,7 @@ export default React.memo(function Viewer3D({ url }: Viewer3DProps) {
                 <directionalLight position={[-10, -20, -10]} intensity={0.8} />
                 <LdrModel
                     url={proxiedUrl}
+                    bundleSourceUrl={url}
                     onLoaded={handleLoaded}
                     onError={handleError}
                     onProgress={handleProgress}
