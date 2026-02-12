@@ -24,19 +24,14 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
     const stageRef = useRef<HTMLDivElement>(null);
     const previewRef = useRef<any>(null);
 
-    if (!isOpen) return null;
-
     const captureComposite = async (): Promise<Blob> => {
-        // Create an offscreen canvas
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
         if (!ctx) throw new Error("Canvas context failed");
 
-        // Target size (e.g., 1024x1024 for a square result)
         canvas.width = 1000;
         canvas.height = 1000;
 
-        // 1. Draw Background Image
         if (backgroundUrl) {
             const bgImg = new Image();
             bgImg.crossOrigin = "anonymous";
@@ -48,7 +43,6 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
             ctx.drawImage(bgImg, 0, 0, 1000, 1000);
         }
 
-        // 2. Draw 3D Model Snapshot
         if (previewRef.current) {
             const ldrSnapshot = previewRef.current.captureScreenshot();
             if (ldrSnapshot) {
@@ -70,7 +64,7 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
         });
     };
 
-    // Pre-generate blob as soon as possible to preserve user gesture context for Share API
+    // Pre-generate blob — hooks must always run (React Rules of Hooks)
     useEffect(() => {
         if (!isOpen || loading || !backgroundUrl || !ldrUrl) {
             setCompositeBlob(null);
@@ -81,14 +75,12 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
         const prepare = async () => {
             setIsPreparing(true);
             try {
-                // Give a bit of time for 3D model to render first frame stably
                 await new Promise(r => setTimeout(r, 1000));
                 if (!alive) return;
 
                 const blob = await captureComposite();
                 if (alive) {
                     setCompositeBlob(blob);
-                    console.log("[ShareModal] Composite blob ready");
                 }
             } catch (e) {
                 console.error("[ShareModal] Pre-generation failed:", e);
@@ -99,6 +91,9 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
         prepare();
         return () => { alive = false; };
     }, [isOpen, loading, backgroundUrl, ldrUrl]);
+
+    // Early return AFTER all hooks — React requires hooks to run on every render
+    if (!isOpen) return null;
 
     const handleDownload = () => {
         if (!compositeBlob) return;
