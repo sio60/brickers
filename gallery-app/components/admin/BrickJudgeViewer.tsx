@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls, Center } from "@react-three/drei";
+import { Bounds, OrbitControls, Center } from "@react-three/drei";
 import * as THREE from "three";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -49,23 +49,33 @@ const ISSUE_COLORS: Record<string, string> = {
 const NORMAL_COLOR = "#4CAF50";
 
 /* ── 3D LDR Model with Heatmap ── */
+/* KidsLdrPreview 와 동일한 검증된 패턴 사용:
+   1. Blob URL + loadAsync() (parse() 대신)
+   2. preloadMaterials() await 후 로딩
+   3. /api/proxy/ldr 프록시 사용 (fallback 지원)
+   4. URL modifier 완전 일치
+   5. async/await + cancellation 패턴 */
 function JudgeLdrModel({
     ldrContent,
     brickColors,
     focusBrickId,
+    onLoaded,
+    onError,
 }: {
     ldrContent: string;
     brickColors: Record<number, string>;
     focusBrickId: number | null;
+    onLoaded?: () => void;
+    onError?: (err: any) => void;
 }) {
-    const groupRef = useRef<THREE.Group>(null);
-    const { invalidate, camera } = useThree();
+    const { invalidate } = useThree();
     const [model, setModel] = useState<THREE.Group | null>(null);
     const meshMapRef = useRef<Map<number, THREE.Mesh[]>>(new Map());
 
     const loader = useMemo(() => {
         THREE.Cache.enabled = true;
         const manager = new THREE.LoadingManager();
+
         manager.setURLModifier((u) => {
             let fixed = u.replace(/\\/g, "/");
             fixed = fixed.replace("/ldraw/p/p/", "/ldraw/p/");
@@ -80,7 +90,7 @@ function JudgeLdrModel({
                 }
 
                 const isPrimitive = /^\d+-\d+/.test(filename) ||
-                    /^(stud|stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|empty)/.test(filename);
+                    /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud|empty)/.test(filename);
                 const isSubpart = /^\d+s\d+\.dat$/i.test(filename);
 
                 fixed = fixed.replace("/ldraw/models/p/", "/ldraw/p/");
@@ -93,34 +103,55 @@ function JudgeLdrModel({
                 if (isPrimitive && fixed.includes("/ldraw/parts/") && !fixed.includes("/parts/s/")) {
                     fixed = fixed.replace("/ldraw/parts/", "/ldraw/p/");
                 }
-                if (isSubpart && fixed.includes("/ldraw/p/")) {
+                if (isSubpart && fixed.includes("/ldraw/p/") && !fixed.includes("/p/48/") && !fixed.includes("/p/8/")) {
                     fixed = fixed.replace("/ldraw/p/", "/ldraw/parts/s/");
                 }
+
+                if (!fixed.includes("/parts/") && !fixed.includes("/p/")) {
+                    if (isSubpart) fixed = fixed.replace("/ldraw/", "/ldraw/parts/s/");
+                    else if (isPrimitive) fixed = fixed.replace("/ldraw/", "/ldraw/p/");
+                    else fixed = fixed.replace("/ldraw/", "/ldraw/parts/");
+                }
+            }
+
+            if (fixed.startsWith(CDN_BASE)) {
+                return `/api/proxy/ldr?url=${encodeURIComponent(fixed)}`;
             }
             return fixed;
         });
 
-        manager.onError = (url: string) => {
-            console.warn("[LDraw] Failed to load:", url);
-        };
+        manager.onError = (path) => console.warn("[LDraw] failed to load:", path);
 
         const l = new LDrawLoader(manager);
-        try { (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any); } catch { }
         l.setPartsLibraryPath(CDN_BASE);
-        (l as any).preloadMaterials(CDN_BASE + "LDConfig.ldr");
+        l.smoothNormals = true;
+        try { (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any); } catch { }
+
         return l;
     }, []);
 
-    // LDR 텍스트 파싱 → 3D 모델
     useEffect(() => {
         if (!ldrContent) return;
+        let cancelled = false;
+        let prev: THREE.Group | null = null;
 
-        (loader as any).parse(ldrContent, "", (parsed: THREE.Group) => {
+        (async () => {
             try {
+                setModel(null);
+
+                await loader.preloadMaterials(CDN_BASE + "LDConfig.ldr");
+
+                const blob = new Blob([ldrContent], { type: "text/plain" });
+                const blobUrl = URL.createObjectURL(blob);
+
+                const parsed = await loader.loadAsync(blobUrl);
+                URL.revokeObjectURL(blobUrl);
+
+                if (cancelled) { disposeObject3D(parsed); return; }
                 if (!parsed) return;
+
                 removeNullChildren(parsed);
 
-                // brick ID 할당 + mesh map 구축
                 const meshMap = new Map<number, THREE.Mesh[]>();
                 let brickId = 0;
                 (parsed.children ?? []).forEach((child) => {
@@ -139,26 +170,21 @@ function JudgeLdrModel({
                 });
                 meshMapRef.current = meshMap;
 
-                // 좌표계 보정 (LDraw: -Y up)
                 parsed.rotation.x = Math.PI;
-
-                setModel((prev) => {
-                    if (prev) disposeObject3D(prev);
-                    return parsed;
-                });
-                invalidate();
+                prev = parsed;
+                setModel(parsed);
+                onLoaded?.();
             } catch (e) {
-                console.error("[BrickJudge] parse error:", e);
+                console.error("[BrickJudge] load error:", e);
+                onError?.(e);
             }
-        });
+        })();
 
         return () => {
-            setModel((prev) => {
-                if (prev) disposeObject3D(prev);
-                return null;
-            });
+            cancelled = true;
+            if (prev) disposeObject3D(prev);
         };
-    }, [ldrContent, loader, invalidate]);
+    }, [ldrContent, loader, onLoaded, onError]);
 
     // 히트맵 적용
     useEffect(() => {
@@ -168,29 +194,27 @@ function JudgeLdrModel({
         meshMap.forEach((meshes, id) => {
             const issueColor = brickColors[id];
             meshes.forEach((mesh) => {
-                if (mesh.material) {
-                    const mat = (mesh.material as THREE.MeshStandardMaterial).clone();
-                    if (issueColor) {
-                        mat.color = new THREE.Color(issueColor);
-                        mat.emissive = new THREE.Color(issueColor);
-                        mat.emissiveIntensity = 0.4;
-                    } else {
-                        mat.color = new THREE.Color(NORMAL_COLOR);
-                        mat.emissive = new THREE.Color(NORMAL_COLOR);
-                        mat.emissiveIntensity = 0.15;
-                    }
-
-                    // 포커스 모드: 비대상 브릭 반투명
-                    if (focusBrickId !== null && focusBrickId !== id) {
-                        mat.transparent = true;
-                        mat.opacity = 0.12;
-                    } else {
-                        mat.transparent = false;
-                        mat.opacity = 1;
-                    }
-
-                    mesh.material = mat;
+                if (!mesh.material) return;
+                const mat = (mesh.material as THREE.MeshStandardMaterial).clone();
+                if (issueColor) {
+                    mat.color = new THREE.Color(issueColor);
+                    mat.emissive = new THREE.Color(issueColor);
+                    mat.emissiveIntensity = 0.4;
+                } else {
+                    mat.color = new THREE.Color(NORMAL_COLOR);
+                    mat.emissive = new THREE.Color(NORMAL_COLOR);
+                    mat.emissiveIntensity = 0.15;
                 }
+
+                if (focusBrickId !== null && focusBrickId !== id) {
+                    mat.transparent = true;
+                    mat.opacity = 0.12;
+                } else {
+                    mat.transparent = false;
+                    mat.opacity = 1;
+                }
+
+                mesh.material = mat;
             });
         });
         invalidate();
@@ -199,11 +223,11 @@ function JudgeLdrModel({
     if (!model) return null;
 
     return (
-        <Center>
-            <group ref={groupRef}>
+        <Bounds fit clip observe margin={1.2}>
+            <Center>
                 <primitive object={model} />
-            </group>
-        </Center>
+            </Center>
+        </Bounds>
     );
 }
 
@@ -299,6 +323,8 @@ export default function BrickJudgeViewer() {
     const [judgeResult, setJudgeResult] = useState<JudgeResult | null>(null);
     const [loading, setLoading] = useState(false);
     const [judging, setJudging] = useState(false);
+    const [modelLoading, setModelLoading] = useState(false);
+    const [modelError, setModelError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [focusBrickId, setFocusBrickId] = useState<number | null>(null);
 
@@ -328,6 +354,8 @@ export default function BrickJudgeViewer() {
         setSelectedJob(job);
         setJudgeResult(null);
         setFocusBrickId(null);
+        setModelError(null);
+        setModelLoading(false);
         setJudging(true);
 
         try {
@@ -340,11 +368,14 @@ export default function BrickJudgeViewer() {
             if (res.ok) {
                 const data: JudgeResult = await res.json();
                 setJudgeResult(data);
+                setModelLoading(true);
             } else {
                 console.error("[BrickJudge] Judge failed:", res.status);
+                setModelError(`Judge API failed: ${res.status}`);
             }
         } catch (e) {
             console.error("[BrickJudge] Judge error:", e);
+            setModelError(e instanceof Error ? e.message : "Unknown error");
         } finally {
             setJudging(false);
         }
@@ -411,12 +442,31 @@ export default function BrickJudgeViewer() {
                         </div>
                     )}
 
+                    {modelLoading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-10 pointer-events-none">
+                            <div className="text-center">
+                                <div className="w-6 h-6 border-2 border-gray-300 border-t-black rounded-full animate-spin mx-auto mb-2" />
+                                <p className="text-xs text-gray-400">3D Loading...</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {modelError && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-red-50/90 z-20">
+                            <div className="text-center text-red-600">
+                                <p className="font-semibold mb-1">Load Error</p>
+                                <p className="text-xs">{modelError}</p>
+                            </div>
+                        </div>
+                    )}
+
                     {!judgeResult && !judging ? (
                         <div className="h-full flex items-center justify-center">
                             <p className="text-gray-400 text-sm">{bj.selectJob}</p>
                         </div>
-                    ) : judgeResult ? (
+                    ) : judgeResult?.ldr_content ? (
                         <Canvas
+                            key={selectedJob?.id || "empty"}
                             camera={{ position: [0, 80, 500], fov: 45 }}
                             dpr={[1, 2]}
                             gl={{ alpha: true }}
@@ -430,6 +480,11 @@ export default function BrickJudgeViewer() {
                                 ldrContent={judgeResult.ldr_content}
                                 brickColors={judgeResult.brick_colors || {}}
                                 focusBrickId={focusBrickId}
+                                onLoaded={() => setModelLoading(false)}
+                                onError={(e) => {
+                                    setModelLoading(false);
+                                    setModelError(e?.message || "3D model load failed");
+                                }}
                             />
 
                             <OrbitControls
