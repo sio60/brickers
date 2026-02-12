@@ -294,7 +294,7 @@ function MyPageContent() {
                 body: JSON.stringify({
                     targetType: "JOB",
                     targetId: job.id,
-                    reason: "GENERAL",
+                    reason: "OTHER",
                     details: "Reported from MyPage"
                 }),
             });
