@@ -64,6 +64,8 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
             REVALIDATE_SECRET=${{ secrets.GALLERY_REVALIDATE_SECRET }}
+            NEXT_PUBLIC_GA_ID=${{ secrets.NEXT_PUBLIC_GA_ID }}
+            NEXT_PUBLIC_GTM_ID=${{ secrets.NEXT_PUBLIC_GTM_ID }}
 
   deploy:
     needs: build-and-push
@@ -145,10 +147,15 @@ jobs:
             KAKAO_ADMIN_KEY=${{ secrets.KAKAO_ADMIN_KEY }}
             KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}
 
+            # Google
             GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
             GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
             GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }}
             GOOGLE_LOCAL_REDIRECT_URI=${{ secrets.GOOGLE_LOCAL_REDIRECT_URI }}
+
+            # GA4 / GTM
+            NEXT_PUBLIC_GA_ID=${{ secrets.NEXT_PUBLIC_GA_ID }}
+            NEXT_PUBLIC_GTM_ID=${{ secrets.NEXT_PUBLIC_GTM_ID }}
 
             # Cookie
             COOKIE_SECURE=true
@@ -176,6 +183,10 @@ jobs:
 
             # Internal API Token (AI Server → Backend 로그 전송용)
             INTERNAL_API_TOKEN=${{ secrets.INTERNAL_API_TOKEN }}
+
+            # GA4 Data API (Backend 전용)
+            GA4_PROPERTY_ID=${{ secrets.GA4_PROPERTY_ID }}
+            GA4_CREDENTIALS_JSON=${{ secrets.GA4_CREDENTIALS_JSON }}
             EOF
 
             echo "🔐 Docker Hub login..."
