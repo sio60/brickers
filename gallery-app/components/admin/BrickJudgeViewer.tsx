@@ -479,11 +479,10 @@ export default function BrickJudgeViewer() {
                     ) : judgeResult?.ldr_content ? (
                         <Canvas
                             key={selectedJob?.id || "empty"}
-                            camera={{ position: [0, 80, 500], fov: 45 }}
+                            camera={{ position: [0, 200, 600], fov: 45, near: 0.1, far: 100000 }}
                             dpr={[1, 2]}
-                            gl={{ alpha: true }}
-                            frameloop="demand"
                         >
+                            <color attach="background" args={["#f8f9fa"]} />
                             <ambientLight intensity={1.2} />
                             <directionalLight position={[10, 20, 10]} intensity={1.5} />
                             <directionalLight position={[-10, -20, -10]} intensity={0.8} />
@@ -504,8 +503,8 @@ export default function BrickJudgeViewer() {
                                 makeDefault
                                 enablePan
                                 enableZoom
-                                minDistance={10}
-                                maxDistance={1000}
+                                minDistance={1}
+                                maxDistance={5000}
                             />
                         </Canvas>
                     ) : null}
