@@ -468,7 +468,26 @@ export const ko = {
             user: "사용자"
         },
         brickJudge: {
-            title: "물리 엔진 검증"
+            title: "물리 엔진 검증",
+            description: "유저 생성 모델의 물리적 안정성을 검증합니다",
+            searchPlaceholder: "닉네임 또는 제목 검색...",
+            analyze: "분석",
+            analyzing: "분석 중...",
+            score: "안정성 점수",
+            brickCount: "브릭 수",
+            issueCount: "이슈",
+            stable: "안정",
+            unstable: "불안정",
+            elapsed: "처리 시간",
+            noIssues: "문제 없음",
+            noJobs: "분석 가능한 작업이 없습니다",
+            selectJob: "좌측에서 작업을 선택하세요",
+            legend: {
+                topOnly: "위에서만 연결",
+                floating: "공중 부유",
+                isolated: "고립됨",
+                normal: "정상"
+            }
         },
         gallery: {
             title: "갤러리 관리",
