@@ -15,6 +15,8 @@ import { registerToGallery } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
 import { type StepBrickInfo } from "@/lib/ldrUtils";
 import BackgroundBricks from "@/components/BackgroundBricks";
+import { generatePdfFromServer } from "@/components/kids/PDFGenerator";
+import ShareModal from "@/components/kids/ShareModal";
 import './KidsStepPage.css';
 
 // SSR 제외
@@ -628,6 +630,12 @@ function KidsStepPageContent() {
     const [isApplyingColor, setIsApplyingColor] = useState(false);
     const [colorChangedLdrBase64, setColorChangedLdrBase64] = useState<string | null>(null);
 
+    // 공유하기 관련
+    const [shareModalOpen, setShareModalOpen] = useState(false);
+    const [shareBackgroundUrl, setShareBackgroundUrl] = useState<string | null>(null);
+    const [isSharing, setIsSharing] = useState(false);
+    const [shareUrl, setShareUrl] = useState<string | null>(null);
+
     const revokeAll = (arr: string[]) => {
         arr.forEach((u) => { try { URL.revokeObjectURL(u); } catch { } });
     };
@@ -761,6 +769,7 @@ function KidsStepPageContent() {
                     if (data.isPro) setIsProMode(true);
                     if (data.pdfUrl || data.pdf_url) setServerPdfUrl(data.pdfUrl || data.pdf_url);
                     if (data.screenshotUrls) setJobScreenshotUrls(data.screenshotUrls);
+                    if (data.backgroundUrl) setShareBackgroundUrl(data.backgroundUrl);
                 }
             } catch (e) { console.error(e); }
         })();
@@ -903,6 +912,13 @@ function KidsStepPageContent() {
         <div ref={containerRef} style={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
             <OffscreenRenderer />
             <BackgroundBricks />
+            <ShareModal
+                isOpen={shareModalOpen}
+                onClose={() => setShareModalOpen(false)}
+                backgroundUrl={shareBackgroundUrl}
+                ldrUrl={ldrUrl}
+                loading={!shareBackgroundUrl || !ldrUrl}
+            />
 
             <div className="kidsStep__mainContainer">
                 {!isPreset ? (
@@ -969,6 +985,21 @@ function KidsStepPageContent() {
                             </button>
                             <button className="kidsStep__sidebarBtn" style={{ marginTop: 6 }} onClick={() => router.push("/gallery")}>
                                 갤러리 보기
+                            </button>
+
+                            {/* 공유하기 버튼 추가 */}
+                            <button
+                                className={`kidsStep__sidebarBtn ${shareBackgroundUrl ? 'kidsStep__sidebarBtn--primary' : ''}`}
+                                style={{
+                                    marginTop: 14,
+                                    backgroundColor: shareBackgroundUrl ? '#ffe135' : '#e0e0e0',
+                                    color: '#000',
+                                    fontWeight: 800
+                                }}
+                                onClick={() => setShareModalOpen(true)}
+                                disabled={!shareBackgroundUrl}
+                            >
+                                {shareBackgroundUrl ? "✨ 공유하기" : "⌛ 배경 생성중..."}
                             </button>
                         </div>
                     </div>
