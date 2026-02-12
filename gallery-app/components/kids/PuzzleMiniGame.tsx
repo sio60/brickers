@@ -5,17 +5,20 @@ import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { savePuzzleRank, getPuzzleRanking, PuzzleRank } from "../../lib/api/kidsApi";
+import * as gtag from "../../lib/gtag";
 
 interface PuzzleMiniGameProps {
     percent?: number;
     message?: string;
+    jobId?: string;
+    age?: string;
 }
 
 const SIZE = 3;
 const TOTAL_TILES = SIZE * SIZE;
 const BACKGROUND_IMAGE = "/game.png";
 
-export default function PuzzleMiniGame({ percent, message }: PuzzleMiniGameProps) {
+export default function PuzzleMiniGame({ percent, message, jobId, age }: PuzzleMiniGameProps) {
     const { t } = useLanguage();
     const { user } = useAuth(); // 사용자 정보 가져오기
 
@@ -73,6 +76,13 @@ export default function PuzzleMiniGame({ percent, message }: PuzzleMiniGameProps
 
         setTiles(currentBoard);
         setIsActive(true);
+
+        // [NEW] 트래킹: 게임 시작
+        gtag.trackGameAction("game_start", {
+            game_difficulty: "normal", // 현재 3x3 고정
+            wait_time_at_moment: seconds,
+            job_id: jobId
+        });
     };
 
     const getAdjacents = (pos: number) => {
@@ -128,6 +138,15 @@ export default function PuzzleMiniGame({ percent, message }: PuzzleMiniGameProps
             // 내 순위 찾기
             const myIdx = topRanking.findIndex(r => r.userId === userId && Math.abs(r.timeSpent - seconds) < 0.1);
             if (myIdx !== -1) setMyRank(myIdx + 1);
+
+            // [NEW] 트래킹: 게임 완료
+            gtag.trackGameAction("game_complete", {
+                game_difficulty: "normal",
+                game_moves: moves,
+                wait_time_at_moment: seconds,
+                job_id: jobId,
+                rank: myIdx !== -1 ? myIdx + 1 : undefined
+            });
         } catch (err) {
             console.error("랭킹 시스템 오류:", err);
         }
