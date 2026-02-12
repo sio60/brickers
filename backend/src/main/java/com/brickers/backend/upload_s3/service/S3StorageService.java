@@ -27,6 +27,7 @@ public class S3StorageService implements StorageService {
             "image/png", "png",
             "image/jpeg", "jpg",
             "image/webp", "webp",
+            "image/avif", "avif",
             "application/octet-stream", "glb",
             "model/gltf-binary", "glb",
             "text/plain", "ldr",

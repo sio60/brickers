@@ -64,8 +64,10 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
         }
     };
 
+    const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/avif"];
+
     const handleFile = (f: File) => {
-        if (!f.type.startsWith("image/")) return;
+        if (!ALLOWED_TYPES.includes(f.type)) return;
         setFile(f);
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPreviewUrl(URL.createObjectURL(f));
@@ -173,7 +175,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                 <input
                                     ref={inputRef}
                                     type="file"
-                                    accept="image/*"
+                                    accept="image/png,image/jpeg,image/webp,image/avif"
                                     className={styles.hiddenInput}
                                     onChange={(e) => {
                                         const f = e.target.files?.[0];

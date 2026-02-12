@@ -96,6 +96,8 @@ public class UploadPresignService {
             return "jpg";
         if ("image/webp".equals(contentType))
             return "webp";
+        if ("image/avif".equals(contentType))
+            return "avif";
 
         // fallback by name
         if (originalName != null) {
