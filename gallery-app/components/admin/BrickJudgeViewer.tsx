@@ -80,7 +80,7 @@ function JudgeLdrModel({
                 }
 
                 const isPrimitive = /^\d+-\d+/.test(filename) ||
-                    /^(stud|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|empty)/.test(filename);
+                    /^(stud|stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|empty)/.test(filename);
                 const isSubpart = /^\d+s\d+\.dat$/i.test(filename);
 
                 fixed = fixed.replace("/ldraw/models/p/", "/ldraw/p/");
@@ -100,6 +100,10 @@ function JudgeLdrModel({
             return fixed;
         });
 
+        manager.onError = (url: string) => {
+            console.warn("[LDraw] Failed to load:", url);
+        };
+
         const l = new LDrawLoader(manager);
         try { (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any); } catch { }
         l.setPartsLibraryPath(CDN_BASE);
@@ -112,35 +116,40 @@ function JudgeLdrModel({
         if (!ldrContent) return;
 
         (loader as any).parse(ldrContent, "", (parsed: THREE.Group) => {
-            if (!parsed) return;
-            removeNullChildren(parsed);
+            try {
+                if (!parsed) return;
+                removeNullChildren(parsed);
 
-            // brick ID 할당 + mesh map 구축
-            const meshMap = new Map<number, THREE.Mesh[]>();
-            let brickId = 0;
-            (parsed.children ?? []).forEach((child) => {
-                const meshes: THREE.Mesh[] = [];
-                child.traverse((obj: any) => {
-                    if (obj.isMesh) {
-                        obj.userData.brickId = brickId;
-                        meshes.push(obj);
+                // brick ID 할당 + mesh map 구축
+                const meshMap = new Map<number, THREE.Mesh[]>();
+                let brickId = 0;
+                (parsed.children ?? []).forEach((child) => {
+                    if (!child) return;
+                    const meshes: THREE.Mesh[] = [];
+                    child.traverse((obj: any) => {
+                        if (obj?.isMesh) {
+                            obj.userData.brickId = brickId;
+                            meshes.push(obj);
+                        }
+                    });
+                    if (meshes.length > 0) {
+                        meshMap.set(brickId, meshes);
+                        brickId++;
                     }
                 });
-                if (meshes.length > 0) {
-                    meshMap.set(brickId, meshes);
-                    brickId++;
-                }
-            });
-            meshMapRef.current = meshMap;
+                meshMapRef.current = meshMap;
 
-            // 좌표계 보정 (LDraw: -Y up)
-            parsed.rotation.x = Math.PI;
+                // 좌표계 보정 (LDraw: -Y up)
+                parsed.rotation.x = Math.PI;
 
-            setModel((prev) => {
-                if (prev) disposeObject3D(prev);
-                return parsed;
-            });
-            invalidate();
+                setModel((prev) => {
+                    if (prev) disposeObject3D(prev);
+                    return parsed;
+                });
+                invalidate();
+            } catch (e) {
+                console.error("[BrickJudge] parse error:", e);
+            }
         });
 
         return () => {
