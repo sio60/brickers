@@ -508,7 +508,7 @@ function OffscreenBrickRenderer() {
             <LdrModel
                 url={url}
                 fitTrigger={url}
-                fitMargin={3.0}
+                fitMargin={1.3}
                 onLoaded={onLoaded}
                 onError={() => {
                     // Skip error
@@ -552,13 +552,13 @@ function BrickThumbnail({ partName, color }: { partName: string, color: string }
     if (!imgUrl) {
         // Loading state
         return (
-            <div className="kidsStep__brickColorBlock" style={{ background: "#eee", width: 48, height: 48, borderRadius: 6 }} />
+            <div className="kidsStep__brickColorBlock" style={{ background: "#eee", width: 72, height: 72, borderRadius: 6 }} />
         );
     }
 
     return (
         <div className="kidsStep__brickColorBlock" style={{
-            width: 48, height: 48,
+            width: 72, height: 72,
             display: "flex", alignItems: "center", justifyContent: "center",
             background: "#fff", borderRadius: 6, border: "1px solid #eee"
         }}>
