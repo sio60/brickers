@@ -87,7 +87,7 @@ services:
     networks:
       - brickers-network
 
-  # ✅ 통합된 Next.js 앱 (Kids + Gallery 모두 포함)
+  # ✅ 통합된 Next.js 앱 (Kids + Gallery 모두 포함.)
   frontend:
     image: ${DOCKER_USERNAME}/brickers-frontend:latest
     container_name: brickers-frontend
