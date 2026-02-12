@@ -5,6 +5,8 @@ import com.brickers.backend.job.entity.GenerateJobEntity;
 import com.brickers.backend.job.entity.JobStage;
 import com.brickers.backend.job.entity.JobStatus;
 import com.brickers.backend.job.repository.GenerateJobRepository;
+import com.brickers.backend.user.entity.User;
+import com.brickers.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -12,8 +14,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.brickers.backend.user.entity.User;
-import com.brickers.backend.user.repository.UserRepository;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -45,8 +45,6 @@ public class AdminJobService {
 
             // 2. 검색된 사용자들의 작업 조회
             if (isReported) {
-                // 사용자 + 신고됨 (상태 무시 or 상태 포함? -> 현재 리포지토리에는 상태 포함 메서드 없음. 필요시 추가하거나 메모리 필터)
-                // 리포지토리에 findByUserIdInAndReportedTrueOrderByCreatedAtDesc 있음
                 result = jobRepository.findByUserIdInAndReportedTrueOrderByCreatedAtDesc(userIds, pageRequest);
             } else if (status != null) {
                 result = jobRepository.findByUserIdInAndStatusOrderByCreatedAtDesc(userIds, status, pageRequest);
@@ -70,26 +68,16 @@ public class AdminJobService {
             }
         }
 
-        // [NEW] 사용자 정보 일괄 조회
-        Set<String> userIds = result.getContent().stream()
+        // 유저 정보 일괄 조회 (N+1 방지)
+        Set<String> allUserIds = result.getContent().stream()
                 .map(GenerateJobEntity::getUserId)
+                .filter(uid -> uid != null)
                 .collect(Collectors.toSet());
-
-        Map<String, User> userMap = userRepository.findAllById(userIds).stream()
+        Map<String, User> userMap = userRepository.findAllById(allUserIds)
+                .stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
 
-        return result.map(job -> {
-            AdminJobDto dto = AdminJobDto.from(job);
-            User user = userMap.get(job.getUserId());
-            if (user != null) {
-                dto.setUserInfo(AdminJobDto.UserInfo.builder()
-                        .id(user.getId())
-                        .email(user.getEmail())
-                        .nickname(user.getNickname())
-                        .build());
-            }
-            return dto;
-        });
+        return result.map(job -> AdminJobDto.from(job, userMap.get(job.getUserId())));
     }
 
     @Transactional(readOnly = true)

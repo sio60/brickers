@@ -437,7 +437,26 @@ export const en = {
             user: "User"
         },
         brickJudge: {
-            title: "Brick Judge"
+            title: "Brick Judge",
+            description: "Verify physical stability of user-generated models",
+            searchPlaceholder: "Search by nickname or title...",
+            analyze: "Analyze",
+            analyzing: "Analyzing...",
+            score: "Stability Score",
+            brickCount: "Bricks",
+            issueCount: "Issues",
+            stable: "Stable",
+            unstable: "Unstable",
+            elapsed: "Elapsed",
+            noIssues: "No issues found",
+            noJobs: "No analyzable jobs available",
+            selectJob: "Select a job from the list",
+            legend: {
+                topOnly: "Top-only connection",
+                floating: "Floating",
+                isolated: "Isolated",
+                normal: "Normal"
+            }
         },
         gallery: {
             title: "Gallery Management",
