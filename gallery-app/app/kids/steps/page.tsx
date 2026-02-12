@@ -317,7 +317,7 @@ function LdrModel({
     );
 }
 
-// GLB 모델 중심 정렬 컴포넌트 (BrickJudgeViewer 패턴)
+// GLB 모델 중심 정렬 컴포넌트 (모델 전체 높이 중앙 기준)
 function StepsGlbModel({ url }: { url: string }) {
     const { scene } = useGLTF(url);
     const { invalidate, camera, controls } = useThree();
@@ -329,15 +329,16 @@ function StepsGlbModel({ url }: { url: string }) {
         const box = new THREE.Box3().setFromObject(scene);
         const center = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
-        scene.position.set(-center.x, -box.min.y, -center.z);
+        // 모델 중심을 원점에 배치 (바닥이 아닌 전체 중심)
+        scene.position.set(-center.x, -center.y, -center.z);
 
-        const targetY = size.y / 2;
         if (controls && (controls as any).target) {
-            (controls as any).target.set(0, targetY, 0);
+            (controls as any).target.set(0, 0, 0);
             (controls as any).update();
         }
-        camera.position.set(0, targetY + size.y * 0.3, Math.max(size.x, size.z) * 2.5);
-        camera.lookAt(0, targetY, 0);
+        const maxDim = Math.max(size.x, size.y, size.z);
+        camera.position.set(0, maxDim * 0.3, maxDim * 2.5);
+        camera.lookAt(0, 0, 0);
 
         centered.current = true;
         invalidate();
@@ -486,7 +487,7 @@ function OffscreenBrickRenderer() {
                 box.getSize(size);
                 const maxDim = Math.max(size.x, size.y, size.z);
                 const fov = (camera as THREE.PerspectiveCamera).fov * (Math.PI / 180);
-                const dist = (maxDim / (2 * Math.tan(fov / 2))) * 2.6;
+                const dist = (maxDim / (2 * Math.tan(fov / 2))) * 2.1; // Adjusted from 1.6 to 2.1 (20% larger than original 2.6)
                 const k = 0.577; // 1/sqrt(3)
                 camera.position.set(center.x + dist * k, center.y + dist * k, center.z + dist * k);
                 camera.lookAt(center);
@@ -519,7 +520,7 @@ function OffscreenBrickRenderer() {
             <LdrModel
                 url={url}
                 fitTrigger={url}
-                fitMargin={2.5}
+                fitMargin={2.0}
                 onLoaded={onLoaded}
                 onError={() => {
                     // Skip error
@@ -1020,7 +1021,7 @@ function KidsStepPageContent() {
                             </button>
                             <button
                                 className="kidsStep__sidebarBtn"
-                                style={{ marginTop: 6 }}
+                                style={{ marginTop: 8 }}
                                 onClick={downloadGlb}
                                 disabled={!glbUrl || loading}
                             >
@@ -1031,25 +1032,20 @@ function KidsStepPageContent() {
                             <div className="kidsStep__sidebarSectionLabel">
                                 이동하기
                             </div>
-                            <button className="kidsStep__sidebarBtn" onClick={() => router.push("/")}>
+                            <button className="kidsStep__sidebarBtn" style={{ marginTop: 8 }} onClick={() => router.push("/")}>
                                 홈으로
                             </button>
-                            <button className="kidsStep__sidebarBtn" style={{ marginTop: 6 }} onClick={() => router.push("/gallery")}>
+                            <button className="kidsStep__sidebarBtn" style={{ marginTop: 8 }} onClick={() => router.push("/gallery")}>
                                 갤러리 보기
                             </button>
 
                             {/* 공유하기 버튼 추가 */}
                             <button
-                                className={`kidsStep__sidebarBtn ${shareBackgroundUrl ? 'kidsStep__sidebarBtn--primary' : ''}`}
+                                className="kidsStep__sidebarBtn"
                                 style={{
-                                    marginTop: 14,
+                                    marginTop: 8,
                                     backgroundColor: shareBackgroundUrl ? '#000' : '#e0e0e0',
                                     color: shareBackgroundUrl ? '#fff' : '#000',
-                                    fontWeight: 800,
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    padding: '12px',
-                                    transition: 'all 0.2s',
                                     cursor: shareBackgroundUrl ? 'pointer' : 'not-allowed'
                                 }}
                                 onClick={() => setShareModalOpen(true)}
@@ -1079,7 +1075,7 @@ function KidsStepPageContent() {
                                     <div className="kidsStep__splitPane left full">
                                         <div className="kidsStep__paneLabel">완성 모습</div>
                                         <Canvas
-                                            camera={{ position: [200, -200, 200], fov: 45 }}
+                                            camera={{ position: [200, -200, 200], fov: 45, near: 0.1, far: 100000 }}
                                             dpr={[1, 2]}
                                             gl={{ preserveDrawingBuffer: true }}
                                             frameloop="demand"
@@ -1124,7 +1120,7 @@ function KidsStepPageContent() {
                                             전체 3D 보기
                                         </button>
                                         <Canvas
-                                            camera={{ position: [200, -200, 200], fov: 45 }}
+                                            camera={{ position: [200, -200, 200], fov: 45, near: 0.1, far: 100000 }}
                                             dpr={[1, 2]}
                                             gl={{ preserveDrawingBuffer: true }}
                                             frameloop="demand"
@@ -1185,7 +1181,7 @@ function KidsStepPageContent() {
                         {/* GLB Viewer */}
                         {activeTab === 'GLB' && (
                             <Canvas
-                                camera={{ position: [0, 200, 600], fov: 45 }}
+                                camera={{ position: [0, 200, 600], fov: 45, near: 0.1, far: 100000 }}
                                 dpr={[1, 2]}
                                 frameloop="demand"
                             >

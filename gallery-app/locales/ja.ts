@@ -514,6 +514,7 @@ export const ja = {
         views: "閲覧",
         likes: "いいね",
         view3d: "3Dで見る＆作る",
+        viewImages: "画像で見る",
         save: "保存",
         share: "共有",
         creator: "クリエイター",

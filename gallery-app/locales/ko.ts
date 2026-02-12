@@ -546,6 +546,7 @@ export const ko = {
         views: "조회",
         likes: "좋아요",
         view3d: "3D로 보기 & 만들기",
+        viewImages: "이미지로 보기",
         save: "저장",
         share: "공유",
         creator: "크리에이터",

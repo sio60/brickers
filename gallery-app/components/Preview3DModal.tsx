@@ -76,7 +76,7 @@ export default function Preview3DModal({ url, onClose, buildUrl }: { url: string
                     ✕ Close
                 </button>
 
-                <Canvas camera={{ position: [0, 200, 600], fov: 45 }} frameloop="demand">
+                <Canvas camera={{ position: [0, 200, 600], fov: 45, near: 0.1, far: 100000 }} frameloop="demand">
                     <ThrottledDriver />
                     <ambientLight intensity={0.9} />
                     <directionalLight position={[50, 100, 50]} intensity={1.2} />
