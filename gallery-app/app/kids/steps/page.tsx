@@ -929,13 +929,6 @@ function KidsStepPageContent() {
                             <button className="kidsStep__sidebarBtn" style={{ marginTop: 6 }} onClick={() => router.push("/gallery")}>
                                 갤러리 보기
                             </button>
-                            <button className="kidsStep__sidebarBtn" style={{ marginTop: 6 }} onClick={() => {
-                                sessionStorage.removeItem('pendingUpload');
-                                sessionStorage.removeItem('pendingPrompt');
-                                router.push("/");
-                            }}>
-                                새로 만들기
-                            </button>
                         </div>
                     </div>
                 ) : (
