@@ -108,10 +108,15 @@ public class KidsService {
                     age,
                     budget);
         } else {
-            // ⚠️ 기존 방식 (직접 호출) - 개발/테스트용
+            // ⚠️ 기존 방식 (직접 호출) - 개발/테스트용 (SQS 비활성 시 fallback)
             log.info("[Brickers] 직접 호출 모드 (SQS 비활성화) | jobId={}", job.getId());
-            // kidsAsyncWorker는 제거됨 (SQS 전환)
-            throw new UnsupportedOperationException("SQS 모드를 활성화해주세요");
+
+            kidsAsyncWorker.processGenerationAsync(
+                    job.getId(),
+                    userId,
+                    finalImageUrl,
+                    age,
+                    budget);
         }
 
         // 3) 즉시 응답
@@ -321,7 +326,8 @@ public class KidsService {
         // 응답 헤더 즉시 flush용 초기 이벤트
         try {
             emitter.send(SseEmitter.event().name("connected").data("ok"));
-        } catch (IOException ignored) {}
+        } catch (IOException ignored) {
+        }
 
         emitter.onCompletion(() -> removeEmitter(jobId, emitter));
         emitter.onTimeout(() -> removeEmitter(jobId, emitter));
