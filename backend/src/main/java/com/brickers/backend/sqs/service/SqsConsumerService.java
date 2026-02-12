@@ -166,6 +166,9 @@ public class SqsConsumerService {
             if (result.getTags() != null && !result.getTags().isEmpty()) {
                 job.setSuggestedTags(result.getTags());
             }
+            if (result.getBackgroundUrl() != null && !result.getBackgroundUrl().isBlank()) {
+                job.setBackgroundUrl(result.getBackgroundUrl());
+            }
             job.markDone();
 
             jobRepository.save(job);
