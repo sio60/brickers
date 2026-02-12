@@ -179,8 +179,74 @@ public class GoogleAnalyticsService {
         List<Map<String, Object>> result = new ArrayList<>();
         for (Row row : response.getRowsList()) {
             result.add(Map.of(
-                    "eventName", row.getDimensionValues(0).getValue(),
+                    "eventName", row.getDimensionValues(row.getDimensionValuesCount() - 1).getValue(),
                     "count", Long.parseLong(row.getMetricValues(0).getValue())));
+        }
+        return result;
+    }
+
+    /**
+     * 인기 태그 순위를 조회합니다. (generate_success 이벤트 추천 태그 기반)
+     */
+    public List<Map<String, Object>> getTopTags(int days, int limit) throws IOException {
+        if (analyticsDataClient == null)
+            return new ArrayList<>();
+
+        // GA4에서 커스텀 파라미터는 차원(Dimension)으로 등록되어 있어야 조회가 수월합니다.
+        // 현재는 'customEvent:suggested_tags' 형식의 차원이 있다고 가정하거나,
+        // 이벤트와 파라미터를 필터링하여 조회해야 합니다. 브릭커스 환경에 맞춰 'customEvent:suggested_tags' 사용.
+        RunReportRequest request = RunReportRequest.newBuilder()
+                .setProperty("properties/" + propertyId)
+                .addDimensions(Dimension.newBuilder().setName("customEvent:suggested_tags"))
+                .addMetrics(Metric.newBuilder().setName("eventCount"))
+                .setDimensionFilter(FilterExpression.newBuilder()
+                        .setFilter(Filter.newBuilder()
+                                .setFieldName("eventName")
+                                .setStringFilter(Filter.StringFilter.newBuilder().setValue("generate_success"))
+                                .build()))
+                .addDateRanges(DateRange.newBuilder()
+                        .setStartDate(days + "daysAgo")
+                        .setEndDate("today"))
+                .setLimit(limit)
+                .build();
+
+        RunReportResponse response = analyticsDataClient.runReport(request);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Row row : response.getRowsList()) {
+            result.add(Map.of(
+                    "tag", row.getDimensionValues(0).getValue(),
+                    "count", Long.parseLong(row.getMetricValues(0).getValue())));
+        }
+        return result;
+    }
+
+    /**
+     * 활동량이 가장 많은 상위 사용자들을 조회합니다.
+     */
+    public List<Map<String, Object>> getHeavyUsers(int days, int limit) throws IOException {
+        if (analyticsDataClient == null)
+            return new ArrayList<>();
+
+        RunReportRequest request = RunReportRequest.newBuilder()
+                .setProperty("properties/" + propertyId)
+                .addDimensions(Dimension.newBuilder().setName("userId"))
+                .addMetrics(Metric.newBuilder().setName("eventCount"))
+                .addDateRanges(DateRange.newBuilder()
+                        .setStartDate(days + "daysAgo")
+                        .setEndDate("today"))
+                .setLimit(limit)
+                .build();
+
+        RunReportResponse response = analyticsDataClient.runReport(request);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Row row : response.getRowsList()) {
+            String uid = row.getDimensionValues(0).getValue();
+            if (uid.isEmpty() || uid.equals("(not set)"))
+                continue;
+
+            result.add(Map.of(
+                    "userId", uid,
+                    "eventCount", Long.parseLong(row.getMetricValues(0).getValue())));
         }
         return result;
     }
