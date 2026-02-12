@@ -439,20 +439,20 @@ export default function BrickJudgeViewer() {
                                 <ScoreBadge score={judgeResult.score} stable={judgeResult.stable} />
                                 <div className="flex items-center gap-3 text-sm text-gray-600">
                                     <span>{bj.brickCount}: <strong>{judgeResult.brick_count}</strong></span>
-                                    <span>{bj.issueCount}: <strong>{judgeResult.issues.length}</strong></span>
+                                    <span>{bj.issueCount}: <strong>{(judgeResult.issues ?? []).length}</strong></span>
                                     <span className={judgeResult.stable ? "text-green-600" : "text-red-600"}>
                                         {judgeResult.stable ? bj.stable : bj.unstable}
                                     </span>
                                 </div>
                             </div>
                             <span className="text-xs text-gray-400">
-                                {bj.elapsed}: {judgeResult.elapsed_ms.toFixed(1)}ms
+                                {bj.elapsed}: {(judgeResult.elapsed_ms ?? 0).toFixed(1)}ms
                             </span>
                         </div>
 
-                        {judgeResult.issues.length > 0 ? (
+                        {(judgeResult.issues ?? []).length > 0 ? (
                             <div className="space-y-1.5">
-                                {judgeResult.issues
+                                {(judgeResult.issues ?? [])
                                     .sort((a, b) => (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9))
                                     .map((issue, idx) => (
                                         <button
