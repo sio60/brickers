@@ -858,6 +858,30 @@ function KidsStepPageContent() {
 
     const isPreset = searchParams.get("isPreset") === "true";
 
+    // 키보드 화살표 + 마우스 휠
+    useEffect(() => {
+        const handleKey = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowRight' && canNext) { setLoading(true); setStepIdx(v => v + 1); }
+            else if (e.key === 'ArrowLeft' && canPrev) { setLoading(true); setStepIdx(v => v - 1); }
+        };
+        window.addEventListener('keydown', handleKey);
+        return () => window.removeEventListener('keydown', handleKey);
+    });
+
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+        const handleWheel = (e: WheelEvent) => {
+            if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || Math.abs(e.deltaY) > 30) {
+                e.preventDefault();
+                if (e.deltaX > 0 || e.deltaY > 0) { if (canNext) { setLoading(true); setStepIdx(v => v + 1); } }
+                else { if (canPrev) { setLoading(true); setStepIdx(v => v - 1); } }
+            }
+        };
+        el.addEventListener('wheel', handleWheel, { passive: false });
+        return () => el.removeEventListener('wheel', handleWheel);
+    });
+
     return (
         <div ref={containerRef} style={{ position: "relative", minHeight: "100vh", overflow: "hidden" }}>
             <OffscreenRenderer />

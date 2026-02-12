@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { GalleryItem } from '../types/gallery';
@@ -126,8 +126,34 @@ export default function CarouselGallery({ items = [], loading = false }: Carouse
         router.push(`/gallery/${slug}`);
     };
 
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+        const handleWheel = (e: WheelEvent) => {
+            if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || Math.abs(e.deltaY) > 30) {
+                e.preventDefault();
+                if (e.deltaX > 0 || e.deltaY > 0) handleNext();
+                else handlePrev();
+            }
+        };
+        el.addEventListener('wheel', handleWheel, { passive: false });
+        return () => el.removeEventListener('wheel', handleWheel);
+    });
+
+    useEffect(() => {
+        const handleKey = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowRight') handleNext();
+            else if (e.key === 'ArrowLeft') handlePrev();
+        };
+        window.addEventListener('keydown', handleKey);
+        return () => window.removeEventListener('keydown', handleKey);
+    });
+
     return (
         <div
+            ref={containerRef}
             className="w-full h-[550px] flex flex-col items-center justify-center overflow-hidden relative pt-5"
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
