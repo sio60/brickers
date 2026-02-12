@@ -670,7 +670,7 @@ function KidsStepPageContent() {
                         setStepBlobUrls(blobs);
                         setSortedBlobUrl(sortedBlob);
                         setStepBricks(bricks || []);
-                        setStepIdx(stepTexts.length - 1);
+                        setStepIdx(prev => prev < stepTexts.length ? prev : 0);
                         setIsColorModalOpen(false);
                         alert(`${result.themeApplied} ${t.kids.steps.colorThemeApplied}`);
                     } else {
@@ -877,7 +877,7 @@ function KidsStepPageContent() {
     // 키보드 화살표 + 마우스 휠
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
-            if (!isAssemblyMode) return;
+            if (!isAssemblyMode || activeTab !== 'LDR') return;
             if (e.key === 'ArrowRight' && canNext) { setLoading(true); setStepIdx(v => v + 1); }
             else if (e.key === 'ArrowLeft' && canPrev) { setLoading(true); setStepIdx(v => v - 1); }
         };
@@ -888,7 +888,7 @@ function KidsStepPageContent() {
     // Shift+휠 = 스텝 전환, 일반 휠 = 3D 줌 (OrbitControls)
     useEffect(() => {
         const el = containerRef.current;
-        if (!el || !isAssemblyMode) return;
+        if (!el || !isAssemblyMode || activeTab !== 'LDR') return;
         const handleWheel = (e: WheelEvent) => {
             if (!e.shiftKey) return; // Shift 없으면 줌으로 넘김
             e.preventDefault();
@@ -1065,22 +1065,9 @@ function KidsStepPageContent() {
                                             <div className="kidsStep__stepInfo">
                                                 Step {stepIdx + 1} <span style={{ color: "#aaa" }}>/ {total}</span>
                                             </div>
-                                            {canNext ? (
+                                            {canNext && (
                                                 <button className="kidsStep__navBtn kidsStep__navBtn--next" onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}>
                                                     {t.kids.steps.next} →
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    className="kidsStep__navBtn kidsStep__navBtn--complete"
-                                                    style={{ backgroundColor: "#4CAF50", color: "white", fontWeight: "bold" }}
-                                                    onClick={() => {
-                                                        const tagsParam = suggestedTags.length > 0 ? `&tags=${encodeURIComponent(suggestedTags.join(','))}` : '';
-                                                        /* Job Title이 없으면 기본값 */
-                                                        const titleParam = `&title=${encodeURIComponent("My Brick Model")}`;
-                                                        router.push(`/kids/viewer?url=${encodeURIComponent(ldrUrl)}&jobId=${jobId}${tagsParam}${titleParam}`);
-                                                    }}
-                                                >
-                                                    ✨ {t.kids.steps?.complete || "완성! 꾸미기"}
                                                 </button>
                                             )}
                                         </div>
@@ -1116,7 +1103,7 @@ function KidsStepPageContent() {
                     </div>
                 </div>
 
-                {isAssemblyMode && (
+                {isAssemblyMode && activeTab === 'LDR' && (
                     <div className="kidsStep__rightSidebar">
                         <div className="kidsStep__rightSidebarHeader">
                             {t.kids.steps.tabBrick}
