@@ -1,6 +1,6 @@
 'use client';
 
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Environment } from "@react-three/drei";
@@ -211,6 +211,21 @@ function Brick({
     );
 }
 
+function ThrottledDriver({ fps = 24 }: { fps?: number }) {
+    const { invalidate } = useThree();
+    const last = useRef(0);
+    const interval = 1000 / fps;
+
+    useFrame(({ clock }) => {
+        const now = clock.getElapsedTime() * 1000;
+        if (now - last.current >= interval) {
+            last.current = now;
+            invalidate();
+        }
+    });
+    return null;
+}
+
 function Background3DContent({
     entryDirection = "float",
 }: {
@@ -232,7 +247,8 @@ function Background3DContent({
     }, []);
 
     return (
-        <Canvas camera={{ position: [0, 0, 10], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias: true, alpha: true }}>
+        <Canvas frameloop="demand" camera={{ position: [0, 0, 10], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias: true, alpha: true }}>
+            <ThrottledDriver fps={24} />
             <ambientLight intensity={0.8} />
             <pointLight position={[10, 10, 10]} intensity={1.5} />
             <directionalLight position={[-5, 5, 5]} intensity={1} />
