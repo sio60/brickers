@@ -949,9 +949,8 @@ function MyPageContent() {
                             </button>
 
                             <button
-                                className={`${styles.mypage__menuItem2}`}
+                                className={`${styles.mypage__menuItem2} ${styles.primary}`}
                                 onClick={() => handleShare(menuJob)}
-                                style={{ color: '#000', fontWeight: 'bold' }}
                             >
                                 <Icons.Image className={styles.mypage__menuIcon2} />
                                 <span>{t.detail?.share || "공유"}</span>
