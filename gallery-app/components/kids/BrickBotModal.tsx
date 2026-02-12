@@ -198,6 +198,7 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [conversationId, setConversationId] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -328,12 +329,18 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
         try {
             const res = await authFetch("/api/chat/query", {
                 method: "POST",
-                body: JSON.stringify({ message: userMsg, language }),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    message: userMsg,
+                    language,
+                    conversation_id: conversationId,
+                }),
             });
 
             if (!res.ok) throw new Error("API Error");
 
             const data = await res.json();
+            if (data.conversation_id) setConversationId(data.conversation_id);
             const { cleanText, actions } = parseBotResponse(data.reply);
             setMessages((prev) => [...prev, { role: "bot", content: cleanText, actions: actions.length > 0 ? actions : undefined }]);
 
@@ -610,8 +617,8 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                                                 className={`${styles.refundItem} ${selectedOrderId === item.orderId ? styles.selected : ''}`}
                                             >
                                                 <div>
-                                                    <div className={styles.refundItemName}>{item.itemName}</div>
-                                                    <div className={styles.refundItemMeta}>{item.orderedAt?.split("T")[0]} • {item.amount}원</div>
+                                                    <div className={styles.refundItemName}>{item.planName}</div>
+                                                    <div className={styles.refundItemMeta}>{(item.paidAt || item.createdAt)?.split("T")[0]} • {item.amount}원</div>
                                                 </div>
                                                 {selectedOrderId === item.orderId && <div className={styles.refundCheck}>✔</div>}
                                             </div>
