@@ -1,10 +1,11 @@
 'use client';
 
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Environment } from "@react-three/drei";
 import dynamic from 'next/dynamic';
+import ThrottledDriver from "@/components/three/ThrottledDriver";
 
 // Random utility functions
 const randomRange = (min: number, max: number) => Math.random() * (max - min) + min;
@@ -209,21 +210,6 @@ function Brick({
             {renderGeometry()}
         </mesh>
     );
-}
-
-function ThrottledDriver({ fps = 24 }: { fps?: number }) {
-    const { invalidate } = useThree();
-    const last = useRef(0);
-    const interval = 1000 / fps;
-
-    useFrame(({ clock }) => {
-        const now = clock.getElapsedTime() * 1000;
-        if (now - last.current >= interval) {
-            last.current = now;
-            invalidate();
-        }
-    });
-    return null;
 }
 
 function Background3DContent({

@@ -2,6 +2,7 @@
 
 import { Canvas } from "@react-three/fiber";
 import { Bounds, OrbitControls, Center } from "@react-three/drei";
+import ThrottledDriver from "@/components/three/ThrottledDriver";
 import * as THREE from "three";
 import { useEffect, useMemo, useState, useRef, forwardRef, useImperativeHandle } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -480,6 +481,7 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
                 gl={{ alpha: true, preserveDrawingBuffer: true }} // 캡처를 위해 preserveDrawingBuffer 필수
                 frameloop="demand"
             >
+                <ThrottledDriver />
                 <ambientLight intensity={1.2} />
                 <directionalLight position={[10, 20, 10]} intensity={1.5} />
                 <directionalLight position={[-10, -20, -10]} intensity={0.8} />
