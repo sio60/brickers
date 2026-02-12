@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -8,14 +8,44 @@ import * as gtag from '@/lib/gtag';
 import { GalleryItem } from '@/types/gallery';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { Canvas } from "@react-three/fiber";
+import * as THREE from "three";
+import { Canvas, useThree } from "@react-three/fiber";
 
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
-import { Bounds, Center, Gltf, Environment, OrbitControls } from "@react-three/drei";
+import { Environment, OrbitControls, useGLTF } from "@react-three/drei";
 import ThrottledDriver from "@/components/three/ThrottledDriver";
 import ScreenshotGallery from './gallery/ScreenshotGallery';
 import { CommentList, CommentInput, Comment } from './gallery/CommentSection';
 import RecommendationSidebar from './gallery/RecommendationSidebar';
+
+// GLB 모델 중심 정렬 컴포넌트 (BrickJudgeViewer 패턴)
+function GlbModel({ url }: { url: string }) {
+    const { scene } = useGLTF(url);
+    const { invalidate, camera, controls } = useThree();
+    const centered = useRef(false);
+
+    useEffect(() => {
+        if (!scene || centered.current) return;
+
+        const box = new THREE.Box3().setFromObject(scene);
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+        scene.position.set(-center.x, -box.min.y, -center.z);
+
+        const targetY = size.y / 2;
+        if (controls && (controls as any).target) {
+            (controls as any).target.set(0, targetY, 0);
+            (controls as any).update();
+        }
+        camera.position.set(0, targetY + size.y * 0.3, Math.max(size.x, size.z) * 2.5);
+        camera.lookAt(0, targetY, 0);
+
+        centered.current = true;
+        invalidate();
+    }, [scene, camera, controls, invalidate]);
+
+    return <primitive object={scene} />;
+}
 
 type Props = {
     item: GalleryItem;
@@ -303,17 +333,13 @@ export default function GalleryDetailClient({ item }: Props) {
                         {activeTab === 'GLB' && (
                             item.glbUrl ? (
                                 <div className="absolute inset-0">
-                                    <Canvas camera={{ position: [5, 5, 5], fov: 50 }} dpr={[1, 2]} frameloop="demand">
+                                    <Canvas camera={{ position: [0, 200, 600], fov: 45 }} dpr={[1, 2]} frameloop="demand">
                                         <ThrottledDriver />
                                         <ambientLight intensity={0.8} />
                                         <directionalLight position={[5, 10, 5]} intensity={1.5} />
                                         <Environment preset="city" />
-                                        <Bounds fit clip observe margin={1.2}>
-                                            <Center>
-                                                <Gltf src={item.glbUrl} />
-                                            </Center>
-                                        </Bounds>
-                                        <OrbitControls makeDefault enablePan={false} enableZoom />
+                                        <GlbModel url={item.glbUrl} />
+                                        <OrbitControls makeDefault enablePan={false} enableZoom autoRotate autoRotateSpeed={2} />
                                     </Canvas>
                                 </div>
                             ) : (

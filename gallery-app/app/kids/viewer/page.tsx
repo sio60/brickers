@@ -3,8 +3,8 @@
 import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as THREE from "three";
-import { Canvas } from "@react-three/fiber";
-import { Bounds, OrbitControls } from "@react-three/drei";
+import { Canvas, useThree } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
 import ThrottledDriver from "@/components/three/ThrottledDriver";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
@@ -52,6 +52,8 @@ function LdrModel({
     onLoaded?: (group: THREE.Group) => void;
     onError?: (e: unknown) => void;
 }) {
+    const { invalidate, camera, controls } = useThree();
+
     const loader = useMemo(() => {
         THREE.Cache.enabled = true;
         const manager = new THREE.LoadingManager();
@@ -78,9 +80,24 @@ function LdrModel({
             if (g) {
                 removeNullChildren(g);
                 g.rotation.x = Math.PI;
+
+                // 모델 중심 정렬 (BrickJudgeViewer 패턴)
+                const box = new THREE.Box3().setFromObject(g);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+                g.position.set(-center.x, -box.min.y, -center.z);
+
+                const targetY = size.y / 2;
+                if (controls && (controls as any).target) {
+                    (controls as any).target.set(0, targetY, 0);
+                    (controls as any).update();
+                }
+                camera.position.set(0, targetY + size.y * 0.3, Math.max(size.x, size.z) * 2.5);
+                camera.lookAt(0, targetY, 0);
             }
             prev = g;
             setGroup(g);
+            invalidate();
             onLoaded?.(g);
         })().catch((e) => {
             console.error("[LDraw] load failed:", e);
@@ -91,14 +108,10 @@ function LdrModel({
             cancelled = true;
             if (prev) disposeObject3D(prev);
         };
-    }, [url, ldconfigUrl, loader, onLoaded, onError]);
+    }, [url, ldconfigUrl, loader, onLoaded, onError, camera, controls, invalidate]);
 
     if (!group) return null;
-    return (
-        <Bounds fit clip observe margin={1.2}>
-            <primitive object={group} />
-        </Bounds>
-    );
+    return <primitive object={group} />;
 }
 
 

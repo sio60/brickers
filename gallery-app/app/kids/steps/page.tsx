@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import * as THREE from "three";
 import { Canvas, useThree } from "@react-three/fiber";
-import { Bounds, OrbitControls, Center, Gltf, Environment, useBounds } from "@react-three/drei";
+import { Bounds, OrbitControls, Center, Environment, useBounds, useGLTF } from "@react-three/drei";
 import ThrottledDriver from "@/components/three/ThrottledDriver";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
@@ -314,6 +314,35 @@ function LdrModel({
             {!noFit && <FitOnceOnLoad trigger={fitTrigger ?? ""} />}
         </Bounds>
     );
+}
+
+// GLB 모델 중심 정렬 컴포넌트 (BrickJudgeViewer 패턴)
+function StepsGlbModel({ url }: { url: string }) {
+    const { scene } = useGLTF(url);
+    const { invalidate, camera, controls } = useThree();
+    const centered = useRef(false);
+
+    useEffect(() => {
+        if (!scene || centered.current) return;
+
+        const box = new THREE.Box3().setFromObject(scene);
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+        scene.position.set(-center.x, -box.min.y, -center.z);
+
+        const targetY = size.y / 2;
+        if (controls && (controls as any).target) {
+            (controls as any).target.set(0, targetY, 0);
+            (controls as any).update();
+        }
+        camera.position.set(0, targetY + size.y * 0.3, Math.max(size.x, size.z) * 2.5);
+        camera.lookAt(0, targetY, 0);
+
+        centered.current = true;
+        invalidate();
+    }, [scene, camera, controls, invalidate]);
+
+    return <primitive object={scene} />;
 }
 
 function FitOnceOnLoad({ trigger }: { trigger: string }) {
@@ -1124,7 +1153,7 @@ function KidsStepPageContent() {
                         {/* GLB Viewer */}
                         {activeTab === 'GLB' && (
                             <Canvas
-                                camera={{ position: [5, 5, 5], fov: 50 }}
+                                camera={{ position: [0, 200, 600], fov: 45 }}
                                 dpr={[1, 2]}
                                 frameloop="demand"
                             >
@@ -1132,15 +1161,8 @@ function KidsStepPageContent() {
                                 <ambientLight intensity={0.8} />
                                 <directionalLight position={[5, 10, 5]} intensity={1.5} />
                                 <Environment preset="city" />
-                                {glbUrl && (
-                                    <Bounds fit clip margin={1.35}>
-                                        <Center>
-                                            <Gltf src={glbUrl} />
-                                        </Center>
-                                        <FitOnceOnLoad trigger={glbUrl} />
-                                    </Bounds>
-                                )}
-                                <OrbitControls makeDefault enablePan={false} enableZoom enableDamping />
+                                {glbUrl && <StepsGlbModel url={glbUrl} />}
+                                <OrbitControls makeDefault enablePan={false} enableZoom enableDamping autoRotate autoRotateSpeed={2} />
                             </Canvas>
                         )}
                         {activeTab === 'GLB' && !glbUrl && <div className="kidsStep__noModel">3D Model not available</div>}
