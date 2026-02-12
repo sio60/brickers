@@ -2,6 +2,7 @@
 
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { Bounds, OrbitControls, Center } from "@react-three/drei";
+import ThrottledDriver from "@/components/three/ThrottledDriver";
 import * as THREE from "three";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -93,6 +94,7 @@ export default function Preview3DModal({ url, onClose, buildUrl }: { url: string
                 </button>
 
                 <Canvas camera={{ position: [100, -150, 100], fov: 35 }} frameloop="demand">
+                    <ThrottledDriver />
                     <ambientLight intensity={0.9} />
                     <directionalLight position={[50, 100, 50]} intensity={1.2} />
                     <directionalLight position={[-50, 50, -50]} intensity={0.4} />

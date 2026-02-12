@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { Bounds, OrbitControls } from "@react-three/drei";
+import ThrottledDriver from "@/components/three/ThrottledDriver";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -306,6 +307,7 @@ function ViewerContent() {
                         gl={{ preserveDrawingBuffer: true }}
                         frameloop="demand"
                     >
+                        <ThrottledDriver />
                         <ambientLight intensity={0.9} />
                         <directionalLight position={[3, 5, 2]} intensity={1} />
                         <LdrModel

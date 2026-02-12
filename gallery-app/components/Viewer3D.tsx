@@ -5,6 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { Bounds, OrbitControls, Center } from "@react-three/drei";
+import ThrottledDriver from "@/components/three/ThrottledDriver";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { CDN_BASE, createLDrawURLModifier } from "@/lib/ldrawUrlModifier";
@@ -145,6 +146,7 @@ export default React.memo(function Viewer3D({ url }: Viewer3DProps) {
             )}
 
             <Canvas camera={{ position: [0, 80, 500], fov: 45 }} dpr={[1, 2]} frameloop="demand">
+                <ThrottledDriver />
                 <ambientLight intensity={0.9} />
                 <directionalLight position={[10, 20, 10]} intensity={1.5} />
                 <directionalLight position={[-10, -20, -10]} intensity={0.8} />
