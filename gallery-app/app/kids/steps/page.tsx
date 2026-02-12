@@ -486,7 +486,7 @@ function OffscreenBrickRenderer() {
                 box.getSize(size);
                 const maxDim = Math.max(size.x, size.y, size.z);
                 const fov = (camera as THREE.PerspectiveCamera).fov * (Math.PI / 180);
-                const dist = (maxDim / (2 * Math.tan(fov / 2))) * 2.6;
+                const dist = (maxDim / (2 * Math.tan(fov / 2))) * 2.1; // Adjusted from 1.6 to 2.1 (20% larger than original 2.6)
                 const k = 0.577; // 1/sqrt(3)
                 camera.position.set(center.x + dist * k, center.y + dist * k, center.z + dist * k);
                 camera.lookAt(center);
@@ -519,7 +519,7 @@ function OffscreenBrickRenderer() {
             <LdrModel
                 url={url}
                 fitTrigger={url}
-                fitMargin={2.5}
+                fitMargin={2.0}
                 onLoaded={onLoaded}
                 onError={() => {
                     // Skip error
@@ -1020,7 +1020,7 @@ function KidsStepPageContent() {
                             </button>
                             <button
                                 className="kidsStep__sidebarBtn"
-                                style={{ marginTop: 6 }}
+                                style={{ marginTop: 8 }}
                                 onClick={downloadGlb}
                                 disabled={!glbUrl || loading}
                             >
@@ -1031,25 +1031,20 @@ function KidsStepPageContent() {
                             <div className="kidsStep__sidebarSectionLabel">
                                 이동하기
                             </div>
-                            <button className="kidsStep__sidebarBtn" onClick={() => router.push("/")}>
+                            <button className="kidsStep__sidebarBtn" style={{ marginTop: 8 }} onClick={() => router.push("/")}>
                                 홈으로
                             </button>
-                            <button className="kidsStep__sidebarBtn" style={{ marginTop: 6 }} onClick={() => router.push("/gallery")}>
+                            <button className="kidsStep__sidebarBtn" style={{ marginTop: 8 }} onClick={() => router.push("/gallery")}>
                                 갤러리 보기
                             </button>
 
                             {/* 공유하기 버튼 추가 */}
                             <button
-                                className={`kidsStep__sidebarBtn ${shareBackgroundUrl ? 'kidsStep__sidebarBtn--primary' : ''}`}
+                                className="kidsStep__sidebarBtn"
                                 style={{
-                                    marginTop: 14,
+                                    marginTop: 8,
                                     backgroundColor: shareBackgroundUrl ? '#000' : '#e0e0e0',
                                     color: shareBackgroundUrl ? '#fff' : '#000',
-                                    fontWeight: 800,
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    padding: '12px',
-                                    transition: 'all 0.2s',
                                     cursor: shareBackgroundUrl ? 'pointer' : 'not-allowed'
                                 }}
                                 onClick={() => setShareModalOpen(true)}

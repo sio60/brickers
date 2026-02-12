@@ -488,10 +488,13 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
 
             <Canvas
                 ref={canvasRef}
-                camera={{ position: [0, 80, 500], fov: 45 }}
+                camera={{ position: [120, -120, 500], fov: 45 }}
+                shadows
                 dpr={[1, 2]}
-                gl={{ alpha: true, preserveDrawingBuffer: true }} // 캡처를 위해 preserveDrawingBuffer 필수
-                frameloop="demand"
+                gl={{ preserveDrawingBuffer: true, antialias: true, alpha: true }}
+                onCreated={({ gl }) => {
+                    gl.setClearColor(0x000000, 0); // Transparent background
+                }}
             >
                 <ThrottledDriver />
                 <ambientLight intensity={1.2} />

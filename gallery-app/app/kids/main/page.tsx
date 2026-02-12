@@ -692,22 +692,14 @@ function KidsPageContent() {
                 )}
 
                 {status === "done" && ldrUrl && (
-                    <>
-                        <div className="viewer-container" style={{
-                            position: 'relative',
-                            width: '100%',
-                            height: '100%',
-                            backgroundColor: '#fff',
-                            borderRadius: '24px',
-                            overflow: 'hidden'
-                        }}>
+                    <div className="resultCard">
+                        <div className="viewer-container">
                             <div className="viewer3d">
                                 <KidsLdrPreview key={ldrUrl} url={ldrUrl} ref={previewRef} autoRotate={!shareModalOpen} />
                             </div>
                         </div>
 
-                        {/* 하단 버튼 그룹 */}
-                        <div className="actionBtns actionBtns--horizontal">
+                        <div className="actionBtns--horizontal">
                             <button
                                 className="actionBtn actionBtn--share"
                                 onClick={handleShareImage}
@@ -724,9 +716,8 @@ function KidsPageContent() {
                                 {t.kids.generate.next}
                             </button>
                         </div>
-                    </>
+                    </div>
                 )}
-
 
                 {status === "error" && (
                     <div className="error">
