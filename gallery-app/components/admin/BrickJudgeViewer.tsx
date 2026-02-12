@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useThree } from "@react-three/fiber";
-import { Bounds, OrbitControls, Center } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -68,7 +68,7 @@ function JudgeLdrModel({
     onLoaded?: () => void;
     onError?: (err: any) => void;
 }) {
-    const { invalidate } = useThree();
+    const { invalidate, camera, controls } = useThree();
     const [model, setModel] = useState<THREE.Group | null>(null);
     const meshMapRef = useRef<Map<number, THREE.Mesh[]>>(new Map());
 
@@ -171,8 +171,26 @@ function JudgeLdrModel({
                 meshMapRef.current = meshMap;
 
                 parsed.rotation.x = Math.PI;
+
+                // 바닥 중심 정렬: bounding box 계산 후 모델 이동
+                const box = new THREE.Box3().setFromObject(parsed);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+                // X/Z 중심, Y는 바닥(min)을 0으로
+                parsed.position.set(-center.x, -box.min.y, -center.z);
+
+                // OrbitControls target을 모델 중심 높이로 설정
+                const targetY = size.y / 2;
+                if (controls && (controls as any).target) {
+                    (controls as any).target.set(0, targetY, 0);
+                    (controls as any).update();
+                }
+                camera.position.set(0, targetY + size.y * 0.3, Math.max(size.x, size.z) * 2.5);
+                camera.lookAt(0, targetY, 0);
+
                 prev = parsed;
                 setModel(parsed);
+                invalidate();
                 onLoaded?.();
             } catch (e) {
                 console.error("[BrickJudge] load error:", e);
@@ -184,7 +202,7 @@ function JudgeLdrModel({
             cancelled = true;
             if (prev) disposeObject3D(prev);
         };
-    }, [ldrContent, loader, onLoaded, onError]);
+    }, [ldrContent, loader, onLoaded, onError, camera, controls, invalidate]);
 
     // 히트맵 적용
     useEffect(() => {
@@ -222,13 +240,7 @@ function JudgeLdrModel({
 
     if (!model) return null;
 
-    return (
-        <Bounds fit clip observe margin={1.2}>
-            <Center>
-                <primitive object={model} />
-            </Center>
-        </Bounds>
-    );
+    return <primitive object={model} />;
 }
 
 /* ── Job Card ── */
@@ -475,6 +487,7 @@ export default function BrickJudgeViewer() {
                             <ambientLight intensity={1.2} />
                             <directionalLight position={[10, 20, 10]} intensity={1.5} />
                             <directionalLight position={[-10, -20, -10]} intensity={0.8} />
+                            <gridHelper args={[500, 50, 0x0f4c75, 0x0f3460]} />
 
                             <JudgeLdrModel
                                 ldrContent={judgeResult.ldr_content}

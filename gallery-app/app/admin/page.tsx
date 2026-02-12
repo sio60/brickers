@@ -1007,16 +1007,6 @@ export default function AdminPage() {
                         )}
                         {activeTab === "brick-judge" && (
                             <div className="space-y-6 animate-fadeIn">
-                                <header className="flex justify-between items-center mb-2">
-                                    <div>
-                                        <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center">
-                                            <span className="mr-2">🧱</span> {t.admin.brickJudge?.title || "Brick Judge"}
-                                        </h1>
-                                        <p className="text-gray-500 text-sm mt-1">
-                                            {t.admin.brickJudge?.description || "LDR file physical verification engine"}
-                                        </p>
-                                    </div>
-                                </header>
                                 <BrickJudgeViewer />
                             </div>
                         )}
