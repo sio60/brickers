@@ -106,7 +106,7 @@ public class KidsController {
     /**
      * 프론트엔드 SSE 스트리밍 (CoScientist 로그)
      */
-    @GetMapping("/jobs/{jobId}/logs/stream")
+    @GetMapping(value = "/jobs/{jobId}/logs/stream", produces = "text/event-stream;charset=UTF-8")
     public SseEmitter streamAgentLogs(@PathVariable String jobId) {
         return kidsService.subscribeAgentLogs(jobId);
     }
