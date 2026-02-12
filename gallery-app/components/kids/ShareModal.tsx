@@ -33,14 +33,19 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
         canvas.height = 1000;
 
         if (backgroundUrl) {
+            // Fetch with CORS to avoid browser cache conflict
+            // (CSS background-image caches without CORS headers)
+            const res = await fetch(backgroundUrl, { mode: "cors" });
+            const blob = await res.blob();
+            const bitmapUrl = URL.createObjectURL(blob);
             const bgImg = new Image();
-            bgImg.crossOrigin = "anonymous";
-            bgImg.src = backgroundUrl;
-            await new Promise((resolve, reject) => {
-                bgImg.onload = resolve;
+            bgImg.src = bitmapUrl;
+            await new Promise<void>((resolve, reject) => {
+                bgImg.onload = () => resolve();
                 bgImg.onerror = reject;
             });
             ctx.drawImage(bgImg, 0, 0, 1000, 1000);
+            URL.revokeObjectURL(bitmapUrl);
         }
 
         if (previewRef.current) {

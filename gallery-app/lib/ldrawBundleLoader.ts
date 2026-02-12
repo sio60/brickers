@@ -16,6 +16,11 @@ import { CDN_BASE } from "@/lib/ldrawUrlModifier";
 export async function preloadPartsBundle(ldrUrl: string): Promise<boolean> {
     if (!ldrUrl) return false;
 
+    // Skip non-S3 URLs (blob URLs, proxy URLs, etc.)
+    if (ldrUrl.startsWith("blob:") || ldrUrl.startsWith("/") || !ldrUrl.includes("amazonaws.com")) {
+        return false;
+    }
+
     const bundleUrl = ldrUrl.replace(/\/[^/]+$/, "/parts-bundle.json");
 
     try {
