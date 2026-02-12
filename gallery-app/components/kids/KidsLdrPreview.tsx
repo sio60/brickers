@@ -301,6 +301,7 @@ function LdrModel({
 
 export type KidsLdrPreviewHandle = {
     captureAllSteps: () => Promise<string[][]>;
+    captureScreenshot: () => string | null;
 };
 
 const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibraryPath, ldconfigUrl, stepMode = false }, ref) => {
@@ -368,6 +369,10 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
             setCurrentStep(originalStep);
             console.log(`✅ Captured ${stepsImages.length} steps.`);
             return stepsImages;
+        },
+        captureScreenshot: () => {
+            if (!canvasRef.current) return null;
+            return canvasRef.current.toDataURL("image/png");
         }
     }));
 

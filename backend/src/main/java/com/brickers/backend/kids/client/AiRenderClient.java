@@ -60,4 +60,17 @@ public class AiRenderClient {
                                 .bodyToMono(KidsPdfResponse.class)
                                 .block();
         }
+
+        public java.util.Map<String, Object> generateBackgroundComposite(
+                        org.springframework.web.multipart.MultipartFile file, String subject) {
+                return webClient.post()
+                                .uri("/api/v1/kids/bg-composite")
+                                .contentType(MediaType.MULTIPART_FORM_DATA)
+                                .body(BodyInserters.fromMultipartData("file", file.getResource())
+                                                .with("subject", subject))
+                                .retrieve()
+                                .bodyToMono(new org.springframework.core.ParameterizedTypeReference<java.util.Map<String, Object>>() {
+                                })
+                                .block();
+        }
 }
