@@ -116,6 +116,12 @@ export default function AdminPage() {
     const [refunds, setRefunds] = useState<RefundRequest[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [jobs, setJobs] = useState<AdminJob[]>([]); // [NEW]
+    const [jobPage, setJobPage] = useState(0);
+    const [jobTotalPages, setJobTotalPages] = useState(0);
+    // [NEW] 필터링 상태
+    const [userSearch, setUserSearch] = useState("");
+    const [debouncedUserSearch, setDebouncedUserSearch] = useState("");
+    const [filterStatus, setFilterStatus] = useState("");
 
     // 답변 입력 상태
     const [answerTexts, setAnswerTexts] = useState<Record<string, string>>({});
@@ -125,6 +131,21 @@ export default function AdminPage() {
     const [comments, setComments] = useState<Comment[]>([]);
     const [commentPage, setCommentPage] = useState(0);
     const [commentTotalPages, setCommentTotalPages] = useState(0);
+
+    // 검색어 디바운싱
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedUserSearch(userSearch);
+            setJobPage(0); // 검색어 변경 시 페이지 초기화
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [userSearch]);
+
+    useEffect(() => {
+        if (activeTab === "jobs") {
+            setJobPage(0); // 탭 변경/필터 변경 시 페이지 초기화 확인 필요하나, 여기선 의존성 때문에 별도 처리
+        }
+    }, [filterStatus]);
 
     useEffect(() => {
         getMyProfile()
@@ -155,7 +176,7 @@ export default function AdminPage() {
         if (activeTab === "users") fetchUsers();
         if (activeTab === "comments") fetchComments();
         if (activeTab === "jobs") fetchJobs(); // [NEW]
-    }, [activeTab, commentPage]);
+    }, [activeTab, commentPage, jobPage, debouncedUserSearch, filterStatus]);
 
     const fetchInquiries = async () => {
         try {
@@ -200,10 +221,17 @@ export default function AdminPage() {
     // [NEW] 작업 목록 조회
     const fetchJobs = async () => {
         try {
-            const res = await authFetch("/api/admin/jobs?page=0&size=20");
+            const params = new URLSearchParams();
+            params.append("page", jobPage.toString());
+            params.append("size", "50");
+            if (debouncedUserSearch) params.append("userSearch", debouncedUserSearch);
+            if (filterStatus) params.append("status", filterStatus);
+
+            const res = await authFetch(`/api/admin/jobs?${params.toString()}`);
             if (res.ok) {
                 const data = await res.json();
                 setJobs(data.content || []);
+                setJobTotalPages(data.totalPages || 0);
             }
         } catch (e) {
             console.error(e);
@@ -530,7 +558,28 @@ export default function AdminPage() {
                             <div className={styles.list}>
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="text-xl font-bold">All Jobs Management</h2>
-                                    <button onClick={fetchJobs} className="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">Refresh</button>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder="User Search (Nickname/Email)"
+                                            value={userSearch}
+                                            onChange={(e) => setUserSearch(e.target.value)}
+                                            className="px-3 py-1 border border-gray-300 rounded text-sm w-64"
+                                        />
+                                        <select
+                                            value={filterStatus}
+                                            onChange={(e) => setFilterStatus(e.target.value)}
+                                            className="px-3 py-1 border border-gray-300 rounded text-sm"
+                                        >
+                                            <option value="">All Status</option>
+                                            <option value="QUEUED">Queued</option>
+                                            <option value="RUNNING">Running</option>
+                                            <option value="DONE">Done</option>
+                                            <option value="FAILED">Failed</option>
+                                            <option value="CANCELED">Canceled</option>
+                                        </select>
+                                        <button onClick={fetchJobs} className="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200 text-sm">Refresh</button>
+                                    </div>
                                 </div>
                                 <table className="w-full text-left border-collapse bg-white rounded-lg overflow-hidden shadow-sm">
                                     <thead className="bg-gray-50 border-b border-gray-100">
@@ -605,6 +654,24 @@ export default function AdminPage() {
                                         )}
                                     </tbody>
                                 </table>
+                                {/* Pagination for Jobs */}
+                                <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-white rounded-b-lg">
+                                    <button
+                                        disabled={jobPage === 0}
+                                        onClick={() => setJobPage((p: number) => p - 1)}
+                                        className="px-3 py-1 rounded text-sm disabled:opacity-30 hover:bg-gray-100"
+                                    >
+                                        Previous
+                                    </button>
+                                    <span className="text-xs text-gray-500">Page {jobPage + 1} of {jobTotalPages || 1}</span>
+                                    <button
+                                        disabled={jobPage >= jobTotalPages - 1}
+                                        onClick={() => setJobPage((p: number) => p + 1)}
+                                        className="px-3 py-1 rounded text-sm disabled:opacity-30 hover:bg-gray-100"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
                             </div>
                         )}
 

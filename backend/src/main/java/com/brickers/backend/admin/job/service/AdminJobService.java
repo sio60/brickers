@@ -27,13 +27,33 @@ public class AdminJobService {
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public Page<AdminJobDto> getAllJobs(JobStatus status, int page, int size) {
+    public Page<AdminJobDto> getAllJobs(JobStatus status, String userSearch, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<GenerateJobEntity> result;
-        if (status != null) {
-            result = jobRepository.findByStatusOrderByCreatedAtDesc(status, pageRequest);
+
+        if (userSearch != null && !userSearch.isBlank()) {
+            // 1. 사용자 검색 (닉네임 또는 이메일)
+            java.util.List<User> foundUsers = userRepository.findByNicknameContainingOrEmailContaining(userSearch,
+                    userSearch);
+            if (foundUsers.isEmpty()) {
+                return Page.empty(pageRequest);
+            }
+
+            java.util.List<String> userIds = foundUsers.stream().map(User::getId).collect(Collectors.toList());
+
+            // 2. 검색된 사용자들의 작업 조회
+            if (status != null) {
+                result = jobRepository.findByUserIdInAndStatusOrderByCreatedAtDesc(userIds, status, pageRequest);
+            } else {
+                result = jobRepository.findByUserIdInOrderByCreatedAtDesc(userIds, pageRequest);
+            }
         } else {
-            result = jobRepository.findAll(pageRequest);
+            // 3. 기존 로직 (전체 조회 또는 상태 필터)
+            if (status != null) {
+                result = jobRepository.findByStatusOrderByCreatedAtDesc(status, pageRequest);
+            } else {
+                result = jobRepository.findAll(pageRequest);
+            }
         }
 
         // [NEW] 사용자 정보 일괄 조회
