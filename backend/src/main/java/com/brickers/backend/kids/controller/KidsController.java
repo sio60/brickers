@@ -30,11 +30,11 @@ public class KidsController {
     @PostConstruct
     public void init() {
         if (internalApiToken != null && !internalApiToken.isBlank()) {
-            log.info("🔑 [KidsController] Internal Token Loaded: {}... (Length: {})",
+            log.info("[KidsController] Internal Token Loaded: {}... (Length: {})",
                     internalApiToken.length() > 6 ? internalApiToken.substring(0, 6) : internalApiToken,
                     internalApiToken.length());
         } else {
-            log.error("❌ [KidsController] Internal Token is MISSING or EMPTY! Check .env file.");
+            log.error("[KidsController] Internal Token is MISSING or EMPTY! Check .env file.");
         }
     }
 
@@ -42,7 +42,7 @@ public class KidsController {
     public ResponseEntity<?> generateBrick(
             Authentication authentication,
             @RequestBody KidsGenerateRequest request) {
-        log.info("📥 [KidsController] /api/kids/generate 요청 수신");
+        log.info("[KidsController] /api/kids/generate 요청 수신");
         log.info("   - sourceImageUrl: {}", request.getSourceImageUrl());
         log.info("   - age: {}, budget: {}, title: {}", request.getAge(), request.getBudget(), request.getTitle());
 
@@ -58,7 +58,7 @@ public class KidsController {
                 request.getBudget(),
                 request.getTitle(),
                 request.getPrompt());
-        log.info("✅ [KidsController] 응답: {}", result);
+        log.info("[KidsController] 응답: {}", result);
         return ResponseEntity.ok(result);
     }
 
@@ -129,6 +129,27 @@ public class KidsController {
             return ResponseEntity.badRequest().build();
         }
         kidsService.updatePdfUrl(jobId, pdfUrl);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Screenshot 서버에서 배경 생성 완료 시 backgroundUrl 업데이트
+     * Python: PATCH /api/kids/jobs/{jobId}/background
+     */
+    @PatchMapping("/jobs/{jobId}/background")
+    public ResponseEntity<Void> updateBackgroundUrl(
+            @PathVariable String jobId,
+            @RequestHeader("X-Internal-Token") String token,
+            @RequestBody Map<String, String> body) {
+        if (internalApiToken.isBlank() || !internalApiToken.equals(token)) {
+            log.warn("[KidsController] \ubc30\uacbd \uc5c5\ub370\uc774\ud2b8 \ud1a0\ud070 \ubd88\uc77c\ucc28");
+            return ResponseEntity.status(403).build();
+        }
+        String backgroundUrl = body.get("backgroundUrl");
+        if (backgroundUrl == null || backgroundUrl.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        kidsService.updateBackgroundUrl(jobId, backgroundUrl);
         return ResponseEntity.ok().build();
     }
 
