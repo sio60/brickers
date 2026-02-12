@@ -1,8 +1,34 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import styles from './KidsDrawingCanvas.module.css';
 import { useLanguage } from '@/contexts/LanguageContext';
+
+function buildCursor(tool: 'brush' | 'eraser', size: number, color: string): string {
+    // 캔버스 내부 좌표(1200x900) 대비 화면 표시 크기를 고려해 커서 크기 축소
+    const displaySize = Math.max(4, Math.min(size * 0.6, 48));
+    const svgSize = Math.ceil(displaySize + 4);
+    const center = svgSize / 2;
+
+    let svg: string;
+    if (tool === 'eraser') {
+        const half = displaySize / 2;
+        svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${svgSize}' height='${svgSize}'>` +
+            `<rect x='${center - half}' y='${center - half}' width='${displaySize}' height='${displaySize}' ` +
+            `fill='white' stroke='%23999' stroke-width='1.5' rx='2'/>` +
+            `</svg>`;
+    } else {
+        const r = displaySize / 2;
+        const strokeColor = color === '#ffffff' ? '%23999' : color.replace('#', '%23');
+        svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${svgSize}' height='${svgSize}'>` +
+            `<circle cx='${center}' cy='${center}' r='${r}' ` +
+            `fill='${color.replace('#', '%23')}' fill-opacity='0.4' ` +
+            `stroke='${strokeColor}' stroke-width='1.5'/>` +
+            `</svg>`;
+    }
+
+    return `url("data:image/svg+xml,${svg}") ${center} ${center}, crosshair`;
+}
 
 type Props = {
     onCancel: () => void;
@@ -22,6 +48,8 @@ export default function KidsDrawingCanvas({ onCancel, onDone }: Props) {
     const [color, setColor] = useState('#000000');
     const [brushSize, setBrushSize] = useState(10);
     const [tool, setTool] = useState<'brush' | 'eraser'>('brush');
+
+    const cursorStyle = useMemo(() => buildCursor(tool, brushSize, color), [tool, brushSize, color]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -181,6 +209,7 @@ export default function KidsDrawingCanvas({ onCancel, onDone }: Props) {
                     onTouchMove={draw}
                     onTouchEnd={stopDrawing}
                     className={styles.canvas}
+                    style={{ cursor: cursorStyle }}
                 />
             </div>
 
