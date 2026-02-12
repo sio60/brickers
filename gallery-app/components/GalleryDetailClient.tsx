@@ -7,9 +7,12 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import * as gtag from '@/lib/gtag';
 import { GalleryItem } from '@/types/gallery';
 import Image from 'next/image';
-import Viewer3D from './Viewer3D';
+import dynamic from 'next/dynamic';
 import { Canvas } from "@react-three/fiber";
+
+const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 import { Bounds, Center, Gltf, Environment, OrbitControls } from "@react-three/drei";
+import ThrottledDriver from "@/components/three/ThrottledDriver";
 import ScreenshotGallery from './gallery/ScreenshotGallery';
 import { CommentList, CommentInput, Comment } from './gallery/CommentSection';
 import RecommendationSidebar from './gallery/RecommendationSidebar';
@@ -300,7 +303,8 @@ export default function GalleryDetailClient({ item }: Props) {
                         {activeTab === 'GLB' && (
                             item.glbUrl ? (
                                 <div className="absolute inset-0">
-                                    <Canvas camera={{ position: [5, 5, 5], fov: 50 }} dpr={[1, 2]}>
+                                    <Canvas camera={{ position: [5, 5, 5], fov: 50 }} dpr={[1, 2]} frameloop="demand">
+                                        <ThrottledDriver />
                                         <ambientLight intensity={0.8} />
                                         <directionalLight position={[5, 10, 5]} intensity={1.5} />
                                         <Environment preset="city" />

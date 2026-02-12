@@ -5,6 +5,7 @@ import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Environment } from "@react-three/drei";
 import dynamic from 'next/dynamic';
+import ThrottledDriver from "@/components/three/ThrottledDriver";
 
 // Random utility functions
 const randomRange = (min: number, max: number) => Math.random() * (max - min) + min;
@@ -232,7 +233,8 @@ function Background3DContent({
     }, []);
 
     return (
-        <Canvas camera={{ position: [0, 0, 10], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias: true, alpha: true }}>
+        <Canvas frameloop="demand" camera={{ position: [0, 0, 10], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias: true, alpha: true }}>
+            <ThrottledDriver fps={24} />
             <ambientLight intensity={0.8} />
             <pointLight position={[10, 10, 10]} intensity={1.5} />
             <directionalLight position={[-5, 5, 5]} intensity={1} />

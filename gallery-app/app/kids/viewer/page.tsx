@@ -5,13 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { Bounds, OrbitControls } from "@react-three/drei";
+import ThrottledDriver from "@/components/three/ThrottledDriver";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Link from "next/link";
-import ShareModal from "@/components/kids/ShareModal"; // Import ShareModal
-
-const CDN_BASE = "https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/";
+import ShareModal from "@/components/kids/ShareModal";
+import { CDN_BASE, createLDrawURLModifier } from "@/lib/ldrawUrlModifier";
 
 /* ── Monkey-patch: null children을 원천 차단 ── */
 const _origAdd = THREE.Object3D.prototype.add;
@@ -55,50 +55,14 @@ function LdrModel({
     const loader = useMemo(() => {
         THREE.Cache.enabled = true;
         const manager = new THREE.LoadingManager();
-        const mainAbs = (() => {
-            try { return new URL(url, typeof window !== 'undefined' ? window.location.href : '').href; }
-            catch { return url; }
-        })();
-
-        manager.setURLModifier((u) => {
-            let fixed = u.replace(/\\/g, "/");
-
-            const isAbsolute = fixed.startsWith("http") || fixed.startsWith("blob:") || fixed.startsWith("/") || fixed.includes(":");
-
-            if (fixed.includes("ldraw-parts-library") && fixed.endsWith(".dat") && !fixed.includes("LDConfig.ldr")) {
-                const filename = fixed.split("/").pop() || "";
-                const isPrimitive = /^\d+-\d+/.test(filename) ||
-                    /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud|empty)/.test(filename);
-                const isSubpart = /^\d+s\d+\.dat$/i.test(filename);
-
-                fixed = fixed.replace("/ldraw/models/p/", "/ldraw/p/");
-                fixed = fixed.replace("/ldraw/models/parts/", "/ldraw/parts/");
-                fixed = fixed.replace("/ldraw/p/parts/s/", "/ldraw/parts/s/");
-                fixed = fixed.replace("/ldraw/p/parts/", "/ldraw/parts/");
-                fixed = fixed.replace("/ldraw/p/s/", "/ldraw/parts/s/");
-                fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
-
-                if (isPrimitive && fixed.includes("/ldraw/parts/") && !fixed.includes("/parts/s/")) {
-                    fixed = fixed.replace("/ldraw/parts/", "/ldraw/p/");
-                }
-                if (isSubpart && fixed.includes("/ldraw/p/") && !fixed.includes("/p/48/") && !fixed.includes("/p/8/")) {
-                    fixed = fixed.replace("/ldraw/p/", "/ldraw/parts/s/");
-                }
-                if (!fixed.includes("/parts/") && !fixed.includes("/p/")) {
-                    if (isSubpart) fixed = fixed.replace("/ldraw/", "/ldraw/parts/s/");
-                    else if (isPrimitive) fixed = fixed.replace("/ldraw/", "/ldraw/p/");
-                    else fixed = fixed.replace("/ldraw/", "/ldraw/parts/");
-                }
-            }
-            return fixed;
-        });
+        manager.setURLModifier(createLDrawURLModifier({ useProxy: false }));
 
         const l = new LDrawLoader(manager);
         l.setPartsLibraryPath(partsLibraryPath);
         l.smoothNormals = true;
         try { (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any); } catch { }
         return l;
-    }, [partsLibraryPath, url]);
+    }, [partsLibraryPath]);
 
     const [group, setGroup] = useState<THREE.Group | null>(null);
 
@@ -340,8 +304,10 @@ function ViewerContent() {
                     <Canvas
                         camera={{ position: [200, -200, 200], fov: 45 }}
                         dpr={[1, 2]}
-                        gl={{ preserveDrawingBuffer: true }} // ✅ Important for screenshot
+                        gl={{ preserveDrawingBuffer: true }}
+                        frameloop="demand"
                     >
+                        <ThrottledDriver />
                         <ambientLight intensity={0.9} />
                         <directionalLight position={[3, 5, 2]} intensity={1} />
                         <LdrModel

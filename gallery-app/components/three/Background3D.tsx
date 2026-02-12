@@ -4,6 +4,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Environment } from "@react-three/drei";
+import ThrottledDriver from "./ThrottledDriver";
 
 // Random utility functions
 const randomRange = (min: number, max: number) => Math.random() * (max - min) + min;
@@ -280,7 +281,8 @@ export default function Background3D({
                 pointerEvents: "auto",
             }}
         >
-            <Canvas camera={{ position: [0, 0, 10], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias: true }}>
+            <Canvas frameloop="demand" camera={{ position: [0, 0, 10], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias: true }}>
+                <ThrottledDriver fps={24} />
                 <ambientLight intensity={0.8} />
                 <pointLight position={[10, 10, 10]} intensity={1.5} />
                 <directionalLight position={[-5, 5, 5]} intensity={1} />

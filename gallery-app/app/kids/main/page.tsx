@@ -14,6 +14,7 @@ import { registerToGallery } from "@/lib/api/myApi";
 import { useJobStore } from "@/stores/jobStore";
 import { generatePdfFromServer } from "@/components/kids/PDFGenerator";
 import ShareModal from "@/components/kids/ShareModal";
+import html2canvas from "html2canvas";
 
 // SSR 제외
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
@@ -104,6 +105,7 @@ function KidsPageContent() {
 
     // 3D 프리뷰 ref 및 PDF 생성 상태
     const previewRef = useRef<KidsLdrPreviewHandle>(null);
+    const captureRef = useRef<HTMLDivElement>(null);
     const [isPdfGenerating, setIsPdfGenerating] = useState(false);
 
     const processingRef = useRef(false);
@@ -593,6 +595,48 @@ function KidsPageContent() {
         }
     };
 
+    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    // 이미지 캡처 (배경 + 모델)
+    const captureComposite = async (): Promise<Blob> => {
+        if (!captureRef.current) throw new Error("capture target missing");
+        // Canvas 렌더링 대기
+        await sleep(100);
+        const canvas = await html2canvas(captureRef.current, {
+            useCORS: true,
+            backgroundColor: null,
+            scale: 2,
+        });
+        return new Promise((resolve, reject) => {
+            canvas.toBlob((blob) => {
+                if (blob) resolve(blob);
+                else reject(new Error("blob generation failed"));
+            }, "image/png");
+        });
+    };
+
+    const handleSaveImage = async () => {
+        setIsPdfGenerating(true);
+        try {
+            const blob = await captureComposite();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `brickers-${jobId || 'model'}.png`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error("Save image failed:", e);
+        } finally {
+            setIsPdfGenerating(false);
+        }
+    };
+
+    const handleShareImage = async () => {
+        if (!shareBackgroundUrl || !ldrUrl) return;
+        setShareModalOpen(true);
+    };
+
 
     return (
         <div className="page">
@@ -624,45 +668,35 @@ function KidsPageContent() {
 
                 {status === "done" && ldrUrl && (
                     <>
-                        <div className="resultTitle">{t.kids.generate.ready}</div>
-                        <div className="resultCard" style={{ position: 'relative' }}>
+                        <div className="resultCard" ref={captureRef} style={{
+                            position: 'relative',
+                            backgroundImage: shareBackgroundUrl ? `url(${shareBackgroundUrl})` : 'none',
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            overflow: 'hidden'
+                        }}>
                             <div className="viewer3d">
                                 <KidsLdrPreview key={ldrUrl} url={ldrUrl} ref={previewRef} />
                             </div>
+                        </div>
 
-                            {/* 우측 하단 Next 버튼 */}
+                        {/* 하단 버튼 그룹 */}
+                        <div className="actionBtns actionBtns--horizontal">
                             <button
-                                className="nextBtn nextBtn--ab"
+                                className="actionBtn actionBtn--share"
+                                onClick={handleShareImage}
+                            >
+                                공유하기
+                            </button>
+
+                            <button
+                                className="actionBtn actionBtn--next"
                                 onClick={() => {
                                     router.push(`/kids/steps?url=${encodeURIComponent(ldrUrl)}&jobId=${jobId ?? ""}&age=${age}${pdfUrl ? `&pdfUrl=${encodeURIComponent(pdfUrl)}` : ""}`);
                                 }}
                             >
                                 {t.kids.generate.next}
                             </button>
-                        </div>
-
-                        {/* 하단 버튼 그룹 */}
-                        <div className="actionBtns">
-                            {/* 다운로드 드롭다운 */}
-                            <div className="dropdownContainer">
-                                <button
-                                    className="dlBtn"
-                                    onClick={() => setIsDownloadOpen(!isDownloadOpen)}
-                                >
-                                    Download ▼
-                                </button>
-                                {isDownloadOpen && (
-                                    <div className="dropdownMenu">
-                                        <button onClick={downloadLdr}>LDR Download</button>
-                                        {glbUrl && <button onClick={downloadGlb}>GLB Download</button>}
-                                        <button onClick={handleDownloadPdf} disabled={isPdfGenerating}>
-                                            {isPdfGenerating ? "PDF Generating..." : "PDF Download"}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-
-
                         </div>
                     </>
                 )}
