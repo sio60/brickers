@@ -169,6 +169,9 @@ jobs:
             # OpenAI (챗봇용)
             APP_OPENAI_API_KEY=${{ secrets.APP_OPENAI_API_KEY }}
 
+            # Tripo 3D
+            TRIPO_API_KEY=${{ secrets.TRIPO_API_KEY }}
+
             # SQS (2개 Queue 분리)
             AWS_SQS_ENABLED=true
             AWS_SQS_REQUEST_QUEUE_URL=${{ secrets.AWS_SQS_REQUEST_QUEUE_URL }}

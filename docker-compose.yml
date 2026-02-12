@@ -83,6 +83,7 @@ services:
     environment:
       - TZ=Asia/Seoul
       - OPENAI_API_KEY=${APP_OPENAI_API_KEY}
+      - TRIPO_API_KEY=${TRIPO_API_KEY}
     networks:
       - brickers-network
 
