@@ -230,7 +230,7 @@ function ViewerContent() {
     const handleShareClick = async () => {
         setShareModalOpen(true);
         setShareLoading(true);
-        setShareImageUrl(null);
+        setShareBackgroundUrl(null);
 
         try {
             // 1. Capture Canvas
@@ -264,7 +264,7 @@ function ViewerContent() {
 
             const data = await response.json();
             if (data.url) {
-                setShareImageUrl(data.url);
+                setShareBackgroundUrl(data.url);
             } else {
                 throw new Error("No URL in response");
             }
