@@ -9,7 +9,9 @@ import { getMyOverview, getMyProfile, getMyJobs, retryJob, cancelJob, updateMyPr
 import type { MyOverview, MyProfile, MyJob } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, downloadLdrFromBase64 } from "@/lib/api/colorVariantApi";
 
-import KidsLdrPreview, { KidsLdrPreviewHandle } from "@/components/kids/KidsLdrPreview";
+import dynamic from "next/dynamic";
+import type { KidsLdrPreviewHandle } from "@/components/kids/KidsLdrPreview";
+const KidsLdrPreview = dynamic(() => import("@/components/kids/KidsLdrPreview"), { ssr: false });
 import ShareModal from "@/components/kids/ShareModal";
 import BackgroundBricks from "@/components/BackgroundBricks";
 import UpgradeModal from "@/components/UpgradeModal";
