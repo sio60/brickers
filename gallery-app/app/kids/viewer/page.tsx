@@ -156,7 +156,7 @@ function ViewerContent() {
     // Share Modal State
     const [shareModalOpen, setShareModalOpen] = useState(false);
     const [shareLoading, setShareLoading] = useState(false);
-    const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
+    const [shareBackgroundUrl, setShareBackgroundUrl] = useState<string | null>(null);
     const hasGeneratedRef = useRef(false); // Prevent duplicate generation
 
     const autoGenerateBackground = async () => {
@@ -165,7 +165,7 @@ function ViewerContent() {
 
         setShareModalOpen(true);
         setShareLoading(true);
-        setShareImageUrl(null);
+        setShareBackgroundUrl(null);
 
         // Wait a bit for the model to render fully
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -207,7 +207,7 @@ function ViewerContent() {
 
             const data = await response.json();
             if (data.url) {
-                setShareImageUrl(data.url);
+                setShareBackgroundUrl(data.url);
             } else {
                 throw new Error("No URL in response");
             }
@@ -305,8 +305,9 @@ function ViewerContent() {
             <ShareModal
                 isOpen={shareModalOpen}
                 onClose={() => setShareModalOpen(false)}
-                imageUrl={shareImageUrl}
-                loading={shareLoading}
+                backgroundUrl={shareBackgroundUrl}
+                ldrUrl={urlParam}
+                loading={shareLoading || !shareBackgroundUrl}
             />
 
             {/* 3D Viewer */}
