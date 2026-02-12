@@ -57,9 +57,10 @@ const CHAT_TRANSLATIONS = {
         refund: {
             modeTitle: "환불 요청",
             desc: "최근 결제 내역 중 환불할 항목을 선택해주세요.",
-            empty: "결제 내역이 없습니다.",
+            empty: "환불 가능한 결제 내역이 없습니다.",
             btn: "환불 요청",
-            confirm: "환불 요청이 접수되었습니다. 처리 결과는 알림으로 알려드릴게요."
+            confirm: "환불 요청이 접수되었습니다. 처리 결과는 알림으로 알려드릴게요.",
+            alreadyProcessed: "이미 처리된 주문입니다. 목록을 새로고침합니다."
         },
         cancel: "취소",
         actions: {
@@ -112,9 +113,10 @@ const CHAT_TRANSLATIONS = {
         refund: {
             modeTitle: "Request Refund",
             desc: "Select a payment to refund.",
-            empty: "No payment history.",
+            empty: "No refundable payments found.",
             btn: "Request Refund",
-            confirm: "Refund request submitted."
+            confirm: "Refund request submitted.",
+            alreadyProcessed: "This order has already been processed. Refreshing list."
         },
         cancel: "Cancel",
         actions: {
@@ -167,9 +169,10 @@ const CHAT_TRANSLATIONS = {
         refund: {
             modeTitle: "返金リクエスト",
             desc: "返金したい決済を選択してください。",
-            empty: "決済履歴がありません。",
+            empty: "返金可能な決済がありません。",
             btn: "リクエスト",
-            confirm: "返金リクエストを受け付けました。"
+            confirm: "返金リクエストを受け付けました。",
+            alreadyProcessed: "すでに処理済みの注文です。リストを更新します。"
         },
         cancel: "キャンセル",
         actions: {
@@ -301,10 +304,13 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                 setMode("CHAT");
                 return;
             }
-            const res = await authFetch("/api/payments/my/history?page=0&size=10");
+            const res = await authFetch("/api/payments/my/history?page=0&size=20");
             if (res.ok) {
                 const data = await res.json();
-                setRefundList(data.content || []);
+                const cancelable = (data.content || []).filter(
+                    (o: any) => o.status === "PENDING" || o.status === "COMPLETED"
+                );
+                setRefundList(cancelable);
             } else {
                 alert(tChat.loadFailed);
                 setMode("CHAT");
@@ -435,7 +441,12 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
             });
             if (res.ok) {
                 setMode("CHAT");
+                setSelectedOrderId(null);
                 setMessages(prev => [...prev, { role: "bot", content: tChat.refund.confirm }]);
+            } else if (res.status === 409) {
+                alert(tChat.refund.alreadyProcessed);
+                setSelectedOrderId(null);
+                fetchPaymentHistory();
             } else {
                 alert(tChat.submitFailed);
             }
