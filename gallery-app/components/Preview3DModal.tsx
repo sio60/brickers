@@ -1,38 +1,16 @@
 'use client';
 
-import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { Bounds, OrbitControls, Center } from "@react-three/drei";
+import { Canvas, useThree } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
 import ThrottledDriver from "@/components/three/ThrottledDriver";
 import * as THREE from "three";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LDrawLoader } from "three-stdlib";
 import { CDN_BASE, createLDrawURLModifier } from "@/lib/ldrawUrlModifier";
 
-// 카메라를 쿼터뷰 각도로 설정하는 컴포넌트
-function CameraSetup() {
-    const { camera } = useThree();
-    const initialized = useRef(false);
-
-    useFrame(() => {
-        if (!initialized.current) {
-            // 쿼터뷰: 위에서 45도 각도로 내려다보기
-            const distance = camera.position.length();
-            const angle = Math.PI / 4; // 45도
-            const height = distance * Math.sin(angle);
-            const horizontal = distance * Math.cos(angle);
-
-            camera.position.set(horizontal * 0.7, height, horizontal * 0.7);
-            camera.lookAt(0, 0, 0);
-            initialized.current = true;
-        }
-    });
-
-    return null;
-}
-
 function LdrModel({ url }: { url: string }) {
-    const { camera } = useThree();
+    const { invalidate, camera, controls } = useThree();
     const [group, setGroup] = useState<THREE.Group | null>(null);
 
     useEffect(() => {
@@ -44,40 +22,45 @@ function LdrModel({ url }: { url: string }) {
         const loader = new LDrawLoader(manager);
         (loader as any).setPartsLibraryPath(CDN_BASE);
 
-        // Load materials first, then load model
         (async () => {
             try {
                 const proxyUrl = `/api/proxy/ldr?url=${encodeURIComponent(url)}`;
-                console.log("Loading LDR via Proxy:", proxyUrl);
 
                 await (loader as any).preloadMaterials(`${CDN_BASE}LDConfig.ldr`);
                 if (cancelled) return;
 
-                // Load main model via proxy to avoid CORS
                 const g = await loader.loadAsync(proxyUrl);
                 if (cancelled) return;
 
                 g.rotation.x = Math.PI;
+
+                // 모델 중심 정렬 (BrickJudgeViewer 패턴)
+                const box = new THREE.Box3().setFromObject(g);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+                g.position.set(-center.x, -box.min.y, -center.z);
+
+                // 카메라를 모델 기준으로 배치
+                const targetY = size.y / 2;
+                if (controls && (controls as any).target) {
+                    (controls as any).target.set(0, targetY, 0);
+                    (controls as any).update();
+                }
+                camera.position.set(0, targetY + size.y * 0.3, Math.max(size.x, size.z) * 2.5);
+                camera.lookAt(0, targetY, 0);
+
                 setGroup(g);
+                invalidate();
             } catch (err) {
                 console.error("LDraw load failed:", err);
-                const errorMessage = err instanceof Error ? err.message : "Unknown error";
-                alert(`Failed to load 3D model.\nURL: ${url}\nError: ${errorMessage}`);
             }
         })();
 
         return () => { cancelled = true; };
-    }, [url]);
+    }, [url, camera, controls, invalidate]);
 
     if (!group) return null;
-
-    return (
-        <Bounds fit clip observe margin={1.2}>
-            <Center>
-                <primitive object={group} />
-            </Center>
-        </Bounds>
-    );
+    return <primitive object={group} />;
 }
 
 export default function Preview3DModal({ url, onClose, buildUrl }: { url: string, onClose: () => void, buildUrl?: string }) {
@@ -93,19 +76,16 @@ export default function Preview3DModal({ url, onClose, buildUrl }: { url: string
                     ✕ Close
                 </button>
 
-                <Canvas camera={{ position: [100, -150, 100], fov: 35 }} frameloop="demand">
+                <Canvas camera={{ position: [0, 200, 600], fov: 45 }} frameloop="demand">
                     <ThrottledDriver />
                     <ambientLight intensity={0.9} />
                     <directionalLight position={[50, 100, 50]} intensity={1.2} />
                     <directionalLight position={[-50, 50, -50]} intensity={0.4} />
-                    <CameraSetup />
                     <LdrModel url={url} />
                     <OrbitControls
                         makeDefault
                         autoRotate
                         autoRotateSpeed={1.5}
-                        minPolarAngle={Math.PI / 6}
-                        maxPolarAngle={Math.PI / 2.5}
                     />
                 </Canvas>
 

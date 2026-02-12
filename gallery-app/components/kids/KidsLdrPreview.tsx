@@ -1,7 +1,7 @@
 'use client';
 
-import { Canvas } from "@react-three/fiber";
-import { Bounds, OrbitControls, Center } from "@react-three/drei";
+import { Canvas, useThree } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
 import ThrottledDriver from "@/components/three/ThrottledDriver";
 import * as THREE from "three";
 import { useEffect, useMemo, useState, useRef, forwardRef, useImperativeHandle } from "react";
@@ -24,6 +24,7 @@ type Props = {
     stepMode?: boolean;
     onLoaded?: () => void;
     onError?: (err: any) => void;
+    autoRotate?: boolean;
 };
 
 function removeNullChildren(obj: THREE.Object3D) {
@@ -57,6 +58,8 @@ function LdrModel({
     onLoaded,
     onError,
 }: Props & { currentStep?: number; isPreview?: boolean; onStepCountChange?: (count: number) => void }) {
+    const { invalidate, camera, controls } = useThree();
+
     const loader = useMemo(() => {
         THREE.Cache.enabled = true;
         const manager = new THREE.LoadingManager();
@@ -117,10 +120,25 @@ function LdrModel({
                 if (g) {
                     removeNullChildren(g);
                     g.rotation.x = Math.PI;
+
+                    // 모델 중심 정렬 (BrickJudgeViewer 패턴)
+                    const box = new THREE.Box3().setFromObject(g);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
+                    g.position.set(-center.x, -box.min.y, -center.z);
+
+                    const targetY = size.y / 2;
+                    if (controls && (controls as any).target) {
+                        (controls as any).target.set(0, targetY, 0);
+                        (controls as any).update();
+                    }
+                    camera.position.set(0, targetY + size.y * 0.3, Math.max(size.x, size.z) * 2.5);
+                    camera.lookAt(0, targetY, 0);
                 }
 
                 prev = g;
                 setGroup(g);
+                invalidate();
                 onLoaded?.();
             } catch (e) {
                 console.error("[LdrModel] Failed to load LDR:", e);
@@ -132,7 +150,7 @@ function LdrModel({
             cancelled = true;
             if (prev) disposeObject3D(prev);
         };
-    }, [url, ldconfigUrl, loader, onStepCountChange, onLoaded, onError]);
+    }, [url, ldconfigUrl, loader, onStepCountChange, onLoaded, onError, camera, controls, invalidate]);
 
     // 원본 머티리얼 저장 (투명화 후 복원용)
     const originalMaterialsRef = useRef<Map<number, THREE.Material | THREE.Material[]>>(new Map());
@@ -228,13 +246,7 @@ function LdrModel({
 
     if (!group) return null;
 
-    return (
-        <Bounds fit clip observe margin={1.2}>
-            <Center>
-                <primitive object={group} />
-            </Center>
-        </Bounds>
-    );
+    return <primitive object={group} />;
 }
 
 export type KidsLdrPreviewHandle = {
@@ -242,7 +254,7 @@ export type KidsLdrPreviewHandle = {
     captureScreenshot: () => string | null;
 };
 
-const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibraryPath, ldconfigUrl, stepMode = false }, ref) => {
+const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibraryPath, ldconfigUrl, stepMode = false, autoRotate = true }, ref) => {
     const { t } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [errorMSG, setErrorMSG] = useState<string | null>(null);
@@ -510,7 +522,7 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
                     enableZoom
                     minDistance={10}
                     maxDistance={1000}
-                    autoRotate={true}
+                    autoRotate={autoRotate}
                     autoRotateSpeed={2}
                 />
             </Canvas>
