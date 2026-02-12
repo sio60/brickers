@@ -85,6 +85,8 @@ export default function KidsPage() {
       try {
         setDebugLog(t.kids.generate.uploadPrepare);
         const presign = await myApi.getPresignUrl(rawFile.type, rawFile.name);
+        console.log("Presign Response:", presign);
+
 
         setDebugLog(t.kids.generate.uploading);
         const uploadRes = await fetch(presign.uploadUrl, {
