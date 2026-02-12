@@ -877,7 +877,7 @@ function KidsStepPageContent() {
     // 키보드 화살표 + 마우스 휠
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
-            if (!isAssemblyMode) return;
+            if (!isAssemblyMode || activeTab !== 'LDR') return;
             if (e.key === 'ArrowRight' && canNext) { setLoading(true); setStepIdx(v => v + 1); }
             else if (e.key === 'ArrowLeft' && canPrev) { setLoading(true); setStepIdx(v => v - 1); }
         };
@@ -888,7 +888,7 @@ function KidsStepPageContent() {
     // Shift+휠 = 스텝 전환, 일반 휠 = 3D 줌 (OrbitControls)
     useEffect(() => {
         const el = containerRef.current;
-        if (!el || !isAssemblyMode) return;
+        if (!el || !isAssemblyMode || activeTab !== 'LDR') return;
         const handleWheel = (e: WheelEvent) => {
             if (!e.shiftKey) return; // Shift 없으면 줌으로 넘김
             e.preventDefault();
@@ -1103,7 +1103,7 @@ function KidsStepPageContent() {
                     </div>
                 </div>
 
-                {isAssemblyMode && (
+                {isAssemblyMode && activeTab === 'LDR' && (
                     <div className="kidsStep__rightSidebar">
                         <div className="kidsStep__rightSidebarHeader">
                             {t.kids.steps.tabBrick}
