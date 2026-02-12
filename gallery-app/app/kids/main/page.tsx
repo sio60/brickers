@@ -643,54 +643,23 @@ function KidsPageContent() {
                             </div>
                         </div>
 
-                        {/* 하단 수직 버튼 그룹 */}
-                        <div className="actionBtns actionBtns--vertical">
+                        {/* 하단 버튼 그룹 */}
+                        <div className="actionBtns actionBtns--horizontal">
                             <button
-                                className="nextBtn nextBtn--primary"
-                                onClick={() => {
-                                    router.push(`/kids/steps?url=${encodeURIComponent(ldrUrl)}&jobId=${jobId ?? ""}&age=${age}${pdfUrl ? `&pdfUrl=${encodeURIComponent(pdfUrl)}` : ""}`);
-                                }}
-                                style={{ width: '100%', marginBottom: '12px' }}
-                            >
-                                {t.kids.generate.next}
-                            </button>
-
-                            <button
-                                className="dlBtn"
-                                onClick={handleSaveImage}
-                                disabled={isPdfGenerating}
-                                style={{ width: '100%', marginBottom: '12px' }}
-                            >
-                                {isPdfGenerating ? "Saving..." : "저장하기"}
-                            </button>
-
-                            <button
-                                className="dlBtn"
+                                className="actionBtn actionBtn--share"
                                 onClick={handleShareImage}
-                                style={{ width: '100%', marginBottom: '24px' }}
                             >
                                 공유하기
                             </button>
 
-                            {/* 다운로드 드롭다운 (기존 - 유지하거나 통합) */}
-                            <div className="dropdownContainer" style={{ width: '100%' }}>
-                                <button
-                                    className="dlBtn"
-                                    onClick={() => setIsDownloadOpen(!isDownloadOpen)}
-                                    style={{ width: '100%' }}
-                                >
-                                    기타 다운로드 ▼
-                                </button>
-                                {isDownloadOpen && (
-                                    <div className="dropdownMenu">
-                                        <button onClick={downloadLdr}>LDR Download</button>
-                                        {glbUrl && <button onClick={downloadGlb}>GLB Download</button>}
-                                        <button onClick={handleDownloadPdf} disabled={isPdfGenerating}>
-                                            {isPdfGenerating ? "PDF Generating..." : "PDF Download"}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
+                            <button
+                                className="actionBtn actionBtn--next"
+                                onClick={() => {
+                                    router.push(`/kids/steps?url=${encodeURIComponent(ldrUrl)}&jobId=${jobId ?? ""}&age=${age}${pdfUrl ? `&pdfUrl=${encodeURIComponent(pdfUrl)}` : ""}`);
+                                }}
+                            >
+                                {t.kids.generate.next}
+                            </button>
                         </div>
                     </>
                 )}

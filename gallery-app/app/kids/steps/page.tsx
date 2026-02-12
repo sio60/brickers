@@ -1143,26 +1143,28 @@ function KidsStepPageContent() {
                     </div>
                 </div>
 
-                {isAssemblyMode && activeTab === 'LDR' && (
+                {isAssemblyMode && activeTab === 'LDR' ? (
                     <div className="kidsStep__rightSidebar">
                         <div className="kidsStep__rightSidebarHeader">
                             {t.kids.steps.tabBrick}
                         </div>
-                        {stepBricks[stepIdx] && stepBricks[stepIdx].length > 0 ? (
-                            <div className="kidsStep__brickList">
-                                {stepBricks[stepIdx].map((b, i) => (
-                                    <div key={i} className="kidsStep__brickItem">
-                                        <BrickThumbnail partName={b.partName} color={b.color} />
-                                        <span className="kidsStep__brickCount">x{b.count}</span>
+                        <div className="kidsStep__brickList">
+                            {stepBricks[stepIdx] && stepBricks[stepIdx].length > 0 ? (
+                                stepBricks[stepIdx].map((brick: any, idx: number) => (
+                                    <div key={`${brick.partName}-${brick.color}-${idx}`} className="kidsStep__brickItem">
+                                        <div className="kidsStep__brickCanvasContainer">
+                                            <BrickThumbnail partName={brick.partName} color={brick.color} />
+                                        </div>
+                                        <div className="kidsStep__brickCount">x{brick.count}</div>
                                     </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="kidsStep__noBricks">
-                                No bricks needed for this step.
-                            </div>
-                        )}
+                                ))
+                            ) : (
+                                <div className="kidsStep__noBricks">No new bricks this step</div>
+                            )}
+                        </div>
                     </div>
+                ) : (
+                    <div className="kidsStep__sidebarSpacer" />
                 )}
 
                 {/* Gallery Modal */}
