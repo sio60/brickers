@@ -631,13 +631,7 @@ function KidsPageContent() {
                                 )}
                             </div>
 
-                            <button
-                                className="dlBtn"
-                                disabled={!shareBackgroundUrl || !ldrUrl}
-                                onClick={() => setShareModalOpen(true)}
-                            >
-                                {shareBackgroundUrl ? (t.kids?.share?.share || "Share") : "Background 준비중..."}
-                            </button>
+
                         </div>
                     </>
                 )}
