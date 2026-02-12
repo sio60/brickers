@@ -8,9 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
-
-const CDN_BASE =
-    "https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/";
+import { CDN_BASE, createLDrawURLModifier } from "@/lib/ldrawUrlModifier";
 
 /* ── Monkey-patch: null children을 원천 차단 ── */
 const _origAdd = THREE.Object3D.prototype.add;
@@ -60,75 +58,14 @@ function LdrModel({
 }: Props & { currentStep?: number; isPreview?: boolean; onStepCountChange?: (count: number) => void }) {
     const loader = useMemo(() => {
         THREE.Cache.enabled = true;
-
         const manager = new THREE.LoadingManager();
-
-        manager.setURLModifier((u) => {
-            let fixed = u.replace(/\\/g, "/");
-
-            // Normalize accidental double segments
-            fixed = fixed.replace("/ldraw/p/p/", "/ldraw/p/");
-            fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
-
-            // LDraw 라이브러리 URL인 경우 경로 수정
-            const lowerFixed = fixed.toLowerCase();
-            if (lowerFixed.includes("ldraw-parts-library") && lowerFixed.endsWith(".dat") && !lowerFixed.includes("ldconfig.ldr")) {
-                const filename = fixed.split("/").pop() || "";
-                const lowerName = filename.toLowerCase();
-                if (filename && lowerName !== filename) {
-                    fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
-                }
-
-
-                // Primitive 패턴: n-n*.dat (예: 4-4edge, 1-4cyli), stud*.dat, rect*.dat, box*.dat 등
-                const isPrimitive = /^\d+-\d+/.test(filename) ||
-                    /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud|empty)/.test(filename);
-
-                // Subpart 패턴: 파트번호 + s + 숫자.dat (예: 3003s02.dat)
-                const isSubpart = /^\d+s\d+\.dat$/i.test(filename);
-
-                // 1. 잘못된 경로 조합 수정
-                fixed = fixed.replace("/ldraw/models/p/", "/ldraw/p/");
-                fixed = fixed.replace("/ldraw/models/parts/", "/ldraw/parts/");
-                fixed = fixed.replace("/ldraw/p/parts/s/", "/ldraw/parts/s/");
-                fixed = fixed.replace("/ldraw/p/parts/", "/ldraw/parts/");
-                fixed = fixed.replace("/ldraw/p/s/", "/ldraw/parts/s/");
-                fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
-
-                // 2. primitive가 /parts/에 잘못 들어간 경우 /p/로 수정
-                if (isPrimitive && fixed.includes("/ldraw/parts/") && !fixed.includes("/parts/s/")) {
-                    fixed = fixed.replace("/ldraw/parts/", "/ldraw/p/");
-                }
-
-                // 3. subpart가 /p/에 잘못 들어간 경우 /parts/s/로 수정
-                if (isSubpart && fixed.includes("/ldraw/p/") && !fixed.includes("/p/48/") && !fixed.includes("/p/8/")) {
-                    fixed = fixed.replace("/ldraw/p/", "/ldraw/parts/s/");
-                }
-
-                // 4. 경로가 없는 경우 적절한 경로 추가
-                if (!fixed.includes("/parts/") && !fixed.includes("/p/")) {
-                    if (isSubpart) fixed = fixed.replace("/ldraw/", "/ldraw/parts/s/");
-                    else if (isPrimitive) fixed = fixed.replace("/ldraw/", "/ldraw/p/");
-                    else fixed = fixed.replace("/ldraw/", "/ldraw/parts/");
-                }
-            }
-
-            if (fixed.startsWith(CDN_BASE)) {
-                return `/api/proxy/ldr?url=${encodeURIComponent(fixed)}`;
-            }
-            return fixed;
-        });
-
+        manager.setURLModifier(createLDrawURLModifier());
         manager.onError = (path) => console.error("[LDraw] failed to load asset:", path);
 
         const l = new LDrawLoader(manager);
         l.setPartsLibraryPath(partsLibraryPath);
         l.smoothNormals = true;
-
-        try {
-            (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any);
-        } catch { }
-
+        try { (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any); } catch { }
         return l;
     }, [partsLibraryPath]);
 
@@ -405,6 +342,7 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
                     justifyContent: "center",
                     background: "rgba(248,249,250,0.8)",
                     zIndex: 10,
+                    pointerEvents: "none",
                 }}>
                     <div style={{ textAlign: "center", color: "#666", fontWeight: "bold" }}
                         dangerouslySetInnerHTML={{ __html: t.viewer3d?.loadingWait || t.common.loading }}

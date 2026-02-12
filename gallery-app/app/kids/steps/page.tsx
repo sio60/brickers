@@ -14,13 +14,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { registerToGallery } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
 import { type StepBrickInfo } from "@/lib/ldrUtils";
+import { CDN_BASE, createLDrawURLModifier } from "@/lib/ldrawUrlModifier";
 import BackgroundBricks from "@/components/BackgroundBricks";
 import { generatePdfFromServer } from "@/components/kids/PDFGenerator";
 import ShareModal from "@/components/kids/ShareModal";
 import './KidsStepPage.css';
-
-// SSR 제외
-const CDN_BASE = "https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/";
 
 /* ── Monkey-patch: null children을 원천 차단 ── */
 const _origAdd = THREE.Object3D.prototype.add;
@@ -120,62 +118,11 @@ function LdrModel({
     const loader = useMemo(() => {
         THREE.Cache.enabled = true;
         const manager = new THREE.LoadingManager();
-        const mainAbs = (() => {
-            try { return new URL(url, typeof window !== 'undefined' ? window.location.href : '').href; }
-            catch { return url; }
-        })();
-
-        manager.setURLModifier((u) => {
-            let fixed = u.replace(/\\/g, "/");
-            fixed = fixed.replace("/ldraw/p/p/", "/ldraw/p/");
-            fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
-            if (overrideMainLdrUrl) {
-                try {
-                    const abs = new URL(fixed, window.location.href).href;
-                    if (abs === mainAbs) return overrideMainLdrUrl;
-                } catch { }
-            }
-
-            const isAbsolute = fixed.startsWith("http") || fixed.startsWith("blob:") || fixed.startsWith("/") || fixed.includes(":");
-            if (overrideMainLdrUrl && !isAbsolute) {
-                try { fixed = new URL(fixed, url).href; } catch { }
-            }
-
-            const lowerFixed = fixed.toLowerCase();
-            if (lowerFixed.includes("ldraw-parts-library") && lowerFixed.endsWith(".dat") && !lowerFixed.includes("ldconfig.ldr")) {
-                const filename = fixed.split("/").pop() || "";
-                const lowerName = filename.toLowerCase();
-                if (filename && lowerName !== filename) {
-                    fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
-                }
-
-                const isPrimitive = /^\d+-\d+/.test(filename) ||
-                    /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud|empty)/.test(filename);
-                const isSubpart = /^\d+s\d+\.dat$/i.test(filename);
-
-                fixed = fixed.replace("/ldraw/models/p/", "/ldraw/p/");
-                fixed = fixed.replace("/ldraw/models/parts/", "/ldraw/parts/");
-                fixed = fixed.replace("/ldraw/p/parts/s/", "/ldraw/parts/s/");
-                fixed = fixed.replace("/ldraw/p/parts/", "/ldraw/parts/");
-                fixed = fixed.replace("/ldraw/p/s/", "/ldraw/parts/s/");
-                fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
-
-                if (isPrimitive && fixed.includes("/ldraw/parts/") && !fixed.includes("/parts/s/")) {
-                    fixed = fixed.replace("/ldraw/parts/", "/ldraw/p/");
-                }
-                if (isSubpart && fixed.includes("/ldraw/p/") && !fixed.includes("/p/48/") && !fixed.includes("/p/8/")) {
-                    fixed = fixed.replace("/ldraw/p/", "/ldraw/parts/s/");
-                }
-
-                if (!fixed.includes("/parts/") && !fixed.includes("/p/")) {
-                    if (isSubpart) fixed = fixed.replace("/ldraw/", "/ldraw/parts/s/");
-                    else if (isPrimitive) fixed = fixed.replace("/ldraw/", "/ldraw/p/");
-                    else fixed = fixed.replace("/ldraw/", "/ldraw/parts/");
-                }
-            }
-
-            return fixed;
-        });
+        manager.setURLModifier(createLDrawURLModifier({
+            mainModelUrl: url,
+            overrideMainLdrUrl,
+            useProxy: false,
+        }));
 
         const l = new LDrawLoader(manager);
         l.setPartsLibraryPath(partsLibraryPath);
@@ -460,29 +407,44 @@ function OffscreenBrickRenderer() {
     const [currentReq, setCurrentReq] = useState<RenderRequest | null>(null);
     const [url, setUrl] = useState<string | null>(null);
     const { gl, scene, camera } = useThree();
+    const frameCountRef = useRef(0);
+    const initialDelayRef = useRef(true);
 
     useEffect(() => {
-        processQueueInternal = () => {
-            const req = renderQueue.shift();
-            if (req) {
-                const ldr = `1 ${req.color} 0 0 0 1 0 0 0 1 0 0 0 1 ${req.partName}.dat`;
-                const blob = new Blob([ldr], { type: 'text/plain' });
-                const objUrl = URL.createObjectURL(blob);
-                setCurrentReq(req);
-                setUrl(objUrl);
-            } else {
-                isRendering = false;
-            }
+        // Delay thumbnail generation by 2s to let main model load first
+        const timer = setTimeout(() => {
+            initialDelayRef.current = false;
+            processQueueInternal = () => {
+                const req = renderQueue.shift();
+                if (req) {
+                    const ldr = `1 ${req.color} 0 0 0 1 0 0 0 1 0 0 0 1 ${req.partName}.dat`;
+                    const blob = new Blob([ldr], { type: 'text/plain' });
+                    const objUrl = URL.createObjectURL(blob);
+                    setCurrentReq(req);
+                    setUrl(objUrl);
+                } else {
+                    isRendering = false;
+                }
+            };
+            processQueue();
+        }, 2000);
+        return () => {
+            clearTimeout(timer);
+            processQueueInternal = null;
         };
-        processQueue();
-        return () => { processQueueInternal = null; };
     }, []);
 
     // When model loaded & rendered -> Capture
     const onLoaded = () => {
         // Wait a small tick for render
-        setTimeout(() => {
+        setTimeout(async () => {
             if (!currentReq) return;
+
+            // Yield to main thread every 3 renders to keep UI responsive
+            frameCountRef.current++;
+            if (frameCountRef.current % 3 === 0) {
+                await new Promise(resolve => setTimeout(resolve, 0));
+            }
 
             // Fit camera to brick bounding box for consistent sizing
             const box = new THREE.Box3().setFromObject(scene);
@@ -505,7 +467,7 @@ function OffscreenBrickRenderer() {
 
             // Cache & Resolve
             const cacheKey = `brick_thumb_${currentReq.partName}_${currentReq.color}`;
-            try { sessionStorage.setItem(cacheKey, dataUrl); } catch { } // Quota limit safe
+            try { sessionStorage.setItem(cacheKey, dataUrl); } catch { }
             currentReq.resolve(dataUrl);
 
             // Cleanup
@@ -546,7 +508,8 @@ function OffscreenRenderer() {
             <Canvas
                 gl={{ preserveDrawingBuffer: true, alpha: true }}
                 camera={{ position: [100, 100, 100], fov: 35 }}
-                dpr={1} // Low DPI for speed
+                dpr={1}
+                frameloop="demand"
             >
                 <ambientLight intensity={1.5} />
                 <directionalLight position={[5, 10, 5]} intensity={2} />
@@ -1053,7 +1016,7 @@ function KidsStepPageContent() {
                 <div className="kidsStep__layoutCenter">
                     <div className="kidsStep__card kids-main-canvas">
                         {loading && (
-                            <div className="kidsStep__loadingOverlay">
+                            <div className="kidsStep__loadingOverlay" style={{ pointerEvents: "none" }}>
                                 <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
                                 <span>{t.kids.steps.loading}</span>
                             </div>
@@ -1069,6 +1032,7 @@ function KidsStepPageContent() {
                                             camera={{ position: [200, -200, 200], fov: 45 }}
                                             dpr={[1, 2]}
                                             gl={{ preserveDrawingBuffer: true }}
+                                            frameloop="demand"
                                         >
                                             <ambientLight intensity={0.9} />
                                             <directionalLight position={[3, 5, 2]} intensity={1} />
@@ -1112,6 +1076,7 @@ function KidsStepPageContent() {
                                             camera={{ position: [200, -200, 200], fov: 45 }}
                                             dpr={[1, 2]}
                                             gl={{ preserveDrawingBuffer: true }}
+                                            frameloop="demand"
                                         >
                                             <ambientLight intensity={0.9} />
                                             <directionalLight position={[3, 5, 2]} intensity={1} />
@@ -1158,6 +1123,7 @@ function KidsStepPageContent() {
                             <Canvas
                                 camera={{ position: [5, 5, 5], fov: 50 }}
                                 dpr={[1, 2]}
+                                frameloop="demand"
                             >
                                 <ambientLight intensity={0.8} />
                                 <directionalLight position={[5, 10, 5]} intensity={1.5} />
@@ -1170,7 +1136,7 @@ function KidsStepPageContent() {
                                         <FitOnceOnLoad trigger={glbUrl} />
                                     </Bounds>
                                 )}
-                                <OrbitControls makeDefault enablePan={false} enableZoom autoRotate autoRotateSpeed={2.5} enableDamping />
+                                <OrbitControls makeDefault enablePan={false} enableZoom enableDamping />
                             </Canvas>
                         )}
                         {activeTab === 'GLB' && !glbUrl && <div className="kidsStep__noModel">3D Model not available</div>}

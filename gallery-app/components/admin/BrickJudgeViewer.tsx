@@ -9,9 +9,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import type { JudgeResult, JobListItem } from "@/types/judge";
-
-const CDN_BASE =
-    "https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/";
+import { CDN_BASE, createLDrawURLModifier } from "@/lib/ldrawUrlModifier";
 
 /* Monkey-patch: null children 방지 */
 const _origAdd = THREE.Object3D.prototype.add;
@@ -75,51 +73,7 @@ function JudgeLdrModel({
     const loader = useMemo(() => {
         THREE.Cache.enabled = true;
         const manager = new THREE.LoadingManager();
-
-        manager.setURLModifier((u) => {
-            let fixed = u.replace(/\\/g, "/");
-            fixed = fixed.replace("/ldraw/p/p/", "/ldraw/p/");
-            fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
-
-            const lowerFixed = fixed.toLowerCase();
-            if (lowerFixed.includes("ldraw-parts-library") && lowerFixed.endsWith(".dat") && !lowerFixed.includes("ldconfig.ldr")) {
-                const filename = fixed.split("/").pop() || "";
-                const lowerName = filename.toLowerCase();
-                if (filename && lowerName !== filename) {
-                    fixed = fixed.slice(0, fixed.length - filename.length) + lowerName;
-                }
-
-                const isPrimitive = /^\d+-\d+/.test(filename) ||
-                    /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud|empty)/.test(filename);
-                const isSubpart = /^\d+s\d+\.dat$/i.test(filename);
-
-                fixed = fixed.replace("/ldraw/models/p/", "/ldraw/p/");
-                fixed = fixed.replace("/ldraw/models/parts/", "/ldraw/parts/");
-                fixed = fixed.replace("/ldraw/p/parts/s/", "/ldraw/parts/s/");
-                fixed = fixed.replace("/ldraw/p/parts/", "/ldraw/parts/");
-                fixed = fixed.replace("/ldraw/p/s/", "/ldraw/parts/s/");
-                fixed = fixed.replace("/ldraw/parts/parts/", "/ldraw/parts/");
-
-                if (isPrimitive && fixed.includes("/ldraw/parts/") && !fixed.includes("/parts/s/")) {
-                    fixed = fixed.replace("/ldraw/parts/", "/ldraw/p/");
-                }
-                if (isSubpart && fixed.includes("/ldraw/p/") && !fixed.includes("/p/48/") && !fixed.includes("/p/8/")) {
-                    fixed = fixed.replace("/ldraw/p/", "/ldraw/parts/s/");
-                }
-
-                if (!fixed.includes("/parts/") && !fixed.includes("/p/")) {
-                    if (isSubpart) fixed = fixed.replace("/ldraw/", "/ldraw/parts/s/");
-                    else if (isPrimitive) fixed = fixed.replace("/ldraw/", "/ldraw/p/");
-                    else fixed = fixed.replace("/ldraw/", "/ldraw/parts/");
-                }
-            }
-
-            if (fixed.startsWith(CDN_BASE)) {
-                return `/api/proxy/ldr?url=${encodeURIComponent(fixed)}`;
-            }
-            return fixed;
-        });
-
+        manager.setURLModifier(createLDrawURLModifier());
         manager.onError = (path) => console.warn("[LDraw] failed to load:", path);
 
         const l = new LDrawLoader(manager);
@@ -481,6 +435,7 @@ export default function BrickJudgeViewer() {
                             key={selectedJob?.id || "empty"}
                             camera={{ position: [0, 200, 600], fov: 45, near: 0.1, far: 100000 }}
                             dpr={[1, 2]}
+                            frameloop="demand"
                         >
                             <color attach="background" args={["#f8f9fa"]} />
                             <ambientLight intensity={1.2} />
