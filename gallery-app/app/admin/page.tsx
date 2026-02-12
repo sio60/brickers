@@ -55,7 +55,7 @@ type RefundRequest = {
     updatedAt: string;
 };
 
-// [NEW] 사용자 타입 정의
+// [NEW] 사용자 타입 정의 (구조 복구)
 type User = {
     id: string;
     email: string;
@@ -68,6 +68,25 @@ type User = {
     lastLoginAt?: string;
     suspendedAt?: string;
     suspendedReason?: string;
+};
+
+// [NEW] 작업(Job) 타입 정의
+type AdminJob = {
+    id: string;
+    userId: string;
+    userInfo?: {
+        id: string;
+        email: string;
+        nickname: string;
+    };
+    title: string;
+    status: string;
+    stage: string;
+    sourceImageUrl?: string;
+    previewImageUrl?: string;
+    createdAt: string;
+    updatedAt: string;
+    errorMessage?: string;
 };
 
 // [NEW] 댓글 타입 정의
@@ -89,13 +108,14 @@ export default function AdminPage() {
 
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<AdminStats | null>(null);
-    const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "gallery" | "inquiries" | "reports" | "refunds" | "comments" | "brick-judge">("dashboard");
+    const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "jobs" | "gallery" | "inquiries" | "reports" | "refunds" | "comments" | "brick-judge">("dashboard");
 
     // 데이터 상태
     const [inquiries, setInquiries] = useState<Inquiry[]>([]);
     const [reports, setReports] = useState<Report[]>([]);
     const [refunds, setRefunds] = useState<RefundRequest[]>([]);
     const [users, setUsers] = useState<User[]>([]);
+    const [jobs, setJobs] = useState<AdminJob[]>([]); // [NEW]
 
     // 답변 입력 상태
     const [answerTexts, setAnswerTexts] = useState<Record<string, string>>({});
@@ -133,7 +153,8 @@ export default function AdminPage() {
         if (activeTab === "reports") fetchReports();
         if (activeTab === "refunds") fetchRefunds();
         if (activeTab === "users") fetchUsers();
-        if (activeTab === "comments") fetchComments(); // [NEW]
+        if (activeTab === "comments") fetchComments();
+        if (activeTab === "jobs") fetchJobs(); // [NEW]
     }, [activeTab, commentPage]);
 
     const fetchInquiries = async () => {
@@ -173,6 +194,19 @@ export default function AdminPage() {
             }
         } catch (error) {
             console.error("Failed to fetch comments", error);
+        }
+    };
+
+    // [NEW] 작업 목록 조회
+    const fetchJobs = async () => {
+        try {
+            const res = await authFetch("/api/admin/jobs?page=0&size=20");
+            if (res.ok) {
+                const data = await res.json();
+                setJobs(data.content || []);
+            }
+        } catch (e) {
+            console.error(e);
         }
     };
 
@@ -231,6 +265,23 @@ export default function AdminPage() {
         } catch (e) {
             console.error(e);
             alert(t.admin.error);
+        }
+    };
+
+    // [NEW] 작업 중단/재시도 핸들러
+    const handleJobAction = async (jobId: string, action: 'retry' | 'cancel') => {
+        if (!confirm(`Are you sure you want to ${action} this job?`)) return;
+        try {
+            const res = await authFetch(`/api/admin/jobs/${jobId}/${action}`, { method: "POST" });
+            if (res.ok) {
+                alert(`Job ${action}ed successfully.`);
+                fetchJobs();
+            } else {
+                alert("Failed to perform action.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error occurred.");
         }
     };
 
@@ -395,6 +446,12 @@ export default function AdminPage() {
                             {t.admin.sidebar.users}
                         </button>
                         <button
+                            className={`${styles.sidebarItem} ${activeTab === "jobs" ? styles.active : ""}`}
+                            onClick={() => setActiveTab("jobs")}
+                        >
+                            {t.admin.sidebar.jobs || "All Jobs"}
+                        </button>
+                        <button
                             className={`${styles.sidebarItem} ${activeTab === "comments" ? styles.active : ""}`}
                             onClick={() => setActiveTab("comments")}
                         >
@@ -437,10 +494,13 @@ export default function AdminPage() {
                             <h1 className={styles.title}>
                                 {activeTab === "dashboard" && t.floatingMenu.admin}
                                 {activeTab === "users" && t.admin.sidebar.users}
+                                {activeTab === "jobs" && (t.admin.sidebar.jobs || "All Jobs")}
                                 {activeTab === "inquiries" && t.admin.sidebar.inquiries}
                                 {activeTab === "reports" && t.admin.sidebar.reports}
                                 {activeTab === "refunds" && t.admin.sidebar.refunds}
                                 {activeTab === "comments" && t.admin.sidebar.comments}
+                                {activeTab === "brick-judge" && (t.admin.brickJudge?.title || "Brick Judge")}
+                                {activeTab === "gallery" && t.admin.sidebar.gallery}
                             </h1>
                             <button className={styles.closeBtn} onClick={() => router.back()}>✕</button>
                         </header>
@@ -465,7 +525,90 @@ export default function AdminPage() {
                             </div>
                         )}
 
-                        {/* [NEW] Comments Tab */}
+                        {/* [NEW] Jobs Tab */}
+                        {activeTab === "jobs" && (
+                            <div className={styles.list}>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-xl font-bold">All Jobs Management</h2>
+                                    <button onClick={fetchJobs} className="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">Refresh</button>
+                                </div>
+                                <table className="w-full text-left border-collapse bg-white rounded-lg overflow-hidden shadow-sm">
+                                    <thead className="bg-gray-50 border-b border-gray-100">
+                                        <tr>
+                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Image</th>
+                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Job Info</th>
+                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">User</th>
+                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Dates</th>
+                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {jobs.map((job) => (
+                                            <tr key={job.id} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-4 py-3">
+                                                    <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden relative">
+                                                        {job.previewImageUrl || job.sourceImageUrl ? (
+                                                            <img src={job.previewImageUrl || job.sourceImageUrl} alt="job" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="flex items-center justify-center w-full h-full text-gray-300">No Img</div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <div className="font-medium text-sm text-gray-900">{job.title || "Untitled Job"}</div>
+                                                    <div className="text-xs text-gray-500 font-mono" title={job.id}>{job.id.substring(0, 8)}...</div>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <div className="text-sm font-medium text-gray-900">{job.userInfo?.nickname || "Unknown"}</div>
+                                                    <div className="text-xs text-gray-500">{job.userInfo?.email || job.userId}</div>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium 
+                                                        ${job.status === 'DONE' ? 'bg-green-100 text-green-800' :
+                                                            job.status === 'FAILED' ? 'bg-red-100 text-red-800' :
+                                                                job.status === 'RUNNING' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                        {job.status}
+                                                    </span>
+                                                    <div className="text-xs text-gray-500 mt-1">{job.stage}</div>
+                                                </td>
+                                                <td className="px-4 py-3 text-xs text-gray-500">
+                                                    <div>Created: {new Date(job.createdAt).toLocaleDateString()}</div>
+                                                    <div>Updated: {new Date(job.updatedAt).toLocaleDateString()}</div>
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <div className="flex justify-end gap-2">
+                                                        {(job.status === 'FAILED' || job.status === 'CANCELED') && (
+                                                            <button
+                                                                onClick={() => handleJobAction(job.id, 'retry')}
+                                                                className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 border border-blue-200 rounded hover:bg-blue-50"
+                                                            >
+                                                                Retry
+                                                            </button>
+                                                        )}
+                                                        {(job.status === 'QUEUED' || job.status === 'RUNNING') && (
+                                                            <button
+                                                                onClick={() => handleJobAction(job.id, 'cancel')}
+                                                                className="text-xs text-red-600 hover:text-red-800 font-medium px-2 py-1 border border-red-200 rounded hover:bg-red-50"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {jobs.length === 0 && (
+                                            <tr>
+                                                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">No jobs found.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        {/* Comments Tab */}
                         {activeTab === "comments" && (
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between mb-4">
@@ -553,7 +696,7 @@ export default function AdminPage() {
                             </div>
                         )}
 
-                        {/* [NEW] Users Tab */}
+                        {/* Users Tab */}
                         {activeTab === "users" && (
                             <div className={styles.list}>
                                 <div className={styles.searchBar} style={{ marginBottom: "20px", display: "flex", gap: "10px" }}>
@@ -564,7 +707,6 @@ export default function AdminPage() {
                                         onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                                         style={{ padding: "10px", borderRadius: "8px", border: "1px solid #ddd", flex: 1 }}
                                     />
-                                    {/* 검색 기능은 백엔드 구현 필요 */}
                                     <button onClick={fetchUsers} style={{ padding: "10px 20px", borderRadius: "8px", border: "none", background: "#000", color: "#fff", cursor: "pointer" }}>
                                         Search
                                     </button>
