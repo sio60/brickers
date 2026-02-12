@@ -22,6 +22,7 @@ public class LocalStorageService implements StorageService {
             "image/png", "png",
             "image/jpeg", "jpg",
             "image/webp", "webp",
+            "image/avif", "avif",
             "application/octet-stream", "ldr", // ✅ LDR
             "text/plain", "ldr", // ✅ LDR (text)
             "application/json", "json"); // ✅ JSON

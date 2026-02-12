@@ -100,7 +100,7 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
         return () => { alive = false; };
     }, [isOpen, loading, backgroundUrl, ldrUrl]);
 
-    const handleDownload = async () => {
+    const handleDownload = () => {
         if (!compositeBlob) return;
         setWorking(true);
         try {
@@ -121,31 +121,36 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
         }
     };
 
-    const handleShare = async () => {
+    const handleShare = () => {
         if (!compositeBlob) return;
-        setWorking(true);
-        try {
-            const blob = compositeBlob;
-            const file = new File([blob], "brick-model.png", { type: "image/png" });
-            if (navigator.share && navigator.canShare?.({ files: [file] })) {
-                await navigator.share({
-                    title: "Check out my Brickers model!",
-                    text: "I made this with Brickers AI!",
-                    files: [file],
-                });
-            } else {
-                await navigator.clipboard.write([
-                    new ClipboardItem({
-                        [blob.type]: blob
-                    })
-                ]);
+
+        const file = new File([compositeBlob], "brick-model.png", { type: "image/png" });
+        if (navigator.share && navigator.canShare?.({ files: [file] })) {
+            // navigator.share must be called in the same turn as the user gesture
+            navigator.share({
+                title: "Check out my Brickers model!",
+                text: "I made this with Brickers AI!",
+                files: [file],
+            }).catch(e => {
+                if (e.name !== 'AbortError') {
+                    console.error("Share failed", e);
+                    alert("Share failed. Please try again.");
+                }
+            });
+        } else {
+            setWorking(true);
+            navigator.clipboard.write([
+                new ClipboardItem({
+                    [compositeBlob.type]: compositeBlob
+                })
+            ]).then(() => {
                 alert("Image copied to clipboard!");
-            }
-        } catch (e) {
-            console.log("Share skipped/failed", e);
-            alert("Share failed. Please try again.");
-        } finally {
-            setWorking(false);
+            }).catch(e => {
+                console.error("Clipboard failed", e);
+                alert("Share failed. Please try again.");
+            }).finally(() => {
+                setWorking(false);
+            });
         }
     };
 
