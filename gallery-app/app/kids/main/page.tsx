@@ -567,18 +567,43 @@ function KidsPageContent() {
 
     // 이미지 캡처 (배경 + 모델)
     const captureComposite = async (): Promise<Blob> => {
-        if (!captureRef.current) throw new Error("capture target missing");
-        // Canvas 렌더링 대기
-        await sleep(100);
-        const canvas = await html2canvas(captureRef.current, {
-            useCORS: true,
-            backgroundColor: null,
-            scale: 2,
-        });
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Canvas context failed");
+
+        canvas.width = 1000;
+        canvas.height = 1000;
+
+        // 1. Draw Background
+        if (shareBackgroundUrl) {
+            const bgImg = new Image();
+            bgImg.crossOrigin = "anonymous";
+            bgImg.src = shareBackgroundUrl;
+            await new Promise((resolve, reject) => {
+                bgImg.onload = resolve;
+                bgImg.onerror = reject;
+            });
+            ctx.drawImage(bgImg, 0, 0, 1000, 1000);
+        }
+
+        // 2. Draw 3D Model
+        if (previewRef.current) {
+            const dataUrl = previewRef.current.captureScreenshot();
+            if (dataUrl) {
+                const modelImg = new Image();
+                modelImg.src = dataUrl;
+                await new Promise((resolve, reject) => {
+                    modelImg.onload = resolve;
+                    modelImg.onerror = reject;
+                });
+                ctx.drawImage(modelImg, 0, 0, 1000, 1000);
+            }
+        }
+
         return new Promise((resolve, reject) => {
             canvas.toBlob((blob) => {
                 if (blob) resolve(blob);
-                else reject(new Error("blob generation failed"));
+                else reject(new Error("Blob generation failed"));
             }, "image/png");
         });
     };
@@ -631,15 +656,16 @@ function KidsPageContent() {
 
                 {status === "done" && ldrUrl && (
                     <>
-                        <div className="resultCard" ref={captureRef} style={{
+                        <div className="viewer-container" style={{
                             position: 'relative',
-                            backgroundImage: shareBackgroundUrl ? `url(${shareBackgroundUrl})` : 'none',
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
+                            width: '100%',
+                            height: '100%',
+                            backgroundColor: '#fff',
+                            borderRadius: '24px',
                             overflow: 'hidden'
                         }}>
                             <div className="viewer3d">
-                                <KidsLdrPreview key={ldrUrl} url={ldrUrl} ref={previewRef} />
+                                <KidsLdrPreview key={ldrUrl} url={ldrUrl} ref={previewRef} autoRotate={!shareModalOpen} />
                             </div>
                         </div>
 

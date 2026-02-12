@@ -24,6 +24,7 @@ type Props = {
     stepMode?: boolean;
     onLoaded?: () => void;
     onError?: (err: any) => void;
+    autoRotate?: boolean;
 };
 
 function removeNullChildren(obj: THREE.Object3D) {
@@ -242,7 +243,7 @@ export type KidsLdrPreviewHandle = {
     captureScreenshot: () => string | null;
 };
 
-const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibraryPath, ldconfigUrl, stepMode = false }, ref) => {
+const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibraryPath, ldconfigUrl, stepMode = false, autoRotate = true }, ref) => {
     const { t } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [errorMSG, setErrorMSG] = useState<string | null>(null);
@@ -510,7 +511,7 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
                     enableZoom
                     minDistance={10}
                     maxDistance={1000}
-                    autoRotate={true}
+                    autoRotate={autoRotate}
                     autoRotateSpeed={2}
                 />
             </Canvas>

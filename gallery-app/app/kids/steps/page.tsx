@@ -999,9 +999,14 @@ function KidsStepPageContent() {
                                 className={`kidsStep__sidebarBtn ${shareBackgroundUrl ? 'kidsStep__sidebarBtn--primary' : ''}`}
                                 style={{
                                     marginTop: 14,
-                                    backgroundColor: shareBackgroundUrl ? '#ffe135' : '#e0e0e0',
-                                    color: '#000',
-                                    fontWeight: 800
+                                    backgroundColor: shareBackgroundUrl ? '#000' : '#e0e0e0',
+                                    color: shareBackgroundUrl ? '#fff' : '#000',
+                                    fontWeight: 800,
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    padding: '12px',
+                                    transition: 'all 0.2s',
+                                    cursor: shareBackgroundUrl ? 'pointer' : 'not-allowed'
                                 }}
                                 onClick={() => setShareModalOpen(true)}
                                 disabled={!shareBackgroundUrl}
