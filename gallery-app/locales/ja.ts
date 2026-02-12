@@ -406,7 +406,26 @@ export const ja = {
             user: "ユーザー"
         },
         brickJudge: {
-            title: "物理エンジン検証"
+            title: "物理エンジン検証",
+            description: "ユーザー生成モデルの物理的安定性を検証します",
+            searchPlaceholder: "ニックネームまたはタイトルで検索...",
+            analyze: "分析",
+            analyzing: "分析中...",
+            score: "安定性スコア",
+            brickCount: "ブリック数",
+            issueCount: "問題",
+            stable: "安定",
+            unstable: "不安定",
+            elapsed: "処理時間",
+            noIssues: "問題なし",
+            noJobs: "分析可能なジョブがありません",
+            selectJob: "左側からジョブを選択してください",
+            legend: {
+                topOnly: "上部のみ接続",
+                floating: "浮遊",
+                isolated: "孤立",
+                normal: "正常"
+            }
         },
         gallery: {
             title: "ギャラリー管理",
