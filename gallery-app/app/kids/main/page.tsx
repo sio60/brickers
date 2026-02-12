@@ -127,6 +127,7 @@ function KidsPageContent() {
         const runProcess = async () => {
             processingRef.current = true;
             setStatus("loading");
+            const startTime = Date.now(); // [NEW] 대기 시간 측정을 위해
 
             // React가 Background3D를 언마운트할 시간 확보 (WebGL Context Lost 방지)
             await sleep(200);
@@ -134,12 +135,12 @@ function KidsPageContent() {
             setDebugLog(t.kids.generate.starting);
             console.log("[KidsPage] 🚀 runProcess 시작 | file:", rawFile?.name, "prompt:", targetPrompt);
 
-            gtag.event({
-                action: 'generate_start',
-                category: 'Kids',
+            gtag.trackGeneration("start", {
+                job_id: "pending", // 아직 생성 전이므로 pending
+                age: age,
                 label: targetPrompt ? 'prompt' : 'image',
-                value: budget,
-                prompt: targetPrompt || undefined
+                budget: budget,
+                search_term: targetPrompt || undefined
             });
 
             try {
@@ -308,6 +309,16 @@ function KidsPageContent() {
                             glbUrl: statusData.glbUrl,
                             age
                         });
+
+                        // [NEW] 트래킹: 생성 성공
+                        const waitTime = Math.round((Date.now() - startTime) / 1000);
+                        gtag.trackGeneration("success", {
+                            job_id: jid,
+                            age: age,
+                            wait_time: waitTime,
+                            brick_count: statusData.parts || 0,
+                            suggested_tags: statusData.suggestedTags?.join(', ')
+                        });
                         break;
                     }
                 }
@@ -336,19 +347,17 @@ function KidsPageContent() {
                 setStatus("done");
                 console.log("[KidsPage] ✅ 전체 프로세스 완료! | ldrUrl:", modelUrl);
 
-                gtag.event({
-                    action: 'generate_success',
-                    category: 'Kids',
-                    label: jobId || 'unknown',
-                    prompt: targetPrompt || undefined,
-                    suggested_tags: finalData.suggestedTags?.join(', ') || undefined,
-                    brick_count: finalData.parts || undefined
-                });
+                // (기존 gtag.event는 중복이므로 제거하거나 새로운 함수로 대체)
             } catch (e) {
                 if (!alive) return;
                 console.error("[KidsPage] ❌ Brick generation failed:", e);
-                setDebugLog(`${t.kids.generate.errorOccurred}: ${e instanceof Error ? e.message : String(e)}`);
                 setStatus("error");
+                // [NEW] 트래킹: 생성 실패
+                gtag.trackGeneration("fail", {
+                    job_id: jobId || "unknown",
+                    error_type: e instanceof Error ? e.name : "UnknownError",
+                    message: e instanceof Error ? e.message : String(e)
+                });
             }
         };
 
@@ -430,7 +439,11 @@ function KidsPageContent() {
             link.download = `brickers_${jobId || 'model'}.ldr`;
             link.click();
             URL.revokeObjectURL(dUrl);
-            gtag.event({ action: 'download_ldr', category: 'Download', label: jobId || 'model' });
+            gtag.trackUserFeedback({
+                action: "download",
+                job_id: jobId || 'model',
+                label: 'LDR'
+            });
         } catch (err) { console.error(err); }
     };
 
@@ -440,7 +453,11 @@ function KidsPageContent() {
         link.href = glbUrl;
         link.download = `brickers_${jobId || 'model'}.glb`;
         link.click();
-        gtag.event({ action: 'download_glb', category: 'Download', label: jobId || 'model' });
+        gtag.trackUserFeedback({
+            action: "download",
+            job_id: jobId || 'model',
+            label: 'GLB'
+        });
     };
 
     // 색상 모달 열 때 테마 로드
@@ -512,6 +529,14 @@ function KidsPageContent() {
                 visibility: "PUBLIC",
             });
 
+            // [NEW] 트래킹: 공유 성공
+            gtag.trackUserFeedback({
+                action: "share",
+                job_id: jobId || undefined,
+                label: "Gallery",
+                rating: 5 // 공유는 긍정적인 신호로 간주
+            });
+
             const safeTitle = (res.title || "brick").replace(/[^a-zA-Z0-9가-힣]/g, "-");
             const url = `${window.location.origin}/gallery/${safeTitle}-${res.id}`;
             setShareUrl(url);
@@ -554,6 +579,13 @@ function KidsPageContent() {
             // 3. 다운로드
             window.open(generatedPdfUrl, "_blank");
             setDebugLog(t.kids?.steps?.pdfDownloadComplete || "✅ PDF 다운로드 완료");
+
+            // [NEW] 트래킹: PDF 다운로드 성공
+            gtag.trackUserFeedback({
+                action: "download",
+                job_id: jobId || 'model',
+                label: 'PDF'
+            });
         } catch (e) {
             console.error("PDF Download Error:", e);
             alert(t.kids?.steps?.colorThemeError || "PDF 생성 중 오류가 발생했습니다.");
@@ -645,12 +677,17 @@ function KidsPageContent() {
             <div className="center">
                 {status === "loading" && (
                     <>
-                        <PuzzleMiniGame percent={percent} message={agentLogs.length > 0 ? (() => {
-                            const last = agentLogs[agentLogs.length - 1];
-                            const match = last.match(/^\[(.+?)\]\s*/);
-                            const step = match?.[1];
-                            return (step && t.sse?.[step]) || last.replace(/^\[.*?\]\s*/, '');
-                        })() : undefined} />
+                        <PuzzleMiniGame
+                            percent={percent}
+                            jobId={jobId ?? undefined}
+                            age={age}
+                            message={agentLogs.length > 0 ? (() => {
+                                const last = agentLogs[agentLogs.length - 1];
+                                const match = last.match(/^\[(.+?)\]\s*/);
+                                const step = match?.[1];
+                                return (step && t.sse?.[step]) || last.replace(/^\[.*?\]\s*/, '');
+                            })() : undefined}
+                        />
                     </>
                 )}
 
