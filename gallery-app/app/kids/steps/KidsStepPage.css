@@ -602,24 +602,6 @@
     border-radius: 8px;
 }
 
-/* ── Back Button ── */
-.kidsStep__backBtn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.75rem;
-    color: #000;
-    padding: 2px 0;
-    margin-bottom: 4px;
-    transition: color 0.15s;
-    text-align: left;
-}
-
-.kidsStep__backBtn:hover {
-    color: #000;
-}
-
 /* ── Mode Buttons ── */
 .kidsStep__modeBtn {
     display: flex;
