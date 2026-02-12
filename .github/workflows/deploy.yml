@@ -44,7 +44,8 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/brickers-backend:latest
             ${{ secrets.DOCKER_USERNAME }}/brickers-backend:${{ github.sha }}
           provenance: false
-          no-cache: true
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
           build-args: |
             AWS_S3_BUCKET=dummy
 
@@ -60,7 +61,8 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/brickers-frontend:latest
             ${{ secrets.DOCKER_USERNAME }}/brickers-frontend:${{ github.sha }}
           provenance: false
-          no-cache: true
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
           build-args: |
             NEXT_PUBLIC_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
             REVALIDATE_SECRET=${{ secrets.GALLERY_REVALIDATE_SECRET }}

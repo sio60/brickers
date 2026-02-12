@@ -2,7 +2,6 @@
 # 1. Build Stage
 # =============================================================================
 FROM gradle:8.14-jdk17 AS build
-COPY --chown=gradle:gradle . /home/gradle/src
 WORKDIR /home/gradle/src
 
 # -----------------------------------------------------------------------------
@@ -48,8 +47,16 @@ ENV AWS_SQS_REQUEST_QUEUE_URL=https://sqs.ap-northeast-2.amazonaws.com/dummy/Dum
 ENV AWS_SQS_RESULT_QUEUE_URL=https://sqs.ap-northeast-2.amazonaws.com/dummy/DummyResultQueue
 
 # -----------------------------------------------------------------------------
-# 빌드 실행 (테스트 제외)
+# 1단계: 빌드 설정만 복사 → 의존성 다운로드 (build.gradle 안 바뀌면 캐시)
 # -----------------------------------------------------------------------------
+COPY --chown=gradle:gradle build.gradle settings.gradle ./
+COPY --chown=gradle:gradle gradle/ ./gradle/
+RUN gradle dependencies --no-daemon || true
+
+# -----------------------------------------------------------------------------
+# 2단계: 전체 소스 복사 → 빌드 (소스 변경 시에만 실행)
+# -----------------------------------------------------------------------------
+COPY --chown=gradle:gradle . .
 RUN gradle build --no-daemon -x test
 
 # =============================================================================
