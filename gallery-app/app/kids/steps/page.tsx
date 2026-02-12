@@ -491,7 +491,7 @@ function OffscreenBrickRenderer() {
                 box.getSize(size);
                 const maxDim = Math.max(size.x, size.y, size.z);
                 const fov = (camera as THREE.PerspectiveCamera).fov * (Math.PI / 180);
-                const dist = (maxDim / (2 * Math.tan(fov / 2))) * 1.8;
+                const dist = (maxDim / (2 * Math.tan(fov / 2))) * 2.6;
                 const k = 0.577; // 1/sqrt(3)
                 camera.position.set(center.x + dist * k, center.y + dist * k, center.z + dist * k);
                 camera.lookAt(center);
@@ -877,6 +877,7 @@ function KidsStepPageContent() {
     // 키보드 화살표 + 마우스 휠
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
+            if (!isAssemblyMode) return;
             if (e.key === 'ArrowRight' && canNext) { setLoading(true); setStepIdx(v => v + 1); }
             else if (e.key === 'ArrowLeft' && canPrev) { setLoading(true); setStepIdx(v => v - 1); }
         };
@@ -884,21 +885,15 @@ function KidsStepPageContent() {
         return () => window.removeEventListener('keydown', handleKey);
     });
 
+    // Shift+휠 = 스텝 전환, 일반 휠 = 3D 줌 (OrbitControls)
     useEffect(() => {
         const el = containerRef.current;
-        if (!el) return;
+        if (!el || !isAssemblyMode) return;
         const handleWheel = (e: WheelEvent) => {
-            // 스크롤 가능한 영역 위에서는 휠 가로채지 않음
-            let target = e.target as HTMLElement | null;
-            while (target && target !== el) {
-                if (target.scrollHeight > target.clientHeight) return;
-                target = target.parentElement;
-            }
-            if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || Math.abs(e.deltaY) > 30) {
-                e.preventDefault();
-                if (e.deltaX > 0 || e.deltaY > 0) { if (canNext) { setLoading(true); setStepIdx(v => v + 1); } }
-                else { if (canPrev) { setLoading(true); setStepIdx(v => v - 1); } }
-            }
+            if (!e.shiftKey) return; // Shift 없으면 줌으로 넘김
+            e.preventDefault();
+            if (e.deltaY > 0) { if (canNext) { setLoading(true); setStepIdx(v => v + 1); } }
+            else { if (canPrev) { setLoading(true); setStepIdx(v => v - 1); } }
         };
         el.addEventListener('wheel', handleWheel, { passive: false });
         return () => el.removeEventListener('wheel', handleWheel);
@@ -1073,6 +1068,9 @@ function KidsStepPageContent() {
                                             <button className="kidsStep__navBtn kidsStep__navBtn--next" disabled={!canNext} onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}>
                                                 {t.kids.steps.next} →
                                             </button>
+                                        </div>
+                                        <div style={{ textAlign: "center", fontSize: "0.7rem", color: "#aaa", marginTop: 4 }}>
+                                            Shift + Scroll / ← → {t.kids.steps?.stepNavHint || '키로 단계 이동'}
                                         </div>
                                     </div>
                                 )}
