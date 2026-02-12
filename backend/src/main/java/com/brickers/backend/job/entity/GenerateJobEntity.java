@@ -113,6 +113,10 @@ public class GenerateJobEntity {
     @Builder.Default
     private boolean deleted = false;
 
+    /** 신고 접수 여부 (관리자 확인용) */
+    @Builder.Default
+    private boolean reported = false;
+
     /** 재시도/재개 요구(선택): 특정 단계부터 다시 수행하고 싶을 때 기록 */
     private JobStage requestedFromStage;
 

@@ -122,6 +122,7 @@ export default function AdminPage() {
     const [userSearch, setUserSearch] = useState("");
     const [debouncedUserSearch, setDebouncedUserSearch] = useState("");
     const [filterStatus, setFilterStatus] = useState("");
+    const [reportedOnly, setReportedOnly] = useState(false);
 
     // 답변 입력 상태
     const [answerTexts, setAnswerTexts] = useState<Record<string, string>>({});
@@ -176,7 +177,7 @@ export default function AdminPage() {
         if (activeTab === "users") fetchUsers();
         if (activeTab === "comments") fetchComments();
         if (activeTab === "jobs") fetchJobs(); // [NEW]
-    }, [activeTab, commentPage, jobPage, debouncedUserSearch, filterStatus]);
+    }, [activeTab, commentPage, jobPage, debouncedUserSearch, filterStatus, reportedOnly]);
 
     const fetchInquiries = async () => {
         try {
@@ -226,6 +227,7 @@ export default function AdminPage() {
             params.append("size", "50");
             if (debouncedUserSearch) params.append("userSearch", debouncedUserSearch);
             if (filterStatus) params.append("status", filterStatus);
+            if (reportedOnly) params.append("reported", "true");
 
             const res = await authFetch(`/api/admin/jobs?${params.toString()}`);
             if (res.ok) {
@@ -557,11 +559,11 @@ export default function AdminPage() {
                         {activeTab === "jobs" && (
                             <div className={styles.list}>
                                 <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-xl font-bold">All Jobs Management</h2>
+                                    <h2 className="text-xl font-bold">{t.admin.jobs?.title || "All Jobs Management"}</h2>
                                     <div className="flex gap-2">
                                         <input
                                             type="text"
-                                            placeholder="User Search (Nickname/Email)"
+                                            placeholder={t.admin.jobs?.searchPlaceholder || "User Search (Nickname/Email)"}
                                             value={userSearch}
                                             onChange={(e) => setUserSearch(e.target.value)}
                                             className="px-3 py-1 border border-gray-300 rounded text-sm w-64"
@@ -571,25 +573,36 @@ export default function AdminPage() {
                                             onChange={(e) => setFilterStatus(e.target.value)}
                                             className="px-3 py-1 border border-gray-300 rounded text-sm"
                                         >
-                                            <option value="">All Status</option>
-                                            <option value="QUEUED">Queued</option>
-                                            <option value="RUNNING">Running</option>
-                                            <option value="DONE">Done</option>
-                                            <option value="FAILED">Failed</option>
-                                            <option value="CANCELED">Canceled</option>
+                                            <option value="">{t.admin.jobs?.filter?.all || "All Status"}</option>
+                                            <option value="QUEUED">{t.admin.jobs?.filter?.queued || "Queued"}</option>
+                                            <option value="RUNNING">{t.admin.jobs?.filter?.running || "Running"}</option>
+                                            <option value="DONE">{t.admin.jobs?.filter?.done || "Done"}</option>
+                                            <option value="FAILED">{t.admin.jobs?.filter?.failed || "Failed"}</option>
+                                            <option value="CANCELED">{t.admin.jobs?.filter?.canceled || "Canceled"}</option>
                                         </select>
-                                        <button onClick={fetchJobs} className="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200 text-sm">Refresh</button>
+                                        <label className="flex items-center gap-2 px-3 py-1 border border-gray-300 rounded text-sm bg-white cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={reportedOnly}
+                                                onChange={(e) => setReportedOnly(e.target.checked)}
+                                                className="w-4 h-4"
+                                            />
+                                            {t.admin.jobs?.filter?.reportedOnly || "View Reported Only"}
+                                        </label>
+                                        <button onClick={fetchJobs} className="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200 text-sm">
+                                            {t.admin.jobs?.action?.refresh || "Refresh"}
+                                        </button>
                                     </div>
                                 </div>
                                 <table className="w-full text-left border-collapse bg-white rounded-lg overflow-hidden shadow-sm">
                                     <thead className="bg-gray-50 border-b border-gray-100">
                                         <tr>
-                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Image</th>
-                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Job Info</th>
-                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">User</th>
-                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
-                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Dates</th>
-                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
+                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t.admin.jobs?.table?.image || "Image"}</th>
+                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t.admin.jobs?.table?.jobInfo || "Job Info"}</th>
+                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t.admin.jobs?.table?.user || "User"}</th>
+                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t.admin.jobs?.table?.status || "Status"}</th>
+                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t.admin.jobs?.table?.dates || "Dates"}</th>
+                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">{t.admin.jobs?.table?.actions || "Actions"}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
@@ -600,16 +613,16 @@ export default function AdminPage() {
                                                         {job.previewImageUrl || job.sourceImageUrl ? (
                                                             <img src={job.previewImageUrl || job.sourceImageUrl} alt="job" className="w-full h-full object-cover" />
                                                         ) : (
-                                                            <div className="flex items-center justify-center w-full h-full text-gray-300">No Img</div>
+                                                            <div className="flex items-center justify-center w-full h-full text-gray-300">{t.admin.jobs?.table?.noImage || "No Img"}</div>
                                                         )}
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <div className="font-medium text-sm text-gray-900">{job.title || "Untitled Job"}</div>
+                                                    <div className="font-medium text-sm text-gray-900">{job.title || (t.admin.jobs?.table?.untitledJob || "Untitled Job")}</div>
                                                     <div className="text-xs text-gray-500 font-mono" title={job.id}>{job.id.substring(0, 8)}...</div>
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <div className="text-sm font-medium text-gray-900">{job.userInfo?.nickname || "Unknown"}</div>
+                                                    <div className="text-sm font-medium text-gray-900">{job.userInfo?.nickname || (t.admin.jobs?.table?.unknownUser || "Unknown")}</div>
                                                     <div className="text-xs text-gray-500">{job.userInfo?.email || job.userId}</div>
                                                 </td>
                                                 <td className="px-4 py-3">
@@ -622,8 +635,8 @@ export default function AdminPage() {
                                                     <div className="text-xs text-gray-500 mt-1">{job.stage}</div>
                                                 </td>
                                                 <td className="px-4 py-3 text-xs text-gray-500">
-                                                    <div>Created: {new Date(job.createdAt).toLocaleDateString()}</div>
-                                                    <div>Updated: {new Date(job.updatedAt).toLocaleDateString()}</div>
+                                                    <div>{t.admin.jobs?.table?.created || "Created"}: {new Date(job.createdAt).toLocaleDateString()}</div>
+                                                    <div>{t.admin.jobs?.table?.updated || "Updated"}: {new Date(job.updatedAt).toLocaleDateString()}</div>
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
                                                     <div className="flex justify-end gap-2">
@@ -632,7 +645,7 @@ export default function AdminPage() {
                                                                 onClick={() => handleJobAction(job.id, 'retry')}
                                                                 className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 border border-blue-200 rounded hover:bg-blue-50"
                                                             >
-                                                                Retry
+                                                                {t.admin.jobs?.action?.retry || "Retry"}
                                                             </button>
                                                         )}
                                                         {(job.status === 'QUEUED' || job.status === 'RUNNING') && (
@@ -640,7 +653,7 @@ export default function AdminPage() {
                                                                 onClick={() => handleJobAction(job.id, 'cancel')}
                                                                 className="text-xs text-red-600 hover:text-red-800 font-medium px-2 py-1 border border-red-200 rounded hover:bg-red-50"
                                                             >
-                                                                Cancel
+                                                                {t.admin.jobs?.action?.cancel || "Cancel"}
                                                             </button>
                                                         )}
                                                     </div>
@@ -649,7 +662,7 @@ export default function AdminPage() {
                                         ))}
                                         {jobs.length === 0 && (
                                             <tr>
-                                                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">No jobs found.</td>
+                                                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">{t.admin.jobs?.empty || "No jobs found."}</td>
                                             </tr>
                                         )}
                                     </tbody>
@@ -661,15 +674,15 @@ export default function AdminPage() {
                                         onClick={() => setJobPage((p: number) => p - 1)}
                                         className="px-3 py-1 rounded text-sm disabled:opacity-30 hover:bg-gray-100"
                                     >
-                                        Previous
+                                        {t.admin.jobs?.pagination?.previous || "Previous"}
                                     </button>
-                                    <span className="text-xs text-gray-500">Page {jobPage + 1} of {jobTotalPages || 1}</span>
+                                    <span className="text-xs text-gray-500">{t.admin.jobs?.pagination?.page || "Page"} {jobPage + 1} {t.admin.jobs?.pagination?.of || "of"} {jobTotalPages || 1}</span>
                                     <button
                                         disabled={jobPage >= jobTotalPages - 1}
                                         onClick={() => setJobPage((p: number) => p + 1)}
                                         className="px-3 py-1 rounded text-sm disabled:opacity-30 hover:bg-gray-100"
                                     >
-                                        Next
+                                        {t.admin.jobs?.pagination?.next || "Next"}
                                     </button>
                                 </div>
                             </div>
