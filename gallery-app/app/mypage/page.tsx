@@ -933,7 +933,7 @@ function MyPageContent() {
                         </div>
                         <div className={styles.mypage__menuList}>
                             <button
-                                className={`${styles.mypage__menuItem2} ${styles.primary}`}
+                                className={`${styles.mypage__menuItem2}`}
                                 onClick={() => handleMenuAction('preview')}
                                 disabled={!menuJob.sourceImageUrl}
                             >
@@ -941,15 +941,18 @@ function MyPageContent() {
                                 <span>{t.jobs.menu?.previewImage}</span>
                             </button>
                             <button
-                                className={`${styles.mypage__menuItem2} ${styles.primary}`}
+                                className={`${styles.mypage__menuItem2}`}
                                 onClick={() => handleMenuAction('view')}
                                 disabled={!menuJob.ldrUrl}
                             >
+                                <Icons.Layers className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.viewBlueprint}</span>
                             </button>
 
+                            <div className={styles.mypage__menuDivider} />
+
                             <button
-                                className={`${styles.mypage__menuItem2} ${styles.primary}`}
+                                className={`${styles.mypage__menuItem2}`}
                                 onClick={() => handleShare(menuJob)}
                             >
                                 <Icons.Image className={styles.mypage__menuIcon2} />
