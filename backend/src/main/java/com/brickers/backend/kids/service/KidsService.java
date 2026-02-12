@@ -35,7 +35,7 @@ public class KidsService {
     private final GenerateJobRepository generateJobRepository;
     private final StorageService storageService;
     private final KidsAsyncWorker kidsAsyncWorker;
-    private final com.brickers.backend.kids.client.AiRenderClient aiRenderClient; // ✅ [NEW]
+    private final com.brickers.backend.kids.client.AiRenderClient aiRenderClient; // [NEW]
     private final UserRepository userRepository;
     private final SqsProducerService sqsProducerService;
 
@@ -100,7 +100,7 @@ public class KidsService {
 
         // 2) SQS 또는 Async 워커로 작업 전달
         if (sqsEnabled) {
-            // ✅ SQS로 작업 요청 전송
+            // SQS로 작업 요청 전송
             log.info("[Brickers] SQS로 작업 요청 전송 | jobId={}", job.getId());
             sqsProducerService.sendJobRequest(
                     job.getId(),
@@ -197,7 +197,7 @@ public class KidsService {
         }
 
         generateJobRepository.save(job);
-        log.info("[Brickers] ✅ Job Stage 업데이트 완료 | jobId={} | stage={}", jobId, stage);
+        log.info("[Brickers] Job Stage 업데이트 완료 | jobId={} | stage={}", jobId, stage);
     }
 
     /**
@@ -213,7 +213,25 @@ public class KidsService {
         job.setUpdatedAt(LocalDateTime.now());
         generateJobRepository.save(job);
 
-        log.info("[Brickers] ✅ PDF URL 저장 완료 | jobId={}", jobId);
+        log.info("[Brickers] PDF URL 저장 완료 | jobId={}", jobId);
+    }
+
+    /**
+     * \u2705 Screenshot \uc11c\ubc84\uc5d0\uc11c \ubc30\uacbd URL
+     * \uc5c5\ub370\uc774\ud2b8
+     */
+    public void updateBackgroundUrl(String jobId, String backgroundUrl) {
+        log.info("[Brickers] \ubc30\uacbd URL \uc5c5\ub370\uc774\ud2b8 | jobId={} | backgroundUrl={}", jobId,
+                backgroundUrl);
+
+        GenerateJobEntity job = generateJobRepository.findById(jobId)
+                .orElseThrow(() -> new java.util.NoSuchElementException("Job not found: " + jobId));
+
+        job.setBackgroundUrl(backgroundUrl);
+        job.setUpdatedAt(LocalDateTime.now());
+        generateJobRepository.save(job);
+
+        log.info("[Brickers] 배경 URL 저장 완료 | jobId={}", jobId);
     }
 
     /**

@@ -75,6 +75,14 @@
     margin-top: 20px;
 }
 
+.actionBtns--vertical {
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+    max-width: 300px;
+    align-items: center;
+}
+
 .dlBtn {
     background: #fff;
     color: #000;
