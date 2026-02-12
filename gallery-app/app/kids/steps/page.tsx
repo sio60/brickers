@@ -487,7 +487,7 @@ function OffscreenBrickRenderer() {
                 box.getSize(size);
                 const maxDim = Math.max(size.x, size.y, size.z);
                 const fov = (camera as THREE.PerspectiveCamera).fov * (Math.PI / 180);
-                const dist = (maxDim / (2 * Math.tan(fov / 2))) * 2.1; // Adjusted from 1.6 to 2.1 (20% larger than original 2.6)
+                const dist = (maxDim / (2 * Math.tan(fov / 2))) * 1.9; // Balanced: between 1.7 (too big) and 2.1 (too small)
                 const k = 0.577; // 1/sqrt(3)
                 camera.position.set(center.x + dist * k, center.y + dist * k, center.z + dist * k);
                 camera.lookAt(center);
@@ -520,7 +520,7 @@ function OffscreenBrickRenderer() {
             <LdrModel
                 url={url}
                 fitTrigger={url}
-                fitMargin={2.0}
+                fitMargin={1.6}
                 onLoaded={onLoaded}
                 onError={() => {
                     // Skip error
