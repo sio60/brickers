@@ -1,16 +1,16 @@
 export const GA_TRACKING_ID = process.env['NEXT_PUBLIC_GA_ID'] || "";
-if (typeof window !== "undefined") {
-    console.log(`📡 [GA4] Tracking ID loaded: ${GA_TRACKING_ID}`);
-}
+// if (typeof window !== "undefined") {
+//     console.log(`📡 [GA4] Tracking ID loaded: ${GA_TRACKING_ID}`);
+// }
 
 // https://developers.google.com/analytics/devguides/collection/gtagjs/events
 export const pageview = (url: string) => {
     if (typeof window !== "undefined" && window.gtag) {
         window.gtag("config", GA_TRACKING_ID, {
             page_path: url,
-            debug_mode: true,
+            debug_mode: true, // GA4 실시간 DebugView 확인을 위해 활성화
         });
-        console.info(`🚩 [GA4] Pageview sent to: ${url}`);
+        // console.info(`🚩 [GA4] Pageview sent to: ${url}`);
     }
 };
 
@@ -29,7 +29,6 @@ export const event = ({ action, category, label, value, ...rest }: {
             value: value,
             ...rest,
         });
-        console.info(`🎯 [GA4] Event: ${action}`, { category, label, value, ...rest });
     }
 };
 
@@ -40,11 +39,9 @@ export const setUserId = (userId: string | null) => {
     if (typeof window !== "undefined" && window.gtag) {
         window.gtag("config", GA_TRACKING_ID, {
             user_id: userId,
-            debug_mode: true,
+            debug_mode: true, // User ID 매칭 확인을 위해 활성화
         });
-        console.info(`📊 [GA4] User ID set to: ${userId}`);
-    } else {
-        console.warn("⚠️ [GA4] gtag is not defined. Cannot set User ID.");
+        // console.info(`📊 [GA4] User ID set to: ${userId}`);
     }
 };
 
@@ -54,6 +51,5 @@ export const setUserId = (userId: string | null) => {
 export const setUserProperties = (properties: Record<string, any>) => {
     if (typeof window !== "undefined" && window.gtag) {
         window.gtag("set", "user_properties", properties);
-        console.info(`📊 [GA4] User Properties set:`, properties);
     }
 };
