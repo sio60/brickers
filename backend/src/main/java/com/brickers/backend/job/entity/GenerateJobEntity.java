@@ -97,6 +97,9 @@ public class GenerateJobEntity {
     /** PDF URL (S3) */
     private String pdfUrl; // [New]
 
+    /** 배경 이미지 URL (Nano Banana 생성) */
+    private String backgroundUrl;
+
     /** 6면 스크린샷 URL 맵 (front, back, left, right, top, bottom) */
     private java.util.Map<String, String> screenshotUrls;
 

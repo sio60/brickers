@@ -57,6 +57,9 @@ public class MyJobResponse {
     /** 6면 스크린샷 URL 맵 */
     private Map<String, String> screenshotUrls;
 
+    /** 배경 이미지 URL (Nano Banana) */
+    private String backgroundUrl;
+
     /** PRO 모드 여부 (보통 1000개 이상) */
     private boolean isPro;
 
@@ -91,6 +94,7 @@ public class MyJobResponse {
                 .errorMessage(j.getErrorMessage())
                 .suggestedTags(j.getSuggestedTags())
                 .screenshotUrls(j.getScreenshotUrls())
+                .backgroundUrl(j.getBackgroundUrl())
                 .parts(j.getParts())
                 .finalTarget(j.getFinalTarget())
                 .isPro(j.getParts() != null && j.getParts() >= 1000)

@@ -46,6 +46,7 @@ public class SqsMessage {
     private String ldrUrl;
     private String bomUrl;
     private String pdfUrl; // [New] PDF URL
+    private String backgroundUrl; // Background image URL (Nano Banana)
     private Integer parts;
     private Integer finalTarget;
     private List<String> tags;
