@@ -10,6 +10,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { CDN_BASE, createLDrawURLModifier } from "@/lib/ldrawUrlModifier";
+import { preloadPartsBundle } from "@/lib/ldrawBundleLoader";
 
 /* ── Monkey-patch: null children을 원천 차단 ── */
 const _origAdd = THREE.Object3D.prototype.add;
@@ -82,6 +83,9 @@ function LdrModel({
         (async () => {
             try {
                 setGroup(null);
+
+                // 0. Preload parts bundle (cache injection)
+                await preloadPartsBundle(url);
 
                 // 1. LDR 텍스트 가져오기
                 const res = await fetch(url);

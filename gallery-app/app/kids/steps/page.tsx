@@ -17,6 +17,7 @@ import * as gtag from "@/lib/gtag";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
 import { type StepBrickInfo } from "@/lib/ldrUtils";
 import { CDN_BASE, createLDrawURLModifier } from "@/lib/ldrawUrlModifier";
+import { preloadPartsBundle } from "@/lib/ldrawBundleLoader";
 import BackgroundBricks from "@/components/BackgroundBricks";
 import { generatePdfFromServer } from "@/components/kids/PDFGenerator";
 import ShareModal from "@/components/kids/ShareModal";
@@ -141,6 +142,7 @@ function LdrModel({
         let prev: THREE.Group | null = null;
         (async () => {
             setGroup(null);
+            await preloadPartsBundle(url);
             await loader.preloadMaterials(ldconfigUrl);
             const g = await loader.loadAsync(url);
             if (cancelled) { disposeObject3D(g); return; }
