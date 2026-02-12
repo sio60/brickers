@@ -157,7 +157,7 @@ export default React.memo(function Viewer3D({ url }: Viewer3DProps) {
                 />
             )}
 
-            <Canvas camera={{ position: [0, 80, 500], fov: 45 }} dpr={[1, 2]} frameloop="demand">
+            <Canvas camera={{ position: [0, 80, 500], fov: 45, near: 0.1, far: 100000 }} dpr={[1, 2]} frameloop="demand">
                 <ThrottledDriver />
                 <ambientLight intensity={0.9} />
                 <directionalLight position={[10, 20, 10]} intensity={1.5} />

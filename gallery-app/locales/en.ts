@@ -514,6 +514,7 @@ export const en = {
         views: "Views",
         likes: "Likes",
         view3d: "View in 3D & Build",
+        viewImages: "View Images",
         save: "Save",
         share: "Share",
         creator: "CREATOR",

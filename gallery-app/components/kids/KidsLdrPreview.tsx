@@ -487,7 +487,7 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
 
             <Canvas
                 ref={canvasRef}
-                camera={{ position: [0, 80, 500], fov: 45 }}
+                camera={{ position: [0, 80, 500], fov: 45, near: 0.1, far: 100000 }}
                 dpr={[1, 2]}
                 gl={{ alpha: true, preserveDrawingBuffer: true }} // 캡처를 위해 preserveDrawingBuffer 필수
                 frameloop="demand"
