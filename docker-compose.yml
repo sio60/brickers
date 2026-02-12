@@ -66,6 +66,10 @@ services:
       # ✅ Internal API Token (AI Server → Backend 로그 전송 인증)
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN}
 
+      # ✅ GA4 Data API 인증 (Backend 전용)
+      - GA4_PROPERTY_ID=${GA4_PROPERTY_ID}
+      - GA4_CREDENTIALS_JSON=${GA4_CREDENTIALS_JSON}
+
     networks:
       - brickers-network
 
@@ -96,6 +100,8 @@ services:
       # ✅ Next.js 환경변수
       # NEXT_PUBLIC_*은 클라이언트(브라우저)에서 사용 → 빈 문자열로 상대경로 사용
       - NEXT_PUBLIC_API_BASE_URL=
+      - NEXT_PUBLIC_GA_ID=${NEXT_PUBLIC_GA_ID}
+      - NEXT_PUBLIC_GTM_ID=${NEXT_PUBLIC_GTM_ID}
       # API_BASE는 서버사이드(SSR, rewrites)에서 사용 → Docker 내부 네트워크
       - API_BASE=http://backend:8080
       - REVALIDATE_SECRET=${GALLERY_REVALIDATE_SECRET}
