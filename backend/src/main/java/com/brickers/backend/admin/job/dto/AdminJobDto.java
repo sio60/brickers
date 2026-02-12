@@ -13,8 +13,18 @@ import java.time.LocalDateTime;
 public class AdminJobDto {
     private String id;
     private String userId;
+    private UserInfo userInfo; // [NEW] 사용자 정보
     private String title;
     private JobStatus status;
+
+    @Data
+    @Builder
+    public static class UserInfo {
+        private String id;
+        private String email;
+        private String nickname;
+    }
+
     private JobStage stage;
     private String sourceImageUrl;
     private String errorMessage;

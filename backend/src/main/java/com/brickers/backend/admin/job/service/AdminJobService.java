@@ -12,13 +12,19 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.brickers.backend.user.entity.User;
+import com.brickers.backend.user.repository.UserRepository;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AdminJobService {
 
     private final GenerateJobRepository jobRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public Page<AdminJobDto> getAllJobs(JobStatus status, int page, int size) {
@@ -29,7 +35,27 @@ public class AdminJobService {
         } else {
             result = jobRepository.findAll(pageRequest);
         }
-        return result.map(AdminJobDto::from);
+
+        // [NEW] 사용자 정보 일괄 조회
+        Set<String> userIds = result.getContent().stream()
+                .map(GenerateJobEntity::getUserId)
+                .collect(Collectors.toSet());
+
+        Map<String, User> userMap = userRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        return result.map(job -> {
+            AdminJobDto dto = AdminJobDto.from(job);
+            User user = userMap.get(job.getUserId());
+            if (user != null) {
+                dto.setUserInfo(AdminJobDto.UserInfo.builder()
+                        .id(user.getId())
+                        .email(user.getEmail())
+                        .nickname(user.getNickname())
+                        .build());
+            }
+            return dto;
+        });
     }
 
     @Transactional(readOnly = true)
