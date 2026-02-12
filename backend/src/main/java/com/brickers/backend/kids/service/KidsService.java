@@ -141,7 +141,9 @@ public class KidsService {
                 "size", "1024x1024",
                 "response_format", "b64_json");
 
-        Map response = webClientBuilder.build().post()
+        Map response = webClientBuilder
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024)) // 10MB
+                .build().post()
                 .uri("https://api.openai.com/v1/images/generations")
                 .header("Authorization", "Bearer " + openaiApiKey)
                 .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
