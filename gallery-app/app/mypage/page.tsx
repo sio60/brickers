@@ -1229,7 +1229,8 @@ function MyPageContent() {
                     setShareModalOpen(false);
                     setShareJob(null);
                 }}
-                imageUrl={shareImageUrl}
+                backgroundUrl={shareImageUrl}
+                ldrUrl={shareJob?.ldrUrl || null}
                 loading={shareLoading}
             />
         </div>
