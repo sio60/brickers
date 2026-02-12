@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
+import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import type { JudgeResult, JobListItem } from "@/types/judge";
 
 const CDN_BASE =
@@ -100,6 +101,7 @@ function JudgeLdrModel({
         });
 
         const l = new LDrawLoader(manager);
+        try { (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any); } catch { }
         l.setPartsLibraryPath(CDN_BASE);
         (l as any).preloadMaterials(CDN_BASE + "LDConfig.ldr");
         return l;
