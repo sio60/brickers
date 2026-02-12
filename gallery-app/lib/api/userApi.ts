@@ -31,6 +31,7 @@ export interface MyJob {
     parts?: number;            // 최종 브릭 개수
     finalTarget?: number;      // 최종 해상도
     isPro?: boolean;           // PRO 모드 여부
+    backgroundUrl?: string;    // 배경 이미지 URL (Nano Banana)
     hasResult: boolean;
     errorMessage: string | null;
     createdAt: string;

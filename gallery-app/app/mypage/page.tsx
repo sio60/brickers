@@ -394,59 +394,16 @@ function MyPageContent() {
             alert(t.jobs.noLdrFile);
             return;
         }
+
+        // 배경 이미지가 없으면 기본값(null)으로 띄우거나, 혹은 "backgroundUrl"이 있으면 그것을 사용
+        // (백엔드에서 backgroundUrl을 내려주도록 수정했으므로, job.backgroundUrl 사용)
+        const bgUrl = job.backgroundUrl || null;
+
         setMenuJob(null);
         setShareJob(job);
+        setShareImageUrl(bgUrl);
         setShareModalOpen(true);
-        setShareLoading(true);
-        setShareImageUrl(null);
-    };
-
-    // 쉐어용 모델 로딩 완료 시 자동 캡처 & 생성
-    const onShareModelLoaded = async () => {
-        if (!shareJob || !sharePreviewRef.current) return;
-
-        // 렌더링 안정화 대기
-        await new Promise(r => setTimeout(r, 1500));
-
-        try {
-            const dataUrl = sharePreviewRef.current.captureScreenshot();
-            if (!dataUrl) throw new Error("Failed to capture screenshot");
-
-            const res = await fetch(dataUrl);
-            const blob = await res.blob();
-
-            const formData = new FormData();
-            formData.append("file", blob, "model.png");
-
-            // 태그 정보가 있으면 포함, 없으면 기본값
-            let subject = shareJob.title || "lego creation";
-            // MyJob에는 tag 정보가 없으므로 생략하거나 기본값 사용
-            // 만약 상세 조회 API가 있다면 거기서 가져와야 함. 일단 title 사용.
-            formData.append("subject", subject);
-
-            const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
-            const response = await fetch(`${apiBase}/api/kids/share/background`, {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!response.ok) throw new Error("Failed to generate background");
-
-            const data = await response.json();
-            if (data.url) {
-                setShareImageUrl(data.url);
-            } else {
-                throw new Error("No URL in response");
-            }
-        } catch (e) {
-            console.error("Share gen error:", e);
-            alert("배경 생성에 실패했습니다.");
-            setShareModalOpen(false);
-        } finally {
-            setShareLoading(false);
-            // 생성 완료 후 3D 모델 언마운트 (리소스 절약)
-            setShareJob(null);
-        }
+        setShareLoading(false); // 이미 URL이 있으므로 로딩 필요 없음
     };
 
     // 색상 변경 관련 함수
@@ -988,8 +945,16 @@ function MyPageContent() {
                                 onClick={() => handleMenuAction('view')}
                                 disabled={!menuJob.ldrUrl}
                             >
-                                <Icons.Layers className={styles.mypage__menuIcon2} />
                                 <span>{t.jobs.menu?.viewBlueprint}</span>
+                            </button>
+
+                            <button
+                                className={`${styles.mypage__menuItem2}`}
+                                onClick={() => handleShare(menuJob)}
+                                style={{ color: '#000', fontWeight: 'bold' }}
+                            >
+                                <Icons.Image className={styles.mypage__menuIcon2} />
+                                <span>{t.detail?.share || "공유"}</span>
                             </button>
 
                             {/* PDF Download Button */}
@@ -1052,16 +1017,6 @@ function MyPageContent() {
                                 <span>{t.jobs.menu?.report}</span>
                             </button>
 
-                            <div className={styles.mypage__menuDivider} />
-
-                            <button
-                                className={`${styles.mypage__menuItem2} ${styles.primary}`}
-                                onClick={() => handleShare(menuJob)}
-                                style={{ color: '#0070f3' }}
-                            >
-                                <Icons.Image className={styles.mypage__menuIcon2} />
-                                <span>{t.detail?.share || "공유"}</span>
-                            </button>
 
                             <div className={styles.mypage__menuDivider} />
                             {/* <button
@@ -1212,16 +1167,7 @@ function MyPageContent() {
                 </div>
             )}
                 */}
-            {/* 공유하기 배경 생성용 숨김 뷰어 */}
-            {shareModalOpen && shareJob && (
-                <div style={{ position: "absolute", top: "-9999px", left: "-9999px", width: "800px", height: "800px" }}>
-                    <KidsLdrPreview
-                        ref={sharePreviewRef}
-                        url={shareJob.ldrUrl!}
-                        onLoaded={onShareModelLoaded}
-                    />
-                </div>
-            )}
+
 
             <ShareModal
                 isOpen={shareModalOpen}
