@@ -435,14 +435,14 @@
 .kidsStep__modeContainer {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
 .kidsStep__colorContainer {
-    margin-top: 8px;
+    margin-top: 10px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
 .kidsStep__sidebarSection {
