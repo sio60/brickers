@@ -8,7 +8,9 @@ import styles from "./MyPage.module.css";
 import { getMyOverview, getMyProfile, getMyJobs, retryJob, cancelJob, updateMyProfile, ApiError } from "@/lib/api/myApi";
 import type { MyOverview, MyProfile, MyJob } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, downloadLdrFromBase64 } from "@/lib/api/colorVariantApi";
-import KidsLdrPreview from "@/components/kids/KidsLdrPreview";
+
+import KidsLdrPreview, { KidsLdrPreviewHandle } from "@/components/kids/KidsLdrPreview";
+import ShareModal from "@/components/kids/ShareModal";
 import BackgroundBricks from "@/components/BackgroundBricks";
 import UpgradeModal from "@/components/UpgradeModal";
 
@@ -90,6 +92,13 @@ function MyPageContent() {
     const [isApplyingColor, setIsApplyingColor] = useState(false);
     const [colorChangedLdrBase64, setColorChangedLdrBase64] = useState<string | null>(null);
 
+
+    // 공유하기 관련 상태
+    const [shareModalOpen, setShareModalOpen] = useState(false);
+    const [shareLoading, setShareLoading] = useState(false);
+    const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
+    const [shareJob, setShareJob] = useState<MyJob | null>(null); // 공유할 작업 (렌더링 트리거)
+    const sharePreviewRef = useRef<KidsLdrPreviewHandle>(null);
 
     const loadJobsPage = async (page: number, replace = false) => {
         try {
@@ -376,6 +385,69 @@ function MyPageContent() {
         { id: "settings" as MenuItem, label: t.menu.settings },
         { id: "delete" as MenuItem, label: t.menu.delete },
     ];
+
+
+
+    // 공유하기 처리 로직
+    const handleShare = (job: MyJob) => {
+        if (!job.ldrUrl) {
+            alert(t.jobs.noLdrFile);
+            return;
+        }
+        setMenuJob(null);
+        setShareJob(job);
+        setShareModalOpen(true);
+        setShareLoading(true);
+        setShareImageUrl(null);
+    };
+
+    // 쉐어용 모델 로딩 완료 시 자동 캡처 & 생성
+    const onShareModelLoaded = async () => {
+        if (!shareJob || !sharePreviewRef.current) return;
+
+        // 렌더링 안정화 대기
+        await new Promise(r => setTimeout(r, 1500));
+
+        try {
+            const dataUrl = sharePreviewRef.current.captureScreenshot();
+            if (!dataUrl) throw new Error("Failed to capture screenshot");
+
+            const res = await fetch(dataUrl);
+            const blob = await res.blob();
+
+            const formData = new FormData();
+            formData.append("file", blob, "model.png");
+
+            // 태그 정보가 있으면 포함, 없으면 기본값
+            let subject = shareJob.title || "lego creation";
+            // MyJob에는 tag 정보가 없으므로 생략하거나 기본값 사용
+            // 만약 상세 조회 API가 있다면 거기서 가져와야 함. 일단 title 사용.
+            formData.append("subject", subject);
+
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+            const response = await fetch(`${apiBase}/api/kids/share/background`, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) throw new Error("Failed to generate background");
+
+            const data = await response.json();
+            if (data.url) {
+                setShareImageUrl(data.url);
+            } else {
+                throw new Error("No URL in response");
+            }
+        } catch (e) {
+            console.error("Share gen error:", e);
+            alert("배경 생성에 실패했습니다.");
+            setShareModalOpen(false);
+        } finally {
+            setShareLoading(false);
+            // 생성 완료 후 3D 모델 언마운트 (리소스 절약)
+            setShareJob(null);
+        }
+    };
 
     // 색상 변경 관련 함수
     const openColorModal = async () => {
@@ -981,6 +1053,17 @@ function MyPageContent() {
                             </button>
 
                             <div className={styles.mypage__menuDivider} />
+
+                            <button
+                                className={`${styles.mypage__menuItem2} ${styles.primary}`}
+                                onClick={() => handleShare(menuJob)}
+                                style={{ color: '#0070f3' }}
+                            >
+                                <Icons.Image className={styles.mypage__menuIcon2} />
+                                <span>{t.detail?.share || "공유"}</span>
+                            </button>
+
+                            <div className={styles.mypage__menuDivider} />
                             {/* <button
                                 className={`${styles.mypage__menuItem2} ${styles.primary}`}></button> */}
                             {/* 색상 변경 버튼 - 마이페이지에서는 숨김 (나중에 활성화 가능)
@@ -1129,6 +1212,26 @@ function MyPageContent() {
                 </div>
             )}
                 */}
+            {/* 공유하기 배경 생성용 숨김 뷰어 */}
+            {shareModalOpen && shareJob && (
+                <div style={{ position: "absolute", top: "-9999px", left: "-9999px", width: "800px", height: "800px" }}>
+                    <KidsLdrPreview
+                        ref={sharePreviewRef}
+                        url={shareJob.ldrUrl!}
+                        onLoaded={onShareModelLoaded}
+                    />
+                </div>
+            )}
+
+            <ShareModal
+                isOpen={shareModalOpen}
+                onClose={() => {
+                    setShareModalOpen(false);
+                    setShareJob(null);
+                }}
+                imageUrl={shareImageUrl}
+                loading={shareLoading}
+            />
         </div>
     );
 }
