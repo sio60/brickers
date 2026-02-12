@@ -17,6 +17,8 @@
     width: 100%;
     max-width: 800px;
     padding: 20px;
+    margin-top: 5vh;
+    /* 상단 헤더와의 간격 확보 */
 }
 
 .debugLog {
@@ -71,26 +73,28 @@
 
 .actionBtns--horizontal {
     flex-direction: row;
-    gap: 16px;
+    gap: 12px;
     width: 100%;
     max-width: 500px;
     justify-content: center;
-    margin-top: 24px;
+    margin-top: 32px;
+    margin-bottom: 40px;
+    /* 아래 잘림 방지 */
 }
 
 .actionBtn {
     flex: 1;
     min-width: 140px;
-    height: 54px;
-    border-radius: 16px;
-    font-size: 17px;
+    height: 56px;
+    border-radius: 14px;
+    font-size: 18px;
     font-weight: 800;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .actionBtn--share {

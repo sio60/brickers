@@ -1,5 +1,5 @@
 
- "use client";
+"use client";
 
 import React, { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
@@ -20,19 +20,52 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
     const { t } = useLanguage();
     const [working, setWorking] = useState(false);
     const stageRef = useRef<HTMLDivElement>(null);
+    const previewRef = useRef<any>(null);
 
     if (!isOpen) return null;
 
     const captureComposite = async (): Promise<Blob> => {
-        if (!stageRef.current) throw new Error("capture target missing");
-        const canvas = await html2canvas(stageRef.current, {
-            useCORS: true,
-            backgroundColor: null,
-            scale: 2,
+        // Create an offscreen canvas
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Canvas context failed");
+
+        // Target size (e.g., 1024x1024 for a square result)
+        canvas.width = 1000;
+        canvas.height = 1000;
+
+        // 1. Draw Background Image
+        if (backgroundUrl) {
+            const bgImg = new Image();
+            bgImg.crossOrigin = "anonymous";
+            bgImg.src = backgroundUrl;
+            await new Promise((resolve, reject) => {
+                bgImg.onload = resolve;
+                bgImg.onerror = reject;
+            });
+            ctx.drawImage(bgImg, 0, 0, 1000, 1000);
+        }
+
+        // 2. Draw 3D Model Snapshot
+        if (previewRef.current) {
+            const ldrSnapshot = previewRef.current.captureScreenshot();
+            if (ldrSnapshot) {
+                const modelImg = new Image();
+                modelImg.src = ldrSnapshot;
+                await new Promise((resolve, reject) => {
+                    modelImg.onload = resolve;
+                    modelImg.onerror = reject;
+                });
+                ctx.drawImage(modelImg, 0, 0, 1000, 1000);
+            }
+        }
+
+        return new Promise((resolve, reject) => {
+            canvas.toBlob((blob) => {
+                if (blob) resolve(blob);
+                else reject(new Error("Blob generation failed"));
+            }, "image/png");
         });
-        const dataUrl = canvas.toDataURL("image/png");
-        const res = await fetch(dataUrl);
-        return await res.blob();
     };
 
     const handleDownload = async () => {
@@ -115,7 +148,7 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
                         )}
                         {ldrUrl ? (
                             <div className="absolute inset-0">
-                                <KidsLdrPreview url={ldrUrl} />
+                                <KidsLdrPreview url={ldrUrl} autoRotate={false} ref={previewRef} />
                             </div>
                         ) : null}
 
@@ -144,10 +177,10 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
 }
 
 function Button({ children, onClick, variant = "primary", disabled }: any) {
-    const base = "flex-1 py-3 px-4 rounded-xl font-bold text-lg transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2";
+    const base = "flex-1 py-3.5 px-6 rounded-2xl font-black text-lg transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2";
     const styles = variant === "primary"
         ? "bg-black text-white hover:bg-gray-800 shadow-gray-200"
-        : "bg-gray-100 text-black hover:bg-gray-200";
+        : "bg-gray-100 text-black hover:bg-gray-200 shadow-none";
 
     return (
         <button onClick={onClick} disabled={disabled} className={`${base} ${styles} ${disabled ? "opacity-50" : ""}`}>
