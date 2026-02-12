@@ -11,7 +11,6 @@ import styles from "./AdminPage.module.css";
 
 // SSR 제외
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
-const BrickJudgeViewer = dynamic(() => import("@/components/admin/BrickJudgeViewer"), { ssr: false });
 
 // 타입 정의
 type Inquiry = {
@@ -108,7 +107,7 @@ export default function AdminPage() {
 
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<AdminStats | null>(null);
-    const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "jobs" | "gallery" | "inquiries" | "reports" | "refunds" | "comments" | "brick-judge">("dashboard");
+    const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "jobs" | "gallery" | "inquiries" | "reports" | "refunds" | "comments">("dashboard");
 
     // 데이터 상태
     const [inquiries, setInquiries] = useState<Inquiry[]>([]);
@@ -511,12 +510,6 @@ export default function AdminPage() {
                         >
                             {t.admin.sidebar.gallery}
                         </button>
-                        <button
-                            className={`${styles.sidebarItem} ${activeTab === "brick-judge" ? styles.active : ""}`}
-                            onClick={() => setActiveTab("brick-judge")}
-                        >
-                            {t.admin.brickJudge?.title || "Brick Judge"}
-                        </button>
                     </aside>
 
                     <main className={styles.content}>
@@ -529,7 +522,6 @@ export default function AdminPage() {
                                 {activeTab === "reports" && t.admin.sidebar.reports}
                                 {activeTab === "refunds" && t.admin.sidebar.refunds}
                                 {activeTab === "comments" && t.admin.sidebar.comments}
-                                {activeTab === "brick-judge" && (t.admin.brickJudge?.title || "Brick Judge")}
                                 {activeTab === "gallery" && t.admin.sidebar.gallery}
                             </h1>
                             <button className={styles.closeBtn} onClick={() => router.back()}>✕</button>
@@ -1003,21 +995,6 @@ export default function AdminPage() {
                         {activeTab === "gallery" && (
                             <div className={styles.list}>
                                 <GalleryManagement />
-                            </div>
-                        )}
-                        {activeTab === "brick-judge" && (
-                            <div className="space-y-6 animate-fadeIn">
-                                <header className="flex justify-between items-center mb-2">
-                                    <div>
-                                        <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center">
-                                            <span className="mr-2">🧱</span> {t.admin.brickJudge?.title || "Brick Judge"}
-                                        </h1>
-                                        <p className="text-gray-500 text-sm mt-1">
-                                            {t.admin.brickJudge?.description || "LDR file physical verification engine"}
-                                        </p>
-                                    </div>
-                                </header>
-                                <BrickJudgeViewer />
                             </div>
                         )}
                     </main>
