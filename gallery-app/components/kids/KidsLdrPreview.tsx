@@ -24,6 +24,7 @@ type Props = {
     stepMode?: boolean;
     onLoaded?: () => void;
     onError?: (err: any) => void;
+    autoRotate?: boolean;
 };
 
 function removeNullChildren(obj: THREE.Object3D) {
@@ -253,7 +254,7 @@ export type KidsLdrPreviewHandle = {
     captureScreenshot: () => string | null;
 };
 
-const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibraryPath, ldconfigUrl, stepMode = false }, ref) => {
+const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibraryPath, ldconfigUrl, stepMode = false, autoRotate = true }, ref) => {
     const { t } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [errorMSG, setErrorMSG] = useState<string | null>(null);
@@ -487,10 +488,13 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
 
             <Canvas
                 ref={canvasRef}
-                camera={{ position: [0, 80, 500], fov: 45, near: 0.1, far: 100000 }}
+                camera={{ position: [120, -120, 500], fov: 45, near: 0.1, far: 100000 }}
+                shadows
                 dpr={[1, 2]}
-                gl={{ alpha: true, preserveDrawingBuffer: true }} // 캡처를 위해 preserveDrawingBuffer 필수
-                frameloop="demand"
+                gl={{ preserveDrawingBuffer: true, antialias: true, alpha: true }}
+                onCreated={({ gl }) => {
+                    gl.setClearColor(0x000000, 0); // Transparent background
+                }}
             >
                 <ThrottledDriver />
                 <ambientLight intensity={1.2} />
@@ -521,7 +525,7 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
                     enableZoom
                     minDistance={10}
                     maxDistance={1000}
-                    autoRotate={true}
+                    autoRotate={autoRotate}
                     autoRotateSpeed={2}
                 />
             </Canvas>

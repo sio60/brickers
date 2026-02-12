@@ -133,6 +133,12 @@ export default function AdminPage() {
     const [commentPage, setCommentPage] = useState(0);
     const [commentTotalPages, setCommentTotalPages] = useState(0);
 
+    // [NEW] AI Deep Analysis 상태
+    const [deepAnalyzing, setDeepAnalyzing] = useState(false);
+    const [deepReport, setDeepReport] = useState<string | null>(null);
+    const [deepRisk, setDeepRisk] = useState<number>(0);
+    const [deepError, setDeepError] = useState<string | null>(null);
+
     // 검색어 디바운싱
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -453,6 +459,28 @@ export default function AdminPage() {
         }
     };
 
+    // [NEW] AI Deep Analysis 실행
+    const handleDeepAnalyze = async () => {
+        setDeepAnalyzing(true);
+        setDeepReport(null);
+        setDeepError(null);
+        try {
+            const res = await authFetch("/api/admin/analytics/deep-analyze", { method: "POST" });
+            if (res.ok) {
+                const data = await res.json();
+                setDeepReport(data.report || "보고서 없음");
+                setDeepRisk(data.risk_score || 0);
+            } else {
+                const err = await res.json().catch(() => null);
+                setDeepError(err?.details || err?.error || `Error ${res.status}`);
+            }
+        } catch (e: any) {
+            setDeepError(e.message || "네트워크 오류");
+        } finally {
+            setDeepAnalyzing(false);
+        }
+    };
+
     if (loading) return null;
 
     return (
@@ -551,6 +579,95 @@ export default function AdminPage() {
                                         <h3>{t.admin.stats.gallery}</h3>
                                         <p className={styles.statValue}>{stats?.totalGalleryPosts ?? "--"}</p>
                                     </div>
+                                </div>
+
+                                {/* [NEW] AI Deep Analysis Section */}
+                                <div style={{
+                                    marginTop: '32px',
+                                    padding: '24px',
+                                    background: '#f8f9fa',
+                                    borderRadius: '20px',
+                                    border: '2px solid #eee',
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 900 }}>🧠 AI 심층 분석</h3>
+                                        <button
+                                            onClick={handleDeepAnalyze}
+                                            disabled={deepAnalyzing}
+                                            style={{
+                                                padding: '10px 24px',
+                                                background: deepAnalyzing ? '#ccc' : '#000',
+                                                color: '#fff',
+                                                border: 'none',
+                                                borderRadius: '12px',
+                                                fontSize: '13px',
+                                                fontWeight: 800,
+                                                cursor: deepAnalyzing ? 'not-allowed' : 'pointer',
+                                                transition: 'all 0.2s',
+                                            }}
+                                        >
+                                            {deepAnalyzing ? '⏳ 분석 중...' : '🚀 심층 분석 실행'}
+                                        </button>
+                                    </div>
+                                    <p style={{ fontSize: '13px', color: '#888', margin: '0 0 16px' }}>
+                                        LangGraph 에이전트가 GA4 데이터를 수집 → 이상 탐지 → 원인 추론 → 전략 수립을 자율적으로 수행합니다.
+                                    </p>
+
+                                    {deepAnalyzing && (
+                                        <div style={{
+                                            padding: '40px',
+                                            textAlign: 'center',
+                                            color: '#888',
+                                            fontSize: '14px',
+                                        }}>
+                                            <div style={{ fontSize: '32px', marginBottom: '12px', animation: 'spin 2s linear infinite' }}>🧠</div>
+                                            <p>데이터 수집 및 분석 파이프라인 실행 중...</p>
+                                            <p style={{ fontSize: '12px', color: '#aaa' }}>이 작업은 최대 30초 정도 소요됩니다.</p>
+                                        </div>
+                                    )}
+
+                                    {deepError && (
+                                        <div style={{
+                                            padding: '16px',
+                                            background: '#fff0f0',
+                                            border: '1px solid #ffcccc',
+                                            borderRadius: '12px',
+                                            color: '#cc0000',
+                                            fontSize: '14px',
+                                        }}>
+                                            ❌ 분석 실패: {deepError}
+                                        </div>
+                                    )}
+
+                                    {deepReport && (
+                                        <div style={{
+                                            padding: '20px',
+                                            background: '#fff',
+                                            border: `2px solid ${deepRisk >= 0.3 ? '#ff6b6b' : '#51cf66'}`,
+                                            borderRadius: '16px',
+                                            fontSize: '14px',
+                                            lineHeight: '1.8',
+                                            whiteSpace: 'pre-wrap',
+                                            maxHeight: '500px',
+                                            overflow: 'auto',
+                                        }}>
+                                            {deepRisk >= 0.3 && (
+                                                <div style={{
+                                                    display: 'inline-block',
+                                                    padding: '4px 12px',
+                                                    background: '#ff6b6b',
+                                                    color: '#fff',
+                                                    borderRadius: '8px',
+                                                    fontSize: '12px',
+                                                    fontWeight: 800,
+                                                    marginBottom: '12px',
+                                                }}>
+                                                    ⚠️ Risk Score: {(deepRisk * 100).toFixed(0)}%
+                                                </div>
+                                            )}
+                                            {deepReport}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}

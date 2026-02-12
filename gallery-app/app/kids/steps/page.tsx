@@ -13,6 +13,7 @@ import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { registerToGallery } from "@/lib/api/myApi";
+import * as gtag from "@/lib/gtag";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
 import { type StepBrickInfo } from "@/lib/ldrUtils";
 import { CDN_BASE, createLDrawURLModifier } from "@/lib/ldrawUrlModifier";
@@ -486,7 +487,7 @@ function OffscreenBrickRenderer() {
                 box.getSize(size);
                 const maxDim = Math.max(size.x, size.y, size.z);
                 const fov = (camera as THREE.PerspectiveCamera).fov * (Math.PI / 180);
-                const dist = (maxDim / (2 * Math.tan(fov / 2))) * 2.6;
+                const dist = (maxDim / (2 * Math.tan(fov / 2))) * 2.1; // Adjusted from 1.6 to 2.1 (20% larger than original 2.6)
                 const k = 0.577; // 1/sqrt(3)
                 camera.position.set(center.x + dist * k, center.y + dist * k, center.z + dist * k);
                 camera.lookAt(center);
@@ -519,7 +520,7 @@ function OffscreenBrickRenderer() {
             <LdrModel
                 url={url}
                 fitTrigger={url}
-                fitMargin={2.5}
+                fitMargin={2.0}
                 onLoaded={onLoaded}
                 onError={() => {
                     // Skip error
@@ -623,6 +624,7 @@ function KidsStepPageContent() {
     const [selectedTheme, setSelectedTheme] = useState<string>("");
     const [isApplyingColor, setIsApplyingColor] = useState(false);
     const [colorChangedLdrBase64, setColorChangedLdrBase64] = useState<string | null>(null);
+    const [customThemeInput, setCustomThemeInput] = useState("");
 
     // 공유하기 관련
     const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -854,6 +856,11 @@ function KidsStepPageContent() {
     const handleDownloadPdf = () => {
         if (serverPdfUrl) {
             window.open(serverPdfUrl, "_blank");
+            gtag.trackUserFeedback({
+                action: "download",
+                job_id: jobId || undefined,
+                label: "PDF_StepPage"
+            });
         } else {
             alert(t.kids.steps?.pdfWait);
         }
@@ -880,6 +887,14 @@ function KidsStepPageContent() {
             setIsGalleryModalOpen(false);
             // setGalleryTitle(""); // Parent doesn't hold title anymore
             setIsRegisteredToGallery(true);
+
+            // [NEW] 트래킹: 갤러리 등록 성공
+            gtag.trackUserFeedback({
+                action: "share",
+                job_id: jobId || undefined,
+                label: "Gallery_Register",
+                rating: 5
+            });
         } catch (err: any) {
             console.error(err);
             if (err.message?.includes("이미 갤러리에 등록")) {
@@ -1006,7 +1021,7 @@ function KidsStepPageContent() {
                             </button>
                             <button
                                 className="kidsStep__sidebarBtn"
-                                style={{ marginTop: 6 }}
+                                style={{ marginTop: 8 }}
                                 onClick={downloadGlb}
                                 disabled={!glbUrl || loading}
                             >
@@ -1017,21 +1032,21 @@ function KidsStepPageContent() {
                             <div className="kidsStep__sidebarSectionLabel">
                                 이동하기
                             </div>
-                            <button className="kidsStep__sidebarBtn" onClick={() => router.push("/")}>
+                            <button className="kidsStep__sidebarBtn" style={{ marginTop: 8 }} onClick={() => router.push("/")}>
                                 홈으로
                             </button>
-                            <button className="kidsStep__sidebarBtn" style={{ marginTop: 6 }} onClick={() => router.push("/gallery")}>
+                            <button className="kidsStep__sidebarBtn" style={{ marginTop: 8 }} onClick={() => router.push("/gallery")}>
                                 갤러리 보기
                             </button>
 
                             {/* 공유하기 버튼 추가 */}
                             <button
-                                className={`kidsStep__sidebarBtn ${shareBackgroundUrl ? 'kidsStep__sidebarBtn--primary' : ''}`}
+                                className="kidsStep__sidebarBtn"
                                 style={{
-                                    marginTop: 14,
-                                    backgroundColor: shareBackgroundUrl ? '#ffe135' : '#e0e0e0',
-                                    color: '#000',
-                                    fontWeight: 800
+                                    marginTop: 8,
+                                    backgroundColor: shareBackgroundUrl ? '#000' : '#e0e0e0',
+                                    color: shareBackgroundUrl ? '#fff' : '#000',
+                                    cursor: shareBackgroundUrl ? 'pointer' : 'not-allowed'
                                 }}
                                 onClick={() => setShareModalOpen(true)}
                                 disabled={!shareBackgroundUrl}
@@ -1138,7 +1153,19 @@ function KidsStepPageContent() {
                                                 Step {stepIdx + 1} <span style={{ color: "#aaa" }}>/ {total}</span>
                                             </div>
                                             {canNext && (
-                                                <button className="kidsStep__navBtn kidsStep__navBtn--next" onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}>
+                                                <button className="kidsStep__navBtn kidsStep__navBtn--next" onClick={() => {
+                                                    setLoading(true);
+                                                    setStepIdx(v => {
+                                                        const next = v + 1;
+                                                        // [NEW] 트래킹: 다음 스텝 이동
+                                                        gtag.trackGameAction("game_exit", { // exit을 '단계 진행' 용도로 활용 가능하나, 여기서는 단순 액션으로 기록
+                                                            action: "step_next",
+                                                            current_step: next,
+                                                            job_id: jobId || undefined
+                                                        });
+                                                        return next;
+                                                    });
+                                                }}>
                                                     {t.kids.steps.next} →
                                                 </button>
                                             )}
@@ -1218,12 +1245,26 @@ function KidsStepPageContent() {
                             <div className="colorModal__themes">
                                 {colorThemes.length === 0 ? <div className="colorModal__loading">{t.kids.steps?.themeLoading || t.common.loading}</div> : (
                                     colorThemes.map((theme: ThemeInfo) => (
-                                        <button key={theme.name} className={`colorModal__themeBtn ${selectedTheme === theme.name ? "selected" : ""}`} onClick={() => setSelectedTheme(theme.name)}>
+                                        <button key={theme.name} className={`colorModal__themeBtn ${selectedTheme === theme.name && !customThemeInput ? "selected" : ""}`} onClick={() => { setSelectedTheme(theme.name); setCustomThemeInput(""); }}>
                                             <span className="colorModal__themeName">{theme.name}</span>
                                             <span className="colorModal__themeDesc">{theme.description}</span>
                                         </button>
                                     ))
                                 )}
+                            </div>
+                            <div className="colorModal__divider">직접 입력</div>
+                            <div className="colorModal__customSection">
+                                <input
+                                    type="text"
+                                    className="colorModal__customInput"
+                                    placeholder="크리스마스, 사이버펑크, 파스텔..."
+                                    value={customThemeInput}
+                                    onChange={(e) => {
+                                        setCustomThemeInput(e.target.value);
+                                        setSelectedTheme(e.target.value);
+                                    }}
+                                    onFocus={() => setSelectedTheme(customThemeInput)}
+                                />
                             </div>
                             <div className="galleryModal__actions">
                                 <button className="galleryModal__btn galleryModal__btn--cancel" onClick={() => setIsColorModalOpen(false)}>{t.kids.steps.galleryModal.cancel}</button>
