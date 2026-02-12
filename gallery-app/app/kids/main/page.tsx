@@ -329,6 +329,7 @@ function KidsPageContent() {
 
                 setLdrUrl(modelUrl);
                 setGlbUrl(finalData.glbUrl || finalData.glb_url);
+                if (finalData.backgroundUrl) setShareBackgroundUrl(finalData.backgroundUrl);
                 if (finalData.pdfUrl) setPdfUrl(finalData.pdfUrl);
                 setStatus("done");
                 console.log("[KidsPage] ✅ 전체 프로세스 완료! | ldrUrl:", modelUrl);
@@ -477,23 +478,9 @@ function KidsPageContent() {
         }
     };
 
-    // Auto-Background Generation & Share Modal
+    // Share Modal
     const [shareModalOpen, setShareModalOpen] = useState(false);
-    const [shareLoading, setShareLoading] = useState(false);
-    const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
-    const hasGeneratedRef = useRef(false);
-
-    // Trigger when DONE and LDR URL is valid
-    useEffect(() => {
-        if (status === "done" && ldrUrl && !hasGeneratedRef.current) {
-            // Need to wait until KidsLdrPreview is mounted and ref is set.
-            // Simple timeout for now, or check in a loop/interval
-            const timer = setTimeout(() => {
-                autoGenerateBackground();
-            }, 500);
-            return () => clearTimeout(timer);
-        }
-    }, [status, ldrUrl]);
+    const [shareBackgroundUrl, setShareBackgroundUrl] = useState<string | null>(null);
 
     if (!isFileLoaded) {
         return <div className="page">Loading...</div>;
@@ -574,67 +561,14 @@ function KidsPageContent() {
     };
 
 
-    const autoGenerateBackground = async () => {
-        if (hasGeneratedRef.current) return;
-
-        // Wait for ref to be ready
-        if (!previewRef.current) return;
-
-        hasGeneratedRef.current = true;
-        setShareModalOpen(true);
-        setShareLoading(true);
-        setShareImageUrl(null);
-
-        // Allow some time for the model to render fully
-        await new Promise(r => setTimeout(r, 1500));
-
-        try {
-            const dataUrl = previewRef.current.captureScreenshot();
-            if (!dataUrl) throw new Error("Failed to capture screenshot");
-
-            const res = await fetch(dataUrl);
-            const blob = await res.blob();
-
-            const formData = new FormData();
-            formData.append("file", blob, "model.png");
-
-            // Build subject with title + tags
-            let subject = jobTitle || "lego creation";
-            if (suggestedTags.length > 0) {
-                subject += `, ${suggestedTags.join(", ")}`;
-            }
-            formData.append("subject", subject);
-
-            const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
-            const response = await fetch(`${apiBase}/api/kids/share/background`, {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!response.ok) throw new Error("Failed to generate background");
-
-            const data = await response.json();
-            if (data.url) {
-                setShareImageUrl(data.url);
-            } else {
-                throw new Error("No URL in response");
-            }
-        } catch (e) {
-            console.error("Auto-Gen Error:", e);
-            // Optionally close or show error in modal
-        } finally {
-            setShareLoading(false);
-        }
-    };
-
-
     return (
         <div className="page">
             <ShareModal
                 isOpen={shareModalOpen}
                 onClose={() => setShareModalOpen(false)}
-                imageUrl={shareImageUrl}
-                loading={shareLoading}
+                backgroundUrl={shareBackgroundUrl}
+                ldrUrl={ldrUrl}
+                loading={!shareBackgroundUrl || !ldrUrl}
             />
             <Background3D entryDirection="float" />
 
@@ -689,6 +623,14 @@ function KidsPageContent() {
                                     </div>
                                 )}
                             </div>
+
+                            <button
+                                className="dlBtn"
+                                disabled={!shareBackgroundUrl || !ldrUrl}
+                                onClick={() => setShareModalOpen(true)}
+                            >
+                                {shareBackgroundUrl ? (t.kids?.share?.share || "Share") : "Background 준비중..."}
+                            </button>
                         </div>
                     </>
                 )}

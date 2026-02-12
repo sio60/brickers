@@ -189,6 +189,9 @@ function ViewerContent() {
                 finalSubject += `, ${tagsParam}`;
             }
             formData.append("subject", finalSubject);
+            if (urlParam) {
+                formData.append("ldrUrl", urlParam);
+            }
 
             const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
             const endpoint = `${apiBase}/api/kids/share/background`;
@@ -242,6 +245,9 @@ function ViewerContent() {
             formData.append("file", blob, "model.png");
             // Subject for background generation (simple logic: use title or "lego creation")
             formData.append("subject", title || "lego creation");
+            if (urlParam) {
+                formData.append("ldrUrl", urlParam);
+            }
 
             // Use relative path - Next.js rewrite or direct backend call
             const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
