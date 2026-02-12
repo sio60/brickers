@@ -112,12 +112,13 @@ function JudgeLdrModel({
         if (!ldrContent) return;
 
         (loader as any).parse(ldrContent, "", (parsed: THREE.Group) => {
+            if (!parsed) return;
             removeNullChildren(parsed);
 
             // brick ID 할당 + mesh map 구축
             const meshMap = new Map<number, THREE.Mesh[]>();
             let brickId = 0;
-            parsed.children.forEach((child) => {
+            (parsed.children ?? []).forEach((child) => {
                 const meshes: THREE.Mesh[] = [];
                 child.traverse((obj: any) => {
                     if (obj.isMesh) {
