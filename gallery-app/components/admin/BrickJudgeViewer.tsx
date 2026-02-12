@@ -475,6 +475,7 @@ export default function BrickJudgeViewer() {
                             <ambientLight intensity={1.2} />
                             <directionalLight position={[10, 20, 10]} intensity={1.5} />
                             <directionalLight position={[-10, -20, -10]} intensity={0.8} />
+                            <gridHelper args={[500, 50, 0x0f4c75, 0x0f3460]} />
 
                             <JudgeLdrModel
                                 ldrContent={judgeResult.ldr_content}
