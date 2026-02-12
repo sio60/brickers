@@ -30,15 +30,16 @@ function GlbModel({ url }: { url: string }) {
         const box = new THREE.Box3().setFromObject(scene);
         const center = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
-        scene.position.set(-center.x, -box.min.y, -center.z);
+        // 모델 중심을 원점에 배치 (바닥이 아닌 전체 중심)
+        scene.position.set(-center.x, -center.y, -center.z);
 
-        const targetY = size.y / 2;
         if (controls && (controls as any).target) {
-            (controls as any).target.set(0, targetY, 0);
+            (controls as any).target.set(0, 0, 0);
             (controls as any).update();
         }
-        camera.position.set(0, targetY + size.y * 0.3, Math.max(size.x, size.z) * 2.5);
-        camera.lookAt(0, targetY, 0);
+        const maxDim = Math.max(size.x, size.y, size.z);
+        camera.position.set(0, maxDim * 0.3, maxDim * 2.5);
+        camera.lookAt(0, 0, 0);
 
         centered.current = true;
         invalidate();
@@ -333,7 +334,7 @@ export default function GalleryDetailClient({ item }: Props) {
                         {activeTab === 'GLB' && (
                             item.glbUrl ? (
                                 <div className="absolute inset-0">
-                                    <Canvas camera={{ position: [0, 200, 600], fov: 45 }} dpr={[1, 2]} frameloop="demand">
+                                    <Canvas camera={{ position: [0, 200, 600], fov: 45, near: 0.1, far: 100000 }} dpr={[1, 2]} frameloop="demand">
                                         <ThrottledDriver />
                                         <ambientLight intensity={0.8} />
                                         <directionalLight position={[5, 10, 5]} intensity={1.5} />

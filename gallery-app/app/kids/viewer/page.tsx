@@ -315,7 +315,7 @@ function ViewerContent() {
 
 
                     <Canvas
-                        camera={{ position: [200, -200, 200], fov: 45 }}
+                        camera={{ position: [200, -200, 200], fov: 45, near: 0.1, far: 100000 }}
                         dpr={[1, 2]}
                         gl={{ preserveDrawingBuffer: true }}
                         frameloop="demand"

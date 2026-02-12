@@ -9,7 +9,7 @@ type Props = {
     url: string;
 };
 
-// GLB 모델 중심 정렬 컴포넌트 (BrickJudgeViewer 패턴)
+// GLB 모델 중심 정렬 컴포넌트 (모델 전체 높이 중앙 기준)
 function GlbModel({ url }: { url: string }) {
     const { scene } = useGLTF(url);
     const { invalidate, camera, controls } = useThree();
@@ -21,15 +21,16 @@ function GlbModel({ url }: { url: string }) {
         const box = new THREE.Box3().setFromObject(scene);
         const center = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
-        scene.position.set(-center.x, -box.min.y, -center.z);
+        // 모델 중심을 원점에 배치 (바닥이 아닌 전체 중심)
+        scene.position.set(-center.x, -center.y, -center.z);
 
-        const targetY = size.y / 2;
         if (controls && (controls as any).target) {
-            (controls as any).target.set(0, targetY, 0);
+            (controls as any).target.set(0, 0, 0);
             (controls as any).update();
         }
-        camera.position.set(0, targetY + size.y * 0.3, Math.max(size.x, size.z) * 2.5);
-        camera.lookAt(0, targetY, 0);
+        const maxDim = Math.max(size.x, size.y, size.z);
+        camera.position.set(0, maxDim * 0.3, maxDim * 2.5);
+        camera.lookAt(0, 0, 0);
 
         centered.current = true;
         invalidate();
@@ -43,7 +44,7 @@ export default function KidsGlbViewer({ url }: Props) {
     return (
         <div style={{ width: "100%", height: "100%", position: "relative" }}>
             <Canvas
-                camera={{ position: [0, 200, 600], fov: 45 }}
+                camera={{ position: [0, 200, 600], fov: 45, near: 0.1, far: 100000 }}
                 dpr={[1, 2]}
             >
                 <ambientLight intensity={1.0} />

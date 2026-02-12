@@ -488,7 +488,7 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
 
             <Canvas
                 ref={canvasRef}
-                camera={{ position: [120, -120, 500], fov: 45 }}
+                camera={{ position: [120, -120, 500], fov: 45, near: 0.1, far: 100000 }}
                 shadows
                 dpr={[1, 2]}
                 gl={{ preserveDrawingBuffer: true, antialias: true, alpha: true }}
