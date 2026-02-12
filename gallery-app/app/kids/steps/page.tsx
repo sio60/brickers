@@ -12,6 +12,7 @@ import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { registerToGallery } from "@/lib/api/myApi";
+import * as gtag from "@/lib/gtag";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
 import { type StepBrickInfo } from "@/lib/ldrUtils";
 import BackgroundBricks from "@/components/BackgroundBricks";
@@ -838,6 +839,11 @@ function KidsStepPageContent() {
     const handleDownloadPdf = () => {
         if (serverPdfUrl) {
             window.open(serverPdfUrl, "_blank");
+            gtag.trackUserFeedback({
+                action: "download",
+                job_id: jobId || undefined,
+                label: "PDF_StepPage"
+            });
         } else {
             alert(t.kids.steps?.pdfWait);
         }
@@ -864,6 +870,14 @@ function KidsStepPageContent() {
             setIsGalleryModalOpen(false);
             // setGalleryTitle(""); // Parent doesn't hold title anymore
             setIsRegisteredToGallery(true);
+
+            // [NEW] 트래킹: 갤러리 등록 성공
+            gtag.trackUserFeedback({
+                action: "share",
+                job_id: jobId || undefined,
+                label: "Gallery_Register",
+                rating: 5
+            });
         } catch (err: any) {
             console.error(err);
             if (err.message?.includes("이미 갤러리에 등록")) {
@@ -1097,7 +1111,19 @@ function KidsStepPageContent() {
                                                 Step {stepIdx + 1} <span style={{ color: "#aaa" }}>/ {total}</span>
                                             </div>
                                             {canNext && (
-                                                <button className="kidsStep__navBtn kidsStep__navBtn--next" onClick={() => { setLoading(true); setStepIdx(v => v + 1); }}>
+                                                <button className="kidsStep__navBtn kidsStep__navBtn--next" onClick={() => {
+                                                    setLoading(true);
+                                                    setStepIdx(v => {
+                                                        const next = v + 1;
+                                                        // [NEW] 트래킹: 다음 스텝 이동
+                                                        gtag.trackGameAction("game_exit", { // exit을 '단계 진행' 용도로 활용 가능하나, 여기서는 단순 액션으로 기록
+                                                            action: "step_next",
+                                                            current_step: next,
+                                                            job_id: jobId || undefined
+                                                        });
+                                                        return next;
+                                                    });
+                                                }}>
                                                     {t.kids.steps.next} →
                                                 </button>
                                             )}

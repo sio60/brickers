@@ -137,4 +137,26 @@ public class AnalyticsController {
                     .body(Map.of("error", "AI Server connection failed", "details", e.getMessage()));
         }
     }
+
+    /**
+     * [NEW] LangGraph 기반 심층 분석을 중계합니다.
+     * 프론트엔드 -> 자바 백엔드 -> AI 서버 (POST)
+     * AI 서버에서 데이터 수집 → 이상 탐지 → 인과 추론 → 전략 수립 파이프라인을 실행합니다.
+     */
+    @PostMapping("/deep-analyze")
+    public ResponseEntity<?> deepAnalyze() {
+        log.info("[AnalyticsBridge] 🧠 Requesting LangGraph Deep Analysis...");
+        try {
+            return aiWebClient.post()
+                    .uri("/ai-admin/analytics/deep-analyze")
+                    .retrieve()
+                    .toEntity(Object.class)
+                    .timeout(java.time.Duration.ofSeconds(60))
+                    .block();
+        } catch (Exception e) {
+            log.error("[AnalyticsBridge] Deep Analysis failed: {}", e.getMessage());
+            return ResponseEntity.status(502)
+                    .body(Map.of("error", "AI Deep Analysis failed", "details", e.getMessage()));
+        }
+    }
 }
