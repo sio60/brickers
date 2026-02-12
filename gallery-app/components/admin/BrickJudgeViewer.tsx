@@ -79,7 +79,7 @@ function JudgeLdrModel({
                 }
 
                 const isPrimitive = /^\d+-\d+/.test(filename) ||
-                    /^(stug|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|stud|empty)/.test(filename);
+                    /^(stud|rect|box|cyli|disc|edge|ring|ndis|con|rin|tri|empty)/.test(filename);
                 const isSubpart = /^\d+s\d+\.dat$/i.test(filename);
 
                 fixed = fixed.replace("/ldraw/models/p/", "/ldraw/p/");
@@ -214,9 +214,9 @@ function JobCard({
                 }`}
         >
             <div className="flex items-center gap-3">
-                {job.previewImageUrl ? (
+                {(job.previewImageUrl || job.sourceImageUrl) ? (
                     <img
-                        src={job.previewImageUrl}
+                        src={job.previewImageUrl || job.sourceImageUrl}
                         alt=""
                         className="w-12 h-12 rounded-lg object-cover bg-gray-100 shrink-0"
                     />
