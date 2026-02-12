@@ -750,6 +750,28 @@ function KidsStepPageContent() {
         }
     };
 
+    const downloadLdr = async () => {
+        if (!ldrUrl) return;
+        try {
+            const res = await fetch(ldrUrl);
+            const blob = await res.blob();
+            const dUrl = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = dUrl;
+            link.download = `brickers_${jobId || 'model'}.ldr`;
+            link.click();
+            URL.revokeObjectURL(dUrl);
+        } catch (err) { console.error(err); }
+    };
+
+    const downloadGlb = () => {
+        if (!glbUrl) return;
+        const link = document.createElement("a");
+        link.href = glbUrl;
+        link.download = `brickers_${jobId || 'model'}.glb`;
+        link.click();
+    };
+
     // Job 정보 로드
     useEffect(() => {
         let alive = true;
@@ -976,6 +998,27 @@ function KidsStepPageContent() {
                                 {serverPdfUrl ? t.kids.steps?.pdfDownloadBtn : t.kids.steps?.pdfPreparing}
                             </button>
                         </div>
+
+                        <div className="kidsStep__sidebarSection">
+                            <div className="kidsStep__sidebarSectionLabel">
+                                File Download
+                            </div>
+                            <button
+                                className="kidsStep__sidebarBtn"
+                                onClick={downloadLdr}
+                                disabled={!ldrUrl || loading}
+                            >
+                                LDR DOWNLOAD
+                            </button>
+                            <button
+                                className="kidsStep__sidebarBtn"
+                                style={{ marginTop: 6 }}
+                                onClick={downloadGlb}
+                                disabled={!glbUrl || loading}
+                            >
+                                GLB DOWNLOAD
+                            </button>
+                        </div>
                         <div className="kidsStep__sidebarSection">
                             <div className="kidsStep__sidebarSectionLabel">
                                 이동하기
@@ -999,7 +1042,7 @@ function KidsStepPageContent() {
                                 onClick={() => setShareModalOpen(true)}
                                 disabled={!shareBackgroundUrl}
                             >
-                                {shareBackgroundUrl ? "✨ 공유하기" : "⌛ 배경 생성중..."}
+                                {shareBackgroundUrl ? "공유하기" : "배경 생성중..."}
                             </button>
                         </div>
                     </div>
