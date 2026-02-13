@@ -11,11 +11,12 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
     const pathname = usePathname();
 
     const isAuthWaitingPage = pathname === "/auth/success" || pathname === "/auth/logout";
+    const isStepsPage = pathname === "/kids/steps";
 
     return (
         <div className={`appLayout lang-${language}`}>
             <Header />
-            {!isAuthWaitingPage && <BackgroundBricks />}
+            {!isAuthWaitingPage && !isStepsPage && <BackgroundBricks />}
             <main className="appLayout__content">
                 {children}
             </main>
