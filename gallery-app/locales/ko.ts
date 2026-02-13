@@ -314,6 +314,21 @@ export const ko = {
             completeModel: "완성된 모델",
             instructions: "드래그하여 회전 • 스크롤하여 확대/축소",
             viewSteps: "스텝 보기"
+        },
+        share: {
+            title: "완성!",
+            subtitle: "모델을 친구들과 공유해 보세요.",
+            generating: "생성 중...",
+            generatingBg: "AI가 모델의 배경을 만들고 있어요.",
+            processing: "처리 중...",
+            save: "저장",
+            saving: "저장 중...",
+            share: "공유",
+            downloadFail: "다운로드에 실패했습니다. 다시 시도해 주세요.",
+            shareFail: "공유에 실패했습니다. 다시 시도해 주세요.",
+            clipboardCopy: "이미지가 클립보드에 복사되었습니다!",
+            shareTitle: "내 브리커즈 모델을 확인해 보세요!",
+            shareText: "Brickers AI로 만들었어요!"
         }
     },
     header: {
@@ -449,7 +464,14 @@ export const ko = {
                 status: "상태",
                 stage: "진행 단계",
                 dates: "생성/수정",
-                actions: "관리"
+                actions: "관리",
+                image: "이미지",
+                jobInfo: "작업 정보",
+                noImage: "이미지 없음",
+                untitledJob: "제목 없음",
+                unknownUser: "알 수 없음",
+                created: "생성일",
+                updated: "수정일"
             },
             action: {
                 refresh: "새로고침",
@@ -457,6 +479,13 @@ export const ko = {
                 cancel: "취소",
                 confirmRetry: "이 작업을 재시도하시겠습니까?",
                 confirmCancel: "이 작업을 취소하시겠습니까?"
+            },
+            empty: "작업이 없습니다.",
+            pagination: {
+                previous: "이전",
+                page: "페이지",
+                of: "/",
+                next: "다음"
             }
         },
         error: "오류가 발생했습니다.",

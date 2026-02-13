@@ -113,7 +113,8 @@ export const ja = {
             ldrFile: "図面ファイル(ldr)をダウンロード",
             sourceImage: "元画像ダウンロード",
             downloadPdf: "PDF説明書ダウンロード",
-            downloadEnhanced: "補正画像ダウンロード"
+            downloadEnhanced: "補正画像ダウンロード",
+            report: "通報する"
         },
         noGlbFile: "GLBファイルがありません。",
         noLdrFile: "LDRファイルがありません。",
@@ -130,7 +131,10 @@ export const ja = {
         sortOldest: "古い順",
         noPdfFile: "PDFがまだ生成されていません。組立ページで生成をお待ちください。",
         noCapturedImage: "キャプチャ画像がありません。",
-        settingsTbd: "設定機能準備中"
+        settingsTbd: "設定機能準備中",
+        reportSuccess: "作品が通報されました。",
+        reportConfirm: "この作品を通報しますか？（不適切なコンテンツの通報）",
+        reportFail: "通報に失敗しました。"
     },
     settings: {
         title: "設定",
@@ -189,7 +193,6 @@ export const ja = {
     kids: {
         title: "難易度を選択してください",
         level: "L{lv}",
-        brickBot: "BrickBot",
         bricks: "個",
 
         pro: "PRO",
@@ -313,6 +316,21 @@ export const ja = {
             completeModel: "完成したモデル",
             instructions: "ドラッグで回転 • スクロールで拡大/縮小",
             viewSteps: "ステップ表示"
+        },
+        share: {
+            title: "完成しました",
+            subtitle: "モデルを友達と共有しましょう。",
+            generating: "生成中...",
+            generatingBg: "AIがモデルの背景を作成しています。",
+            processing: "処理中...",
+            save: "保存",
+            saving: "保存中...",
+            share: "共有",
+            downloadFail: "ダウンロードに失敗しました。もう一度お試しください。",
+            shareFail: "共有に失敗しました。もう一度お試しください。",
+            clipboardCopy: "画像がクリップボードにコピーされました！",
+            shareTitle: "私のBrickersモデルを見てください！",
+            shareText: "Brickers AIで作りました！"
         }
     },
     auth: {
@@ -413,6 +431,7 @@ export const ja = {
             analyze: "分析",
             analyzing: "分析中...",
             score: "安定性スコア",
+            brickBot: "BrickBot",
             brickCount: "ブリック数",
             issueCount: "問題",
             stable: "安定",
@@ -426,6 +445,48 @@ export const ja = {
                 floating: "浮遊",
                 isolated: "孤立",
                 normal: "正常"
+            }
+        },
+        jobs: {
+            title: "統合作業管理",
+            searchPlaceholder: "ユーザー検索（ニックネーム/メール）",
+            filter: {
+                all: "すべてのステータス",
+                queued: "待機中",
+                running: "実行中",
+                done: "完了",
+                failed: "失敗",
+                canceled: "キャンセル済み",
+                reportedOnly: "通報されたアイテムのみ表示"
+            },
+            table: {
+                user: "ユーザー",
+                jobId: "ジョブID",
+                status: "ステータス",
+                stage: "進行段階",
+                dates: "作成/更新",
+                actions: "管理",
+                image: "画像",
+                jobInfo: "ジョブ情報",
+                noImage: "画像なし",
+                untitledJob: "タイトルなし",
+                unknownUser: "不明",
+                created: "作成日",
+                updated: "更新日"
+            },
+            action: {
+                refresh: "更新",
+                retry: "再試行",
+                cancel: "キャンセル",
+                confirmRetry: "このジョブを再試行しますか？",
+                confirmCancel: "このジョブをキャンセルしますか？"
+            },
+            empty: "ジョブが見つかりません。",
+            pagination: {
+                previous: "前へ",
+                page: "ページ",
+                of: "/",
+                next: "次へ"
             }
         },
         gallery: {
@@ -502,6 +563,7 @@ export const ja = {
         login: "ログイン",
         logout: "ログアウト",
         gallery: "ギャラリー",
+        notifications: "お知らせ",
         logoAlt: "ブリッカーズロゴ",
         myGallery: "マイギャラリー",
         myPage: "マイページ"

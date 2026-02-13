@@ -113,7 +113,8 @@ export const en = {
             glbFile: "Download Model (glb)",
             ldrFile: "Download Blueprint (ldr)",
             downloadPdf: "Download PDF Guide",
-            downloadEnhanced: "Download Enhanced Image"
+            downloadEnhanced: "Download Enhanced Image",
+            report: "Report"
         },
         noGlbFile: "GLB file not available.",
         noLdrFile: "LDR file not available.",
@@ -130,7 +131,10 @@ export const en = {
         sortOldest: "Oldest",
         noPdfFile: "No PDF generated yet. Please wait on the assembly page.",
         noCapturedImage: "No captured image available.",
-        settingsTbd: "Settings coming soon"
+        settingsTbd: "Settings coming soon",
+        reportSuccess: "The work has been reported.",
+        reportConfirm: "Report this work? (Report inappropriate content)",
+        reportFail: "Failed to report."
     },
     settings: {
         title: "Settings",
@@ -306,11 +310,26 @@ export const en = {
         },
         viewer: {
             noUrl: "Model URL not found",
-            brickBot: "BrickBot",
+            back: "Go Back",
             loading: "Loading 3D model...",
             completeModel: "Completed Model",
             instructions: "Drag to rotate • Scroll to zoom",
             viewSteps: "View Steps"
+        },
+        share: {
+            title: "Completed",
+            subtitle: "Share your model with friends.",
+            generating: "Generating...",
+            generatingBg: "AI is creating a background for your model.",
+            processing: "Processing...",
+            save: "Save",
+            saving: "Saving...",
+            share: "Share",
+            downloadFail: "Download failed. Please try again.",
+            shareFail: "Share failed. Please try again.",
+            clipboardCopy: "Image copied to clipboard!",
+            shareTitle: "Check out my Brickers model!",
+            shareText: "I made this with Brickers AI!"
         }
     },
     header: {
@@ -319,7 +338,7 @@ export const en = {
         logout: "LOGOUT",
         gallery: "GALLERY",
         notifications: "Notifications",
-        logoAlt: "BRICKERS Logo",
+        logoAlt: "Brickers Logo",
         myGallery: "My Gallery",
         myPage: "My Page"
     },
@@ -443,6 +462,7 @@ export const en = {
             analyze: "Analyze",
             analyzing: "Analyzing...",
             score: "Stability Score",
+            brickBot: "BrickBot",
             brickCount: "Bricks",
             issueCount: "Issues",
             stable: "Stable",
@@ -456,6 +476,48 @@ export const en = {
                 floating: "Floating",
                 isolated: "Isolated",
                 normal: "Normal"
+            }
+        },
+        jobs: {
+            title: "All Jobs Management",
+            searchPlaceholder: "User Search (Nickname/Email)",
+            filter: {
+                all: "All Status",
+                queued: "Queued",
+                running: "Running",
+                done: "Done",
+                failed: "Failed",
+                canceled: "Canceled",
+                reportedOnly: "View Reported Only"
+            },
+            table: {
+                user: "User",
+                jobId: "Job ID",
+                status: "Status",
+                stage: "Stage",
+                dates: "Created/Updated",
+                actions: "Actions",
+                image: "Image",
+                jobInfo: "Job Info",
+                noImage: "No Img",
+                untitledJob: "Untitled Job",
+                unknownUser: "Unknown",
+                created: "Created",
+                updated: "Updated"
+            },
+            action: {
+                refresh: "Refresh",
+                retry: "Retry",
+                cancel: "Cancel",
+                confirmRetry: "Retry this job?",
+                confirmCancel: "Cancel this job?"
+            },
+            empty: "No jobs found.",
+            pagination: {
+                previous: "Previous",
+                page: "Page",
+                of: "of",
+                next: "Next"
             }
         },
         gallery: {

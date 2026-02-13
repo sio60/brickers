@@ -87,7 +87,7 @@ function LandingPageContent({ initialItems }: Props) {
                 />
             </div>
 
-            {!galleryItems.length && !isLoading ? null : (
+            {!isLoading && (
                 <div className={styles.hero}>
                     <button
                         className={styles.goMakeBtn}
