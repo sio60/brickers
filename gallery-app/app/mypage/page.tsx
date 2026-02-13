@@ -38,11 +38,12 @@ const Icons = {
     Layers: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.18 6.27a2 2 0 0 0 0 3.66l9 4.1a2 2 0 0 0 1.66 0l8.99-4.1a2 2 0 0 0 0-3.66Z" /><path d="m2.18 16.27 8.99 4.1a2 2 0 0 0 1.66 0l8.99-4.1" /><path d="m2.18 11.27 8.99 4.1a2 2 0 0 0 1.66 0l8.99-4.1" /></svg>,
     DownloadImage: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>,
     DownloadFile: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /><polyline points="14 2 14 8 20 8" /><line x1="12" x2="12" y1="18" y2="12" /><polyline points="9 15 12 18 15 15" /></svg>,
-    Share: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" x2="12" y1="2" y2="15" /></svg>
+    Share: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" x2="12" y1="2" y2="15" /></svg>,
+    Receipt: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" /><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" /><path d="M12 17.5v-11" /></svg>
 };
 
 // types
-type MenuItem = "profile" | "membership" | "jobs" | "inquiries" | "reports" | "settings" | "delete";
+type MenuItem = "profile" | "membership" | "jobs" | "inquiries" | "reports" | "refunds" | "settings" | "delete";
 
 function MyPageContent() {
     const router = useRouter();
@@ -68,6 +69,10 @@ function MyPageContent() {
     const [inquiries, setInquiries] = useState<any[]>([]);
     const [reports, setReports] = useState<any[]>([]);
     const [listLoading, setListLoading] = useState(false);
+
+    // 결제/환불 내역 상태
+    const [refundOrders, setRefundOrders] = useState<any[]>([]);
+    const [refundLoading, setRefundLoading] = useState(false);
 
     // 프로필 수정 관련 상태
     const [isEditing, setIsEditing] = useState(false);
@@ -136,7 +141,7 @@ function MyPageContent() {
 
     useEffect(() => {
         const menu = searchParams.get('menu');
-        if (menu && ['profile', 'membership', 'jobs', 'inquiries', 'reports', 'settings', 'delete'].includes(menu)) {
+        if (menu && ['profile', 'membership', 'jobs', 'inquiries', 'reports', 'refunds', 'settings', 'delete'].includes(menu)) {
             setActiveMenu(menu as MenuItem);
         }
     }, [searchParams]);
@@ -395,6 +400,7 @@ function MyPageContent() {
         { id: "jobs" as MenuItem, label: t.menu.jobs },
         { id: "inquiries" as MenuItem, label: t.menu.inquiries },
         { id: "reports" as MenuItem, label: t.menu.reports },
+        { id: "refunds" as MenuItem, label: t.menu.refunds },
         { id: "settings" as MenuItem, label: t.menu.settings },
         { id: "delete" as MenuItem, label: t.menu.delete },
     ];
@@ -520,6 +526,7 @@ function MyPageContent() {
 
         if (activeMenu === "inquiries") fetchMyInquiries();
         if (activeMenu === "reports") fetchMyReports();
+        if (activeMenu === "refunds") fetchMyRefunds();
 
         return () => {
             if (intervalId) clearInterval(intervalId);
@@ -553,6 +560,35 @@ function MyPageContent() {
             console.error("Failed to fetch reports", e);
         } finally {
             setListLoading(false);
+        }
+    };
+
+    const fetchMyRefunds = async () => {
+        try {
+            setRefundLoading(true);
+            const res = await authFetch("/api/payments/my/history?page=0&size=20");
+            if (res.ok) {
+                const data = await res.json();
+                setRefundOrders(data.content || []);
+            }
+        } catch (e) {
+            console.error("Failed to fetch refund history", e);
+        } finally {
+            setRefundLoading(false);
+        }
+    };
+
+    const getRefundStatusLabel = (status: string) => {
+        const statusMap: Record<string, string> = (t as any).refunds?.status || {};
+        return statusMap[status] || status;
+    };
+
+    const getRefundStatusClass = (status: string) => {
+        switch (status) {
+            case "COMPLETED": return styles.answered;
+            case "REFUND_REQUESTED": return styles.pending;
+            case "REFUNDED": return styles.resolved;
+            default: return "";
         }
     };
 
@@ -899,6 +935,44 @@ function MyPageContent() {
                     </div>
                 );
 
+            case "refunds":
+                return (
+                    <div className={styles.mypage__section}>
+                        <h2 className={styles.mypage__sectionTitle}>{(t as any).refunds.title}</h2>
+                        <div className={styles.mypage__inquiriesList}>
+                            {refundLoading ? (
+                                <p className={styles.mypage__loadingText}>{t.common.loading}...</p>
+                            ) : refundOrders.length > 0 ? (
+                                refundOrders.map((order: any) => (
+                                    <div key={order.orderId} className={styles.mypage__inquiryCard}>
+                                        <div className={styles.inquiry__header}>
+                                            <span className={`${styles.inquiry__statusBadge} ${getRefundStatusClass(order.status)}`}>
+                                                {getRefundStatusLabel(order.status)}
+                                            </span>
+                                            <span className={styles.inquiry__date}>
+                                                {formatDate(order.paidAt || order.createdAt)}
+                                            </span>
+                                        </div>
+                                        <h3 className={styles.inquiry__title}>
+                                            {order.planName || "Unknown Plan"}
+                                        </h3>
+                                        <p style={{ color: '#666', fontSize: '14px', margin: '4px 0 0' }}>
+                                            {order.amount?.toLocaleString()}원
+                                        </p>
+                                        {order.cancelReason && (
+                                            <div style={{ marginTop: '8px', padding: '8px 12px', background: '#f9f9f9', borderRadius: '6px', fontSize: '13px', color: '#888' }}>
+                                                {(t as any).refunds.cancelReason}: {order.cancelReason}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            ) : (
+                                <p className={styles.mypage__empty}>{(t as any).refunds.empty}</p>
+                            )}
+                        </div>
+                    </div>
+                );
+
             case "settings":
                 return (
                     <div className={styles.mypage__section}>
@@ -983,6 +1057,9 @@ function MyPageContent() {
                             </button>
                             <button className={`${styles.mypage__menuItem} ${activeMenu === 'reports' ? styles.active : ''}`} onClick={() => setActiveMenu('reports')}>
                                 <Icons.AlertTriangle className={styles.mypage__menuIcon} /> {t.menu.reports}
+                            </button>
+                            <button className={`${styles.mypage__menuItem} ${activeMenu === 'refunds' ? styles.active : ''}`} onClick={() => setActiveMenu('refunds')}>
+                                <Icons.Receipt className={styles.mypage__menuIcon} /> {(t.menu as any).refunds}
                             </button>
                         </div>
 

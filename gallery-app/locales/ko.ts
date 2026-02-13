@@ -70,6 +70,7 @@ export const ko = {
         bookmarks: "북마크",
         inquiries: "내 문의함",
         reports: "내 신고함",
+        refunds: "결제/환불 내역",
         settings: "설정",
         delete: "회원탈퇴",
         admin: "관리자 전용"
@@ -158,6 +159,22 @@ export const ko = {
             ANSWERED: "답변 완료",
         },
         adminAnswer: "관리자 답변",
+    },
+    refunds: {
+        title: "결제/환불 내역",
+        empty: "결제 내역이 없습니다.",
+        status: {
+            PENDING: "결제 대기",
+            COMPLETED: "결제 완료",
+            FAILED: "결제 실패",
+            CANCELED: "취소됨",
+            REFUND_REQUESTED: "환불 요청중",
+            REFUNDED: "환불 완료",
+        },
+        planName: "요금제",
+        amount: "금액",
+        paidAt: "결제일",
+        cancelReason: "사유",
     },
     reports: {
         title: "내 신고함",
