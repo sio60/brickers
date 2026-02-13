@@ -544,11 +544,7 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
                     enablePan={false}
                     enableZoom
                     minDistance={10}
-<<<<<<< HEAD
                     maxDistance={10000}
-=======
-                    maxDistance={3000}
->>>>>>> 06bace9 (fix: 줌아웃, 북마크하트버튼)
                     autoRotate={autoRotate}
                     autoRotateSpeed={2}
                 />
