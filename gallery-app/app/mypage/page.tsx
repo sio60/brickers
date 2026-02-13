@@ -1308,11 +1308,12 @@ function MyPageContent() {
             </div>
         );
     }
+}
 
-    export default function MyPage() {
-        return (
-            <Suspense fallback={<div className={styles.mypage__loading}>Loading...</div>}>
-                <MyPageContent />
-            </Suspense>
-        );
-    }
+export default function MyPage() {
+    return (
+        <Suspense fallback={<div className={styles.mypage__loading}>Loading...</div>}>
+            <MyPageContent />
+        </Suspense>
+    );
+}
