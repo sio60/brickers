@@ -172,4 +172,25 @@ public class AnalyticsController {
                     .body(Map.of("error", "AI Deep Analysis failed", "details", e.getMessage()));
         }
     }
+
+    /**
+     * [NEW] 인터랙티브 분석 쿼리를 중계합니다. (자연어 질문)
+     * 프론트엔드 -> 자바 백엔드 -> AI 서버 (POST)
+     */
+    @PostMapping("/query")
+    public ResponseEntity<?> queryAnalytics(@RequestBody Map<String, Object> request) {
+        log.info("[AnalyticsBridge] 💬 Processing custom analytics query...");
+        try {
+            return aiWebClient.post()
+                    .uri("/ai-admin/analytics/query")
+                    .bodyValue(request)
+                    .retrieve()
+                    .toEntity(Object.class)
+                    .block();
+        } catch (Exception e) {
+            log.error("[AnalyticsBridge] Query Analysis failed: {}", e.getMessage());
+            return ResponseEntity.status(502)
+                    .body(Map.of("error", "AI Query Analysis failed", "details", e.getMessage()));
+        }
+    }
 }
