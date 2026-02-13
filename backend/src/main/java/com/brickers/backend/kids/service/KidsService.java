@@ -54,9 +54,9 @@ public class KidsService {
     private final org.springframework.web.reactive.function.client.WebClient.Builder webClientBuilder;
 
     public Map<String, Object> startGeneration(String userId, String sourceImageUrl, String age, int budget,
-            String title, String prompt) { // prompt 추가
-        log.info("AI 생성 요청 접수: userId={}, sourceImageUrl={}, age={}, budget={}, title={}, prompt={}",
-                safe(userId), sourceImageUrl, safe(age), budget, safe(title), safe(prompt));
+            String title, String prompt, String language) { // prompt 추가
+        log.info("AI 생성 요청 접수: userId={}, sourceImageUrl={}, age={}, budget={}, title={}, prompt={}, language={}",
+                safe(userId), sourceImageUrl, safe(age), budget, safe(title), safe(prompt), safe(language));
 
         String finalImageUrl = sourceImageUrl;
 
@@ -89,6 +89,7 @@ public class KidsService {
                 .stage(JobStage.THREE_D_PREVIEW)
                 .sourceImageUrl(finalImageUrl) // S3 URL
                 .title(title) // 작업 제목 (파일명)
+                .language(language) // [NEW]
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .stageUpdatedAt(LocalDateTime.now())
@@ -107,7 +108,8 @@ public class KidsService {
                     userId,
                     finalImageUrl,
                     age,
-                    budget);
+                    budget,
+                    language);
         } else {
             // ⚠️ 기존 방식 (직접 호출) - 개발/테스트용 (SQS 비활성 시 fallback)
             log.info("[Brickers] 직접 호출 모드 (SQS 비활성화) | jobId={}", job.getId());
@@ -117,7 +119,8 @@ public class KidsService {
                     userId,
                     finalImageUrl,
                     age,
-                    budget);
+                    budget,
+                    language);
         }
 
         // 3) 즉시 응답
@@ -127,7 +130,7 @@ public class KidsService {
     // 기존 메서드 오버로딩 유지 (하위 호환)
     public Map<String, Object> startGeneration(String userId, String sourceImageUrl, String age, int budget,
             String title) {
-        return startGeneration(userId, sourceImageUrl, age, budget, title, null);
+        return startGeneration(userId, sourceImageUrl, age, budget, title, null, null);
     }
 
     private byte[] generateImageFromPrompt(String prompt) {

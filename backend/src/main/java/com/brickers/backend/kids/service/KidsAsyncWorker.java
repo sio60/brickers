@@ -50,12 +50,14 @@ public class KidsAsyncWorker {
             String userId,
             String sourceImageUrl,
             String age,
-            int budget) {
+            int budget,
+            String language) {
         long totalStart = System.currentTimeMillis();
         log.info("═══════════════════════════════════════════════════════════════");
         log.info("🚀 [KIDS-WORKER] 작업 시작 | jobId={} | userId={} | age={} | budget={}",
                 jobId, userId, age, budget);
         log.info("📁 원본 이미지 URL: {}", sourceImageUrl);
+        log.info("🌐 언어 설정: {}", language);
         log.info("═══════════════════════════════════════════════════════════════");
 
         GenerateJobEntity job = generateJobRepository.findById(jobId).orElse(null);
@@ -81,8 +83,8 @@ public class KidsAsyncWorker {
                     .body(BodyInserters.fromValue(Map.of(
                             "sourceImageUrl", sourceImageUrl,
                             "age", age,
-                            "budget", budget
-                    )))
+                            "budget", budget,
+                            "language", (language == null ? "en" : language))))
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
                     })
@@ -184,7 +186,8 @@ public class KidsAsyncWorker {
     }
 
     private String truncateUrl(String url) {
-        if (url == null || url.length() <= 80) return url;
+        if (url == null || url.length() <= 80)
+            return url;
         return url.substring(0, 77) + "...";
     }
 

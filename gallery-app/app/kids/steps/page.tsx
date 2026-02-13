@@ -1026,7 +1026,7 @@ function KidsStepPageContent() {
                             ← {t.kids.steps.back}
                         </button>
 
-                        <h2 className="kidsStep__sidebarTitle">BRICKERS</h2>
+
 
                         <div className="kidsStep__sidebarSectionLabel">
                             {t.kids.steps.viewModes}

@@ -17,7 +17,7 @@ interface GenerationParams {
 }
 
 export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: GenerationParams) {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const { authFetch } = useAuth();
 
     const [status, setStatus] = useState<GenerationStatus>('idle');
@@ -105,6 +105,7 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
                     age,
                     budget,
                     title: fileTitle,
+                    language,
                 };
 
                 const startRes = await authFetchRef.current('/api/kids/generate', {
