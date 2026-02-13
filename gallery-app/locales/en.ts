@@ -70,6 +70,7 @@ export const en = {
         gallery: "My Gallery",
         bookmarks: "Bookmarks",
         reports: "My Reports",
+        refunds: "Payment / Refunds",
         settings: "Settings",
         delete: "Delete Account",
         admin: "Admin Only"
@@ -154,6 +155,22 @@ export const en = {
             ANSWERED: "Answered",
         },
         adminAnswer: "Admin Answer",
+    },
+    refunds: {
+        title: "Payment / Refunds",
+        empty: "No payment history.",
+        status: {
+            PENDING: "Pending",
+            COMPLETED: "Completed",
+            FAILED: "Failed",
+            CANCELED: "Canceled",
+            REFUND_REQUESTED: "Refund Requested",
+            REFUNDED: "Refunded",
+        },
+        planName: "Plan",
+        amount: "Amount",
+        paidAt: "Paid At",
+        cancelReason: "Reason",
     },
     reports: {
         title: "My Reports",
