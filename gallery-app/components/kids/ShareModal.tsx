@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import html2canvas from "html2canvas";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -23,32 +23,33 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
     const [isPreparing, setIsPreparing] = useState(false);
     const stageRef = useRef<HTMLDivElement>(null);
     const previewRef = useRef<any>(null);
-
-    if (!isOpen) return null;
+    const [previewLoaded, setPreviewLoaded] = useState(false);
+    const handlePreviewLoaded = useCallback(() => setPreviewLoaded(true), []);
 
     const captureComposite = async (): Promise<Blob> => {
-        // Create an offscreen canvas
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
         if (!ctx) throw new Error("Canvas context failed");
 
-        // Target size (e.g., 1024x1024 for a square result)
         canvas.width = 1000;
         canvas.height = 1000;
 
-        // 1. Draw Background Image
         if (backgroundUrl) {
+            // Use image proxy to bypass S3 CORS restrictions
+            const proxyUrl = `/proxy/image?url=${encodeURIComponent(backgroundUrl)}`;
+            const res = await fetch(proxyUrl);
+            const blob = await res.blob();
+            const bitmapUrl = URL.createObjectURL(blob);
             const bgImg = new Image();
-            bgImg.crossOrigin = "anonymous";
-            bgImg.src = backgroundUrl;
-            await new Promise((resolve, reject) => {
-                bgImg.onload = resolve;
+            bgImg.src = bitmapUrl;
+            await new Promise<void>((resolve, reject) => {
+                bgImg.onload = () => resolve();
                 bgImg.onerror = reject;
             });
             ctx.drawImage(bgImg, 0, 0, 1000, 1000);
+            URL.revokeObjectURL(bitmapUrl);
         }
 
-        // 2. Draw 3D Model Snapshot
         if (previewRef.current) {
             const ldrSnapshot = previewRef.current.captureScreenshot();
             if (ldrSnapshot) {
@@ -70,10 +71,11 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
         });
     };
 
-    // Pre-generate blob as soon as possible to preserve user gesture context for Share API
+    // Pre-generate blob — hooks must always run (React Rules of Hooks)
     useEffect(() => {
-        if (!isOpen || loading || !backgroundUrl || !ldrUrl) {
+        if (!isOpen || loading || !backgroundUrl || !ldrUrl || !previewLoaded) {
             setCompositeBlob(null);
+            if (!isOpen) setPreviewLoaded(false);
             return;
         }
 
@@ -81,14 +83,13 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
         const prepare = async () => {
             setIsPreparing(true);
             try {
-                // Give a bit of time for 3D model to render first frame stably
-                await new Promise(r => setTimeout(r, 1000));
+                // Wait for render to settle after preview loaded
+                await new Promise(r => setTimeout(r, 500));
                 if (!alive) return;
 
                 const blob = await captureComposite();
                 if (alive) {
                     setCompositeBlob(blob);
-                    console.log("[ShareModal] Composite blob ready");
                 }
             } catch (e) {
                 console.error("[ShareModal] Pre-generation failed:", e);
@@ -98,7 +99,10 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
         };
         prepare();
         return () => { alive = false; };
-    }, [isOpen, loading, backgroundUrl, ldrUrl]);
+    }, [isOpen, loading, backgroundUrl, ldrUrl, previewLoaded]);
+
+    // Early return AFTER all hooks — React requires hooks to run on every render
+    if (!isOpen) return null;
 
     const handleDownload = () => {
         if (!compositeBlob) return;
@@ -187,7 +191,7 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
                         )}
                         {ldrUrl ? (
                             <div className="absolute inset-0">
-                                <KidsLdrPreview url={ldrUrl} autoRotate={false} ref={previewRef} />
+                                <KidsLdrPreview url={ldrUrl} autoRotate={false} ref={previewRef} onLoaded={handlePreviewLoaded} />
                             </div>
                         ) : null}
 

@@ -5,6 +5,8 @@ import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Environment } from "@react-three/drei";
 import dynamic from 'next/dynamic';
+import ThrottledDriver from "@/components/three/ThrottledDriver";
+import { usePerformanceStore } from "@/stores/performanceStore";
 
 // Random utility functions
 const randomRange = (min: number, max: number) => Math.random() * (max - min) + min;
@@ -14,12 +16,13 @@ const randomColor = () => {
     return colors[Math.floor(Math.random() * colors.length)];
 };
 
-// Physics constants
+// Physics constants (calibrated for 60fps baseline)
 const FRICTION = 0.98;
 const IMPULSE_STRENGTH = 0.15;
 const GRAVITY = 0.015;
 const FLOOR_Y = -8;
 const BOUNCE_DAMPING = 0.6;
+const TARGET_DT = 1 / 60; // 60fps baseline for delta normalization
 
 type ShapeType = "standard" | "long" | "cylinder" | "circle";
 
@@ -48,14 +51,13 @@ function Brick({
     rotation: initialRot,
     scale,
     shape,
-    entryDirection = "float", // Default to float for gallery background
+    entryDirection = "float",
 }: BrickProps) {
     const meshRef = useRef<THREE.Mesh>(null);
 
     const isSides = entryDirection === "sides";
     const isFloat = entryDirection === "float";
 
-    // Initialize position based on entry direction
     const position = useRef(
         useMemo(() => {
             if (isSides) {
@@ -92,6 +94,7 @@ function Brick({
 
     const isFalling = useRef(!isFloat);
 
+    // Delta-time based physics: FPS-independent movement
     useFrame((_, delta) => {
         if (!meshRef.current) return;
 
@@ -100,16 +103,19 @@ function Brick({
         const rot = meshRef.current.rotation;
         const angVel = angularVelocity.current;
 
+        // Normalize delta to 60fps baseline (60fps→1.0, 30fps→2.0, 15fps→4.0)
+        const dt = Math.min(delta / TARGET_DT, 4); // Clamp to prevent physics explosion
+
         if (isFalling.current) {
-            vel.y -= GRAVITY; // gravity
-            pos.add(vel); // move
+            vel.y -= GRAVITY * dt;
+            pos.x += vel.x * dt;
+            pos.y += vel.y * dt;
+            pos.z += vel.z * dt;
 
-            // rotate while falling
-            rot.x += angVel.x;
-            rot.y += angVel.y;
-            rot.z += angVel.z;
+            rot.x += angVel.x * dt;
+            rot.y += angVel.y * dt;
+            rot.z += angVel.z * dt;
 
-            // floor collision
             if (pos.y < FLOOR_Y) {
                 pos.y = FLOOR_Y;
                 vel.y = -vel.y * BOUNCE_DAMPING;
@@ -126,18 +132,17 @@ function Brick({
                 }
             }
         } else {
-            // floating
-            pos.add(vel);
+            pos.x += vel.x * dt;
+            pos.y += vel.y * dt;
+            pos.z += vel.z * dt;
 
-            // Only rotate based on angular velocity (no auto-spin)
-            rot.x += angVel.x;
-            rot.y += angVel.y;
-            rot.z += angVel.z;
+            rot.x += angVel.x * dt;
+            rot.y += angVel.y * dt;
+            rot.z += angVel.z * dt;
 
-            vel.multiplyScalar(FRICTION);
-            angVel.multiplyScalar(FRICTION);
+            vel.multiplyScalar(Math.pow(FRICTION, dt));
+            angVel.multiplyScalar(Math.pow(FRICTION, dt));
 
-            // bounds
             if (pos.y > 15 || pos.y < -15) vel.y *= -1;
             if (pos.x > 25 || pos.x < -25) vel.x *= -1;
             if (pos.z > 5 || pos.z < -30) vel.z *= -1;
@@ -213,10 +218,13 @@ function Brick({
 
 function Background3DContent({
     entryDirection = "float",
+    brickCount = 40,
+    fps = 24,
 }: {
     entryDirection?: "top" | "sides" | "float";
+    brickCount?: number;
+    fps?: number;
 }) {
-    const brickCount = 40; // Matched with Admin's Background3D
     const shapes: ShapeType[] = ["standard", "long", "cylinder", "circle"];
     const randomShape = () => shapes[Math.floor(Math.random() * shapes.length)];
 
@@ -229,10 +237,16 @@ function Background3DContent({
             scale: randomRange(0.8, 1.5),
             shape: randomShape(),
         }));
-    }, []);
+    }, [brickCount]);
 
     return (
-        <Canvas camera={{ position: [0, 0, 10], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias: true, alpha: true }}>
+        <Canvas
+            camera={{ position: [0, 0, 10], fov: 50 }}
+            dpr={[1, 1.5]}
+            gl={{ antialias: true, alpha: true }}
+            frameloop="demand"
+        >
+            <ThrottledDriver fps={fps} />
             <ambientLight intensity={0.8} />
             <pointLight position={[10, 10, 10]} intensity={1.5} />
             <directionalLight position={[-5, 5, 5]} intensity={1} />
@@ -253,18 +267,38 @@ const Background3DDynamic = dynamic(() => Promise.resolve(Background3DContent), 
 });
 
 export default function BackgroundBricks() {
+    const isBackgroundPaused = usePerformanceStore((s) => s.isBackgroundPaused);
+    const profile = usePerformanceStore((s) => s.profile);
+
+    const brickCount = profile?.backgroundBrickCount ?? 40;
+    const fps = profile?.backgroundFps ?? 24;
+
+    // Paused or zero bricks → static white div only (no Canvas, no GPU usage)
+    if (isBackgroundPaused || brickCount === 0) {
+        return (
+            <div
+                style={{
+                    position: "fixed",
+                    inset: 0,
+                    zIndex: 0,
+                    background: "#fff",
+                }}
+            />
+        );
+    }
+
     return (
         <div
             style={{
                 position: "fixed",
                 inset: 0,
-                zIndex: 0, // Behind content but visible
-                background: "#fff", // White matching admin
+                zIndex: 0,
+                background: "#fff",
                 overflow: "hidden",
-                pointerEvents: "auto", // Allow hovering over bricks
+                pointerEvents: "auto",
             }}
         >
-            <Background3DDynamic entryDirection="top" />
+            <Background3DDynamic entryDirection="top" brickCount={brickCount} fps={fps} />
         </div>
     );
 }

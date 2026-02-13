@@ -46,7 +46,8 @@ function LdrModel({ url }: { url: string }) {
                     (controls as any).target.set(0, targetY, 0);
                     (controls as any).update();
                 }
-                camera.position.set(0, targetY + size.y * 0.3, Math.max(size.x, size.z) * 2.5);
+                const maxDim = Math.max(size.x, size.y, size.z);
+                camera.position.set(0, targetY + size.y * 0.3, maxDim * 2.5);
                 camera.lookAt(0, targetY, 0);
 
                 setGroup(g);
