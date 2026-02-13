@@ -163,6 +163,13 @@ function LdrModel({
                 removeNullChildren(g);
                 g.rotation.x = Math.PI;
 
+                // Hide lines (white borders)
+                g.traverse((child: any) => {
+                    if (child.isLineSegments) {
+                        child.visible = false;
+                    }
+                });
+
                 // Clone materials for restoration
                 g.traverse((child: any) => {
                     if (child.isMesh) {
