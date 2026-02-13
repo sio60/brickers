@@ -70,6 +70,7 @@ export const ja = {
         gallery: "マイギャラリー",
         bookmarks: "ブックマーク",
         reports: "報告・通報履歴",
+        refunds: "決済・返金履歴",
         settings: "設定",
         delete: "退会",
         admin: "管理者専用"
@@ -158,6 +159,22 @@ export const ja = {
             ANSWERED: "回答完了",
         },
         adminAnswer: "管理者からの回答",
+    },
+    refunds: {
+        title: "決済・返金履歴",
+        empty: "決済履歴がありません。",
+        status: {
+            PENDING: "決済待ち",
+            COMPLETED: "決済完了",
+            FAILED: "決済失敗",
+            CANCELED: "キャンセル済み",
+            REFUND_REQUESTED: "返金申請中",
+            REFUNDED: "返金完了",
+        },
+        planName: "プラン",
+        amount: "金額",
+        paidAt: "決済日",
+        cancelReason: "理由",
     },
     reports: {
         title: "報告・通報履歴",

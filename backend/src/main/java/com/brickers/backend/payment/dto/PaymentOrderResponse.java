@@ -20,6 +20,8 @@ public class PaymentOrderResponse {
     private LocalDateTime paidAt;
     private LocalDateTime createdAt;
     private String pgOrderId;
+    private String cancelReason;
+    private LocalDateTime canceledAt;
 
     public static PaymentOrderResponse from(PaymentOrder order) {
         try {
@@ -34,6 +36,8 @@ public class PaymentOrderResponse {
                     .paidAt(order.getPaidAt())
                     .createdAt(order.getCreatedAt())
                     .pgOrderId(order.getPgOrderId())
+                    .cancelReason(order.getCancelReason())
+                    .canceledAt(order.getCanceledAt())
                     .build();
         } catch (Throwable e) {
             return PaymentOrderResponse.builder()
