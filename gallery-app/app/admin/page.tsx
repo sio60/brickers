@@ -9,6 +9,7 @@ import { getMyProfile, getAdminStats, AdminStats } from "@/lib/api/myApi";
 import GalleryManagement from "@/components/admin/GalleryManagement";
 import styles from "./AdminPage.module.css";
 import AdminAIReport from "@/components/admin/AdminAIReport";
+import { useAdminAI } from "@/hooks/useAdminAI";
 
 // SSR 제외
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
@@ -110,6 +111,9 @@ export default function AdminPage() {
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "jobs" | "gallery" | "inquiries" | "reports" | "refunds" | "comments" | "brick-judge">("dashboard");
+
+    // [NEW] Use the hook
+    const { ...aiState } = useAdminAI(activeTab);
 
     // 데이터 상태
     const [inquiries, setInquiries] = useState<Inquiry[]>([]);
@@ -522,6 +526,17 @@ export default function AdminPage() {
                         >
                             {t.admin.brickJudge?.title || "Brick Judge"}
                         </button>
+
+                        {/* 상세 관리 버튼 이동 */}
+                        <div className="mt-auto pt-4 border-t border-[#333]">
+                            <button
+                                className={styles.sidebarItem}
+                                onClick={() => router.push("/admin/detail")}
+                                style={{ color: '#ffe135' }}
+                            >
+                                상세 관리 →
+                            </button>
+                        </div>
                     </aside>
 
                     <main className={styles.content}>
@@ -557,6 +572,44 @@ export default function AdminPage() {
                                         <p className={styles.statValue}>{stats?.totalGalleryPosts ?? "--"}</p>
                                     </div>
                                 </div>
+
+                                {/* [NEW] Admin Intel-Query UI */}
+                                <div className="bg-[#f8f9fa] border-2 border-black p-8 rounded-[32px] mb-8 shadow-sm">
+                                    <h1 className="text-2xl font-black mb-3">Admin Intel-Query</h1>
+                                    <p className="font-bold text-gray-800">지표에 대해 궁금한 점을 물어보세요. AI가 실시간 데이터를 분석하여 보고서를 작성합니다.</p>
+
+                                    <div className="mt-8 flex gap-3">
+                                        <input
+                                            type="text"
+                                            placeholder="예: 최근 유저들이 가장 많이 이탈하는 구간과 이유를 분석해줘"
+                                            className="flex-1 px-6 py-4 rounded-2xl border-2 border-black font-medium focus:outline-none focus:ring-4 focus:ring-[#ffe135]/30 transition-all"
+                                            id="adminQueryInputMain"
+                                            onKeyPress={(e) => e.key === 'Enter' && aiState.handleQuerySubmit((e.target as HTMLInputElement).value)}
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                const input = document.getElementById('adminQueryInputMain') as HTMLInputElement;
+                                                aiState.handleQuerySubmit(input.value);
+                                            }}
+                                            disabled={aiState.isQuerying}
+                                            className="px-8 py-4 bg-black text-[#ffe135] rounded-2xl font-black hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                                        >
+                                            {aiState.isQuerying ? "분석 중..." : "질문하기"}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {aiState.queryResult && (
+                                    <div className="bg-white border-2 border-black p-8 rounded-[32px] animate-fadeIn shadow-xl mb-8">
+                                        <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-dashed border-gray-100">
+                                            <h2 className="text-xl font-black">📊 AI 분석 결과</h2>
+                                            <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-black rounded-full">REAL-TIME DATA APPED</span>
+                                        </div>
+                                        <div className="prose prose-slate max-w-none">
+                                            <AdminAIReport customContent={aiState.queryResult} activeTab="dashboard" />
+                                        </div>
+                                    </div>
+                                )}
 
                                 <AdminAIReport activeTab={activeTab} />
                             </div>
