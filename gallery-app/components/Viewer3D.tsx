@@ -179,7 +179,7 @@ export default React.memo(function Viewer3D({ url }: Viewer3DProps) {
                     enablePan={false}
                     enableZoom
                     minDistance={10}
-                    maxDistance={2000}
+                    maxDistance={3000}
                     autoRotate={true}
                     autoRotateSpeed={2}
                 />
