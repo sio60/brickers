@@ -281,4 +281,197 @@ public class GoogleAnalyticsService {
         }
         return total;
     }
+
+    /**
+     * AI Agent용 통합 리포트 데이터 조회 (Batch Request 사용)
+     * - 429 Too Many Requests 에러 방지를 위해 요청을 그룹화하여 전송합니다.
+     * - GA4 BatchRunReports는 한 번에 최대 5개의 리포트만 요청 가능하므로, 2번 나누어 실행합니다.
+     */
+    /**
+     * AI Agent용 통합 리포트 데이터 조회 (Batch Request 사용)
+     * - 429 Too Many Requests 에러 방지를 위해 요청을 그룹화하여 전송합니다.
+     * - GA4 BatchRunReports는 한 번에 최대 5개의 리포트만 요청 가능하므로, 2번 나누어 실행합니다.
+     */
+    public Map<String, Object> getProposalFullReport(int days) {
+        if (analyticsDataClient == null)
+            return Map.of();
+
+        Map<String, Object> finalResult = new java.util.HashMap<>();
+
+        try {
+            // ---------------------------------------------------------
+            // Batch 1: 핵심 지표 (Summary, Trends, Top Pages) - 4 Requests
+            // ---------------------------------------------------------
+            List<RunReportRequest> requests1 = new ArrayList<>();
+
+            // 1. Summary (Active Users, Page Views, Sessions)
+            requests1.add(RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addMetrics(Metric.newBuilder().setName("activeUsers"))
+                    .addMetrics(Metric.newBuilder().setName("screenPageViews"))
+                    .addMetrics(Metric.newBuilder().setName("sessions"))
+                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                    .build());
+
+            // 2. Daily Users Trend
+            requests1.add(RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDimensions(Dimension.newBuilder().setName("date"))
+                    .addMetrics(Metric.newBuilder().setName("activeUsers"))
+                    .addDateRanges(DateRange.newBuilder().setStartDate((days * 2) + "daysAgo").setEndDate("today"))
+                    .build());
+
+            // 3. Top Pages (Overview)
+            requests1.add(RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDimensions(Dimension.newBuilder().setName("pagePath"))
+                    .addMetrics(Metric.newBuilder().setName("screenPageViews"))
+                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                    .setLimit(10)
+                    .build());
+
+            // 4. Top Tags (Custom Event)
+            requests1.add(RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDimensions(Dimension.newBuilder().setName("customEvent:suggested_tags"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                            .setFilter(Filter.newBuilder()
+                                    .setFieldName("eventName")
+                                    .setStringFilter(Filter.StringFilter.newBuilder().setValue("generate_success"))
+                                    .build()))
+                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                    .setLimit(10)
+                    .build());
+
+            // Execute Batch 1
+            BatchRunReportsRequest batchRequest1 = BatchRunReportsRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addAllRequests(requests1)
+                    .build();
+
+            BatchRunReportsResponse batchResponse1 = analyticsDataClient.batchRunReports(batchRequest1);
+
+            // Parse Batch 1
+            if (batchResponse1.getReportsCount() >= 4) {
+                // 1. Summary
+                RunReportResponse r1 = batchResponse1.getReports(0);
+                if (r1.getRowsCount() > 0) {
+                    Row row = r1.getRows(0);
+                    finalResult.put("summary", Map.of(
+                            "activeUsers", Long.parseLong(row.getMetricValues(0).getValue()),
+                            "pageViews", Long.parseLong(row.getMetricValues(1).getValue()),
+                            "sessions", Long.parseLong(row.getMetricValues(2).getValue())));
+                } else {
+                    finalResult.put("summary", Map.of("activeUsers", 0, "pageViews", 0, "sessions", 0));
+                }
+
+                // 2. Daily Users
+                finalResult.put("dailyUsers", processTrendResponse(batchResponse1.getReports(1)));
+
+                // 3. Top Pages
+                List<Map<String, Object>> topPages = new ArrayList<>();
+                for (Row row : batchResponse1.getReports(2).getRowsList()) {
+                    topPages.add(Map.of(
+                            "pagePath", row.getDimensionValues(0).getValue(),
+                            "pageViews", Long.parseLong(row.getMetricValues(0).getValue())));
+                }
+                finalResult.put("topPages", topPages);
+
+                // 4. Top Tags
+                List<Map<String, Object>> tags = new ArrayList<>();
+                for (Row row : batchResponse1.getReports(3).getRowsList()) {
+                    tags.add(Map.of(
+                            "tag", row.getDimensionValues(0).getValue(),
+                            "count", Long.parseLong(row.getMetricValues(0).getValue())));
+                }
+                finalResult.put("topTags", tags);
+            }
+
+            // ---------------------------------------------------------
+            // Batch 2: Heavy Users & Event Stats - 4 Requests (Optimized)
+            // ---------------------------------------------------------
+            List<RunReportRequest> requests2 = new ArrayList<>();
+
+            // 1. Heavy Users
+            requests2.add(RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDimensions(Dimension.newBuilder().setName("customUser:nickname"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                    .setLimit(5)
+                    .build());
+
+            // 2. Event: generate_fail (7d)
+            requests2.add(buildEventRequest("generate_fail", days));
+            // 3. Event: generate_success (7d)
+            requests2.add(buildEventRequest("generate_success", days));
+            // 4. Event: gallery_register_attempt (1d) (Using 1d explicitly for safety)
+            requests2.add(buildEventRequest("gallery_register_attempt", 1));
+
+            // Execute Batch 2
+            BatchRunReportsRequest batchRequest2 = BatchRunReportsRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addAllRequests(requests2)
+                    .build();
+
+            BatchRunReportsResponse batchResponse2 = analyticsDataClient.batchRunReports(batchRequest2);
+
+            // Parse Batch 2
+            if (batchResponse2.getReportsCount() >= 4) {
+                // 1. Heavy Users
+                List<Map<String, Object>> heavyUsers = new ArrayList<>();
+                for (Row row : batchResponse2.getReports(0).getRowsList()) {
+                    String uid = row.getDimensionValues(0).getValue();
+                    if (!uid.isEmpty() && !uid.equals("(not set)")) {
+                        heavyUsers.add(
+                                Map.of("userId", uid, "eventCount", Long.parseLong(row.getMetricValues(0).getValue())));
+                    }
+                }
+                finalResult.put("heavyUsers", heavyUsers);
+
+                // 2-3. Event Stats (7d)
+                List<Map<String, Object>> fail7d = processTrendResponse(batchResponse2.getReports(1));
+                List<Map<String, Object>> success7d = processTrendResponse(batchResponse2.getReports(2));
+
+                // Derive 1d stats (last element if exists - assuming sorted by date)
+                List<Map<String, Object>> fail1d = fail7d.isEmpty() ? new ArrayList<>()
+                        : List.of(fail7d.get(fail7d.size() - 1));
+                List<Map<String, Object>> success1d = success7d.isEmpty() ? new ArrayList<>()
+                        : List.of(success7d.get(success7d.size() - 1));
+
+                // 4. Gallery 1d
+                List<Map<String, Object>> gallery1d = processTrendResponse(batchResponse2.getReports(3));
+
+                Map<String, Object> eventStats = new java.util.HashMap<>();
+                eventStats.put("fail_7d", fail7d);
+                eventStats.put("success_7d", success7d);
+                eventStats.put("fail_1d", fail1d);
+                eventStats.put("success_1d", success1d);
+                eventStats.put("gallery_attempt_1d", gallery1d);
+
+                finalResult.put("eventStats", eventStats);
+            }
+
+        } catch (Exception e) {
+            log.error("Failed to get full proposal report: {}", e.getMessage());
+            // Return partial result if possible or empty
+        }
+
+        return finalResult;
+    }
+
+    private RunReportRequest buildEventRequest(String eventName, int days) {
+        return RunReportRequest.newBuilder()
+                .setProperty("properties/" + propertyId)
+                .addDimensions(Dimension.newBuilder().setName("date"))
+                .addMetrics(Metric.newBuilder().setName("eventCount"))
+                .setDimensionFilter(FilterExpression.newBuilder()
+                        .setFilter(Filter.newBuilder()
+                                .setFieldName("eventName")
+                                .setStringFilter(Filter.StringFilter.newBuilder().setValue(eventName))
+                                .build()))
+                .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                .build();
+    }
 }
