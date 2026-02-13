@@ -61,7 +61,7 @@ function LdrModel({
 
         const l = new LDrawLoader(manager);
         l.setPartsLibraryPath(partsLibraryPath);
-        l.smoothNormals = true;
+        l.smoothNormals = false;
         try { (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any); } catch { }
         return l;
     }, [partsLibraryPath]);

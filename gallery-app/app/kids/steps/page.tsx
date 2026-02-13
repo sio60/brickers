@@ -108,7 +108,7 @@ function LdrModel({
     currentStep,
     stepMode = false,
     fitMargin = 1.5,
-    smoothNormals = true,
+    smoothNormals = false,
 }: {
     url: string;
     overrideMainLdrUrl?: string;
@@ -1225,7 +1225,7 @@ function KidsStepPageContent() {
                                                     url={sortedBlobUrl || ldrUrl}
                                                     currentStep={stepIdx + 1}
                                                     stepMode={true}
-                                                    smoothNormals={perfProfile?.smoothNormals ?? true}
+                                                    smoothNormals={perfProfile?.smoothNormals ?? false}
                                                     onLoaded={(g) => { modelGroupRef.current = g; setLoading(false); setLoadingPhase('loaded'); }}
                                                     onError={() => setLoading(false)}
                                                     customBounds={modelBounds}

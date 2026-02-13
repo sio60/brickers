@@ -79,7 +79,7 @@ function JudgeLdrModel({
 
         const l = new LDrawLoader(manager);
         l.setPartsLibraryPath(CDN_BASE);
-        l.smoothNormals = true;
+        l.smoothNormals = false;
         try { (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any); } catch { }
 
         return l;
