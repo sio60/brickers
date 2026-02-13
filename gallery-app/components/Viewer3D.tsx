@@ -91,6 +91,13 @@ function LdrModel({
                 const size = box.getSize(new THREE.Vector3());
                 g.position.set(-center.x, -box.min.y, -center.z);
 
+                // Hide lines (white borders)
+                g.traverse((child: any) => {
+                    if (child.isLineSegments || child.isLine) {
+                        child.visible = false;
+                    }
+                });
+
                 // 카메라를 모델 기준으로 배치
                 const targetY = size.y / 2;
                 if (controls && (controls as any).target) {
