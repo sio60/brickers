@@ -27,10 +27,10 @@ export default function GalleryPanel({ title, activeCategory, onCategoryChange, 
     ];
 
     return (
-        <div className="gallery-layout w-full max-w-[1200px] mx-auto my-6 flex h-[calc(100vh-160px)] gap-6 px-4">
+        <div className="gallery-layout w-full max-w-[1200px] mx-auto my-2 flex h-[calc(100vh-120px)] gap-6 px-4">
             {/* Sidebar */}
             <div className="w-64 flex-shrink-0 bg-black rounded-3xl overflow-hidden flex flex-col shadow-2xl">
-                <div className="px-8 py-10 border-b border-gray-800">
+                <div className="px-6 py-6 border-b border-gray-800">
                     <h2 className="text-yellow-400 text-xs font-black uppercase tracking-[0.2em] mb-2">{t.main.galleryList.workspace}</h2>
                     <h1 className="text-white text-2xl font-black italic tracking-tighter uppercase">{t.main.galleryList.gallery}</h1>
                 </div>
@@ -61,7 +61,7 @@ export default function GalleryPanel({ title, activeCategory, onCategoryChange, 
             <div className="flex-1 bg-white rounded-3xl overflow-hidden flex flex-col shadow-sm border border-gray-100">
                 {/* Header */}
                 {(title || rightAction) && (
-                    <div className="flex-shrink-0 flex items-center justify-between px-10 py-8 border-b border-gray-50">
+                    <div className="flex-shrink-0 flex items-center justify-between px-8 py-4 border-b border-gray-50">
                         {title && (
                             <h2 className="text-3xl font-black text-black tracking-tighter italic">
                                 {activeCategory === 'all' ? t.main.galleryList.allCreations : t.main.galleryList.myBookmarks}
@@ -74,7 +74,7 @@ export default function GalleryPanel({ title, activeCategory, onCategoryChange, 
                 )}
 
                 {/* Body - Scrollable */}
-                <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-white">
+                <div className="flex-1 overflow-y-auto px-6 pt-2 pb-6 custom-scrollbar bg-white">
                     {children}
                 </div>
 
