@@ -4,7 +4,7 @@ import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import ThrottledDriver from "@/components/three/ThrottledDriver";
 import * as THREE from "three";
-import { useEffect, useMemo, useState, useRef, forwardRef, useImperativeHandle } from "react";
+import { useEffect, useMemo, useState, useRef, forwardRef, useImperativeHandle, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
@@ -69,12 +69,20 @@ function LdrModel({
 
         const l = new LDrawLoader(manager);
         l.setPartsLibraryPath(partsLibraryPath);
-        l.smoothNormals = true;
+        l.smoothNormals = false;
         try { (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any); } catch { }
         return l;
     }, [partsLibraryPath]);
 
     const [group, setGroup] = useState<THREE.Group | null>(null);
+
+    // Stabilize callbacks with refs to prevent useEffect re-runs on every render
+    const onLoadedRef = useRef(onLoaded);
+    const onErrorRef = useRef(onError);
+    const onStepCountChangeRef = useRef(onStepCountChange);
+    onLoadedRef.current = onLoaded;
+    onErrorRef.current = onError;
+    onStepCountChangeRef.current = onStepCountChange;
 
     useEffect(() => {
         let cancelled = false;
@@ -110,7 +118,7 @@ function LdrModel({
                 });
 
                 if (cancelled) return;
-                if (onStepCountChange) onStepCountChange(workerResult.stepTexts.length);
+                onStepCountChangeRef.current?.(workerResult.stepTexts.length);
 
                 // 3. 정렬된 LDR 텍스트를 Blob URL로 변환하여 LDrawLoader에 로드
                 const sortedBlob = new Blob([workerResult.sortedFullText], { type: 'text/plain' });
@@ -144,10 +152,10 @@ function LdrModel({
                 prev = g;
                 setGroup(g);
                 invalidate();
-                onLoaded?.();
+                onLoadedRef.current?.();
             } catch (e) {
                 console.error("[LdrModel] Failed to load LDR:", e);
-                onError?.(e);
+                onErrorRef.current?.(e);
             }
         })();
 
@@ -155,7 +163,7 @@ function LdrModel({
             cancelled = true;
             if (prev) disposeObject3D(prev);
         };
-    }, [url, ldconfigUrl, loader, onStepCountChange, onLoaded, onError, camera, controls, invalidate]);
+    }, [url, ldconfigUrl, loader, camera, controls, invalidate]);
 
     // 원본 머티리얼 저장 (투명화 후 복원용)
     const originalMaterialsRef = useRef<Map<number, THREE.Material | THREE.Material[]>>(new Map());
@@ -259,7 +267,7 @@ export type KidsLdrPreviewHandle = {
     captureScreenshot: () => string | null;
 };
 
-const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibraryPath, ldconfigUrl, stepMode = false, autoRotate = true }, ref) => {
+const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibraryPath, ldconfigUrl, stepMode = false, autoRotate = true, onLoaded: onLoadedProp, onError: onErrorProp }, ref) => {
     const { t } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [errorMSG, setErrorMSG] = useState<string | null>(null);
@@ -515,10 +523,14 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
                         currentStep={currentStep}
                         isPreview={isPreview}
                         onStepCountChange={setTotalSteps}
-                        onLoaded={() => setLoading(false)}
+                        onLoaded={() => {
+                            setLoading(false);
+                            onLoadedProp?.();
+                        }}
                         onError={(e) => {
                             setLoading(false);
                             setErrorMSG(e?.message || "Unknown error");
+                            onErrorProp?.(e);
                         }}
                     />
                 </group>

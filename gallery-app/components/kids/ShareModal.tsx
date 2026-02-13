@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import html2canvas from "html2canvas";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -23,6 +23,8 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
     const [isPreparing, setIsPreparing] = useState(false);
     const stageRef = useRef<HTMLDivElement>(null);
     const previewRef = useRef<any>(null);
+    const [previewLoaded, setPreviewLoaded] = useState(false);
+    const handlePreviewLoaded = useCallback(() => setPreviewLoaded(true), []);
 
     const captureComposite = async (): Promise<Blob> => {
         const canvas = document.createElement("canvas");
@@ -33,9 +35,9 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
         canvas.height = 1000;
 
         if (backgroundUrl) {
-            // Fetch with CORS to avoid browser cache conflict
-            // (CSS background-image caches without CORS headers)
-            const res = await fetch(backgroundUrl, { mode: "cors" });
+            // Use image proxy to bypass S3 CORS restrictions
+            const proxyUrl = `/proxy/image?url=${encodeURIComponent(backgroundUrl)}`;
+            const res = await fetch(proxyUrl);
             const blob = await res.blob();
             const bitmapUrl = URL.createObjectURL(blob);
             const bgImg = new Image();
@@ -71,8 +73,9 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
 
     // Pre-generate blob — hooks must always run (React Rules of Hooks)
     useEffect(() => {
-        if (!isOpen || loading || !backgroundUrl || !ldrUrl) {
+        if (!isOpen || loading || !backgroundUrl || !ldrUrl || !previewLoaded) {
             setCompositeBlob(null);
+            if (!isOpen) setPreviewLoaded(false);
             return;
         }
 
@@ -80,7 +83,8 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
         const prepare = async () => {
             setIsPreparing(true);
             try {
-                await new Promise(r => setTimeout(r, 1000));
+                // Wait for render to settle after preview loaded
+                await new Promise(r => setTimeout(r, 500));
                 if (!alive) return;
 
                 const blob = await captureComposite();
@@ -95,7 +99,7 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
         };
         prepare();
         return () => { alive = false; };
-    }, [isOpen, loading, backgroundUrl, ldrUrl]);
+    }, [isOpen, loading, backgroundUrl, ldrUrl, previewLoaded]);
 
     // Early return AFTER all hooks — React requires hooks to run on every render
     if (!isOpen) return null;
@@ -187,7 +191,7 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
                         )}
                         {ldrUrl ? (
                             <div className="absolute inset-0">
-                                <KidsLdrPreview url={ldrUrl} autoRotate={false} ref={previewRef} />
+                                <KidsLdrPreview url={ldrUrl} autoRotate={false} ref={previewRef} onLoaded={handlePreviewLoaded} />
                             </div>
                         ) : null}
 

@@ -51,7 +51,7 @@ export function detectDeviceTier(): DeviceProfile {
     },
     mid: {
       tier: 'mid',
-      smoothNormals: true,
+      smoothNormals: false,
       dpr: [1, 1.5],
       backgroundBrickCount: 20,
       backgroundFps: 15,
@@ -59,7 +59,7 @@ export function detectDeviceTier(): DeviceProfile {
     },
     high: {
       tier: 'high',
-      smoothNormals: true,
+      smoothNormals: false,
       dpr: [1, 2],
       backgroundBrickCount: 40,
       backgroundFps: 24,
