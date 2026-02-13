@@ -100,14 +100,13 @@ export function useAdminAI(activeTab: string) {
     }, [authFetch]);
 
     // [NEW] Query Analytics State
-    const [queryResult, setQueryResult] = useState<string | null>(null);
+    const [appendedContent, setAppendedContent] = useState<string>("");
     const [isQuerying, setIsQuerying] = useState(false);
 
     const handleQuerySubmit = useCallback(async (query: string) => {
         if (!query.trim()) return;
         setIsQuerying(true);
         try {
-            // Use relative path or env var, consistent with other calls
             const res = await authFetch("/api/admin/analytics/query", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -115,7 +114,9 @@ export function useAdminAI(activeTab: string) {
             });
             const data = await res.json();
             if (data.status === 'success') {
-                setQueryResult(data.answer);
+                const timestamp = new Date().toLocaleTimeString();
+                const newAppend = `\n\n---\n\n### 💬 질의응답 (${timestamp})\n**질문: ${query}**\n\n${data.answer}`;
+                setAppendedContent(prev => prev + newAppend);
             } else {
                 alert("AI 응답을 받아오지 못했습니다.");
             }
@@ -151,10 +152,10 @@ export function useAdminAI(activeTab: string) {
 
     return {
         ...state,
-        queryResult,   // [NEW]
-        isQuerying,    // [NEW]
+        deepReport: state.deepReport ? state.deepReport + appendedContent : null, // ✅ 덧붙여서 반환
+        isQuerying,
         handleDeepAnalyze,
         handleRestore,
-        handleQuerySubmit // [NEW]
+        handleQuerySubmit
     };
 }

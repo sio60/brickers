@@ -4,10 +4,14 @@ import { renderMarkdown } from "@/lib/markdownUtils";
 
 interface AdminAIReportProps {
     activeTab?: string;
-    customContent?: string; // ✅ [NEW] 커스텀 질문 결과 렌더링용
+    aiState?: any; // [NEW] 상위 페이지로부터 전달받은 AI 상태
 }
 
-export default function AdminAIReport({ activeTab, customContent }: AdminAIReportProps) {
+export default function AdminAIReport({ activeTab, aiState }: AdminAIReportProps) {
+    // 상위에서 전달받은 상태가 있으면 그것을 사용, 없으면 직접 생성
+    const internalState = useAdminAI(activeTab || "dashboard");
+    const state = aiState || internalState;
+
     const {
         handleDeepAnalyze,
         handleRestore,
@@ -17,13 +21,9 @@ export default function AdminAIReport({ activeTab, customContent }: AdminAIRepor
         deepError,
         lastDeepAnalysisTime,
         moderationResults
-    } = useAdminAI(activeTab || "dashboard");
+    } = state;
 
-    const [report, setReport] = useState<string | null>(customContent || null); // ✅ customContent 우선 사용
-    const [loading, setLoading] = useState(!customContent);
-    const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-
-    if (activeTab && activeTab !== "dashboard" && !customContent) return null;
+    if (activeTab && activeTab !== "dashboard" && !aiState) return null;
 
     return (
         <div className="space-y-6 animate-fadeIn">
