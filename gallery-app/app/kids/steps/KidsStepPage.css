@@ -431,6 +431,7 @@
     color: #000;
     cursor: pointer;
     padding: 10px 0;
+    margin-top: 10px;
     margin-bottom: 20px;
     display: flex;
     align-items: center;
