@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getMyProfile, getAdminStats, AdminStats } from "@/lib/api/myApi";
 import GalleryManagement from "@/components/admin/GalleryManagement";
 import styles from "./AdminPage.module.css";
-import { renderMarkdown } from "@/lib/markdownUtils";
+import AdminAIReport from "@/components/admin/AdminAIReport";
 
 // SSR 제외
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
@@ -134,14 +134,7 @@ export default function AdminPage() {
     const [commentPage, setCommentPage] = useState(0);
     const [commentTotalPages, setCommentTotalPages] = useState(0);
 
-    // [NEW] AI Deep Analysis 상태
-    const [deepAnalyzing, setDeepAnalyzing] = useState(false);
-    const [deepReport, setDeepReport] = useState<string | null>(null);
-    const [deepRisk, setDeepRisk] = useState<number>(0);
-    const [deepError, setDeepError] = useState<string | null>(null);
-    const [deepAnomalies, setDeepAnomalies] = useState<any[]>([]);
-    const [deepActions, setDeepActions] = useState<any[]>([]);
-    const [deepDiagnosis, setDeepDiagnosis] = useState<any>(null);
+
 
     // 검색어 디바운싱
     useEffect(() => {
@@ -151,6 +144,8 @@ export default function AdminPage() {
         }, 500);
         return () => clearTimeout(timer);
     }, [userSearch]);
+
+
 
     useEffect(() => {
         if (activeTab === "jobs") {
@@ -463,34 +458,6 @@ export default function AdminPage() {
         }
     };
 
-    // [NEW] AI Deep Analysis 실행
-    const handleDeepAnalyze = async () => {
-        setDeepAnalyzing(true);
-        setDeepReport(null);
-        setDeepError(null);
-        setDeepAnomalies([]);
-        setDeepActions([]);
-        setDeepDiagnosis(null);
-        try {
-            const res = await authFetch("/api/admin/analytics/deep-analyze", { method: "POST" });
-            if (res.ok) {
-                const data = await res.json();
-                setDeepReport(data.report || data.final_report || "보고서 없음");
-                setDeepRisk(data.risk_score ?? 0);
-                setDeepAnomalies(data.anomalies || []);
-                setDeepActions(data.proposed_actions || []);
-                setDeepDiagnosis(data.diagnosis || null);
-            } else {
-                const err = await res.json().catch(() => null);
-                setDeepError(err?.details || err?.error || `Error ${res.status}`);
-            }
-        } catch (e: any) {
-            setDeepError(e.message || "네트워크 오류");
-        } finally {
-            setDeepAnalyzing(false);
-        }
-    };
-
     if (loading) return null;
 
     return (
@@ -591,206 +558,7 @@ export default function AdminPage() {
                                     </div>
                                 </div>
 
-                                {/* [NEW] AI Deep Analysis Section */}
-                                <div style={{
-                                    marginTop: '32px',
-                                    padding: '28px',
-                                    background: '#f8f9fa',
-                                    borderRadius: '20px',
-                                    border: '2px solid #eee',
-                                }}>
-                                    {/* 헤더 */}
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                                        <div>
-                                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 900 }}>AI 심층 분석</h3>
-                                            <p style={{ fontSize: '12px', color: '#999', margin: '4px 0 0' }}>
-                                                GA4 수집 → 이상 탐지 → 원인 추론 → 전략 수립
-                                            </p>
-                                        </div>
-                                        <button
-                                            onClick={handleDeepAnalyze}
-                                            disabled={deepAnalyzing}
-                                            style={{
-                                                padding: '10px 24px',
-                                                background: deepAnalyzing ? '#ccc' : '#000',
-                                                color: deepAnalyzing ? '#888' : '#ffe135',
-                                                border: 'none',
-                                                borderRadius: '12px',
-                                                fontSize: '13px',
-                                                fontWeight: 800,
-                                                cursor: deepAnalyzing ? 'not-allowed' : 'pointer',
-                                                transition: 'all 0.2s',
-                                            }}
-                                        >
-                                            {deepAnalyzing ? '분석 중...' : '심층 분석 실행'}
-                                        </button>
-                                    </div>
-
-                                    {/* 로딩 */}
-                                    {deepAnalyzing && (
-                                        <div style={{
-                                            padding: '48px 20px',
-                                            textAlign: 'center',
-                                            background: '#fff',
-                                            borderRadius: '16px',
-                                            border: '1px solid #eee',
-                                            marginTop: '16px',
-                                        }}>
-                                            <div style={{
-                                                width: '40px', height: '40px', margin: '0 auto 16px',
-                                                border: '3px solid #eee', borderTopColor: '#000',
-                                                borderRadius: '50%', animation: 'spin 0.8s linear infinite',
-                                            }} />
-                                            <p style={{ fontSize: '14px', fontWeight: 700, color: '#333', margin: '0 0 4px' }}>데이터 수집 및 분석 파이프라인 실행 중</p>
-                                            <p style={{ fontSize: '12px', color: '#aaa', margin: 0 }}>최대 30초 소요</p>
-                                        </div>
-                                    )}
-
-                                    {/* 에러 */}
-                                    {deepError && (
-                                        <div style={{
-                                            padding: '16px 20px',
-                                            background: '#fff5f5',
-                                            border: '1px solid #fcc',
-                                            borderRadius: '12px',
-                                            color: '#c00',
-                                            fontSize: '14px',
-                                            marginTop: '16px',
-                                        }}>
-                                            분석 실패: {deepError}
-                                        </div>
-                                    )}
-
-                                    {/* 결과 */}
-                                    {deepReport && (
-                                        <div style={{ marginTop: '16px' }}>
-                                            {/* Risk + Status Bar */}
-                                            <div style={{
-                                                display: 'flex', alignItems: 'center', gap: '12px',
-                                                padding: '14px 20px',
-                                                background: deepRisk >= 0.3 ? '#fff5f5' : '#f0fdf4',
-                                                borderRadius: '12px',
-                                                border: `1px solid ${deepRisk >= 0.3 ? '#fed7d7' : '#bbf7d0'}`,
-                                                marginBottom: '16px',
-                                            }}>
-                                                <div style={{
-                                                    width: '44px', height: '44px', borderRadius: '50%',
-                                                    background: deepRisk >= 0.3 ? '#ff6b6b' : '#51cf66',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    color: '#fff', fontWeight: 900, fontSize: '14px', flexShrink: 0,
-                                                }}>
-                                                    {(deepRisk * 100).toFixed(0)}
-                                                </div>
-                                                <div>
-                                                    <div style={{ fontWeight: 800, fontSize: '14px', color: '#000' }}>
-                                                        {deepRisk >= 0.3 ? '이상 징후 감지됨' : '서비스 정상 운영 중'}
-                                                    </div>
-                                                    <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>
-                                                        Risk Score {(deepRisk * 100).toFixed(0)}% | 이상 징후 {deepAnomalies.length}건
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* 이상 징후 카드 */}
-                                            {deepAnomalies.length > 0 && (
-                                                <div style={{ marginBottom: '16px' }}>
-                                                    <div style={{ fontSize: '13px', fontWeight: 800, color: '#333', marginBottom: '8px' }}>감지된 이상 징후</div>
-                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                                        {deepAnomalies.map((a: any, i: number) => (
-                                                            <div key={i} style={{
-                                                                padding: '10px 16px',
-                                                                background: a.severity === 'HIGH' ? '#ff6b6b' : '#ffd43b',
-                                                                color: a.severity === 'HIGH' ? '#fff' : '#000',
-                                                                borderRadius: '10px',
-                                                                fontSize: '12px',
-                                                                fontWeight: 700,
-                                                            }}>
-                                                                <div>{a.metric?.replace(/_/g, ' ')} {a.direction}</div>
-                                                                <div style={{ fontSize: '11px', opacity: 0.8, marginTop: '2px' }}>
-                                                                    {a.current} (기준: {a.baseline}) | Z: {a.z_score}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* 진단 결과 */}
-                                            {deepDiagnosis && (
-                                                <div style={{
-                                                    padding: '16px 20px',
-                                                    background: '#fff',
-                                                    borderRadius: '12px',
-                                                    border: '1px solid #eee',
-                                                    marginBottom: '16px',
-                                                }}>
-                                                    <div style={{ fontSize: '13px', fontWeight: 800, color: '#333', marginBottom: '8px' }}>원인 분석</div>
-                                                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#000', marginBottom: '8px' }}>
-                                                        {deepDiagnosis.root_cause}
-                                                    </div>
-                                                    <div style={{ fontSize: '12px', color: '#888' }}>
-                                                        신뢰도: {((deepDiagnosis.confidence || 0) * 100).toFixed(0)}% | 영향 범위: {deepDiagnosis.affected_segment || '전체'}
-                                                    </div>
-                                                    {deepDiagnosis.evidence && (
-                                                        <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
-                                                            {deepDiagnosis.evidence.map((e: string, i: number) => (
-                                                                <div key={i} style={{ padding: '2px 0' }}>• {e}</div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            {/* 제안 액션 */}
-                                            {deepActions.length > 0 && (
-                                                <div style={{
-                                                    padding: '16px 20px',
-                                                    background: '#fff',
-                                                    borderRadius: '12px',
-                                                    border: '1px solid #eee',
-                                                    marginBottom: '16px',
-                                                }}>
-                                                    <div style={{ fontSize: '13px', fontWeight: 800, color: '#333', marginBottom: '8px' }}>제안 조치</div>
-                                                    {deepActions.map((action: any, i: number) => (
-                                                        <div key={i} style={{
-                                                            display: 'flex', alignItems: 'flex-start', gap: '10px',
-                                                            padding: '8px 0',
-                                                            borderBottom: i < deepActions.length - 1 ? '1px solid #f5f5f5' : 'none',
-                                                        }}>
-                                                            <div style={{
-                                                                padding: '2px 8px', borderRadius: '4px', fontSize: '10px',
-                                                                fontWeight: 800, flexShrink: 0, marginTop: '2px',
-                                                                background: action.priority === 'HIGH' ? '#000' : '#eee',
-                                                                color: action.priority === 'HIGH' ? '#ffe135' : '#333',
-                                                            }}>
-                                                                {action.priority || 'MEDIUM'}
-                                                            </div>
-                                                            <div>
-                                                                <div style={{ fontSize: '13px', fontWeight: 700 }}>{action.action}</div>
-                                                                {action.reason && <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>{action.reason}</div>}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-
-                                            {/* 보고서 본문 (마크다운 렌더링) */}
-                                            <div style={{
-                                                padding: '20px',
-                                                background: '#fff',
-                                                borderRadius: '12px',
-                                                border: '1px solid #eee',
-                                                fontSize: '13px',
-                                                lineHeight: '1.8',
-                                                maxHeight: '400px',
-                                                overflow: 'auto',
-                                                color: '#333',
-                                            }}
-                                                dangerouslySetInnerHTML={{ __html: renderMarkdown(deepReport) }}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
+                                <AdminAIReport activeTab={activeTab} />
                             </div>
                         )}
 
@@ -1251,7 +1019,7 @@ export default function AdminPage() {
                         )}
                     </main>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
