@@ -28,12 +28,14 @@ public class SqsProducerService {
     /**
      * 작업 요청 메시지 전송 (Backend → AI Server)
      */
-    public void sendJobRequest(String jobId, String userId, String sourceImageUrl, String age, int budget) {
+    public void sendJobRequest(String jobId, String userId, String sourceImageUrl, String age, int budget,
+            String language) {
         log.info("📤 [SQS Producer] REQUEST 메시지 생성 시작");
         log.info("   - jobId: {}", jobId);
         log.info("   - userId: {}", userId);
         log.info("   - sourceImageUrl: {}", sourceImageUrl);
         log.info("   - age: {}, budget: {}", age, budget);
+        log.info("   - language: {}", language);
         log.info("   - queueUrl: {}", queueUrl);
 
         SqsMessage message = SqsMessage.builder()
@@ -43,6 +45,7 @@ public class SqsProducerService {
                 .sourceImageUrl(sourceImageUrl)
                 .age(age)
                 .budget(budget)
+                .language(language)
                 .timestamp(LocalDateTime.now())
                 .build();
 

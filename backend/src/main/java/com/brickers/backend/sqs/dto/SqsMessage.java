@@ -38,6 +38,7 @@ public class SqsMessage {
     private String sourceImageUrl;
     private String age;
     private Integer budget;
+    private String language; // [New]
 
     // RESULT 필드
     private Boolean success;
