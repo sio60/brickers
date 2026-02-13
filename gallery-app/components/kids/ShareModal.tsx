@@ -90,7 +90,7 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
             document.body.removeChild(a);
         } catch (e) {
             console.error("Download failed:", e);
-            alert("Download failed. Please try again.");
+            alert(t.kids?.share?.downloadFail || "Download failed. Please try again.");
         } finally {
             setWorking(false);
         }
@@ -103,15 +103,15 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
             const file = new File([blob], "brick-model.png", { type: "image/png" });
             if (navigator.share && navigator.canShare?.({ files: [file] })) {
                 await navigator.share({
-                    title: "Check out my Brickers model!",
-                    text: "I made this with Brickers AI!",
+                    title: t.kids?.share?.shareTitle || "Check out my Brickers model!",
+                    text: t.kids?.share?.shareText || "I made this with Brickers AI!",
                     files: [file],
                 });
             } else if (navigator.clipboard?.write) {
                 await navigator.clipboard.write([
                     new ClipboardItem({ [blob.type]: blob })
                 ]);
-                alert("Image copied to clipboard!");
+                alert(t.kids?.share?.clipboardCopy || "Image copied to clipboard!");
             } else {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
@@ -123,7 +123,7 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
         } catch (e: any) {
             if (e?.name !== 'AbortError') {
                 console.error("Share failed", e);
-                alert("Share failed. Please try again.");
+                alert(t.kids?.share?.shareFail || "Share failed. Please try again.");
             }
         } finally {
             setWorking(false);
@@ -148,7 +148,7 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
                         {loading ? (t.kids?.share?.generating || "Generating...") : (t.kids?.share?.title || "Completed")}
                     </h2>
                     <p className="text-gray-500 mb-6 text-sm">
-                        {loading ? "AI is creating a background for your model." : "Share your model with friends."}
+                        {loading ? (t.kids?.share?.generatingBg || "AI is creating a background for your model.") : (t.kids?.share?.subtitle || "Share your model with friends.")}
                     </p>
 
                     <div
@@ -169,7 +169,7 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
                         {(loading || !backgroundUrl || !ldrUrl) && (
                             <div className="flex flex-col items-center gap-3 z-10 bg-white/70 w-full h-full justify-center">
                                 <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" />
-                                <span className="text-xs font-bold text-gray-400 animate-pulse">Processing...</span>
+                                <span className="text-xs font-bold text-gray-400 animate-pulse">{t.kids?.share?.processing || "Processing..."}</span>
                             </div>
                         )}
                     </div>
@@ -177,10 +177,10 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
                     {!loading && backgroundUrl && ldrUrl && (
                         <div className="flex gap-3">
                             <Button onClick={handleDownload} variant="secondary" disabled={working || !previewLoaded}>
-                                {working ? "Saving..." : (t.kids?.share?.save || "Save")}
+                                {working ? (t.kids?.share?.saving || "Saving...") : (t.kids?.share?.save || "Save")}
                             </Button>
                             <Button onClick={handleShare} variant="primary" disabled={working || !previewLoaded}>
-                                {working ? "Processing..." : (t.kids?.share?.share || "Share")}
+                                {working ? (t.kids?.share?.processing || "Processing...") : (t.kids?.share?.share || "Share")}
                             </Button>
                         </div>
                     )}
