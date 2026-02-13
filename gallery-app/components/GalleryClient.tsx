@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import GalleryPanel from './GalleryPanel';
 import GalleryGrid from './GalleryGrid';
@@ -27,6 +27,34 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
     const [totalPages, setTotalPages] = useState(initialTotalPages);
     const [totalElements, setTotalElements] = useState(initialTotalElements);
     const [loading, setLoading] = useState(false);
+
+    // 로그인 상태가 확인되면(isAuthenticated가 true로 바뀌면) 데이터를 다시 불러옵니다.
+    // 이를 통해 서버에서 렌더링된 정적 데이터(Initial Props)를 사용자 맞춤 데이터(좋아요, 북마크 상태 포함)로 교체합니다.
+    useEffect(() => {
+        if (isAuthenticated) {
+            const refreshData = async () => {
+                try {
+                    const endpoint = category === 'bookmarks' ? '/api/gallery/bookmarks/my' : '/api/gallery';
+                    const res = await authFetch(`${endpoint}?page=${page}&size=24&sort=${sort}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        const content = (data.content || []).map((item: any) => ({
+                            ...item,
+                            myReaction: item.myReaction
+                        }));
+                        setItems(content);
+                        setTotalPages(data.totalPages);
+                        setTotalElements(data.totalElements);
+                    }
+                } catch (error) {
+                    console.error('Failed to refresh gallery data on auth:', error);
+                }
+            };
+            refreshData();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAuthenticated]);
+
 
     const goToPage = async (targetPage: number) => {
         if (loading || targetPage < 0 || targetPage >= totalPages) return;

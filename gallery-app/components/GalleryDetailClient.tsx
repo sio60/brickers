@@ -394,6 +394,20 @@ export default function GalleryDetailClient({ item }: Props) {
                         <div className="p-6">
                             <h1 className="text-2xl font-black text-gray-900 leading-tight mb-6">{item.title}</h1>
 
+                            {/* Tags Section */}
+                            {item.tags && item.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mb-6">
+                                    {item.tags.map((tag, index) => (
+                                        <span
+                                            key={index}
+                                            className="px-3 py-1 bg-gray-100 text-gray-600 text-[11px] font-bold rounded-full tracking-wide"
+                                        >
+                                            #{tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+
                             <div className="flex items-center gap-6">
                                 <button
                                     onClick={handleLikeToggle}

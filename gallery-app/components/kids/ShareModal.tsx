@@ -4,6 +4,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useLanguage } from "@/contexts/LanguageContext";
+import type { KidsLdrPreviewHandle } from "./KidsLdrPreview";
 
 const KidsLdrPreview = dynamic(() => import("./KidsLdrPreview"), { ssr: false });
 
@@ -18,7 +19,7 @@ interface ShareModalProps {
 export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loading }: ShareModalProps) {
     const { t } = useLanguage();
     const [working, setWorking] = useState(false);
-    const previewRef = useRef<any>(null);
+    const previewRef = useRef<KidsLdrPreviewHandle>(null);
     const [previewLoaded, setPreviewLoaded] = useState(false);
     const handlePreviewLoaded = useCallback(() => setPreviewLoaded(true), []);
 
@@ -106,11 +107,18 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
                     text: t.kids?.share?.shareText || "I made this with Brickers AI!",
                     files: [file],
                 });
-            } else {
+            } else if (navigator.clipboard?.write) {
                 await navigator.clipboard.write([
                     new ClipboardItem({ [blob.type]: blob })
                 ]);
                 alert(t.kids?.share?.clipboardCopy || "Image copied to clipboard!");
+            } else {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `brickers-share-${Date.now()}.png`;
+                a.click();
+                URL.revokeObjectURL(url);
             }
         } catch (e: any) {
             if (e?.name !== 'AbortError') {
@@ -149,7 +157,7 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
                         {backgroundUrl && (
                             <div
                                 className="absolute inset-0 bg-cover bg-center"
-                                style={{ backgroundImage: `url(${backgroundUrl})` }}
+                                style={{ backgroundImage: `url(${encodeURI(backgroundUrl)})` }}
                             />
                         )}
                         {ldrUrl ? (
@@ -182,7 +190,12 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
     );
 }
 
-function Button({ children, onClick, variant = "primary", disabled }: any) {
+function Button({ children, onClick, variant = "primary", disabled }: {
+    children: React.ReactNode;
+    onClick: () => void;
+    variant?: "primary" | "secondary";
+    disabled?: boolean;
+}) {
     const base = "flex-1 py-3.5 px-6 rounded-2xl font-black text-lg transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2";
     const styles = variant === "primary"
         ? "bg-black text-white hover:bg-gray-800 shadow-gray-200"

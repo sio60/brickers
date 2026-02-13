@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, useRef, Suspense } from "react";
+import React, { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import styles from "./MyPage.module.css";
-import { getMyOverview, getMyProfile, getMyJobs, retryJob, cancelJob, updateMyProfile, ApiError } from "@/lib/api/myApi";
+import { getMyOverview, getMyProfile, getMyJobs, retryJob, cancelJob, updateMyProfile, cancelMembership, ApiError } from "@/lib/api/myApi";
 import type { MyOverview, MyProfile, MyJob } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, downloadLdrFromBase64 } from "@/lib/api/colorVariantApi";
 
@@ -15,6 +15,8 @@ const KidsLdrPreview = dynamic(() => import("@/components/kids/KidsLdrPreview"),
 import ShareModal from "@/components/kids/ShareModal";
 import BackgroundBricks from "@/components/BackgroundBricks";
 import UpgradeModal from "@/components/UpgradeModal";
+import EditGalleryModal from "@/components/EditGalleryModal";
+import { updateGalleryPost } from "@/lib/api/galleryApi";
 
 // SVG Icons
 const Icons = {
@@ -35,7 +37,8 @@ const Icons = {
     Search: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>,
     Layers: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.18 6.27a2 2 0 0 0 0 3.66l9 4.1a2 2 0 0 0 1.66 0l8.99-4.1a2 2 0 0 0 0-3.66Z" /><path d="m2.18 16.27 8.99 4.1a2 2 0 0 0 1.66 0l8.99-4.1" /><path d="m2.18 11.27 8.99 4.1a2 2 0 0 0 1.66 0l8.99-4.1" /></svg>,
     DownloadImage: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>,
-    DownloadFile: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /><polyline points="14 2 14 8 20 8" /><line x1="12" x2="12" y1="18" y2="12" /><polyline points="9 15 12 18 15 15" /></svg>
+    DownloadFile: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /><polyline points="14 2 14 8 20 8" /><line x1="12" x2="12" y1="18" y2="12" /><polyline points="9 15 12 18 15 15" /></svg>,
+    Share: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" x2="12" y1="2" y2="15" /></svg>
 };
 
 // types
@@ -101,6 +104,14 @@ function MyPageContent() {
     const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
     const [shareJob, setShareJob] = useState<MyJob | null>(null); // 공유할 작업 (렌더링 트리거)
     const sharePreviewRef = useRef<KidsLdrPreviewHandle>(null);
+
+    // 멤버십 해지 모달 상태
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
+
+    // 갤러리 수정 모달 상태
+    const [isEditGalleryModalOpen, setIsEditGalleryModalOpen] = useState(false);
+    const [galleryEditTarget, setGalleryEditTarget] = useState<MyJob | null>(null);
 
     const loadJobsPage = async (page: number, replace = false) => {
         try {
@@ -442,11 +453,52 @@ function MyPageContent() {
         // } finally {
         //     setIsApplyingColor(false);
         // }
+        const downloadColorChangedLdr = () => {
+            // if (!colorChangedLdrBase64) return;
+            // downloadLdrFromBase64(colorChangedLdrBase64, `${menuJob?.title || 'model'}_${selectedTheme}.ldr`);
+        };
+
     };
 
-    const downloadColorChangedLdr = () => {
-        // if (!colorChangedLdrBase64) return;
-        // downloadLdrFromBase64(colorChangedLdrBase64, `${menuJob?.title || 'model'}_${selectedTheme}.ldr`);
+    const handleCancelMembership = async () => {
+        try {
+            setIsCancelling(true);
+            const res = await cancelMembership();
+            if (res.success) {
+                alert(t.membership.cancelSuccess || "멤버십 해지가 완료되었습니다.");
+                setIsCancelModalOpen(false);
+                // 프로필 정보 즉시 갱신
+                const updatedProfile = await getMyProfile();
+                setProfile(updatedProfile);
+            } else {
+                alert(res.message || "멤버십 해지에 실패했습니다.");
+            }
+        } catch (e: any) {
+            alert(e.message || "멤버십 해지 중 오류가 발생했습니다.");
+        } finally {
+            setIsCancelling(false);
+        }
+    };
+
+    // 갤러리 수정 핸들러
+    const handleEditGalleryOpen = () => {
+        if (!menuJob) return;
+        setGalleryEditTarget(menuJob);
+        setIsEditGalleryModalOpen(true);
+        setMenuJob(null); // 메뉴 닫기
+    };
+
+    const handleEditGallerySave = async (data: any) => {
+        if (!galleryEditTarget) return;
+        try {
+            await updateGalleryPost(galleryEditTarget.id, data);
+            alert("수정되었습니다.");
+            // 목록 갱신 (간단히 리로드 혹은 리스트 업데이트)
+            resetAndLoadJobs();
+        } catch (e) {
+            console.error("Update failed", e);
+            throw e; // Modal logs error
+        }
     };
 
     // 실시간 업데이트 (Polling) 및 문의 내역 로드
@@ -619,10 +671,55 @@ function MyPageContent() {
                                 <p className={styles.mypage__planDesc}>
                                     {t.membership.desc?.replace("{plan}", profile.membershipPlan)}
                                 </p>
+
+                                {/* 멤버십 해지 버튼 (무료 플랜이 아닐 경우에만 표시 예시 - 여기선 조건 없이 표시하거나 플랜 체크) */}
+                                {profile.membershipPlan !== 'FREE' && (
+                                    <div style={{ marginTop: '24px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
+                                        <button
+                                            className={styles.mypage__textBtn}
+                                            style={{ color: '#999', textDecoration: 'underline', fontSize: '14px' }}
+                                            onClick={() => setIsCancelModalOpen(true)}
+                                        >
+                                            {t.membership.cancelBtn || "멤버십 해지 / 환불 신청"}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* 멤버십 해지 확인 모달 */}
+                        {isCancelModalOpen && (
+                            <div className={styles.mypage__modalOverlay} onClick={() => setIsCancelModalOpen(false)}>
+                                <div className={styles.mypage__menuModal} style={{ padding: '32px', maxWidth: '400px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                                    <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '16px' }}>
+                                        {t.membership.cancelTitle || "멤버십 해지"}
+                                    </h3>
+                                    <p style={{ marginBottom: '24px', color: '#666', lineHeight: 1.5 }}>
+                                        {t.membership.cancelConfirm || "정말로 멤버십을 해지하시겠습니까?\n해지 후에는 혜택을 더 이상 이용하실 수 없습니다."}
+                                    </p>
+                                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                                        <button
+                                            className={styles.mypage__cancelBtn}
+                                            onClick={() => setIsCancelModalOpen(false)}
+                                            style={{ flex: 1 }}
+                                        >
+                                            {t.common.cancel || "취소"}
+                                        </button>
+                                        <button
+                                            className={styles.mypage__saveBtn}
+                                            style={{ flex: 1, backgroundColor: '#ff4d4f' }}
+                                            onClick={handleCancelMembership}
+                                            disabled={isCancelling}
+                                        >
+                                            {isCancelling ? "처리중..." : (t.common.confirm || "해지하기")}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
-                );
+                )
+
 
             case "jobs":
                 return (
@@ -656,8 +753,11 @@ function MyPageContent() {
                                             className={styles.mypage__job}
                                             onClick={() => handleJobClick(job)}
                                         >
-                                            <div className={styles.mypage__jobThumbData}>
+                                            <div className={styles.mypage__jobThumbData} style={{ position: 'relative', overflow: 'hidden' }}>
                                                 <img src={job.sourceImageUrl || "/placeholder.png"} alt={job.title} className={styles.mypage__jobThumb} />
+
+
+
                                                 <div className={styles.mypage__jobOverlay}>
                                                     <span className={`${styles.mypage__jobStatus} ${styles[getStatusClass(job.status)]}`}>
                                                         {getStatusLabel(job.status)}
@@ -936,6 +1036,15 @@ function MyPageContent() {
                         <div className={styles.mypage__menuList}>
                             <button
                                 className={`${styles.mypage__menuItem2}`}
+                                onClick={handleEditGalleryOpen}
+                            >
+                                <Icons.Edit className={styles.mypage__menuIcon2} />
+                                <span>{t.detail?.edit || "정보 수정"}</span>
+                            </button>
+                            <div className={styles.mypage__menuDivider} />
+
+                            <button
+                                className={`${styles.mypage__menuItem2}`}
                                 onClick={() => handleMenuAction('preview')}
                                 disabled={!menuJob.sourceImageUrl}
                             >
@@ -957,7 +1066,7 @@ function MyPageContent() {
                                 className={`${styles.mypage__menuItem2}`}
                                 onClick={() => handleShare(menuJob)}
                             >
-                                <Icons.Image className={styles.mypage__menuIcon2} />
+                                <Icons.Share className={styles.mypage__menuIcon2} />
                                 <span>{t.detail?.share || "공유"}</span>
                             </button>
 
@@ -1183,9 +1292,25 @@ function MyPageContent() {
                 ldrUrl={shareJob?.ldrUrl || null}
                 loading={shareLoading}
             />
+
+            {/* 갤러리 수정 모달 */}
+            {isEditGalleryModalOpen && galleryEditTarget && (
+                <EditGalleryModal
+                    isOpen={isEditGalleryModalOpen}
+                    onClose={() => setIsEditGalleryModalOpen(false)}
+                    onSave={handleEditGallerySave}
+                    initialData={{
+                        title: galleryEditTarget.title || "",
+                        content: galleryEditTarget.description || "",
+                        tags: galleryEditTarget.tags || galleryEditTarget.suggestedTags || [],
+                        visibility: galleryEditTarget.visibility || "PUBLIC"
+                    }}
+                />
+            )}
         </div>
     );
 }
+
 
 export default function MyPage() {
     return (

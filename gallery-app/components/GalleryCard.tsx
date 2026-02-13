@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { GalleryItem } from '../types/gallery';
@@ -67,22 +66,23 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
         <Link href={`/gallery/${slug}`} className="block group">
             <div className="gallery-card bg-white rounded-3xl overflow-hidden border-[3px] border-black hover:shadow-[0_20px_40px_rgba(0,0,0,0.1)] transition-all duration-300">
                 {/* Thumbnail Area */}
-                <div className="relative aspect-[4/5] bg-white overflow-hidden border-b-[3px] border-black">
+                <div className="relative aspect-[4/5] bg-gray-100 overflow-hidden border-b-[3px] border-black">
                     {hasValidImage ? (
-                        <div className="w-full h-full p-4">
-                            <img
-                                src={displayImageUrl}
-                                alt={item.title}
-                                className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
-                            />
-                        </div>
+                        <img
+                            src={displayImageUrl}
+                            alt={item.title}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-200">
+                        <div className="w-full h-full flex items-center justify-center text-gray-200 p-4">
                             <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
                             </svg>
                         </div>
                     )}
+
+                    {/* Gradient Overlay for Icon Visibility */}
+                    <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-black/50 to-transparent z-0 pointer-events-none" />
 
                     {/* Overlay Action Buttons */}
                     <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
@@ -103,13 +103,6 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
                                     d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
                                 />
                             </svg>
-                            {/* Like count text removed from button as per visual style, or kept if needed? 
-                                The prompt/image didn't show counts, usually overlay icons are just icons in this style.
-                                But let's keep it simple for now as per instructions "image style". 
-                                The image showed just an outline heart. 
-                                I'll remove the count text for cleaner look, or maybe user wants it? User said "bookmark and heart should appear on top".
-                                I'll keep just icon for now to match "image style".
-                            */}
                         </button>
 
                         {/* Bookmark button */}
