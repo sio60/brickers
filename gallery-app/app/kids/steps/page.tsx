@@ -163,6 +163,13 @@ function LdrModel({
                 removeNullChildren(g);
                 g.rotation.x = Math.PI;
 
+                // Hide lines (white borders)
+                g.traverse((child: any) => {
+                    if (child.isLineSegments) {
+                        child.visible = false;
+                    }
+                });
+
                 // Clone materials for restoration
                 g.traverse((child: any) => {
                     if (child.isMesh) {
@@ -861,6 +868,8 @@ function KidsStepPageContent() {
         }
     }, [jobId, jobLoaded, jobScreenshotUrls, isAssemblyMode]);
 
+    const [showFull3D, setShowFull3D] = useState(false);
+
     // LDR 파싱 및 Steps 생성
     useEffect(() => {
         let alive = true;
@@ -1145,7 +1154,44 @@ function KidsStepPageContent() {
                                         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }}>
                                             {/* 메인 이미지 */}
                                             <div style={{ flex: 1, position: 'relative', background: '#fff', minHeight: 0 }}>
-                                                {jobScreenshotUrls?.[selectedView] ? (
+                                                {(showFull3D || (jobLoaded && !jobScreenshotUrls?.[selectedView])) ? (
+                                                    <div style={{ position: 'absolute', inset: 0 }}>
+                                                        <Canvas
+                                                            camera={{ position: [200, -200, 200], fov: 45, near: 0.1, far: 100000 }}
+                                                            dpr={perfProfile?.dpr ?? [1, 2]}
+                                                            gl={{ preserveDrawingBuffer: true }}
+                                                            frameloop="demand"
+                                                        >
+                                                            <ThrottledDriver />
+                                                            <ambientLight intensity={0.9} />
+                                                            <directionalLight position={[3, 5, 2]} intensity={1} />
+                                                            {ldrUrl && (
+                                                                <LdrModel
+                                                                    url={sortedBlobUrl || ldrUrl}
+                                                                    stepMode={false}
+                                                                    smoothNormals={perfProfile?.smoothNormals ?? false}
+                                                                    onLoaded={(g) => { setLoading(false); }}
+                                                                    onError={() => setLoading(false)}
+                                                                    customBounds={modelBounds}
+                                                                />
+                                                            )}
+                                                            <OrbitControls makeDefault enablePan={false} enableZoom />
+                                                        </Canvas>
+                                                        {jobScreenshotUrls?.[selectedView] && (
+                                                            <button
+                                                                onClick={() => setShowFull3D(false)}
+                                                                style={{
+                                                                    position: 'absolute', top: 16, right: 16,
+                                                                    padding: '8px 16px', background: '#fff', borderRadius: 20,
+                                                                    border: '1px solid #ddd', fontSize: '0.8rem', fontWeight: 'bold',
+                                                                    cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                                }}
+                                                            >
+                                                                이미지 보기
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ) : jobScreenshotUrls?.[selectedView] ? (
                                                     <img
                                                         src={jobScreenshotUrls[selectedView]}
                                                         alt={selectedView}
@@ -1164,13 +1210,13 @@ function KidsStepPageContent() {
                                                         jobScreenshotUrls?.[view] ? (
                                                             <button
                                                                 key={view}
-                                                                onClick={() => setSelectedView(view)}
+                                                                onClick={() => { setSelectedView(view); setShowFull3D(false); }}
                                                                 style={{
                                                                     width: 56, height: 56, position: 'relative',
-                                                                    border: selectedView === view ? '2px solid #000' : '2px solid #e5e7eb',
+                                                                    border: (selectedView === view && !showFull3D) ? '2px solid #000' : '2px solid #e5e7eb',
                                                                     borderRadius: 8, overflow: 'hidden', padding: 0,
                                                                     cursor: 'pointer', background: '#fff',
-                                                                    opacity: selectedView === view ? 1 : 0.7,
+                                                                    opacity: (selectedView === view && !showFull3D) ? 1 : 0.7,
                                                                     transition: 'all 0.15s',
                                                                 }}
                                                             >
@@ -1206,7 +1252,13 @@ function KidsStepPageContent() {
                                         <div className="kidsStep__paneLabel">조립 순서</div>
                                         <button
                                             className="kidsStep__viewFullBtn"
-                                            onClick={() => { setLoading(true); setTimeout(() => { setIsAssemblyMode(false); setLoading(false); }, 100); }}
+                                            onClick={() => {
+                                                setLoading(true);
+                                                setTimeout(() => {
+                                                    setIsAssemblyMode(false);
+                                                    setLoading(false);
+                                                }, 100);
+                                            }}
                                         >
                                             전체 3D 보기
                                         </button>
@@ -1226,6 +1278,7 @@ function KidsStepPageContent() {
                                                     currentStep={stepIdx + 1}
                                                     stepMode={true}
                                                     smoothNormals={perfProfile?.smoothNormals ?? false}
+
                                                     onLoaded={(g) => { modelGroupRef.current = g; setLoading(false); setLoadingPhase('loaded'); }}
                                                     onError={() => setLoading(false)}
                                                     customBounds={modelBounds}
@@ -1370,7 +1423,7 @@ function KidsStepPageContent() {
                 )}
 
             </div>
-        </div>
+        </div >
     );
 }
 
