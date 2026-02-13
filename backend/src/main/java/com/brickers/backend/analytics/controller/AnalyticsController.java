@@ -115,6 +115,19 @@ public class AnalyticsController {
     }
 
     /**
+     * AI Agent 요청 통합 엔드포인트 (429 에러 방지용)
+     */
+    @GetMapping("/full-report")
+    public ResponseEntity<?> getFullReport(
+            @RequestHeader(name = "X-Internal-Token", required = false) String token,
+            @RequestParam(name = "days", defaultValue = "7") int days) {
+        if (!isInternalAuthorized(token)) {
+            return ResponseEntity.status(403).body("Unauthorized internal access");
+        }
+        return ResponseEntity.ok(gaService.getProposalFullReport(days));
+    }
+
+    /**
      * AI 서버의 분석 리포트를 중계합니다.
      * 프론트엔드 -> 자바 백엔드 -> AI 서버
      */
@@ -151,7 +164,7 @@ public class AnalyticsController {
                     .uri("/ai-admin/analytics/deep-analyze")
                     .retrieve()
                     .toEntity(Object.class)
-                    .timeout(java.time.Duration.ofSeconds(60))
+                    .timeout(java.time.Duration.ofSeconds(120))
                     .block();
         } catch (Exception e) {
             log.error("[AnalyticsBridge] Deep Analysis failed: {}", e.getMessage());
