@@ -159,30 +159,35 @@ public class GoogleAnalyticsService {
         if (analyticsDataClient == null)
             return new ArrayList<>();
 
-        RunReportRequest request = RunReportRequest.newBuilder()
-                .setProperty("properties/" + propertyId)
-                .addDimensions(Dimension.newBuilder().setName("eventName"))
-                .addMetrics(Metric.newBuilder().setName("eventCount"))
-                .setDimensionFilter(FilterExpression.newBuilder()
-                        .setFilter(Filter.newBuilder()
-                                .setFieldName("userId")
-                                .setStringFilter(Filter.StringFilter.newBuilder()
-                                        .setValue(userId))
-                                .build())
-                        .build())
-                .addDateRanges(DateRange.newBuilder()
-                        .setStartDate(days + "daysAgo")
-                        .setEndDate("today"))
-                .build();
+        try {
+            RunReportRequest request = RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDimensions(Dimension.newBuilder().setName("eventName"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                            .setFilter(Filter.newBuilder()
+                                    .setFieldName("customUser:nickname") // userId 대신 닉네임 사용
+                                    .setStringFilter(Filter.StringFilter.newBuilder()
+                                            .setValue(userId)) // 주의: 여기서 userId 변수는 이제 닉네임을 담게 됨
+                                    .build())
+                            .build())
+                    .addDateRanges(DateRange.newBuilder()
+                            .setStartDate(days + "daysAgo")
+                            .setEndDate("today"))
+                    .build();
 
-        RunReportResponse response = analyticsDataClient.runReport(request);
-        List<Map<String, Object>> result = new ArrayList<>();
-        for (Row row : response.getRowsList()) {
-            result.add(Map.of(
-                    "eventName", row.getDimensionValues(row.getDimensionValuesCount() - 1).getValue(),
-                    "count", Long.parseLong(row.getMetricValues(0).getValue())));
+            RunReportResponse response = analyticsDataClient.runReport(request);
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (Row row : response.getRowsList()) {
+                result.add(Map.of(
+                        "eventName", row.getDimensionValues(0).getValue(),
+                        "count", Long.parseLong(row.getMetricValues(0).getValue())));
+            }
+            return result;
+        } catch (Exception e) {
+            log.warn("Failed to get user activity (userId might be invalid): {}", e.getMessage());
+            return new ArrayList<>();
         }
-        return result;
     }
 
     /**
@@ -227,28 +232,33 @@ public class GoogleAnalyticsService {
         if (analyticsDataClient == null)
             return new ArrayList<>();
 
-        RunReportRequest request = RunReportRequest.newBuilder()
-                .setProperty("properties/" + propertyId)
-                .addDimensions(Dimension.newBuilder().setName("userId"))
-                .addMetrics(Metric.newBuilder().setName("eventCount"))
-                .addDateRanges(DateRange.newBuilder()
-                        .setStartDate(days + "daysAgo")
-                        .setEndDate("today"))
-                .setLimit(limit)
-                .build();
+        try {
+            RunReportRequest request = RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDimensions(Dimension.newBuilder().setName("customUser:nickname")) // GA4 User Property: nickname
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .addDateRanges(DateRange.newBuilder()
+                            .setStartDate(days + "daysAgo")
+                            .setEndDate("today"))
+                    .setLimit(limit)
+                    .build();
 
-        RunReportResponse response = analyticsDataClient.runReport(request);
-        List<Map<String, Object>> result = new ArrayList<>();
-        for (Row row : response.getRowsList()) {
-            String uid = row.getDimensionValues(0).getValue();
-            if (uid.isEmpty() || uid.equals("(not set)"))
-                continue;
+            RunReportResponse response = analyticsDataClient.runReport(request);
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (Row row : response.getRowsList()) {
+                String uid = row.getDimensionValues(0).getValue();
+                if (uid.isEmpty() || uid.equals("(not set)"))
+                    continue;
 
-            result.add(Map.of(
-                    "userId", uid,
-                    "eventCount", Long.parseLong(row.getMetricValues(0).getValue())));
+                result.add(Map.of(
+                        "userId", uid,
+                        "eventCount", Long.parseLong(row.getMetricValues(0).getValue())));
+            }
+            return result;
+        } catch (Exception e) {
+            log.error("Failed to get heavy users: {}", e.getMessage());
+            return new ArrayList<>();
         }
-        return result;
     }
 
     private long getMetricSum(int days, String metricName) throws IOException {
