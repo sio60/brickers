@@ -57,7 +57,8 @@ public class KidsController {
                 request.getAge(),
                 request.getBudget(),
                 request.getTitle(),
-                request.getPrompt());
+                request.getPrompt(),
+                request.getLanguage());
         log.info("[KidsController] 응답: {}", result);
         return ResponseEntity.ok(result);
     }

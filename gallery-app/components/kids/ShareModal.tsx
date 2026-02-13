@@ -162,7 +162,7 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
                         )}
                         {ldrUrl ? (
                             <div className="absolute inset-0">
-                                <KidsLdrPreview url={ldrUrl} autoRotate={false} ref={previewRef} onLoaded={handlePreviewLoaded} />
+                                <KidsLdrPreview url={ldrUrl} autoRotate={false} ref={previewRef} onLoaded={handlePreviewLoaded} cameraDistanceMultiplier={3.5} />
                             </div>
                         ) : null}
 

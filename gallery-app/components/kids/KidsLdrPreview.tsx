@@ -26,6 +26,7 @@ type Props = {
     onLoaded?: () => void;
     onError?: (err: any) => void;
     autoRotate?: boolean;
+    cameraDistanceMultiplier?: number;
 };
 
 function removeNullChildren(obj: THREE.Object3D) {
@@ -58,6 +59,7 @@ function LdrModel({
     onStepCountChange,
     onLoaded,
     onError,
+    cameraDistanceMultiplier = 2.5,
 }: Props & { currentStep?: number; isPreview?: boolean; onStepCountChange?: (count: number) => void }) {
     const { invalidate, camera, controls } = useThree();
 
@@ -145,7 +147,7 @@ function LdrModel({
                         (controls as any).update();
                     }
                     const maxDim = Math.max(size.x, size.y, size.z);
-                    camera.position.set(0, targetY + size.y * 0.3, maxDim * 2.5);
+                    camera.position.set(0, targetY + size.y * 0.3, maxDim * cameraDistanceMultiplier);
                     camera.lookAt(0, targetY, 0);
                 }
 
@@ -267,7 +269,7 @@ export type KidsLdrPreviewHandle = {
     captureScreenshot: () => string | null;
 };
 
-const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibraryPath, ldconfigUrl, stepMode = false, autoRotate = true, onLoaded: onLoadedProp, onError: onErrorProp }, ref) => {
+const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibraryPath, ldconfigUrl, stepMode = false, autoRotate = true, cameraDistanceMultiplier = 2.5, onLoaded: onLoadedProp, onError: onErrorProp }, ref) => {
     const { t } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [errorMSG, setErrorMSG] = useState<string | null>(null);
@@ -522,6 +524,7 @@ const KidsLdrPreview = forwardRef<KidsLdrPreviewHandle, Props>(({ url, partsLibr
                         stepMode={stepMode}
                         currentStep={currentStep}
                         isPreview={isPreview}
+                        cameraDistanceMultiplier={cameraDistanceMultiplier}
                         onStepCountChange={setTotalSteps}
                         onLoaded={() => {
                             setLoading(false);

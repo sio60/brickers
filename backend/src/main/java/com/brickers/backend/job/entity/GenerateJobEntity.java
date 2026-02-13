@@ -60,6 +60,9 @@ public class GenerateJobEntity {
     /** 사용자 표시용 제목(선택) */
     private String title;
 
+    /** 언어 설정 (ko, en, ja) */
+    private String language;
+
     /** Gemini가 추천한 태그 목록 (갤러리 등록 시 사용) */
     private java.util.List<String> suggestedTags;
 
