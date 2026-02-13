@@ -72,7 +72,7 @@ app:
       presign-exp-seconds: ${AWS_PRESIGN_EXP_SECONDS:120}
       key-prefix: ${AWS_S3_KEY_PREFIX:uploads}
       max-bytes: ${UPLOAD_MAX_BYTES:52428800}
-      allowed-content-types: image/png,image/jpeg,image/webp,application/octet-stream,text/plain
+      allowed-content-types: image/png,image/jpeg,image/webp,image/avif,application/octet-stream,text/plain
 
 # ✅ Gallery SEO Revalidate 설정
 gallery:

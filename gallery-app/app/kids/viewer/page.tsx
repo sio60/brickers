@@ -61,7 +61,7 @@ function LdrModel({
 
         const l = new LDrawLoader(manager);
         l.setPartsLibraryPath(partsLibraryPath);
-        l.smoothNormals = true;
+        l.smoothNormals = false;
         try { (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any); } catch { }
         return l;
     }, [partsLibraryPath]);
@@ -92,7 +92,8 @@ function LdrModel({
                     (controls as any).target.set(0, targetY, 0);
                     (controls as any).update();
                 }
-                camera.position.set(0, targetY + size.y * 0.3, Math.max(size.x, size.z) * 2.5);
+                const maxDim = Math.max(size.x, size.y, size.z);
+                camera.position.set(0, targetY + size.y * 0.3, maxDim * 2.5);
                 camera.lookAt(0, targetY, 0);
             }
             prev = g;

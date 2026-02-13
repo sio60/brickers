@@ -1,9 +1,8 @@
 
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import html2canvas from "html2canvas";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const KidsLdrPreview = dynamic(() => import("./KidsLdrPreview"), { ssr: false });
@@ -19,34 +18,34 @@ interface ShareModalProps {
 export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loading }: ShareModalProps) {
     const { t } = useLanguage();
     const [working, setWorking] = useState(false);
-    const stageRef = useRef<HTMLDivElement>(null);
     const previewRef = useRef<any>(null);
-
-    if (!isOpen) return null;
+    const [previewLoaded, setPreviewLoaded] = useState(false);
+    const handlePreviewLoaded = useCallback(() => setPreviewLoaded(true), []);
 
     const captureComposite = async (): Promise<Blob> => {
-        // Create an offscreen canvas
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
         if (!ctx) throw new Error("Canvas context failed");
 
-        // Target size (e.g., 1024x1024 for a square result)
         canvas.width = 1000;
         canvas.height = 1000;
 
-        // 1. Draw Background Image
         if (backgroundUrl) {
+            // Use image proxy to bypass S3 CORS restrictions
+            const proxyUrl = `/proxy/image?url=${encodeURIComponent(backgroundUrl)}`;
+            const res = await fetch(proxyUrl);
+            const blob = await res.blob();
+            const bitmapUrl = URL.createObjectURL(blob);
             const bgImg = new Image();
-            bgImg.crossOrigin = "anonymous";
-            bgImg.src = backgroundUrl;
-            await new Promise((resolve, reject) => {
-                bgImg.onload = resolve;
+            bgImg.src = bitmapUrl;
+            await new Promise<void>((resolve, reject) => {
+                bgImg.onload = () => resolve();
                 bgImg.onerror = reject;
             });
             ctx.drawImage(bgImg, 0, 0, 1000, 1000);
+            URL.revokeObjectURL(bitmapUrl);
         }
 
-        // 2. Draw 3D Model Snapshot
         if (previewRef.current) {
             const ldrSnapshot = previewRef.current.captureScreenshot();
             if (ldrSnapshot) {
@@ -67,6 +66,14 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
             }, "image/png");
         });
     };
+
+    // Reset state when modal closes
+    useEffect(() => {
+        if (!isOpen) setPreviewLoaded(false);
+    }, [isOpen]);
+
+    // Early return AFTER all hooks — React requires hooks to run on every render
+    if (!isOpen) return null;
 
     const handleDownload = async () => {
         setWorking(true);
@@ -92,8 +99,8 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
         setWorking(true);
         try {
             const blob = await captureComposite();
-            if (navigator.share && navigator.canShare?.({ files: [new File([blob], "brick-model.png", { type: "image/png" })] })) {
-                const file = new File([blob], "brick-model.png", { type: "image/png" });
+            const file = new File([blob], "brick-model.png", { type: "image/png" });
+            if (navigator.share && navigator.canShare?.({ files: [file] })) {
                 await navigator.share({
                     title: "Check out my Brickers model!",
                     text: "I made this with Brickers AI!",
@@ -101,15 +108,15 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
                 });
             } else {
                 await navigator.clipboard.write([
-                    new ClipboardItem({
-                        [blob.type]: blob
-                    })
+                    new ClipboardItem({ [blob.type]: blob })
                 ]);
                 alert("Image copied to clipboard!");
             }
-        } catch (e) {
-            console.log("Share skipped/failed", e);
-            alert("Share failed. Please try again.");
+        } catch (e: any) {
+            if (e?.name !== 'AbortError') {
+                console.error("Share failed", e);
+                alert("Share failed. Please try again.");
+            }
         } finally {
             setWorking(false);
         }
@@ -137,7 +144,6 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
                     </p>
 
                     <div
-                        ref={stageRef}
                         className="relative aspect-square bg-gray-50 rounded-2xl overflow-hidden mb-6 flex items-center justify-center border-2 border-gray-200"
                     >
                         {backgroundUrl && (
@@ -148,7 +154,7 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
                         )}
                         {ldrUrl ? (
                             <div className="absolute inset-0">
-                                <KidsLdrPreview url={ldrUrl} autoRotate={false} ref={previewRef} />
+                                <KidsLdrPreview url={ldrUrl} autoRotate={false} ref={previewRef} onLoaded={handlePreviewLoaded} />
                             </div>
                         ) : null}
 
@@ -162,10 +168,10 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
 
                     {!loading && backgroundUrl && ldrUrl && (
                         <div className="flex gap-3">
-                            <Button onClick={handleDownload} variant="secondary" disabled={working}>
+                            <Button onClick={handleDownload} variant="secondary" disabled={working || !previewLoaded}>
                                 {working ? "Saving..." : (t.kids?.share?.save || "Save")}
                             </Button>
-                            <Button onClick={handleShare} variant="primary" disabled={working}>
+                            <Button onClick={handleShare} variant="primary" disabled={working || !previewLoaded}>
                                 {working ? "Processing..." : (t.kids?.share?.share || "Share")}
                             </Button>
                         </div>

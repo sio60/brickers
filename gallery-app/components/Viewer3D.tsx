@@ -9,6 +9,7 @@ import ThrottledDriver from "@/components/three/ThrottledDriver";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { CDN_BASE, createLDrawURLModifier } from "@/lib/ldrawUrlModifier";
+import { preloadPartsBundle } from "@/lib/ldrawBundleLoader";
 import LDrawLoadingIndicator from "@/components/LDrawLoadingIndicator";
 
 function disposeObject3D(root: THREE.Object3D) {
@@ -22,6 +23,7 @@ function disposeObject3D(root: THREE.Object3D) {
 
 function LdrModel({
     url,
+    bundleSourceUrl,
     partsLibraryPath = CDN_BASE,
     ldconfigUrl = `${CDN_BASE}LDConfig.ldr`,
     onLoaded,
@@ -29,6 +31,7 @@ function LdrModel({
     onProgress,
 }: {
     url: string;
+    bundleSourceUrl?: string;
     partsLibraryPath?: string;
     ldconfigUrl?: string;
     onLoaded?: (group: THREE.Group) => void;
@@ -54,7 +57,7 @@ function LdrModel({
 
         const l = new LDrawLoader(manager);
         l.setPartsLibraryPath(partsLibraryPath);
-        l.smoothNormals = true;
+        l.smoothNormals = false;
         try { (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any); } catch { }
         return l;
     }, [partsLibraryPath]);
@@ -71,6 +74,7 @@ function LdrModel({
         (async () => {
             console.log("[LDraw] Starting load for URL:", url);
             try {
+                await preloadPartsBundle(bundleSourceUrl || url);
                 await loader.preloadMaterials(ldconfigUrl); // Required for correct colors
                 const g = await loader.loadAsync(url);
                 console.log("[LDraw] Load successful:", url);
@@ -93,7 +97,8 @@ function LdrModel({
                     (controls as any).target.set(0, targetY, 0);
                     (controls as any).update();
                 }
-                camera.position.set(0, targetY + size.y * 0.3, Math.max(size.x, size.z) * 2.5);
+                const maxDim = Math.max(size.x, size.y, size.z);
+                camera.position.set(0, targetY + size.y * 0.3, maxDim * 2.5);
                 camera.lookAt(0, targetY, 0);
 
                 prev = g;
@@ -164,6 +169,7 @@ export default React.memo(function Viewer3D({ url }: Viewer3DProps) {
                 <directionalLight position={[-10, -20, -10]} intensity={0.8} />
                 <LdrModel
                     url={proxiedUrl}
+                    bundleSourceUrl={url}
                     onLoaded={handleLoaded}
                     onError={handleError}
                     onProgress={handleProgress}

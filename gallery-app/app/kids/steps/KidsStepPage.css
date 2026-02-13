@@ -395,22 +395,17 @@
 .kidsStep__sidebar {
     background: transparent;
     border-radius: 20px;
-    padding: 20px 0 150px;
-    /* 하단 버튼 잘림 방지를 위해 패딩 대폭 추가 */
+    padding: 20px 0 60px;
+    /* 불필요하게 큰 패딩 줄임 */
     border: none;
     box-shadow: none;
     display: flex;
     flex-direction: column;
     gap: 4px;
     height: auto;
-    max-height: 90vh;
-    /* 조금 더 여유공간 확보 */
     z-index: 20;
-    overflow-y: auto;
-    scrollbar-width: none;
-    /* Firefox */
-    -ms-overflow-style: none;
-    /* IE and Edge */
+    overflow: visible;
+    /* 스크롤 제거 */
 }
 
 .kidsStep__sidebar::-webkit-scrollbar {
@@ -436,6 +431,7 @@
     color: #000;
     cursor: pointer;
     padding: 10px 0;
+    margin-top: 10px;
     margin-bottom: 20px;
     display: flex;
     align-items: center;
@@ -447,8 +443,8 @@
 }
 
 .kidsStep__sidebarSectionLabel {
-    margin-top: 15px;
-    /* 라벨 위 간격 좀 더 확보 */
+    margin-top: 12px;
+    /* 간격 살짝 조절 */
     margin-bottom: 5px;
     padding-left: 2px;
     font-size: 0.65rem;
@@ -600,24 +596,6 @@
     flex-shrink: 0;
     background: #f0f0f0;
     border-radius: 8px;
-}
-
-/* ── Back Button ── */
-.kidsStep__backBtn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.75rem;
-    color: #000;
-    padding: 2px 0;
-    margin-bottom: 4px;
-    transition: color 0.15s;
-    text-align: left;
-}
-
-.kidsStep__backBtn:hover {
-    color: #000;
 }
 
 /* ── Mode Buttons ── */

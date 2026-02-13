@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo, Suspense, useLayoutEffect } from 
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import * as THREE from "three";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { Bounds, OrbitControls, Center, Environment, useBounds, useGLTF } from "@react-three/drei";
 import ThrottledDriver from "@/components/three/ThrottledDriver";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
@@ -12,11 +12,15 @@ import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawCondit
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePerformanceStore } from "@/stores/performanceStore";
+import { scheduleIdleWork, cancelIdleWork } from "@/lib/idleScheduler";
 import { registerToGallery } from "@/lib/api/myApi";
 import * as gtag from "@/lib/gtag";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, downloadLdrFromBase64, type ThemeInfo } from "@/lib/api/colorVariantApi";
 import { type StepBrickInfo } from "@/lib/ldrUtils";
 import { CDN_BASE, createLDrawURLModifier } from "@/lib/ldrawUrlModifier";
+import { preloadPartsBundle } from "@/lib/ldrawBundleLoader";
+import LDrawLoadingIndicator from "@/components/LDrawLoadingIndicator";
 import BackgroundBricks from "@/components/BackgroundBricks";
 import { generatePdfFromServer } from "@/components/kids/PDFGenerator";
 import ShareModal from "@/components/kids/ShareModal";
@@ -97,12 +101,14 @@ function LdrModel({
     ldconfigUrl = `${CDN_BASE}LDConfig.ldr`,
     onLoaded,
     onError,
+    onProgress,
     customBounds,
     fitTrigger,
     noFit,
     currentStep,
     stepMode = false,
     fitMargin = 1.5,
+    smoothNormals = false,
 }: {
     url: string;
     overrideMainLdrUrl?: string;
@@ -110,13 +116,18 @@ function LdrModel({
     ldconfigUrl?: string;
     onLoaded?: (group: THREE.Group) => void;
     onError?: (e: unknown) => void;
+    onProgress?: (loaded: number, total: number) => void;
     customBounds?: THREE.Box3 | null;
     fitTrigger?: string;
     noFit?: boolean;
     currentStep?: number;
     stepMode?: boolean;
     fitMargin?: number;
+    smoothNormals?: boolean;
 }) {
+    const onProgressRef = useRef(onProgress);
+    onProgressRef.current = onProgress;
+
     const loader = useMemo(() => {
         THREE.Cache.enabled = true;
         const manager = new THREE.LoadingManager();
@@ -125,13 +136,16 @@ function LdrModel({
             overrideMainLdrUrl,
             useProxy: false,
         }));
+        manager.onProgress = (_url, loaded, total) => {
+            onProgressRef.current?.(loaded, total);
+        };
 
         const l = new LDrawLoader(manager);
         l.setPartsLibraryPath(partsLibraryPath);
-        l.smoothNormals = true;
+        l.smoothNormals = smoothNormals;
         try { (l as any).setConditionalLineMaterial(LDrawConditionalLineMaterial as any); } catch { }
         return l;
-    }, [partsLibraryPath, url, overrideMainLdrUrl]);
+    }, [partsLibraryPath, url, overrideMainLdrUrl, smoothNormals]);
 
     const [group, setGroup] = useState<THREE.Group | null>(null);
     const originalMaterialsRef = useRef<Map<string, THREE.Material | THREE.Material[]>>(new Map());
@@ -141,6 +155,7 @@ function LdrModel({
         let prev: THREE.Group | null = null;
         (async () => {
             setGroup(null);
+            await preloadPartsBundle(url);
             await loader.preloadMaterials(ldconfigUrl);
             const g = await loader.loadAsync(url);
             if (cancelled) { disposeObject3D(g); return; }
@@ -441,27 +456,34 @@ function OffscreenBrickRenderer() {
     const { gl, scene, camera } = useThree();
     const frameCountRef = useRef(0);
     const initialDelayRef = useRef(true);
+    const idleHandleRef = useRef<number | null>(null);
 
     useEffect(() => {
-        // Delay thumbnail generation by 2s to let main model load first
+        // Delay thumbnail generation adaptively, then start in idle time
+        const profile = usePerformanceStore.getState().profile;
+        const delayMs = profile?.thumbnailDelayMs ?? 2000;
         const timer = setTimeout(() => {
-            initialDelayRef.current = false;
-            processQueueInternal = () => {
-                const req = renderQueue.shift();
-                if (req) {
-                    const ldr = `1 ${req.color} 0 0 0 1 0 0 0 1 0 0 0 1 ${req.partName}.dat`;
-                    const blob = new Blob([ldr], { type: 'text/plain' });
-                    const objUrl = URL.createObjectURL(blob);
-                    setCurrentReq(req);
-                    setUrl(objUrl);
-                } else {
-                    isRendering = false;
-                }
-            };
-            processQueue();
-        }, 2000);
+            const idleId = scheduleIdleWork(() => {
+                initialDelayRef.current = false;
+                processQueueInternal = () => {
+                    const req = renderQueue.shift();
+                    if (req) {
+                        const ldr = `1 ${req.color} 0 0 0 1 0 0 0 1 0 0 0 1 ${req.partName}.dat`;
+                        const blob = new Blob([ldr], { type: 'text/plain' });
+                        const objUrl = URL.createObjectURL(blob);
+                        setCurrentReq(req);
+                        setUrl(objUrl);
+                    } else {
+                        isRendering = false;
+                    }
+                };
+                processQueue();
+            }, { timeout: 3000 });
+            idleHandleRef.current = idleId;
+        }, delayMs);
         return () => {
             clearTimeout(timer);
+            if (idleHandleRef.current !== null) cancelIdleWork(idleHandleRef.current);
             processQueueInternal = null;
         };
     }, []);
@@ -580,11 +602,38 @@ function BrickThumbnail({ partName, color }: { partName: string, color: string }
     );
 }
 
+type ViewName = 'front' | 'back' | 'left' | 'right' | 'top' | 'bottom';
+const VIEW_ORDER: ViewName[] = ['front', 'back', 'left', 'right', 'top', 'bottom'];
+
+function FpsMonitor() {
+    const reportFps = usePerformanceStore((s) => s.reportFps);
+    const frameCount = useRef(0);
+    const lastTime = useRef(performance.now());
+
+    useFrame(() => {
+        frameCount.current++;
+        const now = performance.now();
+        if (now - lastTime.current >= 1000) {
+            reportFps(frameCount.current);
+            frameCount.current = 0;
+            lastTime.current = now;
+        }
+    });
+
+    return null;
+}
+
 function KidsStepPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { t } = useLanguage();
     const { authFetch } = useAuth();
+
+    const perfInit = usePerformanceStore((s) => s.init);
+    const perfProfile = usePerformanceStore((s) => s.profile);
+    const setLoadingPhase = usePerformanceStore((s) => s.setLoadingPhase);
+
+    useEffect(() => { perfInit(); }, [perfInit]);
 
     const jobId = searchParams.get("jobId") || "";
     const urlParam = searchParams.get("url") || "";
@@ -592,7 +641,8 @@ function KidsStepPageContent() {
 
     const [ldrUrl, setLdrUrl] = useState<string>(urlParam);
     const [originalLdrUrl] = useState<string>(urlParam);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [loadProgress, setLoadProgress] = useState({ loaded: 0, total: 0 });
     const [stepIdx, setStepIdx] = useState(0);
     const [stepBlobUrls, setStepBlobUrls] = useState<string[]>([]);
     const [sortedBlobUrl, setSortedBlobUrl] = useState<string | null>(null); // [NEW] 전체 정렬된 LDR Blob
@@ -612,7 +662,8 @@ function KidsStepPageContent() {
     const [brickCount, setBrickCount] = useState<number>(0);
     const [isProMode, setIsProMode] = useState(false);
     const [jobScreenshotUrls, setJobScreenshotUrls] = useState<Record<string, string> | null>(null);
-
+    const [selectedView, setSelectedView] = useState<ViewName>('front');
+    const [jobLoaded, setJobLoaded] = useState(false);
 
     const [activeTab, setActiveTab] = useState<'LDR' | 'GLB'>('LDR');
     const [isAssemblyMode, setIsAssemblyMode] = useState(false);
@@ -788,18 +839,35 @@ function KidsStepPageContent() {
                     if (data.pdfUrl || data.pdf_url) setServerPdfUrl(data.pdfUrl || data.pdf_url);
                     if (data.screenshotUrls) setJobScreenshotUrls(data.screenshotUrls);
                     if (data.backgroundUrl) setShareBackgroundUrl(data.backgroundUrl);
+                    setJobLoaded(true);
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                console.error(e);
+                if (alive) setJobLoaded(true);
+            }
         })();
         return () => { alive = false; };
     }, [jobId, ldrUrl]);
+
+    // 스크린샷 없으면 자동으로 3D 모드 전환
+    useEffect(() => {
+        if (isAssemblyMode) return;
+        if (!jobId) {
+            setIsAssemblyMode(true);
+            return;
+        }
+        if (jobLoaded && !jobScreenshotUrls) {
+            setIsAssemblyMode(true);
+        }
+    }, [jobId, jobLoaded, jobScreenshotUrls, isAssemblyMode]);
 
     // LDR 파싱 및 Steps 생성
     useEffect(() => {
         let alive = true;
         (async () => {
-            if (!ldrUrl) return;
+            if (!ldrUrl || !isAssemblyMode) return;
             setLoading(true);
+            setLoadingPhase('loading-3d');
             setStepIdx(0);
             const res = await fetch(ldrUrl);
             if (!res.ok) throw new Error(`LDR fetch failed: ${res.status}`);
@@ -842,7 +910,7 @@ function KidsStepPageContent() {
             setLoading(false);
         });
         return () => { alive = false; };
-    }, [ldrUrl]);
+    }, [ldrUrl, isAssemblyMode]);
 
     useEffect(() => {
         return () => {
@@ -1062,50 +1130,73 @@ function KidsStepPageContent() {
                 <div className="kidsStep__layoutCenter">
                     <div className="kidsStep__card kids-main-canvas">
                         {loading && (
-                            <div className="kidsStep__loadingOverlay" style={{ pointerEvents: "none" }}>
-                                <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
-                                <span>{t.kids.steps.loading}</span>
-                            </div>
+                            <LDrawLoadingIndicator
+                                loaded={loadProgress.loaded}
+                                total={loadProgress.total}
+                                label={t.kids.steps.loading}
+                            />
                         )}
 
                         {activeTab === 'LDR' && (
                             <div className="kidsStep__splitContainer">
-                                {/* Left: Full Model */}
+                                {/* Left: Screenshot Gallery (스크린샷 우선 표시) */}
                                 {!isAssemblyMode && (
-                                    <div className="kidsStep__splitPane left full">
-                                        <div className="kidsStep__paneLabel">완성 모습</div>
-                                        <Canvas
-                                            camera={{ position: [200, -200, 200], fov: 45, near: 0.1, far: 100000 }}
-                                            dpr={[1, 2]}
-                                            gl={{ preserveDrawingBuffer: true }}
-                                            frameloop="demand"
-                                        >
-                                            <ThrottledDriver />
-                                            <ambientLight intensity={0.9} />
-                                            <directionalLight position={[3, 5, 2]} intensity={1} />
-                                            {ldrUrl && (
-                                                <LdrModel
-                                                    // No override -> Full model
-                                                    url={sortedBlobUrl || ldrUrl}
-                                                    onLoaded={(g) => { setLoading(false); }}
-                                                    onError={() => setLoading(false)}
-                                                    customBounds={modelBounds}
-                                                    fitTrigger={`${ldrUrl}|left`}
-                                                />
-                                            )}
-                                            <OrbitControls makeDefault enablePan={false} enableZoom />
-                                        </Canvas>
-
-                                        {!isAssemblyMode && (
-                                            <div className="kidsStep__viewAssemblyOverlay">
+                                    <div className="kidsStep__splitPane left full" style={{ position: 'relative' }}>
+                                        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }}>
+                                            {/* 메인 이미지 */}
+                                            <div style={{ flex: 1, position: 'relative', background: '#fff', minHeight: 0 }}>
+                                                {jobScreenshotUrls?.[selectedView] ? (
+                                                    <img
+                                                        src={jobScreenshotUrls[selectedView]}
+                                                        alt={selectedView}
+                                                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
+                                                    />
+                                                ) : (
+                                                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
+                                                        {jobLoaded ? 'No Screenshot' : 'Loading...'}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {/* 썸네일 + 조립서 보기 버튼 */}
+                                            <div style={{ background: '#fff', borderTop: '1px solid #e5e7eb', padding: '12px 16px' }}>
+                                                <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 12 }}>
+                                                    {VIEW_ORDER.map(view => (
+                                                        jobScreenshotUrls?.[view] ? (
+                                                            <button
+                                                                key={view}
+                                                                onClick={() => setSelectedView(view)}
+                                                                style={{
+                                                                    width: 56, height: 56, position: 'relative',
+                                                                    border: selectedView === view ? '2px solid #000' : '2px solid #e5e7eb',
+                                                                    borderRadius: 8, overflow: 'hidden', padding: 0,
+                                                                    cursor: 'pointer', background: '#fff',
+                                                                    opacity: selectedView === view ? 1 : 0.7,
+                                                                    transition: 'all 0.15s',
+                                                                }}
+                                                            >
+                                                                <img
+                                                                    src={jobScreenshotUrls[view]}
+                                                                    alt={view}
+                                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                                />
+                                                            </button>
+                                                        ) : null
+                                                    ))}
+                                                </div>
                                                 <button
-                                                    className="kidsStep__viewAssemblyBtn"
-                                                    onClick={() => { setLoading(true); setTimeout(() => { setIsAssemblyMode(true); setLoading(false); }, 100); }}
+                                                    onClick={() => setIsAssemblyMode(true)}
+                                                    style={{
+                                                        width: '100%', padding: '12px 0',
+                                                        background: '#000', color: '#fff',
+                                                        borderRadius: 16, fontWeight: 700,
+                                                        fontSize: '1rem', border: 'none',
+                                                        cursor: 'pointer',
+                                                    }}
                                                 >
                                                     {t.kids.steps?.viewAssembly || "조립서 보기"}
                                                 </button>
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
                                 )}
 
@@ -1121,11 +1212,12 @@ function KidsStepPageContent() {
                                         </button>
                                         <Canvas
                                             camera={{ position: [200, -200, 200], fov: 45, near: 0.1, far: 100000 }}
-                                            dpr={[1, 2]}
+                                            dpr={perfProfile?.dpr ?? [1, 2]}
                                             gl={{ preserveDrawingBuffer: true }}
                                             frameloop="demand"
                                         >
                                             <ThrottledDriver />
+                                            <FpsMonitor />
                                             <ambientLight intensity={0.9} />
                                             <directionalLight position={[3, 5, 2]} intensity={1} />
                                             {ldrUrl && (
@@ -1133,7 +1225,8 @@ function KidsStepPageContent() {
                                                     url={sortedBlobUrl || ldrUrl}
                                                     currentStep={stepIdx + 1}
                                                     stepMode={true}
-                                                    onLoaded={(g) => { modelGroupRef.current = g; setLoading(false); }}
+                                                    smoothNormals={perfProfile?.smoothNormals ?? false}
+                                                    onLoaded={(g) => { modelGroupRef.current = g; setLoading(false); setLoadingPhase('loaded'); }}
                                                     onError={() => setLoading(false)}
                                                     customBounds={modelBounds}
                                                     fitTrigger={`${ldrUrl}|${stepIdx}|right`}
@@ -1182,7 +1275,7 @@ function KidsStepPageContent() {
                         {activeTab === 'GLB' && (
                             <Canvas
                                 camera={{ position: [0, 200, 600], fov: 45, near: 0.1, far: 100000 }}
-                                dpr={[1, 2]}
+                                dpr={perfProfile?.dpr ?? [1, 2]}
                                 frameloop="demand"
                             >
                                 <ThrottledDriver />
