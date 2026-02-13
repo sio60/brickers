@@ -656,47 +656,55 @@ export default function AdminPage() {
                                 </div>
                                 <table className="w-full text-left border-collapse bg-white rounded-lg overflow-hidden shadow-sm">
                                     <thead className="bg-gray-50 border-b border-gray-100">
-                                        <tr>
-                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t.admin.jobs?.table?.image || "Image"}</th>
-                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t.admin.jobs?.table?.jobInfo || "Job Info"}</th>
-                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t.admin.jobs?.table?.user || "User"}</th>
-                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t.admin.jobs?.table?.status || "Status"}</th>
-                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t.admin.jobs?.table?.dates || "Dates"}</th>
-                                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">{t.admin.jobs?.table?.actions || "Actions"}</th>
+                                        <tr className="text-gray-500 uppercase font-black text-[10px] tracking-wider">
+                                            <th className="px-4 py-3 w-20 text-center">{t.admin.jobs?.table?.image || "Image"}</th>
+                                            <th className="px-4 py-3">{t.admin.jobs?.table?.jobInfo || "Job Info"}</th>
+                                            <th className="px-4 py-3 w-48">{t.admin.jobs?.table?.user || "User"}</th>
+                                            <th className="px-4 py-3 w-28 text-center">{t.admin.jobs?.table?.status || "Status"}</th>
+                                            <th className="px-4 py-3 w-36">{t.admin.jobs?.table?.dates || "Dates"}</th>
+                                            <th className="px-4 py-3 w-24 text-right">{t.admin.jobs?.table?.actions || "Actions"}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
                                         {jobs.map((job) => (
                                             <tr key={job.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-4 py-3">
-                                                    <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden relative">
+                                                <td className="px-4 py-4 text-center">
+                                                    <div className="w-12 h-12 bg-gray-50 rounded-xl overflow-hidden relative mx-auto border border-gray-100 shadow-sm">
                                                         {job.previewImageUrl || job.sourceImageUrl ? (
                                                             <img src={job.previewImageUrl || job.sourceImageUrl} alt="job" className="w-full h-full object-cover" />
                                                         ) : (
-                                                            <div className="flex items-center justify-center w-full h-full text-gray-300">{t.admin.jobs?.table?.noImage || "No Img"}</div>
+                                                            <div className="flex items-center justify-center w-full h-full text-gray-300 text-[10px] font-bold">{t.admin.jobs?.table?.noImage || "NO IMG"}</div>
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-3">
-                                                    <div className="font-medium text-sm text-gray-900">{job.title || (t.admin.jobs?.table?.untitledJob || "Untitled Job")}</div>
-                                                    <div className="text-xs text-gray-500 font-mono" title={job.id}>{job.id.substring(0, 8)}...</div>
+                                                <td className="px-4 py-4">
+                                                    <div className="font-black text-sm text-gray-900 leading-tight mb-1">{job.title || (t.admin.jobs?.table?.untitledJob || "Untitled Job")}</div>
+                                                    <div className="text-[10px] text-gray-400 font-mono tracking-tighter" title={job.id}>{job.id}</div>
                                                 </td>
-                                                <td className="px-4 py-3">
-                                                    <div className="text-sm font-medium text-gray-900">{job.userInfo?.nickname || (t.admin.jobs?.table?.unknownUser || "Unknown")}</div>
-                                                    <div className="text-xs text-gray-500">{job.userInfo?.email || job.userId}</div>
+                                                <td className="px-4 py-4">
+                                                    <div className="text-sm font-bold text-gray-800 truncate mb-0.5">{job.userInfo?.nickname || (t.admin.jobs?.table?.unknownUser || "Unknown")}</div>
+                                                    <div className="text-[10px] text-gray-400 truncate opacity-70">{job.userInfo?.email || job.userId}</div>
                                                 </td>
-                                                <td className="px-4 py-3">
-                                                    <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium 
-                                                        ${job.status === 'DONE' ? 'bg-green-100 text-green-800' :
-                                                            job.status === 'FAILED' ? 'bg-red-100 text-red-800' :
-                                                                job.status === 'RUNNING' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                <td className="px-4 py-4 text-center">
+                                                    <span className={`inline-block px-2 py-1 rounded-lg text-[10px] font-black tracking-tight border
+                                                        ${job.status === 'DONE' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                            job.status === 'FAILED' ? 'bg-red-50 text-red-700 border-red-200' :
+                                                                job.status === 'RUNNING' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
                                                         {job.status}
                                                     </span>
-                                                    <div className="text-xs text-gray-500 mt-1">{job.stage}</div>
+                                                    <div className="text-[9px] font-bold text-gray-400 mt-1.5 uppercase tracking-wider">{job.stage}</div>
                                                 </td>
-                                                <td className="px-4 py-3 text-xs text-gray-500">
-                                                    <div>{t.admin.jobs?.table?.created || "Created"}: {new Date(job.createdAt).toLocaleDateString()}</div>
-                                                    <div>{t.admin.jobs?.table?.updated || "Updated"}: {new Date(job.updatedAt).toLocaleDateString()}</div>
+                                                <td className="px-4 py-4">
+                                                    <div className="flex flex-col gap-1">
+                                                        <div className="flex items-center gap-1.5 text-[10px] text-gray-500 font-medium">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 opacity-60"></span>
+                                                            {new Date(job.createdAt).toLocaleDateString()}
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-gray-300 opacity-60"></span>
+                                                            {new Date(job.updatedAt).toLocaleDateString()}
+                                                        </div>
+                                                    </div>
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
                                                     <div className="flex justify-end gap-2">
