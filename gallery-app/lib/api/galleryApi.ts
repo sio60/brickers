@@ -110,3 +110,10 @@ export async function toggleGalleryReaction(postId: string, type: ReactionType):
         body: JSON.stringify({ type }),
     });
 }
+// 갤러리/작품 정보 수정
+export async function updateGalleryPost(id: string, data: Partial<GalleryCreateRequest>): Promise<any> {
+    return request<any>(`${API_BASE}/api/gallery/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    });
+}
