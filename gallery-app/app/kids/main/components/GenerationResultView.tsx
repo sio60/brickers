@@ -48,7 +48,7 @@ export const GenerationResultView: React.FC<Props> = ({
                     className="actionBtn actionBtn--share"
                     onClick={onShareClick}
                 >
-                    공유하기
+                    {t.detail?.share || 'Share'}
                 </button>
 
                 <button
