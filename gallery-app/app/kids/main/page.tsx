@@ -6,7 +6,6 @@ import dynamic from "next/dynamic";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { getColorThemes, applyColorVariant, base64ToBlobUrl, ThemeInfo } from "@/lib/api/colorVariantApi";
-import { registerToGallery } from "@/lib/api/myApi";
 import { KidsLdrPreviewHandle } from "@/components/kids/KidsLdrPreview";
 
 import { usePerformanceStore } from "@/stores/performanceStore";
@@ -57,6 +56,10 @@ function KidsPageContent() {
                         setRawFile(new File([blob], name, { type }));
                         setIsFileLoaded(true);
                         sessionStorage.removeItem('pendingUpload');
+                    })
+                    .catch(e => {
+                        console.error('Failed to restore file from session:', e);
+                        setIsFileLoaded(true);
                     });
             } catch (e) {
                 console.error('Failed to restore file:', e);
@@ -83,8 +86,6 @@ function KidsPageContent() {
     const previewRef = useRef<KidsLdrPreviewHandle>(null);
 
     // 3. UI State
-    const [isSharing, setIsSharing] = useState(false);
-    const [shareUrl, setShareUrl] = useState<string | null>(null);
     const [shareModalOpen, setShareModalOpen] = useState(false);
 
     // Color management
@@ -117,9 +118,11 @@ function KidsPageContent() {
         try {
             const result = await applyColorVariant(generation.ldrUrl, selectedTheme, authFetch);
             if (result.ok && result.ldrData) {
+                const prevUrl = generation.ldrUrl;
                 generation.setLdrUrl(base64ToBlobUrl(result.ldrData));
+                if (prevUrl?.startsWith('blob:')) URL.revokeObjectURL(prevUrl);
                 setIsColorModalOpen(false);
-                alert(`${result.themeApplied} ${t.kids.steps.colorThemeApplied} (${result.changedBricks}개 브릭 변경)`);
+                alert(`${result.themeApplied} ${t.kids.steps.colorThemeApplied} (${result.changedBricks} bricks)`);
             } else {
                 alert(result.message || t.kids.steps.colorThemeFailed);
             }
