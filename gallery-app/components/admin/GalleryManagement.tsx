@@ -4,6 +4,8 @@ import { useEffect, useState, ChangeEvent, KeyboardEvent } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import EditGalleryModal from "@/components/EditGalleryModal";
+import { updateGalleryPost } from "@/lib/api/galleryApi";
 // We'll use Tailwind classes for layout to keep it simple and consistent with new components
 
 type GalleryPost = {
@@ -35,6 +37,10 @@ export default function GalleryManagement() {
     // Pagination
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
+
+    // Edit Modal State
+    const [editingPost, setEditingPost] = useState<GalleryPost | null>(null);
+    const [showEditModal, setShowEditModal] = useState(false);
 
     const fetchPosts = async () => {
         setLoading(true);
@@ -119,6 +125,24 @@ export default function GalleryManagement() {
             }
         } catch (e) {
             alert("Error");
+        }
+    };
+
+    const handleEditClick = (post: GalleryPost) => {
+        setEditingPost(post);
+        setShowEditModal(true);
+    };
+
+    const handleEditSave = async (data: any) => {
+        if (!editingPost) return;
+        try {
+            await updateGalleryPost(editingPost.id, data);
+            setShowEditModal(false);
+            setEditingPost(null);
+            fetchPosts();
+        } catch (e) {
+            console.error(e);
+            throw e;
         }
     };
 
@@ -235,6 +259,12 @@ export default function GalleryManagement() {
                                                 >
                                                     {t.admin.gallery.action.delete}
                                                 </button>
+                                                <button
+                                                    onClick={() => handleEditClick(post)}
+                                                    className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded text-xs"
+                                                >
+                                                    Edit
+                                                </button>
                                             </>
                                         )}
                                     </div>
@@ -270,6 +300,23 @@ export default function GalleryManagement() {
                     </button>
                 </div>
             </div>
-        </div>
+
+            {/* Edit Modal */}
+            {
+                showEditModal && editingPost && (
+                    <EditGalleryModal
+                        isOpen={showEditModal}
+                        onClose={() => setShowEditModal(false)}
+                        onSave={handleEditSave}
+                        initialData={{
+                            title: editingPost.title,
+                            content: "", // Admin might not see content in list, but we can fetch or just leave empty if API doesn't return it in list
+                            tags: [], // Same as above
+                            visibility: editingPost.visibility
+                        }}
+                    />
+                )
+            }
+        </div >
     );
 }

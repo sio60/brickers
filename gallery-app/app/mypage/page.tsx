@@ -15,6 +15,8 @@ const KidsLdrPreview = dynamic(() => import("@/components/kids/KidsLdrPreview"),
 import ShareModal from "@/components/kids/ShareModal";
 import BackgroundBricks from "@/components/BackgroundBricks";
 import UpgradeModal from "@/components/UpgradeModal";
+import EditGalleryModal from "@/components/EditGalleryModal";
+import { updateGalleryPost } from "@/lib/api/galleryApi";
 
 // SVG Icons
 const Icons = {
@@ -106,6 +108,10 @@ function MyPageContent() {
     // 멤버십 해지 모달 상태
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [isCancelling, setIsCancelling] = useState(false);
+
+    // 갤러리 수정 모달 상태
+    const [isEditGalleryModalOpen, setIsEditGalleryModalOpen] = useState(false);
+    const [galleryEditTarget, setGalleryEditTarget] = useState<MyJob | null>(null);
 
     const loadJobsPage = async (page: number, replace = false) => {
         try {
@@ -452,7 +458,6 @@ function MyPageContent() {
             // downloadLdrFromBase64(colorChangedLdrBase64, `${menuJob?.title || 'model'}_${selectedTheme}.ldr`);
         };
 
-        // 멤버십 해지 핸들러
         const handleCancelMembership = async () => {
             try {
                 setIsCancelling(true);
@@ -470,6 +475,27 @@ function MyPageContent() {
                 alert(e.message || "멤버십 해지 중 오류가 발생했습니다.");
             } finally {
                 setIsCancelling(false);
+            }
+        };
+
+        // 갤러리 수정 핸들러
+        const handleEditGalleryOpen = () => {
+            if (!menuJob) return;
+            setGalleryEditTarget(menuJob);
+            setIsEditGalleryModalOpen(true);
+            setMenuJob(null); // 메뉴 닫기
+        };
+
+        const handleEditGallerySave = async (data: any) => {
+            if (!galleryEditTarget) return;
+            try {
+                await updateGalleryPost(galleryEditTarget.id, data);
+                alert("수정되었습니다.");
+                // 목록 갱신 (간단히 리로드 혹은 리스트 업데이트)
+                resetAndLoadJobs();
+            } catch (e) {
+                console.error("Update failed", e);
+                throw e; // Modal logs error
             }
         };
 
@@ -1008,6 +1034,15 @@ function MyPageContent() {
                             <div className={styles.mypage__menuList}>
                                 <button
                                     className={`${styles.mypage__menuItem2}`}
+                                    onClick={handleEditGalleryOpen}
+                                >
+                                    <Icons.Edit className={styles.mypage__menuIcon2} />
+                                    <span>{t.detail?.edit || "정보 수정"}</span>
+                                </button>
+                                <div className={styles.mypage__menuDivider} />
+
+                                <button
+                                    className={`${styles.mypage__menuItem2}`}
                                     onClick={() => handleMenuAction('preview')}
                                     disabled={!menuJob.sourceImageUrl}
                                 >
@@ -1255,6 +1290,21 @@ function MyPageContent() {
                     ldrUrl={shareJob?.ldrUrl || null}
                     loading={shareLoading}
                 />
+
+                {/* 갤러리 수정 모달 */}
+                {isEditGalleryModalOpen && galleryEditTarget && (
+                    <EditGalleryModal
+                        isOpen={isEditGalleryModalOpen}
+                        onClose={() => setIsEditGalleryModalOpen(false)}
+                        onSave={handleEditGallerySave}
+                        initialData={{
+                            title: galleryEditTarget.title || "",
+                            content: galleryEditTarget.description || "",
+                            tags: galleryEditTarget.tags || [],
+                            visibility: galleryEditTarget.visibility || "PUBLIC"
+                        }}
+                    />
+                )}
             </div>
         );
     }
