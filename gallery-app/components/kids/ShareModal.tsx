@@ -3,7 +3,6 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import html2canvas from "html2canvas";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const KidsLdrPreview = dynamic(() => import("./KidsLdrPreview"), { ssr: false });
@@ -19,9 +18,6 @@ interface ShareModalProps {
 export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loading }: ShareModalProps) {
     const { t } = useLanguage();
     const [working, setWorking] = useState(false);
-    const [compositeBlob, setCompositeBlob] = useState<Blob | null>(null);
-    const [isPreparing, setIsPreparing] = useState(false);
-    const stageRef = useRef<HTMLDivElement>(null);
     const previewRef = useRef<any>(null);
     const [previewLoaded, setPreviewLoaded] = useState(false);
     const handlePreviewLoaded = useCallback(() => setPreviewLoaded(true), []);
@@ -71,44 +67,18 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
         });
     };
 
-    // Pre-generate blob — hooks must always run (React Rules of Hooks)
+    // Reset state when modal closes
     useEffect(() => {
-        if (!isOpen || loading || !backgroundUrl || !ldrUrl || !previewLoaded) {
-            setCompositeBlob(null);
-            if (!isOpen) setPreviewLoaded(false);
-            return;
-        }
-
-        let alive = true;
-        const prepare = async () => {
-            setIsPreparing(true);
-            try {
-                // Wait for render to settle after preview loaded
-                await new Promise(r => setTimeout(r, 500));
-                if (!alive) return;
-
-                const blob = await captureComposite();
-                if (alive) {
-                    setCompositeBlob(blob);
-                }
-            } catch (e) {
-                console.error("[ShareModal] Pre-generation failed:", e);
-            } finally {
-                if (alive) setIsPreparing(false);
-            }
-        };
-        prepare();
-        return () => { alive = false; };
-    }, [isOpen, loading, backgroundUrl, ldrUrl, previewLoaded]);
+        if (!isOpen) setPreviewLoaded(false);
+    }, [isOpen]);
 
     // Early return AFTER all hooks — React requires hooks to run on every render
     if (!isOpen) return null;
 
-    const handleDownload = () => {
-        if (!compositeBlob) return;
+    const handleDownload = async () => {
         setWorking(true);
         try {
-            const blob = compositeBlob;
+            const blob = await captureComposite();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
@@ -125,36 +95,30 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
         }
     };
 
-    const handleShare = () => {
-        if (!compositeBlob) return;
-
-        const file = new File([compositeBlob], "brick-model.png", { type: "image/png" });
-        if (navigator.share && navigator.canShare?.({ files: [file] })) {
-            // navigator.share must be called in the same turn as the user gesture
-            navigator.share({
-                title: "Check out my Brickers model!",
-                text: "I made this with Brickers AI!",
-                files: [file],
-            }).catch(e => {
-                if (e.name !== 'AbortError') {
-                    console.error("Share failed", e);
-                    alert("Share failed. Please try again.");
-                }
-            });
-        } else {
-            setWorking(true);
-            navigator.clipboard.write([
-                new ClipboardItem({
-                    [compositeBlob.type]: compositeBlob
-                })
-            ]).then(() => {
+    const handleShare = async () => {
+        setWorking(true);
+        try {
+            const blob = await captureComposite();
+            const file = new File([blob], "brick-model.png", { type: "image/png" });
+            if (navigator.share && navigator.canShare?.({ files: [file] })) {
+                await navigator.share({
+                    title: "Check out my Brickers model!",
+                    text: "I made this with Brickers AI!",
+                    files: [file],
+                });
+            } else {
+                await navigator.clipboard.write([
+                    new ClipboardItem({ [blob.type]: blob })
+                ]);
                 alert("Image copied to clipboard!");
-            }).catch(e => {
-                console.error("Clipboard failed", e);
+            }
+        } catch (e: any) {
+            if (e?.name !== 'AbortError') {
+                console.error("Share failed", e);
                 alert("Share failed. Please try again.");
-            }).finally(() => {
-                setWorking(false);
-            });
+            }
+        } finally {
+            setWorking(false);
         }
     };
 
@@ -180,7 +144,6 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
                     </p>
 
                     <div
-                        ref={stageRef}
                         className="relative aspect-square bg-gray-50 rounded-2xl overflow-hidden mb-6 flex items-center justify-center border-2 border-gray-200"
                     >
                         {backgroundUrl && (
@@ -205,11 +168,11 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
 
                     {!loading && backgroundUrl && ldrUrl && (
                         <div className="flex gap-3">
-                            <Button onClick={handleDownload} variant="secondary" disabled={working || isPreparing || !compositeBlob}>
-                                {isPreparing ? "Wait..." : (working ? "Saving..." : (t.kids?.share?.save || "Save"))}
+                            <Button onClick={handleDownload} variant="secondary" disabled={working || !previewLoaded}>
+                                {working ? "Saving..." : (t.kids?.share?.save || "Save")}
                             </Button>
-                            <Button onClick={handleShare} variant="primary" disabled={working || isPreparing || !compositeBlob}>
-                                {isPreparing ? "Wait..." : (working ? "Processing..." : (t.kids?.share?.share || "Share"))}
+                            <Button onClick={handleShare} variant="primary" disabled={working || !previewLoaded}>
+                                {working ? "Processing..." : (t.kids?.share?.share || "Share")}
                             </Button>
                         </div>
                     )}
