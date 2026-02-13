@@ -37,7 +37,13 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
             const res = await fetcher(`${endpoint}?page=${targetPage}&size=24&sort=${targetSort}`);
             if (res.ok) {
                 const data = await res.json();
-                setItems(data.content || []);
+                const content = (data.content || []).map((item: any) => ({
+                    ...item,
+                    id: item.id || item.postId,
+                    bookmarked: targetCategory === 'bookmarks' ? true : item.bookmarked,
+                    myReaction: item.myReaction || (item.liked ? 'LIKE' : null) // 백엔드 필드명 대응
+                }));
+                setItems(content);
                 setTotalPages(data.totalPages);
                 setTotalElements(data.totalElements);
                 if (targetPage !== page) {
