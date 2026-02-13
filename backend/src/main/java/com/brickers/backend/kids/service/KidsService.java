@@ -99,6 +99,9 @@ public class KidsService {
         generateJobRepository.save(job);
         log.info("[Brickers] Job saved to DB. jobId={}, userId={}", job.getId(), safe(userId));
 
+        // SSE 초기 메시지 (SQS 대기 시간 동안 프론트엔드에 표시)
+        addAgentLog(job.getId(), "QUEUE", "요청을 접수했어요. 곧 작업을 시작할게요.");
+
         // 2) SQS 또는 Async 워커로 작업 전달
         if (sqsEnabled) {
             // SQS로 작업 요청 전송
