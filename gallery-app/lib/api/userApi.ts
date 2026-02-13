@@ -119,3 +119,11 @@ export async function cancelJob(jobId: string): Promise<MyJob> {
         method: 'POST',
     });
 }
+
+// 멤버십 해지
+export async function cancelMembership(reason?: string): Promise<{ success: boolean; message: string }> {
+    return request<{ success: boolean; message: string }>(`${API_BASE}/api/my/membership/cancel`, {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+    });
+}
