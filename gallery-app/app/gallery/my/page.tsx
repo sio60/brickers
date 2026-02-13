@@ -98,6 +98,7 @@ export default function MyGalleryPage() {
                     thumbnailUrl: b.thumbnailUrl,
                     createdAt: b.postCreatedAt,
                     bookmarked: true,
+                    myReaction: b.myReaction || (b.liked ? 'LIKE' : null), // 좋아요 상태 연동
                 }));
 
                 if (pageNum === 0) {
