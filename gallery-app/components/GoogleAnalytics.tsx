@@ -32,13 +32,15 @@ export default function GoogleAnalytics() {
     useEffect(() => {
         if (user?.id) {
             gtag.setUserId(user.id);
-            // 닉네임도 사용자 속성으로 함께 전송
+            // 닉네임, 유저ID도 사용자 속성으로 함께 전송 (GA4 Custom Dimension)
             gtag.setUserProperties({
+                userId: user.id,
                 nickname: user.nickname || "Unknown"
             });
         } else {
             gtag.setUserId(null);
             gtag.setUserProperties({
+                userId: null,
                 nickname: null
             });
         }
