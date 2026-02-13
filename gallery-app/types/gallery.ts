@@ -9,6 +9,7 @@ export type GalleryItem = {
     brickCount?: number;
     parts?: number;        // ✅ 추가: 최종 브릭 개수
     isPro?: boolean;       // ✅ 추가: PRO 모드 여부
+    tags?: string[];       // ✅ 추가: 태그 목록
     likeCount?: number;
     viewCount?: number;
     commentCount?: number;

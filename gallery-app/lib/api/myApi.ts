@@ -5,7 +5,7 @@ export type { GalleryItem, GalleryCreateRequest, GalleryRegisterResponse, Bookma
 export type { ReactionType } from './galleryApi';
 export { registerToGallery, getGalleryItems, getGalleryDetail, toggleGalleryBookmark, toggleGalleryReaction } from './galleryApi';
 export type { MyProfile, MyJob, MyOverview, MyProfileUpdateRequest } from './userApi';
-export { getMyProfile, getMyOverview, getMyJobs, getMyGalleryItems, getMyBookmarks, getMyInquiries, getMyReports, updateMyProfile, retryJob, cancelJob } from './userApi';
+export { getMyProfile, getMyOverview, getMyJobs, getMyGalleryItems, getMyBookmarks, getMyInquiries, getMyReports, updateMyProfile, retryJob, cancelJob, cancelMembership } from './userApi';
 export type { PresignResponse } from './uploadApi';
 export { getPresignUrl, uploadImageToS3 } from './uploadApi';
 export type { AdminStats } from './adminApi';

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, useRef, Suspense } from "react";
+import React, { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import styles from "./MyPage.module.css";
-import { getMyOverview, getMyProfile, getMyJobs, retryJob, cancelJob, updateMyProfile, ApiError } from "@/lib/api/myApi";
+import { getMyOverview, getMyProfile, getMyJobs, retryJob, cancelJob, updateMyProfile, cancelMembership, ApiError } from "@/lib/api/myApi";
 import type { MyOverview, MyProfile, MyJob } from "@/lib/api/myApi";
 import { getColorThemes, applyColorVariant, downloadLdrFromBase64 } from "@/lib/api/colorVariantApi";
 
@@ -15,6 +15,8 @@ const KidsLdrPreview = dynamic(() => import("@/components/kids/KidsLdrPreview"),
 import ShareModal from "@/components/kids/ShareModal";
 import BackgroundBricks from "@/components/BackgroundBricks";
 import UpgradeModal from "@/components/UpgradeModal";
+import EditGalleryModal from "@/components/EditGalleryModal";
+import { updateGalleryPost } from "@/lib/api/galleryApi";
 
 // SVG Icons
 const Icons = {
@@ -102,6 +104,14 @@ function MyPageContent() {
     const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
     const [shareJob, setShareJob] = useState<MyJob | null>(null); // 공유할 작업 (렌더링 트리거)
     const sharePreviewRef = useRef<KidsLdrPreviewHandle>(null);
+
+    // 멤버십 해지 모달 상태
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
+
+    // 갤러리 수정 모달 상태
+    const [isEditGalleryModalOpen, setIsEditGalleryModalOpen] = useState(false);
+    const [galleryEditTarget, setGalleryEditTarget] = useState<MyJob | null>(null);
 
     const loadJobsPage = async (page: number, replace = false) => {
         try {
@@ -443,11 +453,52 @@ function MyPageContent() {
         // } finally {
         //     setIsApplyingColor(false);
         // }
+        const downloadColorChangedLdr = () => {
+            // if (!colorChangedLdrBase64) return;
+            // downloadLdrFromBase64(colorChangedLdrBase64, `${menuJob?.title || 'model'}_${selectedTheme}.ldr`);
+        };
+
     };
 
-    const downloadColorChangedLdr = () => {
-        // if (!colorChangedLdrBase64) return;
-        // downloadLdrFromBase64(colorChangedLdrBase64, `${menuJob?.title || 'model'}_${selectedTheme}.ldr`);
+    const handleCancelMembership = async () => {
+        try {
+            setIsCancelling(true);
+            const res = await cancelMembership();
+            if (res.success) {
+                alert(t.membership.cancelSuccess || "멤버십 해지가 완료되었습니다.");
+                setIsCancelModalOpen(false);
+                // 프로필 정보 즉시 갱신
+                const updatedProfile = await getMyProfile();
+                setProfile(updatedProfile);
+            } else {
+                alert(res.message || "멤버십 해지에 실패했습니다.");
+            }
+        } catch (e: any) {
+            alert(e.message || "멤버십 해지 중 오류가 발생했습니다.");
+        } finally {
+            setIsCancelling(false);
+        }
+    };
+
+    // 갤러리 수정 핸들러
+    const handleEditGalleryOpen = () => {
+        if (!menuJob) return;
+        setGalleryEditTarget(menuJob);
+        setIsEditGalleryModalOpen(true);
+        setMenuJob(null); // 메뉴 닫기
+    };
+
+    const handleEditGallerySave = async (data: any) => {
+        if (!galleryEditTarget) return;
+        try {
+            await updateGalleryPost(galleryEditTarget.id, data);
+            alert("수정되었습니다.");
+            // 목록 갱신 (간단히 리로드 혹은 리스트 업데이트)
+            resetAndLoadJobs();
+        } catch (e) {
+            console.error("Update failed", e);
+            throw e; // Modal logs error
+        }
     };
 
     // 실시간 업데이트 (Polling) 및 문의 내역 로드
@@ -620,10 +671,55 @@ function MyPageContent() {
                                 <p className={styles.mypage__planDesc}>
                                     {t.membership.desc?.replace("{plan}", profile.membershipPlan)}
                                 </p>
+
+                                {/* 멤버십 해지 버튼 (무료 플랜이 아닐 경우에만 표시 예시 - 여기선 조건 없이 표시하거나 플랜 체크) */}
+                                {profile.membershipPlan !== 'FREE' && (
+                                    <div style={{ marginTop: '24px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
+                                        <button
+                                            className={styles.mypage__textBtn}
+                                            style={{ color: '#999', textDecoration: 'underline', fontSize: '14px' }}
+                                            onClick={() => setIsCancelModalOpen(true)}
+                                        >
+                                            {t.membership.cancelBtn || "멤버십 해지 / 환불 신청"}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* 멤버십 해지 확인 모달 */}
+                        {isCancelModalOpen && (
+                            <div className={styles.mypage__modalOverlay} onClick={() => setIsCancelModalOpen(false)}>
+                                <div className={styles.mypage__menuModal} style={{ padding: '32px', maxWidth: '400px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                                    <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '16px' }}>
+                                        {t.membership.cancelTitle || "멤버십 해지"}
+                                    </h3>
+                                    <p style={{ marginBottom: '24px', color: '#666', lineHeight: 1.5 }}>
+                                        {t.membership.cancelConfirm || "정말로 멤버십을 해지하시겠습니까?\n해지 후에는 혜택을 더 이상 이용하실 수 없습니다."}
+                                    </p>
+                                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                                        <button
+                                            className={styles.mypage__cancelBtn}
+                                            onClick={() => setIsCancelModalOpen(false)}
+                                            style={{ flex: 1 }}
+                                        >
+                                            {t.common.cancel || "취소"}
+                                        </button>
+                                        <button
+                                            className={styles.mypage__saveBtn}
+                                            style={{ flex: 1, backgroundColor: '#ff4d4f' }}
+                                            onClick={handleCancelMembership}
+                                            disabled={isCancelling}
+                                        >
+                                            {isCancelling ? "처리중..." : (t.common.confirm || "해지하기")}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
-                );
+                )
+
 
             case "jobs":
                 return (
@@ -660,24 +756,7 @@ function MyPageContent() {
                                             <div className={styles.mypage__jobThumbData} style={{ position: 'relative', overflow: 'hidden' }}>
                                                 <img src={job.sourceImageUrl || "/placeholder.png"} alt={job.title} className={styles.mypage__jobThumb} />
 
-                                                {/* Gradient Overlay for Visibility */}
-                                                <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-black/50 to-transparent z-0 pointer-events-none" />
 
-                                                {/* Overlay Actions */}
-                                                <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
-                                                    {job.ldrUrl && (
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleShare(job);
-                                                            }}
-                                                            className="flex items-center justify-center w-8 h-8 transition-transform active:scale-95 text-white drop-shadow-md hover:opacity-80"
-                                                            title={t.detail?.share || "공유"}
-                                                        >
-                                                            <Icons.Share className="w-6 h-6 stroke-white" strokeWidth={2} />
-                                                        </button>
-                                                    )}
-                                                </div>
 
                                                 <div className={styles.mypage__jobOverlay}>
                                                     <span className={`${styles.mypage__jobStatus} ${styles[getStatusClass(job.status)]}`}>
@@ -957,6 +1036,15 @@ function MyPageContent() {
                         <div className={styles.mypage__menuList}>
                             <button
                                 className={`${styles.mypage__menuItem2}`}
+                                onClick={handleEditGalleryOpen}
+                            >
+                                <Icons.Edit className={styles.mypage__menuIcon2} />
+                                <span>{t.detail?.edit || "정보 수정"}</span>
+                            </button>
+                            <div className={styles.mypage__menuDivider} />
+
+                            <button
+                                className={`${styles.mypage__menuItem2}`}
                                 onClick={() => handleMenuAction('preview')}
                                 disabled={!menuJob.sourceImageUrl}
                             >
@@ -978,7 +1066,7 @@ function MyPageContent() {
                                 className={`${styles.mypage__menuItem2}`}
                                 onClick={() => handleShare(menuJob)}
                             >
-                                <Icons.Image className={styles.mypage__menuIcon2} />
+                                <Icons.Share className={styles.mypage__menuIcon2} />
                                 <span>{t.detail?.share || "공유"}</span>
                             </button>
 
@@ -1204,9 +1292,25 @@ function MyPageContent() {
                 ldrUrl={shareJob?.ldrUrl || null}
                 loading={shareLoading}
             />
+
+            {/* 갤러리 수정 모달 */}
+            {isEditGalleryModalOpen && galleryEditTarget && (
+                <EditGalleryModal
+                    isOpen={isEditGalleryModalOpen}
+                    onClose={() => setIsEditGalleryModalOpen(false)}
+                    onSave={handleEditGallerySave}
+                    initialData={{
+                        title: galleryEditTarget.title || "",
+                        content: galleryEditTarget.description || "",
+                        tags: galleryEditTarget.tags || galleryEditTarget.suggestedTags || [],
+                        visibility: galleryEditTarget.visibility || "PUBLIC"
+                    }}
+                />
+            )}
         </div>
     );
 }
+
 
 export default function MyPage() {
     return (
