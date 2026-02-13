@@ -26,6 +26,9 @@ export interface MyJob {
     glbUrl?: string;
     ldrUrl?: string; // LDR 파일 URL (백엔드 MyJobResponse와 일치)
     instructionsPdfUrl?: string; // PDF 파일 URL
+    description?: string; // 추가: 설명
+    tags?: string[];      // 추가: 태그 목록 (사용자가 수정한 태그)
+    visibility?: 'PUBLIC' | 'PRIVATE'; // 추가: 공개 여부
     suggestedTags?: string[];  // Gemini가 추천한 태그 목록
     screenshotUrls?: Record<string, string>;  // 6면 스크린샷 URL 맵
     parts?: number;            // 최종 브릭 개수

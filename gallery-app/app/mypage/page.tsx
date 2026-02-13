@@ -1300,7 +1300,7 @@ function MyPageContent() {
                         initialData={{
                             title: galleryEditTarget.title || "",
                             content: galleryEditTarget.description || "",
-                            tags: galleryEditTarget.tags || [],
+                            tags: galleryEditTarget.tags || galleryEditTarget.suggestedTags || [],
                             visibility: galleryEditTarget.visibility || "PUBLIC"
                         }}
                     />
