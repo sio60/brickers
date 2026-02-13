@@ -148,6 +148,25 @@
     border-top: 2px solid #000;
 }
 
+.list table {
+    table-layout: fixed;
+    border-radius: 0 0 20px 20px;
+}
+
+.list th {
+    background: #fafafa;
+    border-bottom: 2px solid #000;
+    white-space: nowrap;
+}
+
+.list td {
+    vertical-align: middle;
+}
+
+.list tr:last-child td {
+    border-bottom: none;
+}
+
 .listItem {
     display: flex;
     flex-direction: column;
