@@ -28,66 +28,50 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
     const [totalElements, setTotalElements] = useState(initialTotalElements);
     const [loading, setLoading] = useState(false);
 
+    const fetchData = useCallback(async (targetPage: number, targetSort: string, targetCategory: string) => {
+        setLoading(true);
+        try {
+            const endpoint = targetCategory === 'bookmarks' ? '/api/gallery/bookmarks/my' : '/api/gallery';
+            const fetcher = isAuthenticated ? authFetch : fetch;
+
+            const res = await fetcher(`${endpoint}?page=${targetPage}&size=24&sort=${targetSort}`);
+            if (res.ok) {
+                const data = await res.json();
+                setItems(data.content || []);
+                setTotalPages(data.totalPages);
+                setTotalElements(data.totalElements);
+                if (targetPage !== page) {
+                    setPage(targetPage);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            } else if (targetCategory === 'bookmarks') {
+                // Fallback for bookmarks if API fails
+                const bookmarkedOnly = initialItems.filter(i => i.bookmarked);
+                setItems(bookmarkedOnly);
+                setTotalPages(1);
+                setTotalElements(bookmarkedOnly.length);
+            }
+        } catch (error) {
+            console.error('Failed to fetch gallery data:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [isAuthenticated, authFetch, initialItems, page]);
+
     // 로그인 상태가 확인되면(isAuthenticated가 true로 바뀌면) 데이터를 다시 불러옵니다.
-    // 이를 통해 서버에서 렌더링된 정적 데이터(Initial Props)를 사용자 맞춤 데이터(좋아요, 북마크 상태 포함)로 교체합니다.
     useEffect(() => {
         if (isAuthenticated) {
-            const refreshData = async () => {
-                try {
-                    const endpoint = category === 'bookmarks' ? '/api/gallery/bookmarks/my' : '/api/gallery';
-                    const res = await authFetch(`${endpoint}?page=${page}&size=24&sort=${sort}`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        const content = (data.content || []).map((item: any) => ({
-                            ...item,
-                            myReaction: item.myReaction
-                        }));
-                        setItems(content);
-                        setTotalPages(data.totalPages);
-                        setTotalElements(data.totalElements);
-                    }
-                } catch (error) {
-                    console.error('Failed to refresh gallery data on auth:', error);
-                }
-            };
-            refreshData();
+            fetchData(page, sort, category);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAuthenticated]);
 
-
-    const goToPage = async (targetPage: number) => {
+    const goToPage = (targetPage: number) => {
         if (loading || targetPage < 0 || targetPage >= totalPages) return;
-
-        setLoading(true);
-        try {
-            const endpoint = category === 'bookmarks' ? '/api/gallery/bookmarks/my' : '/api/gallery';
-
-            // Use authFetch if it's the bookmarks endpoint (which requires auth)
-            // Otherwise use regular fetch
-            const fetcher = category === 'bookmarks' ? authFetch : fetch;
-
-            const res = await fetcher(`${endpoint}?page=${targetPage}&size=24&sort=${sort}`);
-            if (res.ok) {
-                const data = await res.json();
-                const content = (data.content || []).map((item: any) => ({
-                    ...item,
-                    myReaction: item.myReaction
-                }));
-                setItems(content);
-                setPage(targetPage);
-                setTotalPages(data.totalPages);
-                setTotalElements(data.totalElements);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        } catch (error) {
-            console.error('Failed to load page:', error);
-        } finally {
-            setLoading(false);
-        }
+        fetchData(targetPage, sort, category);
     };
 
-    const handleCategoryChange = async (newCategory: string) => {
+    const handleCategoryChange = (newCategory: string) => {
         if (newCategory === category) return;
         if (newCategory === 'bookmarks' && !isAuthenticated) {
             router.push('?login=true');
@@ -95,70 +79,18 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
         }
 
         setCategory(newCategory);
-        setLoading(true);
         setPage(0);
-
-        try {
-            const endpoint = newCategory === 'bookmarks' ? '/api/gallery/bookmarks/my' : '/api/gallery';
-            const fetcher = newCategory === 'bookmarks' ? authFetch : fetch; // Use authFetch for bookmarks
-
-            const res = await fetcher(`${endpoint}?page=0&size=24&sort=${sort}`);
-            if (res.ok) {
-                const data = await res.json();
-                const content = (data.content || []).map((item: any) => ({
-                    ...item,
-                    myReaction: item.myReaction
-                }));
-                setItems(content);
-                setTotalPages(data.totalPages);
-                setTotalElements(data.totalElements);
-            } else {
-                // If endpoint not found or error, fallback to local filter if it's bookmarks
-                if (newCategory === 'bookmarks') {
-                    const bookmarkedOnly = initialItems.filter(i => i.bookmarked);
-                    setItems(bookmarkedOnly);
-                    setTotalPages(1);
-                    setTotalElements(bookmarkedOnly.length);
-                } else {
-                    setItems(initialItems);
-                    setTotalPages(initialTotalPages);
-                    setTotalElements(initialTotalElements);
-                }
-            }
-        } catch (error) {
-            console.error('Category change failed:', error);
-        } finally {
-            setLoading(false);
-        }
+        fetchData(0, sort, newCategory);
     };
 
-    const handleSortChange = async (newSort: string) => {
+    const handleSortChange = (newSort: string) => {
         if (newSort === sort) return;
 
         setSort(newSort);
-        setLoading(true);
         setPage(0);
-
-        try {
-            const endpoint = category === 'bookmarks' ? '/api/gallery/bookmarks/my' : '/api/gallery';
-            const fetcher = category === 'bookmarks' ? authFetch : fetch; // Use authFetch for bookmarks
-            const res = await fetcher(`${endpoint}?page=0&size=24&sort=${newSort}`);
-            if (res.ok) {
-                const data = await res.json();
-                const content = (data.content || []).map((item: any) => ({
-                    ...item,
-                    myReaction: item.myReaction
-                }));
-                setItems(content);
-                setTotalPages(data.totalPages);
-                setTotalElements(data.totalElements);
-            }
-        } catch (error) {
-            console.error('Sort change failed:', error);
-        } finally {
-            setLoading(false);
-        }
+        fetchData(0, newSort, category);
     };
+
 
     const handleLikeToggle = async (id: string, currentState: boolean) => {
         if (!isAuthenticated) {
