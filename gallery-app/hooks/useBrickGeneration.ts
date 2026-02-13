@@ -38,6 +38,10 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
     const [jobTitle, setJobTitle] = useState<string>('');
 
     const processingRef = useRef(false);
+    const authFetchRef = useRef(authFetch);
+    const tRef = useRef(t);
+    useEffect(() => { authFetchRef.current = authFetch; }, [authFetch]);
+    useEffect(() => { tRef.current = t; }, [t]);
 
     useEffect(() => {
         const promptText = (targetPrompt ?? "").trim();
@@ -57,9 +61,10 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
             processingRef.current = true;
             setStatus("loading");
             const startTime = Date.now();
+            let jid: string | undefined;
 
             await sleep(200);
-            setDebugLog(t.kids.generate.starting);
+            setDebugLog(tRef.current.kids.generate.starting);
 
             gtag.trackGeneration("start", {
                 job_id: "pending",
@@ -74,11 +79,11 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
                 let fileTitle = "prompt_gen";
 
                 if (rawFile) {
-                    setDebugLog(t.kids.generate.uploadPrepare);
+                    setDebugLog(tRef.current.kids.generate.uploadPrepare);
                     const presign = await getPresignUrl(rawFile.type, rawFile.name);
                     if (alive) setJobThumbnailUrl(presign.publicUrl);
 
-                    setDebugLog(t.kids.generate.uploading);
+                    setDebugLog(tRef.current.kids.generate.uploading);
                     const uploadRes = await fetch(presign.uploadUrl, {
                         method: "PUT",
                         body: rawFile,
@@ -93,7 +98,7 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
                     fileTitle = promptText.substring(0, 10);
                 }
 
-                setDebugLog(t.kids.generate.creating2);
+                setDebugLog(tRef.current.kids.generate.creating2);
                 const payload = {
                     sourceImageUrl: sourceImageUrl || undefined,
                     prompt: promptText || undefined,
@@ -102,7 +107,7 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
                     title: fileTitle,
                 };
 
-                const startRes = await authFetch('/api/kids/generate', {
+                const startRes = await authFetchRef.current('/api/kids/generate', {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload),
@@ -115,12 +120,12 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
                 }
 
                 const startData = await startRes.json();
-                const jid = startData.jobId;
+                jid = startData.jobId;
                 if (!jid) throw new Error("No jobId received");
 
                 if (!alive) return;
                 setJobId(jid);
-                setDebugLog(`${t.kids.generate.jobCreated} [${jid}]`);
+                setDebugLog(`${tRef.current.kids.generate.jobCreated} [${jid}]`);
 
                 useJobStore.getState().setActiveJob({ jobId: jid, status: 'QUEUED', age });
 
@@ -129,12 +134,12 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
                     if (!alive) return;
                     await sleep(POLL_INTERVAL);
 
-                    const statusRes = await authFetch(`/api/kids/jobs/${jid}`, {
+                    const statusRes = await authFetchRef.current(`/api/kids/jobs/${jid}`, {
                         signal: abort.signal,
                     });
 
                     if (!statusRes.ok) {
-                        setDebugLog(`${t.kids.generate.serverDelay} (${statusRes.status})`);
+                        setDebugLog(`${tRef.current.kids.generate.serverDelay} (${statusRes.status})`);
                         continue;
                     }
 
@@ -150,7 +155,7 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
                         if (minutesSinceUpdate > 10) warningMsg = ` ⚠️ AI 응답 없음 (${minutesSinceUpdate}m)`;
                     }
 
-                    setDebugLog(`${t.kids.generate.inProgress} [${stage}] (${i}/${maxAttempts})${warningMsg}`);
+                    setDebugLog(`${tRef.current.kids.generate.inProgress} [${stage}] (${i}/${maxAttempts})${warningMsg}`);
 
                     if (statusData.status === "FAILED") {
                         useJobStore.getState().setActiveJob({ jobId: jid, status: 'FAILED', age });
@@ -189,7 +194,7 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
                 if (!finalData) throw new Error(`Timeout: exceeded ${FRONT_TIMEOUT_SEC}s`);
 
                 const modelUrl = finalData.ldrUrl || finalData.modelKey;
-                setDebugLog(t.kids.generate.loadingResult);
+                setDebugLog(tRef.current.kids.generate.loadingResult);
 
                 if (!modelUrl) throw new Error("No model URL in job result");
 
@@ -205,7 +210,7 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
                 console.error("[useBrickGeneration] Error:", e);
                 setStatus("error");
                 gtag.trackGeneration("fail", {
-                    job_id: jobId || "unknown",
+                    job_id: jid || "unknown",
                     error_type: e instanceof Error ? e.name : "UnknownError",
                     message: e instanceof Error ? e.message : String(e)
                 });
