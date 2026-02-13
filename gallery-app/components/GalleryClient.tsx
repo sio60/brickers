@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import GalleryPanel from './GalleryPanel';
 import GalleryGrid from './GalleryGrid';
@@ -107,8 +107,8 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
 
             if (res.ok) {
                 const data = await res.json();
-                setItems(prev =>
-                    prev.map(item =>
+                setItems((prev: GalleryItem[]) =>
+                    prev.map((item: GalleryItem) =>
                         item.id === id
                             ? {
                                 ...item,
@@ -140,11 +140,11 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
 
                 // If we are in the 'bookmarks' category and unbookmarking, remove from list
                 if (category === 'bookmarks' && !data.bookmarked) {
-                    setItems(prev => prev.filter(item => item.id !== id));
-                    setTotalElements(prev => prev - 1);
+                    setItems((prev: GalleryItem[]) => prev.filter((item: GalleryItem) => item.id !== id));
+                    setTotalElements((prev: number) => prev - 1);
                 } else {
-                    setItems(prev =>
-                        prev.map(item =>
+                    setItems((prev: GalleryItem[]) =>
+                        prev.map((item: GalleryItem) =>
                             item.id === id
                                 ? { ...item, bookmarked: data.bookmarked }
                                 : item
