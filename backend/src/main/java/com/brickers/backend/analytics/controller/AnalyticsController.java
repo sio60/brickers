@@ -193,4 +193,14 @@ public class AnalyticsController {
                     .body(Map.of("error", "AI Query Analysis failed", "details", e.getMessage()));
         }
     }
+
+    /**
+     * [NEW] 제품 인텔리전스 데이터 조회 (맞춤 지표)
+     */
+    @GetMapping("/product-intelligence")
+    public ResponseEntity<?> getProductIntelligence(
+            @RequestParam(name = "days", defaultValue = "7") int days) {
+        log.info("[AnalyticsBridge] Fetching Product Intelligence metrics for last {} days", days);
+        return ResponseEntity.ok(gaService.getProductIntelligence(days));
+    }
 }
