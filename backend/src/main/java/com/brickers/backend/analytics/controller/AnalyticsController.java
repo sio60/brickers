@@ -223,4 +223,17 @@ public class AnalyticsController {
         log.info("[AnalyticsBridge] Fetching Product Intelligence metrics for last {} days", days);
         return ResponseEntity.ok(gaService.getProductIntelligence(days));
     }
+
+    /**
+     * [NEW] 심층 분석 (Deep Insights) 차트용 데이터
+     */
+    @GetMapping("/deep-insights")
+    public ResponseEntity<DeepInsightResponse> getDeepInsights(
+            @RequestHeader(name = "X-Internal-Token", required = false) String token,
+            @RequestParam(name = "days", defaultValue = "30") int days) {
+        if (!isAdminOrInternal(token)) {
+            return ResponseEntity.status(403).build();
+        }
+        return ResponseEntity.ok(gaService.getDeepInsights(days));
+    }
 }

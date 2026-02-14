@@ -462,13 +462,24 @@ public class GoogleAnalyticsService {
         List<ProductIntelligenceResponse.ExitPoint> exits = new ArrayList<>();
 
         try {
-            // 1. 퍼널 분석
-            RunReportResponse funnelResp = analyticsDataClient.runReport(RunReportRequest.newBuilder()
+            // 1. 퍼널 분석 (Filter out 'not set')
+            RunReportRequest funnelRequest = RunReportRequest.newBuilder()
                     .setProperty("properties/" + propertyId)
                     .addDimensions(Dimension.newBuilder().setName("customEvent:funnel_stage"))
                     .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                            .setNotExpression(FilterExpression.newBuilder()
+                                    .setFilter(Filter.newBuilder()
+                                            .setFieldName("customEvent:funnel_stage")
+                                            .setStringFilter(
+                                                    Filter.StringFilter.newBuilder().setValue("(not set)").build())
+                                            .build())
+                                    .build())
+                            .build())
                     .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
-                    .build());
+                    .build();
+
+            RunReportResponse funnelResp = analyticsDataClient.runReport(funnelRequest);
 
             for (Row row : funnelResp.getRowsList()) {
                 funnel.add(new ProductIntelligenceResponse.FunnelStage(
@@ -476,15 +487,23 @@ public class GoogleAnalyticsService {
                         Long.parseLong(row.getMetricValues(0).getValue())));
             }
 
-            // 2. 엔진 품질 지표
-            RunReportResponse qResp = analyticsDataClient.runReport(RunReportRequest.newBuilder()
+            // 2. 엔진 품질 지표 (Filter out invalid stability scores)
+            RunReportRequest qRequest = RunReportRequest.newBuilder()
                     .setProperty("properties/" + propertyId)
                     .addMetrics(Metric.newBuilder().setName("customEvent:stability_score"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:brick_count"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:lmm_latency"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                            .setFilter(Filter.newBuilder()
+                                    .setFieldName("eventName") // Only successful generations
+                                    .setStringFilter(Filter.StringFilter.newBuilder().setValue("generate_success"))
+                                    .build())
+                            .build())
                     .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
-                    .build());
+                    .build();
+
+            RunReportResponse qResp = analyticsDataClient.runReport(qRequest);
 
             if (qResp.getRowsCount() > 0) {
                 Row row = qResp.getRows(0);
@@ -515,6 +534,93 @@ public class GoogleAnalyticsService {
             log.error("Failed to get product intelligence: {}", e.getMessage());
         }
         return new ProductIntelligenceResponse(funnel, quality, exits);
+    }
+
+    /**
+     * [NEW] 심층 분석 (Deep Insights) 데이터 조회
+     * 1. 카테고리별 성공/실패율
+     * 2. 검색어 워드 클라우드 (Top Keywords)
+     */
+    public DeepInsightResponse getDeepInsights(int days) {
+        if (analyticsDataClient == null)
+            return null;
+
+        List<DeepInsightResponse.CategoryStat> categoryStats = new ArrayList<>();
+        List<DeepInsightResponse.KeywordStat> keywordStats = new ArrayList<>();
+        // QualityStat is placeholder for now as correlation is complex
+        List<DeepInsightResponse.QualityStat> qualityStats = new ArrayList<>();
+
+        try {
+            // 1. Category Success Rate
+            RunReportRequest categoryRequest = RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDimensions(Dimension.newBuilder().setName("customEvent:image_category"))
+                    .addDimensions(Dimension.newBuilder().setName("eventName"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                            .setFilter(Filter.newBuilder()
+                                    .setFieldName("eventName")
+                                    .setInListFilter(Filter.InListFilter.newBuilder()
+                                            .addValues("generate_success")
+                                            .addValues("generate_fail")
+                                            .build())
+                                    .build())
+                            .build())
+                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                    .build();
+
+            RunReportResponse catResp = analyticsDataClient.runReport(categoryRequest);
+            Map<String, long[]> catMap = new HashMap<>(); // [success, fail]
+
+            for (Row row : catResp.getRowsList()) {
+                String category = row.getDimensionValues(0).getValue();
+                String eventName = row.getDimensionValues(1).getValue();
+                long count = Long.parseLong(row.getMetricValues(0).getValue());
+
+                catMap.putIfAbsent(category, new long[] { 0, 0 });
+                if (eventName.equals("generate_success")) {
+                    catMap.get(category)[0] += count; // index 0: success
+                } else {
+                    catMap.get(category)[1] += count; // index 1: fail
+                }
+            }
+
+            catMap.forEach((k, v) -> {
+                if (!k.isEmpty() && !k.equals("(not set)")) {
+                    categoryStats.add(new DeepInsightResponse.CategoryStat(k, v[0], v[1]));
+                }
+            });
+
+            // 2. Search Keywords
+            RunReportRequest searchRequest = RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDimensions(Dimension.newBuilder().setName("customEvent:search_term"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                            .setFilter(Filter.newBuilder()
+                                    .setFieldName("eventName")
+                                    .setStringFilter(Filter.StringFilter.newBuilder().setValue("user_search"))
+                                    .build())
+                            .build())
+                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                    .setLimit(20)
+                    .build();
+
+            RunReportResponse searchResp = analyticsDataClient.runReport(searchRequest);
+            for (Row row : searchResp.getRowsList()) {
+                String keyword = row.getDimensionValues(0).getValue();
+                if (!keyword.isEmpty() && !keyword.equals("(not set)")) {
+                    keywordStats.add(new DeepInsightResponse.KeywordStat(
+                            keyword,
+                            Long.parseLong(row.getMetricValues(0).getValue())));
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("Failed to fetch Deep Insights: {}", e.getMessage());
+        }
+
+        return new DeepInsightResponse(categoryStats, qualityStats, keywordStats);
     }
 
     private RunReportRequest buildEventRequest(String eventName, int days) {
