@@ -78,6 +78,7 @@ public class GoogleAnalyticsService {
                 .setProperty("properties/" + propertyId)
                 .addDimensions(Dimension.newBuilder().setName("pagePath"))
                 .addMetrics(Metric.newBuilder().setName("screenPageViews"))
+                .addMetrics(Metric.newBuilder().setName("userEngagementDuration"))
                 .addDateRanges(DateRange.newBuilder()
                         .setStartDate(days + "daysAgo")
                         .setEndDate("today"))
@@ -88,9 +89,14 @@ public class GoogleAnalyticsService {
         List<TopPageResponse> result = new ArrayList<>();
 
         for (Row row : response.getRowsList()) {
+            long views = Long.parseLong(row.getMetricValues(0).getValue());
+            double totalDuration = Double.parseDouble(row.getMetricValues(1).getValue());
+            double avgDuration = views > 0 ? totalDuration / views : 0;
+
             result.add(new TopPageResponse(
                     row.getDimensionValues(0).getValue(),
-                    Long.parseLong(row.getMetricValues(0).getValue())));
+                    views,
+                    avgDuration));
         }
         return result;
     }
@@ -199,6 +205,7 @@ public class GoogleAnalyticsService {
         if (analyticsDataClient == null)
             return new ArrayList<>();
 
+        // 1. Fetch raw tag strings (comma separated)
         RunReportRequest request = RunReportRequest.newBuilder()
                 .setProperty("properties/" + propertyId)
                 .addDimensions(Dimension.newBuilder().setName("customEvent:suggested_tags"))
@@ -211,16 +218,36 @@ public class GoogleAnalyticsService {
                 .addDateRanges(DateRange.newBuilder()
                         .setStartDate(days + "daysAgo")
                         .setEndDate("today"))
-                .setLimit(limit)
+                .setLimit(100) // Fetch more to aggregate
                 .build();
 
         RunReportResponse response = analyticsDataClient.runReport(request);
-        List<TopTagResponse> result = new ArrayList<>();
+
+        // 2. Split and Aggregate
+        Map<String, Long> tagCounts = new HashMap<>();
         for (Row row : response.getRowsList()) {
-            result.add(new TopTagResponse(
-                    row.getDimensionValues(0).getValue(),
-                    Long.parseLong(row.getMetricValues(0).getValue())));
+            String tagString = row.getDimensionValues(0).getValue();
+            long count = Long.parseLong(row.getMetricValues(0).getValue());
+
+            if (tagString == null || tagString.isEmpty() || tagString.equals("(not set)"))
+                continue;
+
+            String[] tags = tagString.split(",");
+            for (String tag : tags) {
+                String cleanTag = tag.trim();
+                if (!cleanTag.isEmpty()) {
+                    tagCounts.put(cleanTag, tagCounts.getOrDefault(cleanTag, 0L) + count);
+                }
+            }
         }
+
+        // 3. Sort and Limit
+        List<TopTagResponse> result = new ArrayList<>();
+        tagCounts.entrySet().stream()
+                .sorted((e1, e2) -> Long.compare(e2.getValue(), e1.getValue()))
+                .limit(limit)
+                .forEach(e -> result.add(new TopTagResponse(e.getKey(), e.getValue())));
+
         return result;
     }
 
@@ -315,6 +342,7 @@ public class GoogleAnalyticsService {
                     .setProperty("properties/" + propertyId)
                     .addDimensions(Dimension.newBuilder().setName("pagePath"))
                     .addMetrics(Metric.newBuilder().setName("screenPageViews"))
+                    .addMetrics(Metric.newBuilder().setName("userEngagementDuration"))
                     .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
                     .setLimit(10)
                     .build());
@@ -329,7 +357,7 @@ public class GoogleAnalyticsService {
                                     .setStringFilter(Filter.StringFilter.newBuilder().setValue("generate_success"))
                                     .build()))
                     .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
-                    .setLimit(10)
+                    .setLimit(100)
                     .build());
 
             BatchRunReportsResponse batchResponse1 = analyticsDataClient
@@ -348,13 +376,33 @@ public class GoogleAnalyticsService {
                 dailyUsers = processTrendResponse(batchResponse1.getReports(1));
 
                 for (Row row : batchResponse1.getReports(2).getRowsList()) {
-                    topPages.add(new TopPageResponse(row.getDimensionValues(0).getValue(),
-                            Long.parseLong(row.getMetricValues(0).getValue())));
+                    long views = Long.parseLong(row.getMetricValues(0).getValue());
+                    double totalDuration = Double.parseDouble(row.getMetricValues(1).getValue());
+                    double avgDuration = views > 0 ? totalDuration / views : 0;
+                    topPages.add(new TopPageResponse(row.getDimensionValues(0).getValue(), views, avgDuration));
                 }
+
+                // Aggregating Tags from Batch Response
+                Map<String, Long> tagCounts = new HashMap<>();
                 for (Row row : batchResponse1.getReports(3).getRowsList()) {
-                    topTags.add(new TopTagResponse(row.getDimensionValues(0).getValue(),
-                            Long.parseLong(row.getMetricValues(0).getValue())));
+                    String tagString = row.getDimensionValues(0).getValue();
+                    long count = Long.parseLong(row.getMetricValues(0).getValue());
+
+                    if (tagString == null || tagString.isEmpty() || tagString.equals("(not set)"))
+                        continue;
+
+                    String[] tags = tagString.split(",");
+                    for (String tag : tags) {
+                        String cleanTag = tag.trim();
+                        if (!cleanTag.isEmpty()) {
+                            tagCounts.put(cleanTag, tagCounts.getOrDefault(cleanTag, 0L) + count);
+                        }
+                    }
                 }
+                tagCounts.entrySet().stream()
+                        .sorted((e1, e2) -> Long.compare(e2.getValue(), e1.getValue()))
+                        .limit(10)
+                        .forEach(e -> topTags.add(new TopTagResponse(e.getKey(), e.getValue())));
             }
 
             // Batch 2: Heavy Users & Event Stats
