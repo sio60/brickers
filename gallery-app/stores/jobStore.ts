@@ -27,15 +27,19 @@ interface JobStore {
     stopPolling: () => void;
     clearJob: () => void;
     addNotification: (note: Notification) => void;
+    upsertNotifications: (notes: Notification[]) => void;
     markAsRead: (id: string) => void;
     clearNotifications: () => void;
 }
 
 export interface Notification {
-    id: string; // jobId
+    id: string; // jobId or server notification id
     title: string;
     completedAt: string; // ISO string
     isRead: boolean;
+    source?: 'local' | 'server';
+    link?: string;
+    message?: string;
 }
 
 const POLL_INTERVAL = 3000;
@@ -55,6 +59,34 @@ export const useJobStore = create<JobStore>((set, get) => ({
     addNotification: (note) => set((state) => ({
         notifications: [note, ...state.notifications]
     })),
+
+    upsertNotifications: (notes) => set((state) => {
+        const byId = new Map<string, Notification>();
+
+        for (const existing of state.notifications) {
+            byId.set(existing.id, existing);
+        }
+
+        for (const incoming of notes) {
+            const prev = byId.get(incoming.id);
+            if (!prev) {
+                byId.set(incoming.id, incoming);
+                continue;
+            }
+
+            byId.set(incoming.id, {
+                ...prev,
+                ...incoming,
+                isRead: incoming.isRead ?? prev.isRead,
+            });
+        }
+
+        const merged = Array.from(byId.values()).sort((a, b) =>
+            new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
+        );
+
+        return { notifications: merged };
+    }),
 
     markAsRead: (id) => set((state) => ({
         notifications: state.notifications.map(n =>
@@ -141,7 +173,9 @@ export const useJobStore = create<JobStore>((set, get) => ({
                         id: jobId,
                         title: currentJob.title || '새로운 브릭 생성 완료',
                         completedAt: new Date().toISOString(),
-                        isRead: false
+                        isRead: false,
+                        source: 'local',
+                        link: '/mypage?menu=jobs'
                     });
 
                     // 브라우저 알림 (기존)
