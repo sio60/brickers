@@ -10,6 +10,7 @@ const COLORS = ['#ffe135', '#ff9f43', '#ee5253', '#10ac84', '#5f27cd', '#48dbfb'
 interface TopPage {
     pagePath: string;
     screenPageViews: number;
+    avgEngagementDuration: number;
 }
 
 interface DailyTrend {
@@ -65,11 +66,13 @@ export default function DetailedAnalytics() {
         </div>
     );
 
-    // 날짜 포맷팅 (YYYYMMDD -> MM/DD)
-    const formattedDailyUsers = dailyUsers.map(d => ({
-        ...d,
-        date: d.date.length === 8 ? `${d.date.substring(4, 6)}/${d.date.substring(6, 8)}` : d.date
-    })).reverse(); // GA4 often returns desc
+    // 날짜 포맷팅 (YYYYMMDD -> MM/DD) 및 정렬 (오름차순)
+    const formattedDailyUsers = [...dailyUsers]
+        .sort((a, b) => a.date.localeCompare(b.date)) // 날짜 오름차순
+        .map(d => ({
+            ...d,
+            date: d.date.length === 8 ? `${d.date.substring(4, 6)}/${d.date.substring(6, 8)}` : d.date
+        }));
 
     return (
         <div className="space-y-8 animate-fadeIn">
@@ -103,7 +106,23 @@ export default function DetailedAnalytics() {
                                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                                 <XAxis type="number" hide />
                                 <YAxis dataKey="pagePath" type="category" width={100} tick={{ fontSize: 10, fontWeight: 'bold' }} interval={0} />
-                                <Tooltip cursor={{ fill: '#f1f2f6' }} contentStyle={{ borderRadius: '12px', border: '2px solid black', fontWeight: 'bold' }} />
+                                <Tooltip
+                                    cursor={{ fill: '#f1f2f6' }}
+                                    contentStyle={{ borderRadius: '12px', border: '2px solid black', fontWeight: 'bold' }}
+                                    content={({ active, payload, label }) => {
+                                        if (active && payload && payload.length) {
+                                            const data = payload[0].payload as TopPage;
+                                            return (
+                                                <div className="bg-white p-3 border-2 border-black shadow-lg rounded-xl text-sm">
+                                                    <p className="font-black mb-1 text-lg">{label}</p>
+                                                    <p className="text-blue-600 font-bold">👀 방문 수: {data.screenPageViews}회</p>
+                                                    <p className="text-green-600 font-bold">⏱️ 평균 체류: {Math.round(data.avgEngagementDuration || 0)}초</p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
+                                />
                                 <Bar dataKey="screenPageViews" name="조회수" fill="#ffe135" radius={[0, 8, 8, 0]} label={{ position: 'right', fontWeight: 'bold', fontSize: 12 }}>
                                     {topPages.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
