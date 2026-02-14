@@ -4,6 +4,8 @@ import com.brickers.backend.analytics.dto.*;
 import com.brickers.backend.analytics.service.GoogleAnalyticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.Map;
@@ -25,11 +27,24 @@ public class AnalyticsController {
         return internalApiToken != null && !internalApiToken.isBlank() && internalApiToken.equals(token);
     }
 
+    private boolean isAdmin() {
+        Authentication auth = SecurityContextHolder
+                .getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated())
+            return false;
+        return auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+    }
+
+    private boolean isAdminOrInternal(String token) {
+        return isInternalAuthorized(token) || isAdmin();
+    }
+
     @GetMapping("/active-users")
     public ResponseEntity<?> getActiveUsers(
             @RequestHeader(name = "X-Internal-Token", required = false) String token,
             @RequestParam(name = "days", defaultValue = "7") int days) throws IOException {
-        if (!isInternalAuthorized(token)) {
+        if (!isAdminOrInternal(token)) {
             return ResponseEntity.status(403).body("Unauthorized internal access");
         }
         long count = gaService.getActiveUsers(days);
@@ -40,7 +55,7 @@ public class AnalyticsController {
     public ResponseEntity<AnalyticsSummaryResponse> getSummary(
             @RequestHeader(name = "X-Internal-Token", required = false) String token,
             @RequestParam(name = "days", defaultValue = "7") int days) throws IOException {
-        if (!isInternalAuthorized(token)) {
+        if (!isAdminOrInternal(token)) {
             return ResponseEntity.status(403).build();
         }
         return ResponseEntity.ok(new AnalyticsSummaryResponse(
@@ -54,7 +69,7 @@ public class AnalyticsController {
             @RequestHeader(name = "X-Internal-Token", required = false) String token,
             @RequestParam(name = "days", defaultValue = "7") int days,
             @RequestParam(name = "limit", defaultValue = "10") int limit) throws IOException {
-        if (!isInternalAuthorized(token)) {
+        if (!isAdminOrInternal(token)) {
             return ResponseEntity.status(403).build();
         }
         return ResponseEntity.ok(gaService.getTopPages(days, limit));
@@ -64,7 +79,7 @@ public class AnalyticsController {
     public ResponseEntity<List<DailyTrendResponse>> getDailyUsers(
             @RequestHeader(name = "X-Internal-Token", required = false) String token,
             @RequestParam(name = "days", defaultValue = "30") int days) throws IOException {
-        if (!isInternalAuthorized(token)) {
+        if (!isAdminOrInternal(token)) {
             return ResponseEntity.status(403).build();
         }
         return ResponseEntity.ok(gaService.getDailyActiveUsers(days));
@@ -75,7 +90,7 @@ public class AnalyticsController {
             @RequestHeader(name = "X-Internal-Token", required = false) String token,
             @RequestParam(name = "event") String eventName,
             @RequestParam(name = "days", defaultValue = "7") int days) throws IOException {
-        if (!isInternalAuthorized(token)) {
+        if (!isAdminOrInternal(token)) {
             return ResponseEntity.status(403).build();
         }
         return ResponseEntity.ok(gaService.getDailyEventStats(days, eventName));
@@ -86,7 +101,7 @@ public class AnalyticsController {
             @RequestHeader(name = "X-Internal-Token", required = false) String token,
             @RequestParam(name = "userId") String userId,
             @RequestParam(name = "days", defaultValue = "30") int days) throws IOException {
-        if (!isInternalAuthorized(token)) {
+        if (!isAdminOrInternal(token)) {
             return ResponseEntity.status(403).build();
         }
         return ResponseEntity.ok(gaService.getUserActivity(userId, days));
@@ -97,7 +112,7 @@ public class AnalyticsController {
             @RequestHeader(name = "X-Internal-Token", required = false) String token,
             @RequestParam(name = "days", defaultValue = "30") int days,
             @RequestParam(name = "limit", defaultValue = "10") int limit) throws IOException {
-        if (!isInternalAuthorized(token)) {
+        if (!isAdminOrInternal(token)) {
             return ResponseEntity.status(403).build();
         }
         return ResponseEntity.ok(gaService.getTopTags(days, limit));
@@ -108,7 +123,7 @@ public class AnalyticsController {
             @RequestHeader(name = "X-Internal-Token", required = false) String token,
             @RequestParam(name = "days", defaultValue = "30") int days,
             @RequestParam(name = "limit", defaultValue = "10") int limit) throws IOException {
-        if (!isInternalAuthorized(token)) {
+        if (!isAdminOrInternal(token)) {
             return ResponseEntity.status(403).build();
         }
         return ResponseEntity.ok(gaService.getHeavyUsers(days, limit));
@@ -121,7 +136,7 @@ public class AnalyticsController {
     public ResponseEntity<FullReportResponse> getFullReport(
             @RequestHeader(name = "X-Internal-Token", required = false) String token,
             @RequestParam(name = "days", defaultValue = "7") int days) {
-        if (!isInternalAuthorized(token)) {
+        if (!isAdminOrInternal(token)) {
             return ResponseEntity.status(403).build();
         }
         return ResponseEntity.ok(gaService.getProposalFullReport(days));
@@ -133,6 +148,9 @@ public class AnalyticsController {
     @GetMapping("/ai-report")
     public ResponseEntity<?> getAiReport(
             @RequestParam(name = "days", defaultValue = "7") int days) {
+        if (!isAdminOrInternal(null)) {
+            return ResponseEntity.status(403).build();
+        }
         log.info("[AnalyticsBridge] Requesting AI analysis report for last {} days", days);
         try {
             return aiWebClient.get()
@@ -155,6 +173,9 @@ public class AnalyticsController {
      */
     @PostMapping("/deep-analyze")
     public ResponseEntity<?> deepAnalyze() {
+        if (!isAdminOrInternal(null)) {
+            return ResponseEntity.status(403).build();
+        }
         log.info("[AnalyticsBridge] 🧠 Requesting LangGraph Deep Analysis...");
         try {
             return aiWebClient.post()
@@ -175,6 +196,9 @@ public class AnalyticsController {
      */
     @PostMapping("/query")
     public ResponseEntity<?> queryAnalytics(@RequestBody AnalyticsQueryRequest request) {
+        if (!isAdminOrInternal(null)) {
+            return ResponseEntity.status(403).build();
+        }
         log.info("[AnalyticsBridge] 💬 Processing custom analytics query...");
         try {
             return aiWebClient.post()
