@@ -174,7 +174,7 @@ public class AnalyticsController {
      * [NEW] 인터랙티브 분석 쿼리를 중계합니다. (자연어 질문)
      */
     @PostMapping("/query")
-    public ResponseEntity<?> queryAnalytics(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<?> queryAnalytics(@RequestBody AnalyticsQueryRequest request) {
         log.info("[AnalyticsBridge] 💬 Processing custom analytics query...");
         try {
             return aiWebClient.post()
