@@ -149,7 +149,7 @@
 }
 
 .list table {
-    table-layout: fixed;
+    table-layout: auto;
     border-radius: 0 0 20px 20px;
 }
 

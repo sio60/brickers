@@ -665,10 +665,10 @@ export default function AdminPage() {
                                         <tr className="text-gray-500 uppercase font-black text-[10px] tracking-wider">
                                             <th className="px-4 py-3 w-20 text-center">{t.admin.jobs?.table?.image || "Image"}</th>
                                             <th className="px-4 py-3">{t.admin.jobs?.table?.jobInfo || "Job Info"}</th>
-                                            <th className="px-4 py-3 w-48">{t.admin.jobs?.table?.user || "User"}</th>
+                                            <th className="px-4 py-3 w-40">{t.admin.jobs?.table?.user || "User"}</th>
                                             <th className="px-4 py-3 w-28 text-center">{t.admin.jobs?.table?.status || "Status"}</th>
-                                            <th className="px-4 py-3 w-36">{t.admin.jobs?.table?.dates || "Dates"}</th>
-                                            <th className="px-4 py-3 w-24 text-right">{t.admin.jobs?.table?.actions || "Actions"}</th>
+                                            <th className="px-4 py-3 w-40">{t.admin.jobs?.table?.dates || "Dates"}</th>
+                                            <th className="px-4 py-3 w-64 text-right">{t.admin.jobs?.table?.actions || "Actions"}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
