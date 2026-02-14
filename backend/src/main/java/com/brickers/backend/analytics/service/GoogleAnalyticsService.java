@@ -1,6 +1,8 @@
 package com.brickers.backend.analytics.service;
 
 import com.brickers.backend.analytics.dto.*;
+import com.brickers.backend.analytics.dto.PerformanceResponse.FailureStat;
+import com.brickers.backend.analytics.dto.PerformanceResponse.PerformanceStat;
 import com.google.analytics.data.v1beta.*;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import jakarta.annotation.PostConstruct;
@@ -12,6 +14,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -623,6 +626,23 @@ public class GoogleAnalyticsService {
         return new DeepInsightResponse(categoryStats, qualityStats, keywordStats);
     }
 
+    /**
+     * [NEW] 일별 브릭 생성 활성화 수 (Daily Generation Trend)
+     */
+    public List<DailyTrendResponse> getGenerationTrend(int days) {
+        if (analyticsDataClient == null)
+            return Collections.emptyList();
+
+        try {
+            RunReportRequest request = buildEventRequest("generate_success", days);
+            RunReportResponse response = analyticsDataClient.runReport(request);
+            return processTrendResponse(response);
+        } catch (Exception e) {
+            log.error("Failed to get generation trend: {}", e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
     private RunReportRequest buildEventRequest(String eventName, int days) {
         return RunReportRequest.newBuilder()
                 .setProperty("properties/" + propertyId)
@@ -639,5 +659,151 @@ public class GoogleAnalyticsService {
                         .setEndDate("today")
                         .build())
                 .build();
+    }
+
+    /**
+     * [NEW] 상세 성능 지표 (Failure Reasons & Performance Metrics)
+     */
+    public PerformanceResponse getPerformanceDetails(int days) {
+        if (analyticsDataClient == null)
+            return null;
+
+        List<FailureStat> failureStats = new ArrayList<>();
+        PerformanceStat performance = new PerformanceResponse.PerformanceStat(0, 0, 0);
+
+        try {
+            // 1. Failure Analysis (By error_type)
+            RunReportRequest failRequest = RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDimensions(Dimension.newBuilder().setName("customEvent:error_type"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                            .setFilter(Filter.newBuilder()
+                                    .setFieldName("eventName")
+                                    .setStringFilter(Filter.StringFilter.newBuilder().setValue("generate_fail"))
+                                    .build())
+                            .build())
+                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                    .build();
+
+            RunReportResponse failResp = analyticsDataClient.runReport(failRequest);
+            for (Row row : failResp.getRowsList()) {
+                String reason = row.getDimensionValues(0).getValue();
+                if (!reason.isEmpty() && !reason.equals("(not set)")) {
+                    failureStats.add(new PerformanceResponse.FailureStat(
+                            reason,
+                            Long.parseLong(row.getMetricValues(0).getValue())));
+                }
+            }
+
+            // 2. Performance Metrics (Avg Wait Time, Cost, Brick Count)
+            RunReportRequest perfRequest = RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addMetrics(Metric.newBuilder().setName("customEvent:wait_time"))
+                    .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
+                    .addMetrics(Metric.newBuilder().setName("customEvent:brick_count"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                            .setFilter(Filter.newBuilder()
+                                    .setFieldName("eventName")
+                                    .setStringFilter(Filter.StringFilter.newBuilder().setValue("generate_success"))
+                                    .build())
+                            .build())
+                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                    .build();
+
+            RunReportResponse perfResp = analyticsDataClient.runReport(perfRequest);
+            if (!perfResp.getRowsList().isEmpty()) {
+                Row row = perfResp.getRowsList().get(0);
+                double totalWait = Double.parseDouble(row.getMetricValues(0).getValue());
+                double totalCost = Double.parseDouble(row.getMetricValues(1).getValue());
+                double totalBricks = Double.parseDouble(row.getMetricValues(2).getValue());
+                long count = Long.parseLong(row.getMetricValues(3).getValue());
+
+                if (count > 0) {
+                    performance = new PerformanceResponse.PerformanceStat(
+                            totalWait / count,
+                            totalCost / count,
+                            totalBricks / count);
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("Failed to fetch performance details: {}", e.getMessage());
+        }
+
+        return new PerformanceResponse(failureStats, performance);
+    }
+
+    /**
+     * [DEBUG] GA4 데이터 수집 상태 확인용
+     */
+    public Map<String, Object> getDebugInfo(int days) {
+        Map<String, Object> debugResult = new HashMap<>();
+
+        if (analyticsDataClient == null) {
+            debugResult.put("status", "ERROR");
+            debugResult.put("message", "Analytics Client is null");
+            return debugResult;
+        }
+
+        try {
+            debugResult.put("status", "OK");
+            debugResult.put("propertyId", propertyId);
+
+            // 1. Check Custom Dimensions Availability
+            String[] dimensions = { "customEvent:image_category", "customEvent:error_type", "customEvent:search_term",
+                    "customEvent:suggested_tags" };
+
+            for (String dim : dimensions) {
+                try {
+                    RunReportRequest req = RunReportRequest.newBuilder()
+                            .setProperty("properties/" + propertyId)
+                            .addDimensions(Dimension.newBuilder().setName(dim))
+                            .addMetrics(Metric.newBuilder().setName("eventCount"))
+                            .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                            .setLimit(5)
+                            .build();
+
+                    RunReportResponse resp = analyticsDataClient.runReport(req);
+                    List<String> rows = new ArrayList<>();
+                    for (Row row : resp.getRowsList()) {
+                        rows.add(row.getDimensionValues(0).getValue() + ": " + row.getMetricValues(0).getValue());
+                    }
+                    debugResult.put(dim, rows.isEmpty() ? "NO_DATA (Empty Rows)" : rows);
+                } catch (Exception e) {
+                    debugResult.put(dim, "ERROR: " + e.getMessage());
+                }
+            }
+
+            // 2. Check Custom Metrics Availability
+            try {
+                RunReportRequest metricReq = RunReportRequest.newBuilder()
+                        .setProperty("properties/" + propertyId)
+                        .addMetrics(Metric.newBuilder().setName("customEvent:lmm_latency"))
+                        .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
+                        .addMetrics(Metric.newBuilder().setName("eventCount"))
+                        .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                        .build();
+
+                RunReportResponse metricResp = analyticsDataClient.runReport(metricReq);
+                if (!metricResp.getRowsList().isEmpty()) {
+                    Row row = metricResp.getRowsList().get(0);
+                    debugResult.put("metrics_check", Map.of(
+                            "lmm_latency_sum", row.getMetricValues(0).getValue(),
+                            "est_cost_sum", row.getMetricValues(1).getValue(),
+                            "total_events", row.getMetricValues(2).getValue()));
+                } else {
+                    debugResult.put("metrics_check", "NO_DATA");
+                }
+            } catch (Exception e) {
+                debugResult.put("metrics_check", "ERROR: " + e.getMessage());
+            }
+
+        } catch (Exception e) {
+            debugResult.put("error", e.getMessage());
+        }
+
+        return debugResult;
     }
 }

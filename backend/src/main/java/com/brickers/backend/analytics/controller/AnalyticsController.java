@@ -3,10 +3,14 @@ package com.brickers.backend.analytics.controller;
 import com.brickers.backend.analytics.dto.*;
 import com.brickers.backend.analytics.service.GoogleAnalyticsService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.List;
@@ -18,9 +22,9 @@ import java.util.List;
 public class AnalyticsController {
 
     private final GoogleAnalyticsService gaService;
-    private final org.springframework.web.reactive.function.client.WebClient aiWebClient;
+    private final WebClient aiWebClient;
 
-    @org.springframework.beans.factory.annotation.Value("${INTERNAL_API_TOKEN:}")
+    @Value("${INTERNAL_API_TOKEN:}")
     private String internalApiToken;
 
     private boolean isInternalAuthorized(String token) {
@@ -235,5 +239,44 @@ public class AnalyticsController {
             return ResponseEntity.status(403).build();
         }
         return ResponseEntity.ok(gaService.getDeepInsights(days));
+    }
+
+    /**
+     * [NEW] 일별 브릭 생성 활성화 추이
+     */
+    @GetMapping("/generation-trend")
+    public ResponseEntity<List<DailyTrendResponse>> getGenerationTrend(
+            @RequestHeader(name = "X-Internal-Token", required = false) String token,
+            @RequestParam(name = "days", defaultValue = "7") int days) {
+        if (!isAdminOrInternal(token)) {
+            return ResponseEntity.status(403).build();
+        }
+        return ResponseEntity.ok(gaService.getGenerationTrend(days));
+    }
+
+    /**
+     * [NEW] 상세 성능 지표 조회
+     */
+    @GetMapping("/performance")
+    public ResponseEntity<PerformanceResponse> getPerformanceDetails(
+            @RequestHeader(name = "X-Internal-Token", required = false) String token,
+            @RequestParam(name = "days", defaultValue = "30") int days) {
+        if (!isAdminOrInternal(token)) {
+            return ResponseEntity.status(403).build();
+        }
+        return ResponseEntity.ok(gaService.getPerformanceDetails(days));
+    }
+
+    /**
+     * [DEBUG] GA4 Raw Data Verification
+     */
+    @GetMapping("/debug")
+    public ResponseEntity<Map<String, Object>> debugAnalytics(
+            @RequestHeader(name = "X-Internal-Token", required = false) String token,
+            @RequestParam(name = "days", defaultValue = "30") int days) {
+        if (!isAdminOrInternal(token)) {
+            return ResponseEntity.status(403).build();
+        }
+        return ResponseEntity.ok(gaService.getDebugInfo(days));
     }
 }
