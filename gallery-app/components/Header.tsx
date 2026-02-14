@@ -8,17 +8,26 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import LoginModal from './common/LoginModal';
 import UpgradeModal from './UpgradeModal';
-import { useJobStore } from '../stores/jobStore';
+import { useJobStore, type Notification } from '../stores/jobStore';
 import './Header.css';
+
+type ServerNotification = {
+    id: string;
+    title: string;
+    message?: string;
+    linkUrl?: string;
+    read: boolean;
+    createdAt: string;
+};
 
 function HeaderContent() {
     const { t } = useLanguage();
-    const { isAuthenticated, logout, isLoading, user } = useAuth();
+    const { isAuthenticated, logout, isLoading, user, authFetch } = useAuth();
     const pathname = usePathname();
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    const { showDoneToast, setShowDoneToast, notifications, markAsRead } = useJobStore();
+    const { showDoneToast, setShowDoneToast, notifications, markAsRead, upsertNotifications } = useJobStore();
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -45,8 +54,63 @@ function HeaderContent() {
         }
     }, [showDoneToast, setShowDoneToast]);
 
+    useEffect(() => {
+        if (isLoading || !isAuthenticated) return;
+
+        let cancelled = false;
+
+        const fetchNotifications = async () => {
+            try {
+                const res = await authFetch('/api/my/notifications?page=0&size=30');
+                if (!res.ok) return;
+
+                const data = await res.json();
+                const items: ServerNotification[] = Array.isArray(data?.content) ? data.content : [];
+                if (cancelled) return;
+
+                upsertNotifications(
+                    items.map((item) => ({
+                        id: item.id,
+                        title: item.title,
+                        completedAt: item.createdAt,
+                        isRead: item.read,
+                        source: 'server' as const,
+                        link: item.linkUrl || '/mypage',
+                        message: item.message,
+                    }))
+                );
+            } catch (error) {
+                console.error('[Header] Failed to fetch notifications', error);
+            }
+        };
+
+        fetchNotifications();
+        const pollId = setInterval(fetchNotifications, 15000);
+
+        return () => {
+            cancelled = true;
+            clearInterval(pollId);
+        };
+    }, [authFetch, isAuthenticated, isLoading, upsertNotifications]);
+
     const handleLogout = async () => {
         await logout();
+    };
+
+    const handleNotificationClick = async (note: Notification) => {
+        markAsRead(note.id);
+
+        if (note.source === 'server') {
+            try {
+                await authFetch(`/api/my/notifications/${note.id}/read`, { method: 'PATCH' });
+            } catch (error) {
+                console.error('[Header] Failed to mark notification as read', error);
+            }
+        }
+
+        router.push(note.link || '/mypage?menu=jobs');
+        setIsNotificationOpen(false);
+        setShowDoneToast(false);
     };
 
     // 업그레이드 여부 확인
@@ -116,12 +180,7 @@ function HeaderContent() {
                                                                 <div
                                                                     key={note.id}
                                                                     className={`notification-item ${!note.isRead ? 'unread' : ''}`}
-                                                                    onClick={() => {
-                                                                        markAsRead(note.id);
-                                                                        router.push('/mypage?menu=jobs');
-                                                                        setIsNotificationOpen(false);
-                                                                        setShowDoneToast(false);
-                                                                    }}
+                                                                    onClick={() => handleNotificationClick(note)}
                                                                 >
                                                                     <div className="notification-title">{note.title}</div>
                                                                     <div className="notification-time">
