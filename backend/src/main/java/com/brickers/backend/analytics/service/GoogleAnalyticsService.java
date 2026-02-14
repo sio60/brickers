@@ -461,17 +461,73 @@ public class GoogleAnalyticsService {
         return finalResult;
     }
 
-    private RunReportRequest buildEventRequest(String eventName, int days) {
-        return RunReportRequest.newBuilder()
-                .setProperty("properties/" + propertyId)
-                .addDimensions(Dimension.newBuilder().setName("date"))
-                .addMetrics(Metric.newBuilder().setName("eventCount"))
-                .setDimensionFilter(FilterExpression.newBuilder()
-                        .setFilter(Filter.newBuilder()
-                                .setFieldName("eventName")
-                                .setStringFilter(Filter.StringFilter.newBuilder().setValue(eventName))
-                                .build()))
-                .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
-                .build();
+    /**
+     * [NEW] 제품 인텔리전스 전용 데이터 조회
+     * 맞춤 정의된 차원과 측정항목을 사용하여 서비스의 독보적인 수치들을 가져옵니다.
+     */
+    public Map<String, Object> getProductIntelligence(int days) {
+        if (analyticsDataClient == null)
+            return Map.of();
+
+        Map<String, Object> result = new java.util.HashMap<>();
+        try {
+            // 1. 퍼널 분석 (Funnel Stage Distribution)
+            RunReportRequest funnelRequest = RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDimensions(Dimension.newBuilder().setName("customEvent:funnel_stage"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                    .build();
+
+            List<Map<String, Object>> funnelData = new ArrayList<>();
+            for (Row row : analyticsDataClient.runReport(funnelRequest).getRowsList()) {
+                funnelData.add(Map.of(
+                        "stage", row.getDimensionValues(0).getValue(),
+                        "count", Long.parseLong(row.getMetricValues(0).getValue())));
+            }
+            result.put("funnel", funnelData);
+
+            // 2. 엔진 품질 지표 (Average Stability, Brick Count, LMM Latency)
+            RunReportRequest qualityRequest = RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addMetrics(Metric.newBuilder().setName("customEvent:stability_score"))
+                    .addMetrics(Metric.newBuilder().setName("customEvent:brick_count"))
+                    .addMetrics(Metric.newBuilder().setName("customEvent:lmm_latency"))
+                    .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
+                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                    .build();
+
+            RunReportResponse qualityResp = analyticsDataClient.runReport(qualityRequest);
+            if (qualityResp.getRowsCount() > 0) {
+                Row row = qualityResp.getRows(0);
+                result.put("quality", Map.of(
+                        "avgStability", Double.parseDouble(row.getMetricValues(0).getValue()),
+                        "avgBrickCount", Double.parseDouble(row.getMetricValues(1).getValue()),
+                        "avgLatency", Double.parseDouble(row.getMetricValues(2).getValue()),
+                        "totalCost", Double.parseDouble(row.getMetricValues(3).getValue())));
+            }
+
+            // 3. 이탈 지점 분석 (UX Exit Points)
+            RunReportRequest exitRequest = RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDimensions(Dimension.newBuilder().setName("customEvent:exit_step"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                    .setLimit(10)
+                    .build();
+
+            List<Map<String, Object>> exitData = new ArrayList<>();
+            for (Row row : analyticsDataClient.runReport(exitRequest).getRowsList()) {
+                String step = row.getDimensionValues(0).getValue();
+                if (!step.isEmpty() && !step.equals("(not set)")) {
+                    exitData.add(Map.of("step", step, "count", Long.parseLong(row.getMetricValues(0).getValue())));
+                }
+            }
+            result.put("exits", exitData);
+
+        } catch (Exception e) {
+            log.error("Failed to get product intelligence: {}", e.getMessage());
+        }
+        return result;
     }
 }

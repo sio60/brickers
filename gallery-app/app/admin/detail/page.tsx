@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import styles from "../AdminPage.module.css"; // 경로 수정
 import AdminAIReport from "@/components/admin/AdminAIReport";
+import ProductIntelligenceDashboard from "@/components/admin/ProductIntelligenceDashboard";
 import { useAdminAI } from "@/hooks/useAdminAI";
 
 // SSR 제외
@@ -53,8 +54,20 @@ export default function AdminDetailPage() {
                         </header>
 
                         <div className={styles.dashboard}>
+                            {/* [NEW] Product Intelligence Visuals */}
+                            <section className="mb-12">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-2 h-8 bg-[#ffe135] rounded-full" />
+                                    <h2 className="text-2xl font-black">제품 전용 인텔리전스 (GA4 Custom)</h2>
+                                </div>
+                                <ProductIntelligenceDashboard />
+                            </section>
+
                             <div className="bg-[#f8f9fa] border-2 border-black p-8 rounded-[32px] mb-8 shadow-sm">
-                                <h1 className="text-2xl font-black mb-3">Admin Intel-Query</h1>
+                                <div className="flex items-center gap-3 mb-3">
+                                    <span className="px-3 py-1 bg-black text-[#ffe135] text-xs font-black rounded-full">AI INSIGHT</span>
+                                    <h1 className="text-2xl font-black">Admin Intel-Query</h1>
+                                </div>
                                 <p className="font-bold text-gray-800">지표에 대해 궁금한 점을 물어보세요. AI가 실시간 데이터를 분석하여 보고서를 작성합니다.</p>
 
                                 <div className="mt-8 flex gap-3">
