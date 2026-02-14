@@ -40,7 +40,9 @@ export default function AgentConclusionViewer({ jobId, onClose }: AgentConclusio
                 const traces: AgentTrace[] = await res.json();
 
                 // 1. Before Metrics (첫 번째 verifier 노드 결과)
-                const verifierTraces = traces.filter(t => t.nodeName === "verifier");
+                // backend에서는 'node_verifier'로 기록될 수 있으므로 둘 다 체크
+                const verifierTraces = traces.filter(t => t.nodeName === "verifier" || t.nodeName === "node_verifier");
+
                 if (verifierTraces.length > 0) {
                     const firstVerifier = verifierTraces[0];
                     setBeforeMetrics(extractMetrics(firstVerifier.output));
@@ -50,8 +52,8 @@ export default function AgentConclusionViewer({ jobId, onClose }: AgentConclusio
                     setAfterMetrics(extractMetrics(lastVerifier.output));
                 }
 
-                // 3. Final Report 탐색
-                const endNode = traces.find(t => t.nodeName === "end" || t.output?.final_report);
+                // 3. Final Report 탐색 (end 노드 또는 최종 리포트가 포함된 노드)
+                const endNode = traces.find(t => t.nodeName === "end" || t.nodeName === "__end__" || t.output?.final_report);
                 if (endNode) {
                     setFinalReport(endNode.output?.final_report || endNode.output);
                 }

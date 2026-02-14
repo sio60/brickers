@@ -674,7 +674,7 @@ export default function AdminPage() {
                                     <tbody className="divide-y divide-gray-100">
                                         {jobs.map((job) => (
                                             <tr key={job.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-4 py-4 text-center">
+                                                <td className="px-4 py-2 text-center">
                                                     <div className="w-12 h-12 bg-gray-50 rounded-xl overflow-hidden relative mx-auto border border-gray-100 shadow-sm">
                                                         {job.previewImageUrl || job.sourceImageUrl ? (
                                                             <img src={job.previewImageUrl || job.sourceImageUrl} alt="job" className="w-full h-full object-cover" />
@@ -683,15 +683,15 @@ export default function AdminPage() {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-4">
+                                                <td className="px-4 py-2">
                                                     <div className="font-black text-sm text-gray-900 leading-tight mb-1">{job.title || (t.admin.jobs?.table?.untitledJob || "Untitled Job")}</div>
                                                     <div className="text-[10px] text-gray-400 font-mono tracking-tighter" title={job.id}>{job.id}</div>
                                                 </td>
-                                                <td className="px-4 py-4">
+                                                <td className="px-4 py-2">
                                                     <div className="text-sm font-bold text-gray-800 truncate mb-0.5">{job.userInfo?.nickname || (t.admin.jobs?.table?.unknownUser || "Unknown")}</div>
                                                     <div className="text-[10px] text-gray-400 truncate opacity-70">{job.userInfo?.email || job.userId}</div>
                                                 </td>
-                                                <td className="px-4 py-4 text-center">
+                                                <td className="px-4 py-2 text-center">
                                                     <span className={`inline-block px-2 py-1 rounded-lg text-[10px] font-black tracking-tight border
                                                         ${job.status === 'DONE' ? 'bg-green-50 text-green-700 border-green-200' :
                                                             job.status === 'FAILED' ? 'bg-red-50 text-red-700 border-red-200' :
@@ -700,7 +700,7 @@ export default function AdminPage() {
                                                     </span>
                                                     <div className="text-[9px] font-bold text-gray-400 mt-1.5 uppercase tracking-wider">{job.stage}</div>
                                                 </td>
-                                                <td className="px-4 py-4">
+                                                <td className="px-4 py-2">
                                                     <div className="flex flex-col gap-1">
                                                         <div className="flex items-center gap-1.5 text-[10px] text-gray-500 font-medium">
                                                             <span className="w-1.5 h-1.5 rounded-full bg-blue-400 opacity-60"></span>
