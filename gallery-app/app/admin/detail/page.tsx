@@ -21,6 +21,7 @@ type Comment = { id: string; postId: string; authorId: string; authorNickname: s
 export default function AdminDetailPage() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "jobs" | "gallery" | "inquiries" | "reports" | "refunds" | "comments" | "brick-judge">("dashboard");
+    const exitToMain = () => router.push("/");
 
     // [NEW] Use shared hook
     const aiState = useAdminAI(activeTab);
@@ -39,7 +40,7 @@ export default function AdminDetailPage() {
                         <button className={`${styles.sidebarItem} ${activeTab === "dashboard" ? styles.active : ""}`} onClick={() => setActiveTab("dashboard")}>상세 분석</button>
 
                         <div className="mt-auto pt-4 border-t border-[#333]">
-                            <button className={styles.sidebarItem} onClick={() => router.back()}>
+                            <button className={styles.sidebarItem} onClick={exitToMain}>
                                 ← 돌아가기
                             </button>
                         </div>
@@ -48,7 +49,7 @@ export default function AdminDetailPage() {
                     <main className={styles.content}>
                         <header className={styles.header}>
                             <h1 className={styles.title}>상세 관리 대시보드</h1>
-                            <button className={styles.closeBtn} onClick={() => router.back()}>✕</button>
+                            <button className={styles.closeBtn} onClick={exitToMain}>✕</button>
                         </header>
 
                         <div className={styles.dashboard}>
