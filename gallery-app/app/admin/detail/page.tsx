@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import styles from "../AdminPage.module.css"; // 경로 수정
 import AdminAIReport from "@/components/admin/AdminAIReport";
+import ProductIntelligenceDashboard from "@/components/admin/ProductIntelligenceDashboard";
 import { useAdminAI } from "@/hooks/useAdminAI";
 
 // SSR 제외
@@ -24,7 +25,7 @@ export default function AdminDetailPage() {
     const exitToMain = () => router.push("/");
 
     // [NEW] Use shared hook
-    const { queryResult, isQuerying, handleQuerySubmit } = useAdminAI(activeTab);
+    const aiState = useAdminAI(activeTab);
 
     // 데이터 상태 및 핸들러는 기존 AdminPage와 동일하게 유지
     // ... (중략 - 실구현 시에는 모든 로직 포함)
@@ -53,8 +54,20 @@ export default function AdminDetailPage() {
                         </header>
 
                         <div className={styles.dashboard}>
+                            {/* [NEW] Product Intelligence Visuals */}
+                            <section className="mb-12">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-2 h-8 bg-[#ffe135] rounded-full" />
+                                    <h2 className="text-2xl font-black">제품 전용 인텔리전스 (GA4 Custom)</h2>
+                                </div>
+                                <ProductIntelligenceDashboard />
+                            </section>
+
                             <div className="bg-[#f8f9fa] border-2 border-black p-8 rounded-[32px] mb-8 shadow-sm">
-                                <h1 className="text-2xl font-black mb-3">Admin Intel-Query</h1>
+                                <div className="flex items-center gap-3 mb-3">
+                                    <span className="px-3 py-1 bg-black text-[#ffe135] text-xs font-black rounded-full">AI INSIGHT</span>
+                                    <h1 className="text-2xl font-black">Admin Intel-Query</h1>
+                                </div>
                                 <p className="font-bold text-gray-800">지표에 대해 궁금한 점을 물어보세요. AI가 실시간 데이터를 분석하여 보고서를 작성합니다.</p>
 
                                 <div className="mt-8 flex gap-3">
@@ -63,37 +76,29 @@ export default function AdminDetailPage() {
                                         placeholder="예: 최근 유저들이 가장 많이 이탈하는 구간과 이유를 분석해줘"
                                         className="flex-1 px-6 py-4 rounded-2xl border-2 border-black font-medium focus:outline-none focus:ring-4 focus:ring-[#ffe135]/30 transition-all"
                                         id="adminQueryInput"
-                                        onKeyPress={(e) => e.key === 'Enter' && handleQuerySubmit((e.target as HTMLInputElement).value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && aiState.handleQuerySubmit((e.target as HTMLInputElement).value)}
                                     />
                                     <button
                                         onClick={() => {
                                             const input = document.getElementById('adminQueryInput') as HTMLInputElement;
-                                            handleQuerySubmit(input.value);
+                                            aiState.handleQuerySubmit(input.value);
                                         }}
-                                        disabled={isQuerying}
+                                        disabled={aiState.isQuerying}
                                         className="px-8 py-4 bg-black text-[#ffe135] rounded-2xl font-black hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
                                     >
-                                        {isQuerying ? "분석 중..." : "질문하기"}
+                                        {aiState.isQuerying ? "분석 중..." : "질문하기"}
                                     </button>
                                 </div>
                             </div>
 
-                            {queryResult && (
-                                <div className="bg-white border-2 border-black p-8 rounded-[32px] animate-fadeIn shadow-xl">
-                                    <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-dashed border-gray-100">
-                                        <h2 className="text-xl font-black">📊 AI 분석 결과</h2>
-                                        <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-black rounded-full">REAL-TIME DATA APPED</span>
-                                    </div>
-                                    <div className="prose prose-slate max-w-none">
-                                        <AdminAIReport customContent={queryResult} activeTab="dashboard" />
-                                    </div>
-                                </div>
-                            )}
+                            <div className="bg-white border-2 border-black p-8 rounded-[32px] animate-fadeIn shadow-xl">
+                                <AdminAIReport aiState={aiState} activeTab="dashboard" />
+                            </div>
 
-                            {!queryResult && !isQuerying && (
-                                <div className="text-center py-20 opacity-30 select-none">
-                                    <p className="text-6xl mb-4">💬</p>
-                                    <p className="font-black text-xl">질문을 기다리고 있습니다.</p>
+                            {!aiState.isQuerying && (
+                                <div className="text-center py-10 opacity-30 select-none">
+                                    <p className="text-4xl mb-2">💬</p>
+                                    <p className="font-black text-sm">추가 질문이나 분석이 필요하시면 위 입력창을 이용해주세요.</p>
                                 </div>
                             )}
                         </div>

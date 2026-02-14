@@ -189,7 +189,8 @@ public class SecurityConfig {
                                                 // -------------------------------
                                                 // ✅ Admin API
                                                 // -------------------------------
-                                                .requestMatchers("/api/admin/analytics/**").permitAll()
+                                                .requestMatchers("/api/admin/analytics/**", "/api/admin/moderation/**")
+                                                .permitAll()
                                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                                                 // -------------------------------

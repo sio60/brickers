@@ -37,7 +37,18 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
             const res = await fetcher(`${endpoint}?page=${targetPage}&size=24&sort=${targetSort}`);
             if (res.ok) {
                 const data = await res.json();
-                setItems(data.content || []);
+                const content = (data.content || []).map((item: any) => {
+                    const isLiked = item.myReaction === 'LIKE' || item.liked === true || item.isLiked === true;
+                    return {
+                        ...item,
+                        id: item.id || item.postId,
+                        bookmarked: targetCategory === 'bookmarks' ? true : item.bookmarked,
+                        myReaction: isLiked ? 'LIKE' : null,
+                        authorNickname: item.authorNickname || item.nickname,
+                        authorProfileImage: item.authorProfileImage || item.profileImage,
+                    };
+                });
+                setItems(content);
                 setTotalPages(data.totalPages);
                 setTotalElements(data.totalElements);
                 if (targetPage !== page) {

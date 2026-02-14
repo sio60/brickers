@@ -92,13 +92,23 @@ export default function MyGalleryPage() {
             if (res.ok) {
                 const data = await res.json();
                 // Map bookmark response to GalleryItem format
-                const items: GalleryItem[] = data.content.map((b: any) => ({
-                    id: b.postId,
-                    title: b.title,
-                    thumbnailUrl: b.thumbnailUrl,
-                    createdAt: b.postCreatedAt,
-                    bookmarked: true,
-                }));
+                const items: GalleryItem[] = data.content.map((b: any) => {
+                    // 좋아요 여부 판별 (백엔드 필드 다양성 대응)
+                    const isLiked = b.myReaction === 'LIKE' || b.liked === true || b.isLiked === true;
+
+                    return {
+                        id: b.postId || b.id,
+                        title: b.title,
+                        thumbnailUrl: b.thumbnailUrl,
+                        createdAt: b.postCreatedAt || b.createdAt,
+                        bookmarked: true,
+                        myReaction: isLiked ? 'LIKE' : null,
+                        authorNickname: b.authorNickname || b.nickname,
+                        authorProfileImage: b.authorProfileImage || b.profileImage,
+                        likeCount: b.likeCount,
+                        viewCount: b.viewCount,
+                    };
+                });
 
                 if (pageNum === 0) {
                     setBookmarkItems(items);
