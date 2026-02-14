@@ -69,7 +69,7 @@ export default function DeepInsights() {
                 <div className="bg-black text-white px-4 py-2 rounded-full text-sm font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] transform -rotate-1">
                     NEW 🚀
                 </div>
-                <h2 className="text-2xl font-black text-gray-800">심층 인사이트 (Deep Insights)</h2>
+                <h2 className="text-2xl font-black text-gray-800">유저 성향 분석 (User Propensity)</h2>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

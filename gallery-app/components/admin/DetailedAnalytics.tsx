@@ -1,17 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    BarChart, Bar, Legend, Cell
+    BarChart, Bar, Legend, Cell, PieChart, Pie
 } from 'recharts';
 import { useAuth } from "@/contexts/AuthContext";
 
 const COLORS = ['#ffe135', '#ff9f43', '#ee5253', '#10ac84', '#5f27cd', '#48dbfb', '#2e86de', '#ff6b6b', '#feca57', '#a29bfe'];
 
-interface TopPage {
-    pagePath: string;
-    screenPageViews: number;
-    avgEngagementDuration: number;
-}
 
 interface DailyTrend {
     date: string;
@@ -28,26 +23,41 @@ interface HeavyUser {
     eventCount: number;
 }
 
+interface PerformanceResponse {
+    failureStats: { reason: string; count: number }[];
+    performance: {
+        avgWaitTime: number;
+        avgCost: number;
+        avgBrickCount: number;
+    };
+}
+
 export default function DetailedAnalytics() {
     const { authFetch } = useAuth();
     const [loading, setLoading] = useState(true);
     const [dailyUsers, setDailyUsers] = useState<DailyTrend[]>([]);
-    const [topPages, setTopPages] = useState<TopPage[]>([]);
+    const [genTrend, setGenTrend] = useState<DailyTrend[]>([]); // [NEW] Generation Trend
+    const [performance, setPerformance] = useState<PerformanceResponse | null>(null); // [NEW] Performance Data
     const [topTags, setTopTags] = useState<TopTag[]>([]);
     const [heavyUsers, setHeavyUsers] = useState<HeavyUser[]>([]);
 
     useEffect(() => {
         const fetchAllData = async () => {
             try {
-                const [usersRes, pagesRes, tagsRes, heavyRes] = await Promise.all([
+                const [usersRes, genRes, perfRes, tagsRes, heavyRes] = await Promise.all([
                     authFetch("/api/admin/analytics/daily-users?days=30"),
-                    authFetch("/api/admin/analytics/top-pages?days=30&limit=10"),
+                    authFetch("/api/admin/analytics/generation-trend?days=7"),
+                    authFetch("/api/admin/analytics/performance?days=30"),
                     authFetch("/api/admin/analytics/top-tags?days=30&limit=10"),
                     authFetch("/api/admin/analytics/heavy-users?days=30&limit=10")
                 ]);
 
                 if (usersRes.ok) setDailyUsers(await usersRes.json());
-                if (pagesRes.ok) setTopPages(await pagesRes.json());
+                if (genRes.ok) {
+                    const data = await genRes.json();
+                    setGenTrend(data.sort((a: DailyTrend, b: DailyTrend) => a.date.localeCompare(b.date)));
+                }
+                if (perfRes.ok) setPerformance(await perfRes.json());
                 if (tagsRes.ok) setTopTags(await tagsRes.json());
                 if (heavyRes.ok) setHeavyUsers(await heavyRes.json());
             } catch (e) {
@@ -96,39 +106,89 @@ export default function DetailedAnalytics() {
                 </div>
             </section>
 
+            {/* [NEW] Detailed Performance Metrics */}
+            {
+                performance && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Failure Reason */}
+                        <section className="bg-white p-8 rounded-[32px] border-2 border-black shadow-sm lg:col-span-1">
+                            <h3 className="text-xl font-black mb-4">⚠️ 실패 원인 분석</h3>
+                            <div className="h-[250px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={performance.failureStats}
+                                            dataKey="count"
+                                            nameKey="reason"
+                                            cx="50%"
+                                            cy="50%"
+                                            outerRadius={80}
+                                            label={({ name }) => name}
+                                        >
+                                            {performance.failureStats.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip contentStyle={{ borderRadius: '12px', border: '2px solid black', fontWeight: 'bold' }} />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </section>
+
+                        {/* Performance Stats */}
+                        <section className="bg-white p-8 rounded-[32px] border-2 border-black shadow-sm lg:col-span-2 flex flex-col justify-center">
+                            <h3 className="text-xl font-black mb-8">⚡ 시스템 성능 지표 (평균)</h3>
+                            <div className="grid grid-cols-3 gap-6">
+                                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center">
+                                    <p className="text-gray-500 font-bold mb-2">⏳ 평균 생성 시간</p>
+                                    <p className="text-3xl font-black text-blue-600">{Math.round(performance.performance.avgWaitTime || 0)}초</p>
+                                </div>
+                                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center">
+                                    <p className="text-gray-500 font-bold mb-2">💸 평균 소모 비용</p>
+                                    <p className="text-3xl font-black text-green-600">${(performance.performance.avgCost || 0).toFixed(3)}</p>
+                                </div>
+                                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center">
+                                    <p className="text-gray-500 font-bold mb-2">🧱 평균 브릭 수</p>
+                                    <p className="text-3xl font-black text-purple-600">{Math.round(performance.performance.avgBrickCount || 0)}개</p>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                )
+            }
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* 2. 인기 페이지 */}
+                {/* 2. 일별 브릭 생성 활성화 (Trend) */}
                 <section className="bg-white p-8 rounded-[32px] border-2 border-black shadow-sm">
-                    <h3 className="text-xl font-black mb-6">🔥 가장 많이 방문한 페이지 (Top 10)</h3>
+                    <h3 className="text-xl font-black mb-6">🚀 일별 브릭 생성 활성화 (최근 7일)</h3>
                     <div className="h-[350px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={topPages} layout="vertical" margin={{ left: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                                <XAxis type="number" hide />
-                                <YAxis dataKey="pagePath" type="category" width={100} tick={{ fontSize: 10, fontWeight: 'bold' }} interval={0} />
-                                <Tooltip
-                                    cursor={{ fill: '#f1f2f6' }}
-                                    contentStyle={{ borderRadius: '12px', border: '2px solid black', fontWeight: 'bold' }}
-                                    content={({ active, payload, label }) => {
-                                        if (active && payload && payload.length) {
-                                            const data = payload[0].payload as TopPage;
-                                            return (
-                                                <div className="bg-white p-3 border-2 border-black shadow-lg rounded-xl text-sm">
-                                                    <p className="font-black mb-1 text-lg">{label}</p>
-                                                    <p className="text-blue-600 font-bold">👀 방문 수: {data.screenPageViews}회</p>
-                                                    <p className="text-green-600 font-bold">⏱️ 평균 체류: {Math.round(data.avgEngagementDuration || 0)}초</p>
-                                                </div>
-                                            );
-                                        }
-                                        return null;
-                                    }}
+                            <LineChart data={genTrend} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis
+                                    dataKey="date"
+                                    tick={{ fontSize: 12, fontWeight: 'bold' }}
+                                    stroke="#000"
+                                    tickFormatter={(str) => str.length === 8 ? `${str.substring(4, 6)}/${str.substring(6, 8)}` : str}
                                 />
-                                <Bar dataKey="screenPageViews" name="조회수" fill="#ffe135" radius={[0, 8, 8, 0]} label={{ position: 'right', fontWeight: 'bold', fontSize: 12 }}>
-                                    {topPages.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Bar>
-                            </BarChart>
+                                <YAxis tick={{ fontSize: 12, fontWeight: 'bold' }} stroke="#000" allowDecimals={false} />
+                                <Tooltip
+                                    contentStyle={{ borderRadius: '16px', border: '2px solid black', fontWeight: 'bold', boxShadow: '4px 4px 0px rgba(0,0,0,0.1)' }}
+                                    cursor={{ stroke: '#ffe135', strokeWidth: 2 }}
+                                    labelFormatter={(label) => label.length === 8 ? `${label.substring(0, 4)}년 ${label.substring(4, 6)}월 ${label.substring(6, 8)}일` : label}
+                                />
+                                <Legend />
+                                <Line
+                                    type="step"
+                                    dataKey="count"
+                                    name="생성 성공"
+                                    stroke="#5f27cd"
+                                    strokeWidth={4}
+                                    activeDot={{ r: 8, strokeWidth: 0 }}
+                                    dot={{ r: 4, strokeWidth: 0 }}
+                                />
+                            </LineChart>
                         </ResponsiveContainer>
                     </div>
                 </section>
@@ -189,6 +249,6 @@ export default function DetailedAnalytics() {
                     </table>
                 </div>
             </section>
-        </div>
+        </div >
     );
 }
