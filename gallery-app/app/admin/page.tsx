@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { getMyProfile, getAdminStats, AdminStats } from "@/lib/api/myApi";
+import type { AdminStats } from "@/lib/api/myApi";
 import GalleryManagement from "@/components/admin/GalleryManagement";
 import styles from "./AdminPage.module.css";
 import AdminAIReport from "@/components/admin/AdminAIReport";
@@ -108,7 +108,6 @@ export default function AdminPage() {
     const { t } = useLanguage();
     const { authFetch } = useAuth();
 
-    const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "jobs" | "gallery" | "inquiries" | "reports" | "refunds" | "comments" | "brick-judge">("dashboard");
 
@@ -158,25 +157,30 @@ export default function AdminPage() {
     }, [filterStatus]);
 
     useEffect(() => {
-        getMyProfile()
-            .then(profile => {
-                if (profile.role === "ADMIN") {
-                    return getAdminStats();
-                } else {
-                    alert(t.admin.accessDenied.replace("{role}", profile.role));
-                    router.replace("/");
+        let cancelled = false;
+
+        const fetchDashboardStats = async () => {
+            try {
+                const res = await authFetch("/api/admin/dashboard");
+                if (!res.ok) {
+                    throw new Error(`status=${res.status}`);
                 }
-            })
-            .then(s => {
-                if (s) {
-                    setStats(s);
-                    setLoading(false);
+
+                const data = (await res.json()) as AdminStats;
+                if (!cancelled) {
+                    setStats(data);
                 }
-            })
-            .catch(() => {
-                router.replace("/");
-            });
-    }, [router, t.admin.accessDenied]);
+            } catch (error) {
+                console.error("[AdminPage] failed to fetch dashboard stats", error);
+            }
+        };
+
+        fetchDashboardStats();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [authFetch]);
 
     // 탭 변경 시 데이터 로드
     useEffect(() => {
@@ -461,8 +465,6 @@ export default function AdminPage() {
             alert(t.admin.error);
         }
     };
-
-    if (loading) return null;
 
     return (
         <div className={styles.page}>
