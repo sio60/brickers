@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import styles from "../AdminPage.module.css"; // 경로 수정
-import AdminAIReport from "@/components/admin/AdminAIReport";
-import ProductIntelligenceDashboard from "@/components/admin/ProductIntelligenceDashboard";
+import DetailedAnalytics from "@/components/admin/DetailedAnalytics";
 import { useAdminAI } from "@/hooks/useAdminAI";
 
 // SSR 제외
@@ -27,9 +26,6 @@ export default function AdminDetailPage() {
     // [NEW] Use shared hook
     const aiState = useAdminAI(activeTab);
 
-    // 데이터 상태 및 핸들러는 기존 AdminPage와 동일하게 유지
-    // ... (중략 - 실구현 시에는 모든 로직 포함)
-
     return (
         <div className={styles.page}>
             <Background3D entryDirection="float" />
@@ -41,39 +37,33 @@ export default function AdminDetailPage() {
                         <button className={`${styles.sidebarItem} ${activeTab === "dashboard" ? styles.active : ""}`} onClick={() => setActiveTab("dashboard")}>상세 분석</button>
 
                         <div className="mt-auto pt-4 border-t border-[#333]">
-                            <button className={styles.sidebarItem} onClick={exitToMain}>
-                                ← 돌아가기
+                            <button className={styles.sidebarItem} onClick={() => router.push('/admin')}>
+                                ← 관리자 홈
                             </button>
                         </div>
                     </aside>
 
                     <main className={styles.content}>
                         <header className={styles.header}>
-                            <h1 className={styles.title}>상세 관리 대시보드</h1>
-                            <button className={styles.closeBtn} onClick={exitToMain}>✕</button>
+                            <h1 className={styles.title}>심층 분석 대시보드</h1>
+                            <button className={styles.closeBtn} onClick={() => router.push('/admin')}>✕</button>
                         </header>
 
                         <div className={styles.dashboard}>
-                            {/* [NEW] Product Intelligence Visuals */}
-                            <section className="mb-12">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-2 h-8 bg-[#ffe135] rounded-full" />
-                                    <h2 className="text-2xl font-black">제품 전용 인텔리전스 (GA4 Custom)</h2>
-                                </div>
-                                <ProductIntelligenceDashboard />
-                            </section>
+                            {/* Detailed Analytics Component */}
+                            <DetailedAnalytics />
 
-                            <div className="bg-[#f8f9fa] border-2 border-black p-8 rounded-[32px] mb-8 shadow-sm">
+                            <div className="bg-[#f8f9fa] border-2 border-black p-8 rounded-[32px] my-8 shadow-sm">
                                 <div className="flex items-center gap-3 mb-3">
                                     <span className="px-3 py-1 bg-black text-[#ffe135] text-xs font-black rounded-full">AI INSIGHT</span>
                                     <h1 className="text-2xl font-black">Admin Intel-Query</h1>
                                 </div>
-                                <p className="font-bold text-gray-800">지표에 대해 궁금한 점을 물어보세요. AI가 실시간 데이터를 분석하여 보고서를 작성합니다.</p>
+                                <p className="font-bold text-gray-800">궁금한 분석 질문이 있다면 자유롭게 물어보세요. (예: "지난주 대비 이탈률 변화 원인 분석해줘")</p>
 
                                 <div className="mt-8 flex gap-3">
                                     <input
                                         type="text"
-                                        placeholder="예: 최근 유저들이 가장 많이 이탈하는 구간과 이유를 분석해줘"
+                                        placeholder="AI에게 분석 요청 입력..."
                                         className="flex-1 px-6 py-4 rounded-2xl border-2 border-black font-medium focus:outline-none focus:ring-4 focus:ring-[#ffe135]/30 transition-all"
                                         id="adminQueryInput"
                                         onKeyPress={(e) => e.key === 'Enter' && aiState.handleQuerySubmit((e.target as HTMLInputElement).value)}
@@ -89,18 +79,15 @@ export default function AdminDetailPage() {
                                         {aiState.isQuerying ? "분석 중..." : "질문하기"}
                                     </button>
                                 </div>
-                            </div>
 
-                            <div className="bg-white border-2 border-black p-8 rounded-[32px] animate-fadeIn shadow-xl">
-                                <AdminAIReport aiState={aiState} activeTab="dashboard" />
+                                {aiState.deepReport && (
+                                    <div className="mt-8 bg-white border-2 border-black p-6 rounded-2xl animate-fadeIn">
+                                        <div className="prose max-w-none whitespace-pre-wrap">
+                                            {aiState.deepReport}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-
-                            {!aiState.isQuerying && (
-                                <div className="text-center py-10 opacity-30 select-none">
-                                    <p className="text-4xl mb-2">💬</p>
-                                    <p className="font-black text-sm">추가 질문이나 분석이 필요하시면 위 입력창을 이용해주세요.</p>
-                                </div>
-                            )}
                         </div>
                     </main>
                 </div>
