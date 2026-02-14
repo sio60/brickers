@@ -140,6 +140,19 @@ public class KidsAsyncWorker {
 
         // ✅ S3 URL 직접 저장 (다운로드/업로드 제거)
 
+        // 0. lmmLatency (AI 생성 시간)
+        try {
+            if (response.containsKey("lmmLatency")) {
+                Object val = response.get("lmmLatency");
+                if (val instanceof Number) {
+                    job.setLmmLatency(((Number) val).intValue());
+                    log.info("   ✅ [SAVE] lmmLatency 저장: {}ms", val);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("   ⚠️ [SAVE] lmmLatency 저장 실패: {}", e.getMessage());
+        }
+
         // 1. correctedUrl
         String correctedUrl = asString(response.get("correctedUrl"));
         if (!isBlank(correctedUrl)) {

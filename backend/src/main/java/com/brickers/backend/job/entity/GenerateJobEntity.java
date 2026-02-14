@@ -112,6 +112,9 @@ public class GenerateJobEntity {
     /** 엔진이 시도한 최종 타겟 해상도 */
     private Integer finalTarget;
 
+    /** LMM (AI 모델) 순수 생성 시간 (ms) */
+    private Integer lmmLatency; // [New]
+
     /** 실패 시 에러 메시지 */
     private String errorMessage;
 

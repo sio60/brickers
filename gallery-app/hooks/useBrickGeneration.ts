@@ -186,7 +186,8 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
                             age: age,
                             wait_time: waitTime,
                             brick_count: statusData.parts || 0,
-                            suggested_tags: statusData.suggestedTags?.join(', ')
+                            suggested_tags: statusData.suggestedTags?.join(', '),
+                            lmm_latency: statusData.lmmLatency // [New]
                         });
                         break;
                     }
