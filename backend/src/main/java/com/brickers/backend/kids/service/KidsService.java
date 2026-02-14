@@ -38,6 +38,7 @@ public class KidsService {
     private final com.brickers.backend.kids.client.AiRenderClient aiRenderClient; // [NEW]
     private final UserRepository userRepository;
     private final SqsProducerService sqsProducerService;
+    private final com.brickers.backend.kids.repository.AgentTraceRepository agentTraceRepository; // [NEW]
 
     // === CoScientist Agent Log Streaming ===
     private static final int MAX_LOG_BUFFER_SIZE = 100;
@@ -289,6 +290,33 @@ public class KidsService {
     }
 
     /**
+     * Agent Trace 저장 및 SSE 전송
+     */
+    public void saveAgentTrace(String jobId, com.brickers.backend.kids.dto.AgentLogRequest request) {
+        // 1. DB 저장 (AgentTrace)
+        com.brickers.backend.kids.entity.AgentTrace trace = com.brickers.backend.kids.entity.AgentTrace.builder()
+                .jobId(jobId)
+                .step(request.getStep())
+                .nodeName(request.getNodeName())
+                .status(request.getStatus())
+                .input(request.getInput())
+                .output(request.getOutput())
+                .durationMs(request.getDurationMs())
+                .message(request.getMessage())
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        try {
+            agentTraceRepository.save(trace);
+        } catch (Exception e) {
+            log.error("[AgentTrace] DB 저장 실패: {}", e.getMessage());
+        }
+
+        // 2. SSE 전송 (기존 로직 재사용)
+        addAgentLog(jobId, request.getStep(), request.getMessage());
+    }
+
+    /**
      * AI Server에서 에이전트 로그 수신 + SSE 푸시
      */
     public void addAgentLog(String jobId, String step, String message) {
@@ -402,5 +430,12 @@ public class KidsService {
             log.error("[Brickers] 배경 합성 실패: {}", e.getMessage());
             throw new RuntimeException("배경 합성 실패: " + e.getMessage());
         }
+    }
+
+    /**
+     * Agent Trace 조회
+     */
+    public List<com.brickers.backend.kids.entity.AgentTrace> getAgentTraces(String jobId) {
+        return agentTraceRepository.findByJobIdOrderByCreatedAtAsc(jobId);
     }
 }

@@ -14,6 +14,7 @@ import { useAdminAI } from "@/hooks/useAdminAI";
 // SSR 제외
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
 const BrickJudgeViewer = dynamic(() => import("@/components/admin/BrickJudgeViewer"), { ssr: false });
+const AgentTraceViewer = dynamic(() => import("@/components/admin/AgentTraceViewer"), { ssr: false });
 
 // 타입 정의
 type Inquiry = {
@@ -136,6 +137,9 @@ export default function AdminPage() {
     const [comments, setComments] = useState<Comment[]>([]);
     const [commentPage, setCommentPage] = useState(0);
     const [commentTotalPages, setCommentTotalPages] = useState(0);
+
+    // [NEW] Trace Viewer State
+    const [traceJobId, setTraceJobId] = useState<string | null>(null);
 
 
 
@@ -708,6 +712,12 @@ export default function AdminPage() {
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
                                                     <div className="flex justify-end gap-2">
+                                                        <button
+                                                            onClick={() => setTraceJobId(job.id)}
+                                                            className="text-xs text-gray-600 hover:text-black font-medium px-2 py-1 border border-gray-200 rounded hover:bg-gray-50"
+                                                        >
+                                                            HISTORY
+                                                        </button>
                                                         {(job.status === 'FAILED' || job.status === 'CANCELED') && (
                                                             <button
                                                                 onClick={() => handleJobAction(job.id, 'retry')}
@@ -1081,6 +1091,10 @@ export default function AdminPage() {
                     </main>
                 </div>
             </div >
+            {/* Trace Viewer Modal */}
+            {traceJobId && (
+                <AgentTraceViewer jobId={traceJobId} onClose={() => setTraceJobId(null)} />
+            )}
         </div >
     );
 }

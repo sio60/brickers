@@ -8,6 +8,7 @@ import com.brickers.backend.job.entity.GenerateJobEntity;
 import com.brickers.backend.job.repository.GenerateJobRepository;
 import com.brickers.backend.payment.entity.PaymentOrder;
 import com.brickers.backend.payment.repository.PaymentOrderRepository;
+import com.brickers.backend.notification.service.UserNotificationService;
 import com.brickers.backend.report.dto.ReportCreateRequest;
 import com.brickers.backend.report.dto.ReportResolveRequest;
 import com.brickers.backend.report.dto.ReportResponse;
@@ -53,6 +54,7 @@ public class ReportService {
     private final InquiryRepository inquiryRepository;
     private final UploadFileRepository uploadFileRepository;
     private final PaymentOrderRepository paymentOrderRepository;
+    private final UserNotificationService userNotificationService;
 
     // --- User Side ---
 
@@ -208,7 +210,12 @@ public class ReportService {
             throw new ResponseStatusException(NOT_FOUND, "Invalid action: " + action);
         }
 
-        return ReportResponse.from(reportRepository.save(report));
+        Report saved = reportRepository.save(report);
+        userNotificationService.notifyReportHandled(
+                saved.getReporterId(),
+                action == ReportResolveRequest.ResolveAction.APPROVE,
+                note);
+        return ReportResponse.from(saved);
     }
 
     /**

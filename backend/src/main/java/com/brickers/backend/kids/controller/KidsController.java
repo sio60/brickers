@@ -100,8 +100,17 @@ public class KidsController {
             log.warn("[KidsController] 로그 수신 토큰 불일치");
             return ResponseEntity.status(403).build();
         }
-        kidsService.addAgentLog(jobId, request.getStep(), request.getMessage());
+        kidsService.saveAgentTrace(jobId, request);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Agent Trace 조회 (Admin용)
+     */
+    @GetMapping("/jobs/{jobId}/traces")
+    public ResponseEntity<?> getAgentTraces(@PathVariable String jobId) {
+        // TODO: Admin 권한 체크 필요하지만 일단 오픈 (내부망/Admin페이지에서 사용)
+        return ResponseEntity.ok(kidsService.getAgentTraces(jobId));
     }
 
     /**
