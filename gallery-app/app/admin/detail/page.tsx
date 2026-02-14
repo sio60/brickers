@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import styles from "../AdminPage.module.css"; // 경로 수정
 import DetailedAnalytics from "@/components/admin/DetailedAnalytics";
+import DeepInsights from "@/components/admin/DeepInsights";
 import { useAdminAI } from "@/hooks/useAdminAI";
 
 // SSR 제외
@@ -52,6 +53,9 @@ export default function AdminDetailPage() {
                         <div className={styles.dashboard}>
                             {/* Detailed Analytics Component */}
                             <DetailedAnalytics />
+
+                            {/* Deep Insights Component */}
+                            <DeepInsights />
 
                             <div className="bg-[#f8f9fa] border-2 border-black p-8 rounded-[32px] my-8 shadow-sm">
                                 <div className="flex items-center gap-3 mb-3">
