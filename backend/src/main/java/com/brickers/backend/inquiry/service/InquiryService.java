@@ -5,6 +5,7 @@ import com.brickers.backend.inquiry.entity.Inquiry;
 import com.brickers.backend.inquiry.entity.InquiryAnswer;
 import com.brickers.backend.inquiry.entity.InquiryStatus;
 import com.brickers.backend.inquiry.repository.InquiryRepository;
+import com.brickers.backend.notification.service.UserNotificationService;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.repository.UserRepository;
 import com.brickers.backend.user.service.CurrentUserService;
@@ -28,6 +29,7 @@ public class InquiryService {
     private final InquiryRepository inquiryRepository;
     private final UserRepository userRepository;
     private final CurrentUserService currentUserService;
+    private final UserNotificationService userNotificationService;
 
     // ========== User Side ==========
 
@@ -169,8 +171,9 @@ public class InquiryService {
         inquiry.setAnswer(answer);
         inquiry.setStatus(InquiryStatus.ANSWERED);
         inquiry.setUpdatedAt(LocalDateTime.now());
-
-        return InquiryResponse.from(inquiryRepository.save(inquiry));
+        Inquiry saved = inquiryRepository.save(inquiry);
+        userNotificationService.notifyInquiryAnswered(saved.getUserId(), saved.getTitle());
+        return InquiryResponse.from(saved);
     }
 
     public InquiryResponse updateAnswer(Authentication auth, String inquiryId, InquiryAnswerRequest req) {

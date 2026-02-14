@@ -1,6 +1,7 @@
 package com.brickers.backend.admin.payment.service;
 
 import com.brickers.backend.admin.payment.dto.AdminPaymentDto;
+import com.brickers.backend.notification.service.UserNotificationService;
 import com.brickers.backend.payment.entity.PaymentOrder;
 import com.brickers.backend.payment.entity.PaymentStatus;
 import com.brickers.backend.payment.repository.PaymentOrderRepository;
@@ -19,6 +20,7 @@ public class AdminPaymentService {
 
     private final PaymentOrderRepository paymentOrderRepository;
     private final UserRepository userRepository;
+    private final UserNotificationService userNotificationService;
 
     @Transactional(readOnly = true)
     public Page<AdminPaymentDto> getAllPayments(int page, int size) {
@@ -97,6 +99,12 @@ public class AdminPaymentService {
             }
         });
 
+        userNotificationService.notifyRefundHandled(
+                order.getUserId(),
+                order.getOrderNo(),
+                true,
+                order.getCancelReason());
+
         return AdminPaymentDto.from(order);
     }
 
@@ -112,6 +120,11 @@ public class AdminPaymentService {
 
         order.revertToCompleted();
         paymentOrderRepository.save(order);
+        userNotificationService.notifyRefundHandled(
+                order.getUserId(),
+                order.getOrderNo(),
+                false,
+                reason);
         return AdminPaymentDto.from(order);
     }
 }
