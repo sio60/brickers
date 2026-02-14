@@ -1,19 +1,14 @@
 'use client';
 
-import { useEffect, useState, ChangeEvent } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContext";
-import { getMyProfile, getAdminStats, AdminStats } from "@/lib/api/myApi";
-import GalleryManagement from "@/components/admin/GalleryManagement";
 import styles from "../AdminPage.module.css"; // 경로 수정
 import AdminAIReport from "@/components/admin/AdminAIReport";
 import { useAdminAI } from "@/hooks/useAdminAI";
 
 // SSR 제외
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
-const BrickJudgeViewer = dynamic(() => import("@/components/admin/BrickJudgeViewer"), { ssr: false });
 
 // 타 메인 페이지와 동일한 타입 및 로직 유지 (사용자 요청에 따라 UI 복제)
 type Inquiry = { id: string; title: string; content: string; status: string; createdAt: string; userId: string; userEmail?: string; answer?: { content: string; answeredAt: string; } };
@@ -25,12 +20,6 @@ type Comment = { id: string; postId: string; authorId: string; authorNickname: s
 
 export default function AdminDetailPage() {
     const router = useRouter();
-    const { t } = useLanguage();
-    const { authFetch } = useAuth();
-
-    const [loading, setLoading] = useState(true);
-
-    const [stats, setStats] = useState<AdminStats | null>(null);
     const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "jobs" | "gallery" | "inquiries" | "reports" | "refunds" | "comments" | "brick-judge">("dashboard");
 
     // [NEW] Use shared hook
@@ -38,20 +27,6 @@ export default function AdminDetailPage() {
 
     // 데이터 상태 및 핸들러는 기존 AdminPage와 동일하게 유지
     // ... (중략 - 실구현 시에는 모든 로직 포함)
-
-    useEffect(() => {
-        getMyProfile()
-            .then(profile => {
-                if (profile.role === "ADMIN") return getAdminStats();
-                else router.replace("/");
-            })
-            .then(s => {
-                if (s) { setStats(s); setLoading(false); }
-            })
-            .catch(() => router.replace("/"));
-    }, [router]);
-
-    if (loading) return null;
 
     return (
         <div className={styles.page}>
