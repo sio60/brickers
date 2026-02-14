@@ -12,6 +12,7 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
 
     const isAuthWaitingPage = pathname === "/auth/success" || pathname === "/auth/logout";
     const isStepsPage = pathname === "/kids/steps";
+    const isAdminRoute = pathname.startsWith("/admin");
 
     return (
         <div className={`appLayout lang-${language}`}>
@@ -20,7 +21,7 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
             <main className="appLayout__content">
                 {children}
             </main>
-            {!isAuthWaitingPage && <FloatingMenuButton />}
+            {!isAdminRoute && !isAuthWaitingPage && <FloatingMenuButton />}
         </div>
     );
 }
