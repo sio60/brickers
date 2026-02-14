@@ -712,6 +712,12 @@ export default function AdminPage() {
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
                                                     <div className="flex justify-end gap-2">
+                                                        <button
+                                                            onClick={() => setTraceJobId(job.id)}
+                                                            className="text-xs text-gray-600 hover:text-black font-medium px-2 py-1 border border-gray-200 rounded hover:bg-gray-50"
+                                                        >
+                                                            HISTORY
+                                                        </button>
                                                         {(job.status === 'FAILED' || job.status === 'CANCELED') && (
                                                             <button
                                                                 onClick={() => handleJobAction(job.id, 'retry')}
