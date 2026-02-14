@@ -31,8 +31,8 @@ export default function AgentTraceViewer({ jobId, onClose }: AgentTraceViewerPro
 
     const fetchTraces = async () => {
         try {
-            // Assuming Next.js proxy or direct URL. Adjust as needed.
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/kids/jobs/${jobId}/traces`);
+            // Use relative path to leverage Next.js rewrites (proxies to backend)
+            const res = await fetch(`/api/kids/jobs/${jobId}/traces`);
             if (res.ok) {
                 const data = await res.json();
                 setTraces(data);
