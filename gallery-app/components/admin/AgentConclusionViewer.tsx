@@ -88,10 +88,19 @@ export default function AgentConclusionViewer({ jobId, onClose }: AgentConclusio
                     setAfterMetrics(extractMetrics(lastVerifier.output));
                 }
 
-                // 4. Final Report 탐색
+                // 4. Final Report 탐색 (end 노드 → PipelineSummary fallback)
                 const endNode = traces.find(t => t.nodeName === "end" || t.nodeName === "__end__" || t.output?.final_report);
                 if (endNode) {
                     setFinalReport(endNode.output?.final_report || endNode.output);
+                } else if (summaryTrace?.output?.coscientist) {
+                    // PipelineSummary의 coscientist 데이터를 fallback으로 사용
+                    const cos = summaryTrace.output.coscientist;
+                    setFinalReport({
+                        success: cos.success,
+                        total_attempts: cos.total_attempts,
+                        message: cos.message || "N/A",
+                        tool_usage: cos.tool_usage || {},
+                    });
                 }
 
             } catch (e: any) {
@@ -243,7 +252,7 @@ export default function AgentConclusionViewer({ jobId, onClose }: AgentConclusio
                                                         <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                                                             <div
                                                                 className={`h-full rounded-full transition-all duration-500 ${step.status === "SUCCESS" ? "bg-indigo-400" :
-                                                                        step.status === "FALLBACK" ? "bg-amber-400" : "bg-red-400"
+                                                                    step.status === "FALLBACK" ? "bg-amber-400" : "bg-red-400"
                                                                     }`}
                                                                 style={{ width: `${getBarWidth(step.duration_sec, pipelineSummary.total_time_sec)}%` }}
                                                             />
@@ -264,8 +273,8 @@ export default function AgentConclusionViewer({ jobId, onClose }: AgentConclusio
                                             </h3>
                                             <div className="flex items-center gap-4 mb-3">
                                                 <div className={`px-3 py-1.5 rounded-lg text-xs font-black border-2 ${pipelineSummary.coscientist.success
-                                                        ? "bg-green-50 text-green-700 border-green-100"
-                                                        : "bg-red-50 text-red-700 border-red-100"
+                                                    ? "bg-green-50 text-green-700 border-green-100"
+                                                    : "bg-red-50 text-red-700 border-red-100"
                                                     }`}>
                                                     {pipelineSummary.coscientist.success ? "SUCCESS" : "FAILED"}
                                                 </div>
