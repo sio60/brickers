@@ -8,10 +8,13 @@ import java.util.List;
 
 import com.brickers.backend.gallery.entity.GalleryPostEntity;
 import com.brickers.backend.gallery.entity.Visibility;
+import com.brickers.backend.job.entity.KidsLevel;
 import org.springframework.data.mongodb.repository.Aggregation;
 
 public interface GalleryPostRepository extends MongoRepository<GalleryPostEntity, String> {
   Page<GalleryPostEntity> findByDeletedFalseAndVisibility(Visibility visibility, Pageable pageable);
+  Page<GalleryPostEntity> findByDeletedFalseAndVisibilityAndLevel(Visibility visibility, KidsLevel level,
+      Pageable pageable);
 
   Page<GalleryPostEntity> findByDeletedFalseAndAuthorIdAndVisibility(String authorId, Visibility visibility,
       Pageable pageable);
