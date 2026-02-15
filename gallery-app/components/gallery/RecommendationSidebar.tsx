@@ -12,6 +12,9 @@ type RecommendationSidebarProps = {
                 allCreations: string;
             };
         };
+        kids: {
+            bricks: string;
+        };
     };
 };
 
@@ -39,6 +42,7 @@ export default function RecommendationSidebar({ recommendations, t }: Recommenda
                     recommendations.map((rec) => {
                         const safeTitle = rec.title.replace(/\s+/g, '-').replace(/[^\w\-\uAC00-\uD7A3]/g, '');
                         const recSlug = `${safeTitle}-${rec.id}`;
+                        const displayedBrickCount = rec.parts ?? rec.brickCount;
                         return (
                             <button
                                 key={rec.id}
@@ -62,6 +66,11 @@ export default function RecommendationSidebar({ recommendations, t }: Recommenda
                                         {rec.title}
                                     </h4>
                                     <p className="text-[9px] font-bold text-gray-400">@{rec.authorNickname || 'Anonymous'}</p>
+                                    {typeof displayedBrickCount === 'number' && displayedBrickCount > 0 && (
+                                        <p className="text-[9px] font-bold text-gray-500 mt-0.5">
+                                            {displayedBrickCount.toLocaleString()} {t.kids.bricks}
+                                        </p>
+                                    )}
                                 </div>
                             </button>
                         );
