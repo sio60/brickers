@@ -283,8 +283,34 @@ public class GoogleAnalyticsService {
             }
             return result;
         } catch (Exception e) {
-            log.error("Failed to get heavy users: {}", e.getMessage());
-            return new ArrayList<>();
+            log.warn("Failed to get heavy users with customUser:userId. Retrying with customUser:nickname. Error: {}",
+                    e.getMessage());
+            try {
+                RunReportRequest fallbackRequest = RunReportRequest.newBuilder()
+                        .setProperty("properties/" + propertyId)
+                        // Fallback to nickname if userId fails
+                        .addDimensions(Dimension.newBuilder().setName("customUser:nickname"))
+                        .addMetrics(Metric.newBuilder().setName("eventCount"))
+                        .addDateRanges(DateRange.newBuilder()
+                                .setStartDate(days + "daysAgo")
+                                .setEndDate("today"))
+                        .setLimit(limit)
+                        .build();
+
+                RunReportResponse fallbackResp = analyticsDataClient.runReport(fallbackRequest);
+                List<HeavyUserResponse> result = new ArrayList<>();
+                for (Row row : fallbackResp.getRowsList()) {
+                    String uid = row.getDimensionValues(0).getValue();
+                    if (uid.isEmpty() || uid.equals("(not set)"))
+                        continue;
+
+                    result.add(new HeavyUserResponse(uid, Long.parseLong(row.getMetricValues(0).getValue())));
+                }
+                return result;
+            } catch (Exception ex) {
+                log.error("Failed to get heavy users (Retry failed): {}", ex.getMessage());
+                return new ArrayList<>();
+            }
         }
     }
 
@@ -464,8 +490,8 @@ public class GoogleAnalyticsService {
         ProductIntelligenceResponse.EngineQuality quality = null;
         List<ProductIntelligenceResponse.ExitPoint> exits = new ArrayList<>();
 
+        // 1. Funnel Analysis (Independent Try-Catch)
         try {
-            // 1. 퍼널 분석 (Filter out 'not set')
             RunReportRequest funnelRequest = RunReportRequest.newBuilder()
                     .setProperty("properties/" + propertyId)
                     .addDimensions(Dimension.newBuilder().setName("customEvent:funnel_stage"))
@@ -489,8 +515,12 @@ public class GoogleAnalyticsService {
                         row.getDimensionValues(0).getValue(),
                         Long.parseLong(row.getMetricValues(0).getValue())));
             }
+        } catch (Exception e) {
+            log.warn("Failed to fetch Funnel Analysis (likely unregistered dimension): {}", e.getMessage());
+        }
 
-            // 2. 엔진 품질 지표 (Filter out invalid stability scores)
+        // 2. Engine Quality Metrics (Independent Try-Catch)
+        try {
             RunReportRequest qRequest = RunReportRequest.newBuilder()
                     .setProperty("properties/" + propertyId)
                     .addMetrics(Metric.newBuilder().setName("customEvent:stability_score"))
@@ -516,8 +546,12 @@ public class GoogleAnalyticsService {
                         Double.parseDouble(row.getMetricValues(2).getValue()),
                         Double.parseDouble(row.getMetricValues(3).getValue()));
             }
+        } catch (Exception e) {
+            log.warn("Failed to fetch Engine Quality (likely unregistered metric): {}", e.getMessage());
+        }
 
-            // 3. 이탈 지점 분석
+        // 3. Exit Point Analysis (Independent Try-Catch)
+        try {
             RunReportResponse exitResp = analyticsDataClient.runReport(RunReportRequest.newBuilder()
                     .setProperty("properties/" + propertyId)
                     .addDimensions(Dimension.newBuilder().setName("customEvent:exit_step"))
@@ -532,9 +566,8 @@ public class GoogleAnalyticsService {
                             Long.parseLong(row.getMetricValues(0).getValue())));
                 }
             }
-
         } catch (Exception e) {
-            log.error("Failed to get product intelligence: {}", e.getMessage());
+            log.warn("Failed to fetch Exit Points (likely unregistered dimension): {}", e.getMessage());
         }
         return new ProductIntelligenceResponse(funnel, quality, exits);
     }
@@ -553,74 +586,81 @@ public class GoogleAnalyticsService {
         // QualityStat is placeholder for now as correlation is complex
         List<DeepInsightResponse.QualityStat> qualityStats = new ArrayList<>();
 
-        try {
-            // 1. Category Success Rate
-            RunReportRequest categoryRequest = RunReportRequest.newBuilder()
-                    .setProperty("properties/" + propertyId)
-                    .addDimensions(Dimension.newBuilder().setName("customEvent:image_category"))
-                    .addDimensions(Dimension.newBuilder().setName("eventName"))
-                    .addMetrics(Metric.newBuilder().setName("eventCount"))
-                    .setDimensionFilter(FilterExpression.newBuilder()
-                            .setFilter(Filter.newBuilder()
-                                    .setFieldName("eventName")
-                                    .setInListFilter(Filter.InListFilter.newBuilder()
-                                            .addValues("generate_success")
-                                            .addValues("generate_fail")
-                                            .build())
-                                    .build())
-                            .build())
-                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
-                    .build();
+        try { // Added try block
+              // 1. Category Success Rate (Independent Try-Catch)
+            try {
+                RunReportRequest categoryRequest = RunReportRequest.newBuilder()
+                        .setProperty("properties/" + propertyId)
+                        .addDimensions(Dimension.newBuilder().setName("customEvent:image_category"))
+                        .addDimensions(Dimension.newBuilder().setName("eventName"))
+                        .addMetrics(Metric.newBuilder().setName("eventCount"))
+                        .setDimensionFilter(FilterExpression.newBuilder()
+                                .setFilter(Filter.newBuilder()
+                                        .setFieldName("eventName")
+                                        .setInListFilter(Filter.InListFilter.newBuilder()
+                                                .addValues("generate_success")
+                                                .addValues("generate_fail")
+                                                .build())
+                                        .build())
+                                .build())
+                        .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                        .build();
 
-            RunReportResponse catResp = analyticsDataClient.runReport(categoryRequest);
-            Map<String, long[]> catMap = new HashMap<>(); // [success, fail]
+                RunReportResponse catResp = analyticsDataClient.runReport(categoryRequest);
+                Map<String, long[]> catMap = new HashMap<>(); // [success, fail]
 
-            for (Row row : catResp.getRowsList()) {
-                String category = row.getDimensionValues(0).getValue();
-                String eventName = row.getDimensionValues(1).getValue();
-                long count = Long.parseLong(row.getMetricValues(0).getValue());
+                for (Row row : catResp.getRowsList()) {
+                    String category = row.getDimensionValues(0).getValue();
+                    String eventName = row.getDimensionValues(1).getValue();
+                    long count = Long.parseLong(row.getMetricValues(0).getValue());
 
-                catMap.putIfAbsent(category, new long[] { 0, 0 });
-                if (eventName.equals("generate_success")) {
-                    catMap.get(category)[0] += count; // index 0: success
-                } else {
-                    catMap.get(category)[1] += count; // index 1: fail
+                    catMap.putIfAbsent(category, new long[] { 0, 0 });
+                    if (eventName.equals("generate_success")) {
+                        catMap.get(category)[0] += count; // index 0: success
+                    } else {
+                        catMap.get(category)[1] += count; // index 1: fail
+                    }
                 }
+
+                catMap.forEach((k, v) -> {
+                    if (!k.isEmpty() && !k.equals("(not set)")) {
+                        categoryStats.add(new DeepInsightResponse.CategoryStat(k, v[0], v[1]));
+                    }
+                });
+            } catch (Exception e) {
+                log.warn("Failed to fetch Category Stats (likely unregistered dimension): {}", e.getMessage());
             }
 
-            catMap.forEach((k, v) -> {
-                if (!k.isEmpty() && !k.equals("(not set)")) {
-                    categoryStats.add(new DeepInsightResponse.CategoryStat(k, v[0], v[1]));
-                }
-            });
+            // 2. Search Keywords (Independent Try-Catch)
+            try {
+                RunReportRequest searchRequest = RunReportRequest.newBuilder()
+                        .setProperty("properties/" + propertyId)
+                        .addDimensions(Dimension.newBuilder().setName("customEvent:search_term"))
+                        .addMetrics(Metric.newBuilder().setName("eventCount"))
+                        .setDimensionFilter(FilterExpression.newBuilder()
+                                .setFilter(Filter.newBuilder()
+                                        .setFieldName("eventName")
+                                        .setStringFilter(Filter.StringFilter.newBuilder().setValue("user_search"))
+                                        .build())
+                                .build())
+                        .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                        .setLimit(20)
+                        .build();
 
-            // 2. Search Keywords
-            RunReportRequest searchRequest = RunReportRequest.newBuilder()
-                    .setProperty("properties/" + propertyId)
-                    .addDimensions(Dimension.newBuilder().setName("customEvent:search_term"))
-                    .addMetrics(Metric.newBuilder().setName("eventCount"))
-                    .setDimensionFilter(FilterExpression.newBuilder()
-                            .setFilter(Filter.newBuilder()
-                                    .setFieldName("eventName")
-                                    .setStringFilter(Filter.StringFilter.newBuilder().setValue("user_search"))
-                                    .build())
-                            .build())
-                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
-                    .setLimit(20)
-                    .build();
-
-            RunReportResponse searchResp = analyticsDataClient.runReport(searchRequest);
-            for (Row row : searchResp.getRowsList()) {
-                String keyword = row.getDimensionValues(0).getValue();
-                if (!keyword.isEmpty() && !keyword.equals("(not set)")) {
-                    keywordStats.add(new DeepInsightResponse.KeywordStat(
-                            keyword,
-                            Long.parseLong(row.getMetricValues(0).getValue())));
+                RunReportResponse searchResp = analyticsDataClient.runReport(searchRequest);
+                for (Row row : searchResp.getRowsList()) {
+                    String keyword = row.getDimensionValues(0).getValue();
+                    if (!keyword.isEmpty() && !keyword.equals("(not set)")) {
+                        keywordStats.add(new DeepInsightResponse.KeywordStat(
+                                keyword,
+                                Long.parseLong(row.getMetricValues(0).getValue())));
+                    }
                 }
+            } catch (Exception e) {
+                log.warn("Failed to fetch Search Keywords (likely unregistered dimension): {}", e.getMessage());
             }
-
-        } catch (Exception e) {
-            log.error("Failed to fetch Deep Insights: {}", e.getMessage());
+        } catch (Exception e) { // Corrected general catch block
+            log.error("Failed to fetch Deep Insights (General): {}", e.getMessage());
         }
 
         return new DeepInsightResponse(categoryStats, qualityStats, keywordStats);
