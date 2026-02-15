@@ -125,7 +125,7 @@ export default function PuzzleMiniGame({ percent, message, jobId, age }: PuzzleM
         // 로그인되어 있으면 닉네임 사용, 아니면 Guest
         const nickname = user?.nickname || localStorage.getItem('nickname') || 'Guest';
         // userId는 고유 식별자가 필요하지만, API가 닉네임을 표시용으로 쓴다면 닉네임을 보냄
-        const userId = nickname;
+        const userId = user?.id || "guest";
 
         try {
             // 랭킹 저장
@@ -231,7 +231,7 @@ export default function PuzzleMiniGame({ percent, message, jobId, age }: PuzzleM
                                 >
                                     <span>
                                         <span className={styles.rankNumber}>{i + 1}</span>
-                                        {r.userId}
+                                        {r.nickname || r.userId}
                                     </span>
                                     <span>{formatTime(r.timeSpent)}</span>
                                 </div>
