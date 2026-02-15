@@ -20,4 +20,6 @@ public class TokenStatsDto {
     private long successfulGenerations; // 성공한 생성
     private long failedGenerations; // 실패한 생성
     private double successRate; // 성공률 (%)
+    private long totalTokens; // [New] 총 사용 토큰
+    private double totalEstCost; // [New] 총 예상 비용 (USD)
 }

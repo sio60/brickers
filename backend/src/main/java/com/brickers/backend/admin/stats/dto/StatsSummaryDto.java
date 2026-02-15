@@ -22,4 +22,6 @@ public class StatsSummaryDto {
     private long activeJobs;
     private long completedJobs;
     private long failedJobs;
+    private double totalEstCost; // [New] 전체 누적 AI 비용 (USD)
+    private long totalTokens; // [New] 전체 누적 토큰
 }

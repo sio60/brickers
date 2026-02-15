@@ -37,6 +37,9 @@ public class AdminJobDto {
     private String blueprintPdfKey;
     private String instructionsPdfUrl;
     private String bomKey;
+    private Double estCost; // [New]
+    private Integer tokenCount; // [New]
+    private Integer stabilityScore; // [New]
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime stageUpdatedAt;
@@ -63,6 +66,9 @@ public class AdminJobDto {
                 .blueprintPdfKey(job.getBlueprintPdfKey())
                 .instructionsPdfUrl(job.getInstructionsPdfUrl())
                 .bomKey(job.getBomKey())
+                .estCost(job.getEstCost()) // [New]
+                .tokenCount(job.getTokenCount()) // [New]
+                .stabilityScore(job.getStabilityScore()) // [New]
                 .createdAt(job.getCreatedAt())
                 .updatedAt(job.getUpdatedAt())
                 .stageUpdatedAt(job.getStageUpdatedAt())
