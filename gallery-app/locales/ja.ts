@@ -651,7 +651,15 @@ export const ja = {
         ANALYZE: "不要な複雑さがないか検討しています。",
         REFLECT: "前回の試行と比較して改善点を整理しています。",
         EVOLVE: "形状と効率のバランスを調整しています。",
-        COMPLETE: "設計が完了しました。次のステップに進みましょう。"
+        COMPLETE: "設計が完了しました。次のステップに進みましょう。",
+        trace: {
+            node_merger: "ブリックを組み合わせてより頑丈にしています...",
+            node_color_optimizer: "より綺麗な色を探しています...",
+            node_stability: "崩れないようにしっかり検査しています...",
+            node_connector: "ブリックがうまく繋がるように調整中です...",
+            hypothesis_maker: "どうやって作るか悩み中です...",
+            experiment_executor: "考えた通りに作ってみています..."
+        }
     },
     viewer3d: {
         loading: "3Dモデル読み込み中...",
