@@ -170,24 +170,24 @@
 
 /* 섹션 타이틀 */
 .mypage__sectionTitle {
-    font-size: 32px;
-    font-weight: 900;
+    font-size: 24px;
+    font-weight: 800;
     color: #111;
-    margin-bottom: 32px;
+    margin-bottom: 20px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 /* 타이틀 앞 파란색 바 장식 */
 .mypage__sectionTitle::before {
     content: "";
     display: block;
-    width: 8px;
-    height: 32px;
+    width: 6px;
+    height: 24px;
     background: #3b82f6;
     /* Blue */
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
 .mypage__loading,
@@ -467,15 +467,16 @@
 /* ─── 문의/신고 카드 ─── */
 .mypage__inquiryCard {
     background: #fff;
-    border: 2px solid #e5e7eb;
-    border-radius: 20px;
-    padding: 24px;
-    margin-bottom: 20px;
-    transition: border-color 0.2s;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin-bottom: 0;
+    transition: border-color 0.2s, background-color 0.2s;
 }
 
 .mypage__inquiryCard:hover {
-    border-color: #aaa;
+    border-color: #d1d5db;
+    background: #fcfcfd;
 }
 
 /* ─── 나가기 버튼 ─── */
@@ -646,51 +647,56 @@
 /* Report UI Redesign */
 .report__statusBadge {
     display: inline-block;
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-size: 14px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 12px;
     font-weight: 700;
-    margin-bottom: 12px;
+    margin-bottom: 0;
+    line-height: 1.2;
+    border: 1px solid #d1d5db;
+    color: #4b5563;
+    background: #fff;
 }
 
 .report__statusBadge.resolved {
     background: #000;
     color: #fff;
+    border-color: #000;
 }
 
 .report__statusBadge.pending {
     background: #fff;
-    border: 1px solid #e5e7eb;
-    color: #333;
+    border: 1px solid #d1d5db;
+    color: #4b5563;
 }
 
 .report__type {
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 600;
-    color: #666;
+    color: #6b7280;
     margin-bottom: 4px;
     display: block;
 }
 
 .report__reason {
-    font-size: 24px;
-    font-weight: 800;
+    font-size: 18px;
+    font-weight: 700;
     color: #111;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     display: block;
-    line-height: 1.2;
+    line-height: 1.35;
 }
 
 .report__description {
-    font-size: 16px;
-    color: #444;
+    font-size: 14px;
+    color: #4b5563;
     margin-bottom: 8px;
-    line-height: 1.5;
+    line-height: 1.6;
 }
 
 .report__dataId {
-    font-size: 13px;
-    color: #999;
+    font-size: 12px;
+    color: #9ca3af;
 }
 
 /* ─── 모달 닫기 버튼 (통합 스타일) ─── */
@@ -718,72 +724,143 @@
 }
 
 .report__adminAnswerBox {
-    margin-top: 16px;
-    padding: 16px;
+    margin-top: 12px;
+    padding: 12px;
     background: #f9fafb;
-    border-radius: 8px;
-    position: relative;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
 }
 
 .report__adminTitleBadge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 8px;
+    padding: 3px 8px;
     background: #fff;
     border: 1px solid #e5e7eb;
-    border-radius: 4px;
-    font-size: 12px;
+    border-radius: 6px;
+    font-size: 11px;
     font-weight: 700;
-    color: #333;
+    color: #4b5563;
     margin-bottom: 8px;
 }
 
 .report__resolutionNote {
-    font-size: 15px;
-    color: #333;
-    line-height: 1.5;
+    font-size: 13px;
+    color: #374151;
+    line-height: 1.6;
+    margin: 0;
 }
 
 .report__resolvedDate {
     display: block;
     text-align: right;
-    font-size: 12px;
-    color: #999;
+    font-size: 11px;
+    color: #9ca3af;
     margin-top: 8px;
 }
 
 /* Inquiry UI Redesign */
 .inquiry__statusBadge {
     display: inline-block;
-    padding: 6px 12px;
-    border: 1px solid #111;
-    border-radius: 4px;
-    font-size: 14px;
+    padding: 4px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 12px;
     font-weight: 700;
-    color: #111;
+    color: #4b5563;
     background: #fff;
-    margin-bottom: 12px;
+    margin-bottom: 0;
+    line-height: 1.2;
 }
 
 .inquiry__statusBadge.answered {
     background: #111;
     color: #fff;
+    border-color: #111;
 }
 
 .inquiry__header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 8px;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
 .inquiry__title {
-    font-size: 18px;
-    font-weight: 800;
+    font-size: 17px;
+    font-weight: 700;
     color: #111;
-    margin-bottom: 8px;
+    margin: 0;
     display: block;
+    line-height: 1.35;
+}
+
+.mypage__inquiriesList {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.mypage__loadingText,
+.mypage__empty {
+    color: #6b7280;
+    font-size: 14px;
+    padding: 16px 4px;
+}
+
+.inquiry__expand {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #eceff3;
+}
+
+.inquiry__content {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #374151;
+}
+
+.inquiry__answer {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #374151;
+}
+
+.refund__amount {
+    margin: 4px 0 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.refund__reasonBox {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.answered,
+.resolved {
+    background: #111;
+    color: #fff;
+    border-color: #111;
+}
+
+.pending {
+    background: #fff;
+    color: #4b5563;
+    border-color: #d1d5db;
 }
 
 .report__id-info {
@@ -977,9 +1054,8 @@
 }
 
 .inquiry__date {
-    font-size: 14px;
-    color: #999;
-
+    font-size: 13px;
+    color: #9ca3af;
 }
 
 /* 3D 뷰어 모달 */
