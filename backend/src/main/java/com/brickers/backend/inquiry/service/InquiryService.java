@@ -137,7 +137,11 @@ public class InquiryService {
     // ========== Admin Side ==========
 
     public Page<InquiryResponse> getAllInquiries(InquiryStatus status, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        // 답변이 없는 문의(answer.answeredAt == null)를 먼저 보여주고, 같은 그룹 내에서는 최신순 정렬
+        Sort sort = Sort.by(
+                Sort.Order.asc("answer.answeredAt"),
+                Sort.Order.desc("createdAt"));
+        Pageable pageable = PageRequest.of(page, size, sort);
         Page<Inquiry> inquiries = (status != null)
                 ? inquiryRepository.findByStatus(status, pageable)
                 : inquiryRepository.findAll(pageable);
