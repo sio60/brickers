@@ -273,6 +273,22 @@ public class KidsService {
         log.info("[Brickers] ✅ Suggested Tags 저장 완료 | jobId={} | tags={}", jobId, tags);
     }
 
+    /**
+     * ✅ Gemini 이미지 카테고리 저장 (AI Server에서 호출)
+     */
+    public void updateJobCategory(String jobId, String category) {
+        log.info("[Brickers] Job Category 업데이트 | jobId={} | category={}", jobId, category);
+
+        GenerateJobEntity job = generateJobRepository.findById(jobId)
+                .orElseThrow(() -> new java.util.NoSuchElementException("Job not found: " + jobId));
+
+        job.setImageCategory(category);
+        job.setUpdatedAt(LocalDateTime.now());
+        generateJobRepository.save(job);
+
+        log.info("[Brickers] ✅ Job Category 저장 완료 | jobId={} | category={}", jobId, category);
+    }
+
     private KidsLevel ageToKidsLevel(String age) {
         if (age == null)
             return KidsLevel.LEVEL_1;
