@@ -23,8 +23,8 @@ public class ChatService {
                 String systemNote = """
                                 [System Note] If asked about brick counts, please answer based on the following:
                                 - Level 1: 100+ bricks (varies by resolution)
-                                - Level 2: 150+ bricks
-                                - Level 3: 200+ bricks
+                                - Level 2: 200+ bricks
+                                - Level 3: 300+ bricks
                                 - Pro: 1000+ bricks
 
                                 User Message:

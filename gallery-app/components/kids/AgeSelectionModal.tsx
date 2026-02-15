@@ -81,7 +81,7 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
                                 onClick={() => handleSelect("6-7")}
                             >
                                 <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "2")}</div>
-                                <div className={styles.brickCount}>150+ {t.kids.bricks}</div>
+                                <div className={styles.brickCount}>200+ {t.kids.bricks}</div>
                             </button>
 
                             <button
@@ -89,7 +89,7 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
                                 onClick={() => handleSelect("8-10")}
                             >
                                 <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "3")}</div>
-                                <div className={styles.brickCount}>200+ {t.kids.bricks}</div>
+                                <div className={styles.brickCount}>300+ {t.kids.bricks}</div>
                             </button>
 
                             <button

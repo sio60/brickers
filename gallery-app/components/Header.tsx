@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -10,6 +10,15 @@ import LoginModal from './common/LoginModal';
 import UpgradeModal from './UpgradeModal';
 import { useJobStore, type Notification } from '../stores/jobStore';
 import './Header.css';
+
+const rawBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+const API_BASE = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase;
+
+const toApiUrl = (path: string) => {
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    if (path.startsWith('/') && API_BASE) return `${API_BASE}${path}`;
+    return path;
+};
 
 type ServerNotification = {
     id: string;
@@ -29,20 +38,65 @@ function HeaderContent() {
 
     const { showDoneToast, setShowDoneToast, notifications, markAsRead, upsertNotifications } = useJobStore();
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+    const [hasLocalToken, setHasLocalToken] = useState(false);
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
     const toggleNotifications = () => setIsNotificationOpen(!isNotificationOpen);
     const shouldShowGlobalToast = showDoneToast && pathname !== '/kids/main';
+    const isAuthReady = isAuthenticated || hasLocalToken;
 
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
+    const refreshLocalTokenState = useCallback(() => {
+        if (typeof window === 'undefined') return;
+        setHasLocalToken(!!localStorage.getItem('accessToken'));
+    }, []);
+
+    const requestWithBestAuth = useCallback(async (path: string, init: RequestInit = {}) => {
+        if (isAuthenticated) {
+            return authFetch(path, init);
+        }
+
+        const storedToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+        if (storedToken) {
+            const headers = new Headers(init.headers || {});
+            if (init.body && !headers.has('Content-Type')) {
+                headers.set('Content-Type', 'application/json');
+            }
+            headers.set('Authorization', `Bearer ${storedToken}`);
+
+            const res = await fetch(toApiUrl(path), { ...init, headers, credentials: 'include' });
+            if (res.status !== 401) return res;
+        }
+
+        const fallback = await authFetch(path, init);
+        if (fallback.status === 401 && typeof window !== 'undefined') {
+            localStorage.removeItem('accessToken');
+            setHasLocalToken(false);
+        }
+        return fallback;
+    }, [authFetch, isAuthenticated]);
+
     // URL에 ?login=true가 있으면 자동으로 로그인 모달 열기
     useEffect(() => {
-        if (searchParams.get("login") === "true" && !isAuthenticated) {
+        if (searchParams.get("login") === "true" && !isAuthReady) {
             setIsLoginModalOpen(true);
         }
-    }, [searchParams, isAuthenticated]);
+    }, [searchParams, isAuthReady]);
+
+    useEffect(() => {
+        refreshLocalTokenState();
+        if (typeof window === 'undefined') return;
+
+        window.addEventListener('focus', refreshLocalTokenState);
+        window.addEventListener('storage', refreshLocalTokenState);
+
+        return () => {
+            window.removeEventListener('focus', refreshLocalTokenState);
+            window.removeEventListener('storage', refreshLocalTokenState);
+        };
+    }, [refreshLocalTokenState]);
 
     // 토스트 자동 숨김 (5초)
     useEffect(() => {
@@ -55,13 +109,13 @@ function HeaderContent() {
     }, [showDoneToast, setShowDoneToast]);
 
     useEffect(() => {
-        if (isLoading || !isAuthenticated) return;
+        if (isLoading || !isAuthReady) return;
 
         let cancelled = false;
 
         const fetchNotifications = async () => {
             try {
-                const res = await authFetch('/api/my/notifications?page=0&size=30');
+                const res = await requestWithBestAuth('/api/my/notifications?page=0&size=30');
                 if (!res.ok) return;
 
                 const data = await res.json();
@@ -91,7 +145,7 @@ function HeaderContent() {
             cancelled = true;
             clearInterval(pollId);
         };
-    }, [authFetch, isAuthenticated, isLoading, upsertNotifications]);
+    }, [isLoading, isAuthReady, requestWithBestAuth, upsertNotifications]);
 
     const handleLogout = async () => {
         await logout();
@@ -102,7 +156,7 @@ function HeaderContent() {
 
         if (note.source === 'server') {
             try {
-                await authFetch(`/api/my/notifications/${note.id}/read`, { method: 'PATCH' });
+                await requestWithBestAuth(`/api/my/notifications/${note.id}/read`, { method: 'PATCH' });
             } catch (error) {
                 console.error('[Header] Failed to mark notification as read', error);
             }
@@ -136,7 +190,7 @@ function HeaderContent() {
                 {!pathname.includes('/auth/') ? (
                     <div className="header__actions">
                         {!isLoading ? (
-                            isAuthenticated ? (
+                            isAuthReady ? (
                                 <>
                                     {!isPro && (
                                         <button className="header__upgrade-btn" onClick={() => setIsUpgradeModalOpen(true)}>
