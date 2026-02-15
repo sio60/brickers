@@ -171,7 +171,11 @@ public class ReportService {
     // --- Admin Side ---
 
     public Page<ReportResponse> getAllReports(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        // 처리되지 않은 신고(resolvedAt == null)를 먼저 보여주고, 같은 그룹 내에서는 최신순 정렬
+        Sort sort = Sort.by(
+                Sort.Order.asc("resolvedAt"),
+                Sort.Order.desc("createdAt"));
+        Pageable pageable = PageRequest.of(page, size, sort);
         return reportRepository.findAll(pageable).map(it -> {
             ReportResponse resp = ReportResponse.from(it);
             userRepository.findById(it.getReporterId()).ifPresent(user -> resp.setReporterEmail(user.getEmail()));
