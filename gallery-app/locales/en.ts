@@ -651,7 +651,15 @@ export const en = {
         ANALYZE: "Reviewing for unnecessary complexity.",
         REFLECT: "Comparing with previous attempts and summarizing improvements.",
         EVOLVE: "Balancing form and efficiency.",
-        COMPLETE: "Design is finalized. Ready to move to the next step."
+        COMPLETE: "Design is finalized. Ready to move to the next step.",
+        trace: {
+            node_merger: "Combining bricks to make it stronger...",
+            node_color_optimizer: "Finding prettier colors...",
+            node_stability: "Checking stability carefully...",
+            node_connector: "Adjusting brick connections...",
+            hypothesis_maker: "Thinking about how to build it...",
+            experiment_executor: "Building it as planned..."
+        }
     },
     viewer3d: {
         loading: "Loading 3D model...",

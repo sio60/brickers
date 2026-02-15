@@ -4,6 +4,8 @@ import React from 'react';
 import PuzzleMiniGame from "@/components/kids/PuzzleMiniGame";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+import { parseAgentLog } from "@/utils/logParser";
+
 interface Props {
     percent: number;
     jobId?: string;
@@ -16,9 +18,7 @@ export const GenerationLoadingView: React.FC<Props> = ({ percent, jobId, age, ag
 
     const currentMessage = agentLogs.length > 0 ? (() => {
         const last = agentLogs[agentLogs.length - 1];
-        const match = last.match(/^\[(.+?)\]\s*/);
-        const step = match?.[1];
-        return (step && t.sse?.[step]) || last.replace(/^\[.*?\]\s*/, '');
+        return parseAgentLog(last, t);
     })() : undefined;
 
     return (
