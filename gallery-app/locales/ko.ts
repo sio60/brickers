@@ -650,7 +650,15 @@ export const ko = {
         ANALYZE: "불필요한 복잡성이 있는지 검토하고 있어요.",
         REFLECT: "이전 시도와 비교해서 개선된 점을 정리하고 있어요.",
         EVOLVE: "형태와 효율 사이의 균형을 맞추고 있어요.",
-        COMPLETE: "설계가 완료됐어요. 다음 단계로 넘어가도 좋아요."
+        COMPLETE: "설계가 완료됐어요. 다음 단계로 넘어가도 좋아요.",
+        trace: {
+            node_merger: "브릭을 합쳐서 더 튼튼하게 만들고 있어요...",
+            node_color_optimizer: "더 예쁜 색깔을 찾고 있어요...",
+            node_stability: "무너지지 않게 꼼꼼히 검사하고 있어요...",
+            node_connector: "브릭들이 잘 연결되도록 조정 중이에요...",
+            hypothesis_maker: "어떻게 만들지 고민 중이에요...",
+            experiment_executor: "생각한 대로 만들어보고 있어요..."
+        }
     },
     viewer3d: {
         loading: "3D 모델 로딩 중...",
