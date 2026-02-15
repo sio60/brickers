@@ -91,6 +91,8 @@ type AdminJob = {
     createdAt: string;
     updatedAt: string;
     errorMessage?: string;
+    estCost?: number; // [NEW]
+    tokenCount?: number; // [NEW]
 };
 
 // [NEW] 댓글 타입 정의
@@ -722,6 +724,8 @@ export default function AdminPage() {
                                             <th className="px-4 py-3">{t.admin.jobs?.table?.jobInfo || "Job Info"}</th>
                                             <th className="px-4 py-3 w-40">{t.admin.jobs?.table?.user || "User"}</th>
                                             <th className="px-4 py-3 w-28 text-center">{t.admin.jobs?.table?.status || "Status"}</th>
+                                            <th className="px-4 py-3 w-20 text-right">Cost</th>
+                                            <th className="px-4 py-3 w-20 text-right">Tokens</th>
                                             <th className="px-4 py-3 w-40">{t.admin.jobs?.table?.dates || "Dates"}</th>
                                             <th className="px-4 py-3 w-64 text-right">{t.admin.jobs?.table?.actions || "Actions"}</th>
                                         </tr>
@@ -762,6 +766,16 @@ export default function AdminPage() {
                                                     </span>
                                                     <div className="text-[9px] font-bold text-gray-400 mt-1.5 uppercase tracking-wider truncate" title={job.stage}>
                                                         {job.stage}
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-2 text-right">
+                                                    <div className="text-xs font-bold text-gray-700">
+                                                        {job.estCost ? `$${job.estCost.toFixed(4)}` : "-"}
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-2 text-right">
+                                                    <div className="text-xs font-mono text-gray-500">
+                                                        {job.tokenCount ? job.tokenCount.toLocaleString() : "-"}
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-2">

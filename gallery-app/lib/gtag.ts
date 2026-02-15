@@ -71,6 +71,7 @@ export const trackGeneration = (status: "start" | "success" | "fail", params: {
     stability_score?: number;
     wait_time?: number;
     est_cost?: number;
+    token_count?: number; // [New]
     error_type?: string;
     brick_count?: number;
     [key: string]: any;

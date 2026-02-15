@@ -205,7 +205,10 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
                             brick_count: statusData.parts || 0,
                             suggested_tags: statusData.suggestedTags?.join(', '),
                             lmm_latency: statusData.lmmLatency,
-                            image_category: latestCategory || statusData.imageCategory // [New]
+                            image_category: latestCategory || statusData.imageCategory,
+                            est_cost: statusData.estCost, // [New] Cost Tracking
+                            token_count: statusData.tokenCount, // [New] Token Tracking
+                            stability_score: statusData.stabilityScore // [New] Stability Score
                         });
 
                         // [NEW] Track Search Term Fallback (If no user prompt, use identified tags/subject)

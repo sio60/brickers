@@ -669,7 +669,7 @@ public class GoogleAnalyticsService {
             return null;
 
         List<FailureStat> failureStats = new ArrayList<>();
-        PerformanceStat performance = new PerformanceResponse.PerformanceStat(0, 0, 0);
+        PerformanceStat performance = new PerformanceResponse.PerformanceStat(0, 0, 0, 0);
 
         try {
             // 1. Failure Analysis (By error_type)
@@ -702,6 +702,7 @@ public class GoogleAnalyticsService {
                     .addMetrics(Metric.newBuilder().setName("customEvent:wait_time"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:brick_count"))
+                    .addMetrics(Metric.newBuilder().setName("customEvent:token_count")) // [New]
                     .addMetrics(Metric.newBuilder().setName("eventCount"))
                     .setDimensionFilter(FilterExpression.newBuilder()
                             .setFilter(Filter.newBuilder()
@@ -718,13 +719,15 @@ public class GoogleAnalyticsService {
                 double totalWait = Double.parseDouble(row.getMetricValues(0).getValue());
                 double totalCost = Double.parseDouble(row.getMetricValues(1).getValue());
                 double totalBricks = Double.parseDouble(row.getMetricValues(2).getValue());
-                long count = Long.parseLong(row.getMetricValues(3).getValue());
+                double totalTokens = Double.parseDouble(row.getMetricValues(3).getValue()); // [New]
+                long count = Long.parseLong(row.getMetricValues(4).getValue()); // Index shifted
 
                 if (count > 0) {
                     performance = new PerformanceResponse.PerformanceStat(
                             totalWait / count,
                             totalCost / count,
-                            totalBricks / count);
+                            totalBricks / count,
+                            totalTokens / count); // [New]
                 }
             }
 
