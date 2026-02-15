@@ -10,6 +10,7 @@ import styles from "./BrickBotModal.module.css";
 interface BrickBotModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onCreateAction?: () => void;
 }
 
 interface Message {
@@ -207,7 +208,7 @@ const CHAT_TRANSLATIONS = {
     }
 };
 
-export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
+export default function BrickBotModal({ isOpen, onClose, onCreateAction }: BrickBotModalProps) {
     const router = useRouter();
     const { language } = useLanguage();
     const tChat = CHAT_TRANSLATIONS[language as keyof typeof CHAT_TRANSLATIONS] || CHAT_TRANSLATIONS.ko;
@@ -395,7 +396,11 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
         onClose();
         switch (action) {
             case "create":
-                router.push("/kids/main");
+                if (onCreateAction) {
+                    onCreateAction();
+                } else {
+                    router.push("/kids/main");
+                }
                 break;
             case "gallery":
                 router.push("/gallery");
