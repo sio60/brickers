@@ -21,6 +21,8 @@ type GalleryDetail = {
     likeCount: number;
     viewCount: number;
     tags: string[];
+    parts?: number;
+    brickCount?: number;
     ldrUrl?: string;
     glbUrl?: string; // Original GLB model URL
     bookmarked?: boolean;
