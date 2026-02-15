@@ -15,8 +15,26 @@ interface BrickBotModalProps {
 interface Message {
     role: "user" | "bot";
     content: string;
-    actions?: ("create" | "gallery" | "mypage")[];
+    actions?: ActionType[];
 }
+
+type ActionType =
+    | "create"
+    | "gallery"
+    | "mypage"
+    | "inquiries"
+    | "reports"
+    | "refunds"
+    | "jobs";
+
+type ChatSessionState = {
+    conversationId: string | null;
+    messages: Message[];
+    updatedAt: number;
+};
+
+const MAX_CONTEXT_MESSAGES = 30;
+const CHAT_SESSION_TTL_MS = 30 * 60 * 1000;
 
 const CHAT_TRANSLATIONS = {
     ko: {
@@ -193,7 +211,7 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
     const router = useRouter();
     const { language } = useLanguage();
     const tChat = CHAT_TRANSLATIONS[language as keyof typeof CHAT_TRANSLATIONS] || CHAT_TRANSLATIONS.ko;
-    const { isAuthenticated, authFetch } = useAuth();
+    const { isAuthenticated, authFetch, user } = useAuth();
 
     const [messages, setMessages] = useState<Message[]>([
         { role: "bot", content: tChat.welcome },
@@ -203,6 +221,11 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [conversationId, setConversationId] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const userSessionKey = isAuthenticated
+        ? String(user?.id ?? user?.email ?? "auth")
+        : "guest";
+    const chatSessionStorageKey = `brickerbot:chat:${userSessionKey}:${language}`;
 
     useEffect(() => {
         setMessages(prev => {
@@ -231,6 +254,44 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    useEffect(() => {
+        if (!isOpen) return;
+
+        try {
+            const raw = sessionStorage.getItem(chatSessionStorageKey);
+            if (!raw) return;
+
+            const parsed = JSON.parse(raw) as ChatSessionState;
+            const isExpired = !parsed?.updatedAt || (Date.now() - parsed.updatedAt > CHAT_SESSION_TTL_MS);
+            if (isExpired) {
+                sessionStorage.removeItem(chatSessionStorageKey);
+                return;
+            }
+
+            if (Array.isArray(parsed.messages) && parsed.messages.length > 0) {
+                setMessages(trimMessages(parsed.messages));
+            } else {
+                setMessages([{ role: "bot", content: tChat.welcome }]);
+            }
+
+            setConversationId(parsed.conversationId ?? null);
+        } catch {
+            sessionStorage.removeItem(chatSessionStorageKey);
+        }
+    }, [isOpen, chatSessionStorageKey, tChat.welcome]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        if (mode !== "CHAT") return;
+
+        const state: ChatSessionState = {
+            conversationId,
+            messages: trimMessages(messages),
+            updatedAt: Date.now(),
+        };
+        sessionStorage.setItem(chatSessionStorageKey, JSON.stringify(state));
+    }, [isOpen, mode, chatSessionStorageKey, conversationId, messages]);
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
@@ -239,28 +300,94 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
         if (isOpen && mode === "CHAT") scrollToBottom();
     }, [messages, isOpen, mode]);
 
-    type ActionType = "create" | "gallery" | "mypage";
+    const trimMessages = (next: Message[]) => next.slice(-MAX_CONTEXT_MESSAGES);
 
-    const parseBotResponse = (text: string): { cleanText: string, actions: ActionType[] } => {
-        const actions: ActionType[] = [];
-        let cleanText = text;
+    const actionFromName = (name: string): ActionType | null => {
+        const normalized = name.trim().toLowerCase();
+        const map: Record<string, ActionType> = {
+            create: "create",
+            gallery: "gallery",
+            mypage: "mypage",
+            inquiries: "inquiries",
+            reports: "reports",
+            refunds: "refunds",
+            jobs: "jobs",
+        };
+        return map[normalized] ?? null;
+    };
 
-        if (cleanText.includes("{{NAV_CREATE}}")) {
-            actions.push("create");
+    const actionFromTarget = (target?: string | null): ActionType | null => {
+        if (!target) return null;
+        const normalized = target.trim().toLowerCase();
+        if (normalized === "/kids/main") return "create";
+        if (normalized === "/gallery") return "gallery";
+        if (normalized === "/mypage") return "mypage";
+        if (normalized === "/mypage?menu=inquiries") return "inquiries";
+        if (normalized === "/mypage?menu=reports") return "reports";
+        if (normalized === "/mypage?menu=refunds") return "refunds";
+        if (normalized === "/mypage?menu=jobs") return "jobs";
+        return null;
+    };
+
+    const parseStructuredActions = (rawActions: unknown): ActionType[] => {
+        if (!Array.isArray(rawActions)) return [];
+        const parsed: ActionType[] = [];
+
+        for (const item of rawActions) {
+            if (typeof item === "string") {
+                const fromName = actionFromName(item);
+                const fromTarget = actionFromTarget(item);
+                const action = fromName ?? fromTarget;
+                if (action) parsed.push(action);
+                continue;
+            }
+
+            if (item && typeof item === "object") {
+                const obj = item as Record<string, unknown>;
+                const fromName = typeof obj.action === "string"
+                    ? actionFromName(obj.action)
+                    : typeof obj.name === "string"
+                        ? actionFromName(obj.name)
+                        : null;
+                const fromTarget = typeof obj.target === "string" ? actionFromTarget(obj.target) : null;
+                const action = fromName ?? fromTarget;
+                if (action) parsed.push(action);
+            }
         }
-        if (cleanText.includes("{{NAV_GALLERY}}")) {
-            actions.push("gallery");
-        }
-        if (cleanText.includes("{{NAV_MYPAGE}}")) {
-            actions.push("mypage");
+
+        return parsed;
+    };
+
+    const parseBotResponse = (text: string, rawActions?: unknown): { cleanText: string, actions: ActionType[] } => {
+        const tokenMap: Record<string, ActionType> = {
+            "{{NAV_CREATE}}": "create",
+            "{{NAV_GALLERY}}": "gallery",
+            "{{NAV_MYPAGE}}": "mypage",
+            "{{NAV_INQUIRIES}}": "inquiries",
+            "{{NAV_REPORTS}}": "reports",
+            "{{NAV_REFUNDS}}": "refunds",
+            "{{NAV_JOBS}}": "jobs",
+        };
+
+        const actions: ActionType[] = [...parseStructuredActions(rawActions)];
+        let cleanText = text || "";
+
+        for (const [token, action] of Object.entries(tokenMap)) {
+            if (cleanText.includes(token)) {
+                actions.push(action);
+                cleanText = cleanText.replaceAll(token, "");
+            }
         }
 
-        cleanText = cleanText.replace(/\{\{NAV_CREATE\}\}/g, "")
-            .replace(/\{\{NAV_GALLERY\}\}/g, "")
-            .replace(/\{\{NAV_MYPAGE\}\}/g, "")
-            .trim();
+        const dynamicNavPattern = /\{\{NAV:([^}]+)\}\}/g;
+        cleanText = cleanText.replace(dynamicNavPattern, (_, target: string) => {
+            const action = actionFromTarget(target);
+            if (action) actions.push(action);
+            return "";
+        });
 
-        return { cleanText, actions };
+        const dedupedActions = Array.from(new Set(actions));
+        return { cleanText: cleanText.trim(), actions: dedupedActions };
     };
 
     const handleActionClick = (action: ActionType) => {
@@ -276,6 +403,37 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
             case "mypage":
                 router.push("/mypage");
                 break;
+            case "inquiries":
+                router.push("/mypage?menu=inquiries");
+                break;
+            case "reports":
+                router.push("/mypage?menu=reports");
+                break;
+            case "refunds":
+                router.push("/mypage?menu=refunds");
+                break;
+            case "jobs":
+                router.push("/mypage?menu=jobs");
+                break;
+        }
+    };
+
+    const getActionLabel = (action: ActionType) => {
+        switch (action) {
+            case "create":
+                return tChat.actions.create;
+            case "gallery":
+                return tChat.actions.gallery;
+            case "mypage":
+                return tChat.actions.mypage;
+            case "inquiries":
+                return "My Inquiries";
+            case "reports":
+                return "My Reports";
+            case "refunds":
+                return "My Refunds";
+            case "jobs":
+                return "My Jobs";
         }
     };
 
@@ -327,7 +485,7 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
         if (!input.trim() || isLoading) return;
 
         const userMsg = input;
-        setMessages((prev) => [...prev, { role: "user", content: userMsg }]);
+        setMessages((prev) => trimMessages([...prev, { role: "user", content: userMsg }]));
         setInput("");
         setIsLoading(true);
         setShowSuggestions(false);
@@ -347,14 +505,17 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
 
             const data = await res.json();
             if (data.conversation_id) setConversationId(data.conversation_id);
-            const { cleanText, actions } = parseBotResponse(data.reply);
-            setMessages((prev) => [...prev, { role: "bot", content: cleanText, actions: actions.length > 0 ? actions : undefined }]);
+            const { cleanText, actions } = parseBotResponse(data.reply, data.actions);
+            setMessages((prev) => trimMessages([
+                ...prev,
+                { role: "bot", content: cleanText, actions: actions.length > 0 ? actions : undefined },
+            ]));
 
         } catch (e) {
-            setMessages((prev) => [
+            setMessages((prev) => trimMessages([
                 ...prev,
                 { role: "bot", content: tChat.error },
-            ]);
+            ]));
         } finally {
             setIsLoading(false);
         }
@@ -494,9 +655,7 @@ export default function BrickBotModal({ isOpen, onClose }: BrickBotModalProps) {
                                                     className={styles.actionBtn}
                                                     onClick={() => handleActionClick(act)}
                                                 >
-                                                    {act === "create" && tChat.actions.create}
-                                                    {act === "gallery" && tChat.actions.gallery}
-                                                    {act === "mypage" && tChat.actions.mypage}
+                                                    {getActionLabel(act)}
                                                 </button>
                                             ))}
                                         </div>
