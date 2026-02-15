@@ -79,6 +79,7 @@ export default function GalleryDetailClient({ item }: Props) {
 
     // Recommendations State
     const [recommendations, setRecommendations] = useState<GalleryItem[]>([]);
+    const displayedBrickCount = item.parts ?? item.brickCount;
 
     useEffect(() => {
         // Function to fetch comments
@@ -393,6 +394,12 @@ export default function GalleryDetailClient({ item }: Props) {
                         {/* Title & Actions */}
                         <div className="p-6">
                             <h1 className="text-2xl font-black text-gray-900 leading-tight mb-6">{item.title}</h1>
+
+                            {typeof displayedBrickCount === 'number' && displayedBrickCount > 0 && (
+                                <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full border border-gray-200 bg-gray-50 text-gray-700 text-xs font-bold">
+                                    <span>{displayedBrickCount.toLocaleString()} {t.kids.bricks}</span>
+                                </div>
+                            )}
 
                             {/* Tags Section */}
                             {item.tags && item.tags.length > 0 && (

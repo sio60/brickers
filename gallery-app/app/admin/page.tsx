@@ -15,6 +15,7 @@ import { useAdminAI } from "@/hooks/useAdminAI";
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
 const BrickJudgeViewer = dynamic(() => import("@/components/admin/BrickJudgeViewer"), { ssr: false });
 const AgentTraceViewer = dynamic(() => import("@/components/admin/AgentTraceViewer"), { ssr: false });
+const AgentConclusionViewer = dynamic(() => import("@/components/admin/AgentConclusionViewer"), { ssr: false });
 
 // 타입 정의
 type Inquiry = {
@@ -140,6 +141,7 @@ export default function AdminPage() {
 
     // [NEW] Trace Viewer State
     const [traceJobId, setTraceJobId] = useState<string | null>(null);
+    const [conclusionJobId, setConclusionJobId] = useState<string | null>(null);
 
 
 
@@ -663,16 +665,16 @@ export default function AdminPage() {
                                         <tr className="text-gray-500 uppercase font-black text-[10px] tracking-wider">
                                             <th className="px-4 py-3 w-20 text-center">{t.admin.jobs?.table?.image || "Image"}</th>
                                             <th className="px-4 py-3">{t.admin.jobs?.table?.jobInfo || "Job Info"}</th>
-                                            <th className="px-4 py-3 w-48">{t.admin.jobs?.table?.user || "User"}</th>
+                                            <th className="px-4 py-3 w-40">{t.admin.jobs?.table?.user || "User"}</th>
                                             <th className="px-4 py-3 w-28 text-center">{t.admin.jobs?.table?.status || "Status"}</th>
-                                            <th className="px-4 py-3 w-36">{t.admin.jobs?.table?.dates || "Dates"}</th>
-                                            <th className="px-4 py-3 w-24 text-right">{t.admin.jobs?.table?.actions || "Actions"}</th>
+                                            <th className="px-4 py-3 w-40">{t.admin.jobs?.table?.dates || "Dates"}</th>
+                                            <th className="px-4 py-3 w-64 text-right">{t.admin.jobs?.table?.actions || "Actions"}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
                                         {jobs.map((job) => (
                                             <tr key={job.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-4 py-4 text-center">
+                                                <td className="px-4 py-2 text-center">
                                                     <div className="w-12 h-12 bg-gray-50 rounded-xl overflow-hidden relative mx-auto border border-gray-100 shadow-sm">
                                                         {job.previewImageUrl || job.sourceImageUrl ? (
                                                             <img src={job.previewImageUrl || job.sourceImageUrl} alt="job" className="w-full h-full object-cover" />
@@ -681,15 +683,15 @@ export default function AdminPage() {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-4">
+                                                <td className="px-4 py-2">
                                                     <div className="font-black text-sm text-gray-900 leading-tight mb-1">{job.title || (t.admin.jobs?.table?.untitledJob || "Untitled Job")}</div>
                                                     <div className="text-[10px] text-gray-400 font-mono tracking-tighter" title={job.id}>{job.id}</div>
                                                 </td>
-                                                <td className="px-4 py-4">
+                                                <td className="px-4 py-2">
                                                     <div className="text-sm font-bold text-gray-800 truncate mb-0.5">{job.userInfo?.nickname || (t.admin.jobs?.table?.unknownUser || "Unknown")}</div>
                                                     <div className="text-[10px] text-gray-400 truncate opacity-70">{job.userInfo?.email || job.userId}</div>
                                                 </td>
-                                                <td className="px-4 py-4 text-center">
+                                                <td className="px-4 py-2 text-center">
                                                     <span className={`inline-block px-2 py-1 rounded-lg text-[10px] font-black tracking-tight border
                                                         ${job.status === 'DONE' ? 'bg-green-50 text-green-700 border-green-200' :
                                                             job.status === 'FAILED' ? 'bg-red-50 text-red-700 border-red-200' :
@@ -698,7 +700,7 @@ export default function AdminPage() {
                                                     </span>
                                                     <div className="text-[9px] font-bold text-gray-400 mt-1.5 uppercase tracking-wider">{job.stage}</div>
                                                 </td>
-                                                <td className="px-4 py-4">
+                                                <td className="px-4 py-2">
                                                     <div className="flex flex-col gap-1">
                                                         <div className="flex items-center gap-1.5 text-[10px] text-gray-500 font-medium">
                                                             <span className="w-1.5 h-1.5 rounded-full bg-blue-400 opacity-60"></span>
@@ -717,6 +719,12 @@ export default function AdminPage() {
                                                             className="text-xs text-gray-600 hover:text-black font-medium px-2 py-1 border border-gray-200 rounded hover:bg-gray-50"
                                                         >
                                                             HISTORY
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setConclusionJobId(job.id)}
+                                                            className="text-xs text-indigo-600 hover:text-indigo-800 font-bold px-2 py-1 border border-indigo-100 rounded bg-indigo-50/30 hover:bg-indigo-50 transition-colors"
+                                                        >
+                                                            CONCLUSION
                                                         </button>
                                                         {(job.status === 'FAILED' || job.status === 'CANCELED') && (
                                                             <button
@@ -1094,6 +1102,10 @@ export default function AdminPage() {
             {/* Trace Viewer Modal */}
             {traceJobId && (
                 <AgentTraceViewer jobId={traceJobId} onClose={() => setTraceJobId(null)} />
+            )}
+            {/* [NEW] Conclusion Viewer Modal */}
+            {conclusionJobId && (
+                <AgentConclusionViewer jobId={conclusionJobId} onClose={() => setConclusionJobId(null)} />
             )}
         </div >
     );
