@@ -732,7 +732,46 @@ public class GoogleAnalyticsService {
             }
 
         } catch (Exception e) {
-            log.error("Failed to fetch performance details: {}", e.getMessage());
+            // [Fallback] If token_count is not registered yet, try without it
+            log.warn("Failed to fetch performance details with token_count. Retrying without it. Error: {}",
+                    e.getMessage());
+            try {
+                RunReportRequest fallbackRequest = RunReportRequest.newBuilder()
+                        .setProperty("properties/" + propertyId)
+                        .addMetrics(Metric.newBuilder().setName("customEvent:wait_time"))
+                        .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
+                        .addMetrics(Metric.newBuilder().setName("customEvent:brick_count"))
+                        // token_count excluded
+                        .addMetrics(Metric.newBuilder().setName("eventCount"))
+                        .setDimensionFilter(FilterExpression.newBuilder()
+                                .setFilter(Filter.newBuilder()
+                                        .setFieldName("eventName")
+                                        .setStringFilter(Filter.StringFilter.newBuilder().setValue("generate_success"))
+                                        .build())
+                                .build())
+                        .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                        .build();
+
+                RunReportResponse fallbackResp = analyticsDataClient.runReport(fallbackRequest);
+                if (!fallbackResp.getRowsList().isEmpty()) {
+                    Row row = fallbackResp.getRowsList().get(0);
+                    double totalWait = Double.parseDouble(row.getMetricValues(0).getValue());
+                    double totalCost = Double.parseDouble(row.getMetricValues(1).getValue());
+                    double totalBricks = Double.parseDouble(row.getMetricValues(2).getValue());
+                    // totalTokens is 0
+                    long count = Long.parseLong(row.getMetricValues(3).getValue());
+
+                    if (count > 0) {
+                        performance = new PerformanceResponse.PerformanceStat(
+                                totalWait / count,
+                                totalCost / count,
+                                totalBricks / count,
+                                0); // tokenCount default 0
+                    }
+                }
+            } catch (Exception ex) {
+                log.error("Failed to fetch performance details (Retry failed): {}", ex.getMessage());
+            }
         }
 
         return new PerformanceResponse(failureStats, performance);

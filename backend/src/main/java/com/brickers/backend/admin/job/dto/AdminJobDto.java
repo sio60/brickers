@@ -36,7 +36,8 @@ public class AdminJobDto {
     private String ldrUrl;
     private String blueprintPdfKey;
     private String instructionsPdfUrl;
-    private String bomKey;
+    private String modelKey; // [Added for compatibility]
+    private String bomKey; // [Added for compatibility]
     private Double estCost; // [New]
     private Integer tokenCount; // [New]
     private Integer stabilityScore; // [New]
@@ -44,6 +45,7 @@ public class AdminJobDto {
     private LocalDateTime updatedAt;
     private LocalDateTime stageUpdatedAt;
 
+    @SuppressWarnings("deprecation")
     public static AdminJobDto from(GenerateJobEntity job) {
         // ldrUrl 우선, 없으면 레거시 modelKey fallback
         String ldrUrl = job.getLdrUrl();
@@ -62,10 +64,13 @@ public class AdminJobDto {
                 .previewImageUrl(job.getPreviewImageUrl())
                 .correctedImageUrl(job.getCorrectedImageUrl())
                 .glbUrl(job.getGlbUrl())
-                .ldrUrl(ldrUrl)
+                // .modelKey(job.getModelKey()) // Deprecated
+                .modelKey(job.getLdrUrl()) // Map LDR URL to modelKey for compatibility
+                .ldrUrl(ldrUrl) // Keep the original ldrUrl field with fallback logic
                 .blueprintPdfKey(job.getBlueprintPdfKey())
                 .instructionsPdfUrl(job.getInstructionsPdfUrl())
-                .bomKey(job.getBomKey())
+                // .bomKey(job.getBomKey()) // Deprecated
+                .bomKey(job.getBomUrl()) // Map BOM URL to bomKey for compatibility
                 .estCost(job.getEstCost()) // [New]
                 .tokenCount(job.getTokenCount()) // [New]
                 .stabilityScore(job.getStabilityScore()) // [New]
