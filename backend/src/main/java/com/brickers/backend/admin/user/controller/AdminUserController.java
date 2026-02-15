@@ -1,6 +1,5 @@
 package com.brickers.backend.admin.user.controller;
 
-// ✅ FORCE UPDATE FOR DEPLOY (2ND TRY)
 import com.brickers.backend.admin.user.dto.AdminUserDto;
 import com.brickers.backend.admin.user.service.AdminUserService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -19,8 +19,6 @@ import java.util.Map;
 public class AdminUserController {
 
     private final AdminUserService adminUserService;
-
-    // ✅ Git Force Update Check
 
     @GetMapping
     public ResponseEntity<Page<AdminUserDto>> getUsers(
@@ -39,5 +37,15 @@ public class AdminUserController {
     @PostMapping("/{userId}/activate")
     public ResponseEntity<AdminUserDto> activateUser(@PathVariable String userId) {
         return ResponseEntity.ok(adminUserService.activateUser(userId));
+    }
+
+    @PostMapping("/{userId}/role")
+    public ResponseEntity<AdminUserDto> updateUserRole(
+            @PathVariable String userId,
+            @RequestBody Map<String, String> body,
+            Authentication authentication) {
+        String role = body.get("role");
+        String actorUserId = authentication != null ? String.valueOf(authentication.getPrincipal()) : null;
+        return ResponseEntity.ok(adminUserService.updateUserRole(userId, role, actorUserId));
     }
 }
