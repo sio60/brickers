@@ -7,6 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { getMyProfile } from "@/lib/api/myApi";
 import LoginModal from "@/components/common/LoginModal";
+import AgeSelectionModal from "@/components/kids/AgeSelectionModal";
 import BrickBotModal from "./BrickBotModal";
 import styles from "./FloatingMenuButton.module.css";
 
@@ -20,6 +21,7 @@ export default function FloatingMenuButton() {
     const [isOpen, setIsOpen] = useState(false);
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isChatOpen, setIsChatOpen] = useState(false);
+    const [isAgeModalOpen, setIsAgeModalOpen] = useState(false);
     const [showHint, setShowHint] = useState(true);
 
     useEffect(() => {
@@ -68,6 +70,40 @@ export default function FloatingMenuButton() {
             return;
         }
         setIsOpen(!isOpen);
+    };
+
+    const handleCreateAction = () => {
+        if (!isAuthenticated) {
+            router.push('?login=true');
+            return;
+        }
+        setIsAgeModalOpen(true);
+    };
+
+    const handleLevelSelect = (url: string | null, file: File | null, age: string, prompt?: string) => {
+        if (prompt) {
+            router.push(`/kids/main?age=${age}&prompt=${encodeURIComponent(prompt)}`);
+            return;
+        }
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const dataUrl = reader.result as string;
+                sessionStorage.setItem('pendingUpload', JSON.stringify({
+                    name: file.name,
+                    type: file.type,
+                    dataUrl
+                }));
+                router.push(`/kids/main?age=${age}`);
+            };
+            reader.readAsDataURL(file);
+            return;
+        }
+
+        if (url) {
+            router.push(`/kids/main?age=${age}&model=${encodeURIComponent(url)}`);
+        }
     };
 
     return (
@@ -127,6 +163,12 @@ export default function FloatingMenuButton() {
             <BrickBotModal
                 isOpen={isChatOpen}
                 onClose={() => setIsChatOpen(false)}
+                onCreateAction={handleCreateAction}
+            />
+            <AgeSelectionModal
+                isOpen={isAgeModalOpen}
+                onClose={() => setIsAgeModalOpen(false)}
+                onSelect={handleLevelSelect}
             />
         </>
     );
