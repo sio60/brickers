@@ -60,6 +60,9 @@ public class GenerateJobEntity {
     /** 사용자 표시용 제목(선택) */
     private String title;
 
+    /** 이미지 분류 전체 카테고리 (Animal, Character, 등) */
+    private String imageCategory; // [New]
+
     /** 언어 설정 (ko, en, ja) */
     private String language;
 

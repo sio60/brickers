@@ -18,6 +18,8 @@ export interface GalleryItem {
     screenshotUrls?: Record<string, string>;  // 6면 스크린샷 URL 맵
     isPro?: boolean;       // PRO 모드 여부
     visibility: 'PUBLIC' | 'PRIVATE';
+    imageCategory?: string; // [NEW]
+    backgroundUrl?: string; // [NEW]
     createdAt: string;
     updatedAt: string;
     likeCount: number;
@@ -40,6 +42,8 @@ export interface GalleryCreateRequest {
     parts?: number;        // 최종 브릭 개수
     screenshotUrls?: Record<string, string>;  // 6면 스크린샷 URL 맵
     visibility?: 'PUBLIC' | 'PRIVATE';
+    imageCategory?: string; // [NEW]
+    backgroundUrl?: string; // [NEW]
 }
 
 // 갤러리 등록 응답 타입

@@ -60,6 +60,9 @@ public class MyJobResponse {
     /** 배경 이미지 URL (Nano Banana) */
     private String backgroundUrl;
 
+    /** 이미지 분류 전체 카테고리 (Animal, Character, 등) */
+    private String imageCategory; // [NEW]
+
     /** PRO 모드 여부 (보통 1000개 이상) */
     private boolean isPro;
 
@@ -98,6 +101,7 @@ public class MyJobResponse {
                 .parts(j.getParts())
                 .finalTarget(j.getFinalTarget())
                 .isPro(j.getParts() != null && j.getParts() >= 1000)
+                .imageCategory(j.getImageCategory()) // [NEW]
                 .createdAt(j.getCreatedAt())
                 .updatedAt(j.getUpdatedAt())
                 .stageUpdatedAt(j.getStageUpdatedAt())

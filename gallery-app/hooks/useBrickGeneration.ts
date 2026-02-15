@@ -62,6 +62,7 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
             setStatus("loading");
             const startTime = Date.now();
             let jid: string | undefined;
+            let latestCategory = "";
 
             await sleep(200);
             setDebugLog(tRef.current.kids.generate.starting);
@@ -130,6 +131,15 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
 
                 useJobStore.getState().setActiveJob({ jobId: jid, status: 'QUEUED', age });
 
+                // [NEW] Track user search keyword if targetPrompt exists
+                if (targetPrompt) {
+                    gtag.trackUserFeedback({
+                        action: "search",
+                        search_term: targetPrompt,
+                        job_id: jid
+                    });
+                }
+
                 let finalData: any = null;
                 for (let i = 0; i < maxAttempts; i++) {
                     if (!alive) return;
@@ -147,6 +157,11 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
                     const statusData = await statusRes.json();
                     const stage = statusData.stage || statusData.status || "QUEUED";
                     setCurrentStage(stage);
+
+                    // [NEW] Capture latest category for fail/success tracking
+                    if (statusData.imageCategory) {
+                        latestCategory = statusData.imageCategory;
+                    }
 
                     let warningMsg = "";
                     if (statusData.status === "RUNNING" && statusData.stageUpdatedAt) {
@@ -181,14 +196,28 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
                         });
 
                         const waitTime = Math.round((Date.now() - startTime) / 1000);
+
+                        // [GA4] Success Tracking
                         gtag.trackGeneration("success", {
                             job_id: jid,
                             age: age,
                             wait_time: waitTime,
                             brick_count: statusData.parts || 0,
                             suggested_tags: statusData.suggestedTags?.join(', '),
-                            lmm_latency: statusData.lmmLatency // [New]
+                            lmm_latency: statusData.lmmLatency,
+                            image_category: latestCategory || statusData.imageCategory // [New]
                         });
+
+                        // [NEW] Track Search Term Fallback (If no user prompt, use identified tags/subject)
+                        if (!targetPrompt) {
+                            const fallbackTerm = statusData.title || (statusData.suggestedTags && statusData.suggestedTags[0]) || "Untitled";
+                            gtag.trackUserFeedback({
+                                action: "search",
+                                search_term: fallbackTerm,
+                                job_id: jid
+                            });
+                        }
+
                         break;
                     }
                 }
@@ -211,10 +240,13 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
                 if (!alive) return;
                 console.error("[useBrickGeneration] Error:", e);
                 setStatus("error");
+
+                // [GA4] Fail Tracking (Include category if identified)
                 gtag.trackGeneration("fail", {
                     job_id: jid || "unknown",
                     error_type: e instanceof Error ? e.name : "UnknownError",
-                    message: e instanceof Error ? e.message : String(e)
+                    message: e instanceof Error ? e.message : String(e),
+                    image_category: latestCategory || undefined // [NEW]
                 });
             }
         };

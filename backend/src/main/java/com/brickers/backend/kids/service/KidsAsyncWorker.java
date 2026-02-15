@@ -103,6 +103,9 @@ public class KidsAsyncWorker {
             log.info("📌 [STEP 3/5] 결과물 저장 시작 (S3 업로드)...");
             long saveStart = System.currentTimeMillis();
 
+            // [Race Condition Fix] DB에서 최신 상태를 다시 읽어와서 중간에 PATCH된 데이터(카테고리, PDF 등) 유실 방지
+            job = generateJobRepository.findById(jobId).orElse(job);
+
             applySuccessResultToJob(job, safeUserId, response);
 
             long saveElapsed = System.currentTimeMillis() - saveStart;
@@ -180,6 +183,63 @@ public class KidsAsyncWorker {
         if (!isBlank(bomUrl)) {
             log.info("   ✅ [SAVE] BOM S3 URL 직접 사용 | url={}", truncateUrl(bomUrl));
             job.setBomUrl(bomUrl);
+        }
+
+        // 4.1. backgroundUrl [NEW]
+        String bgUrl = asString(response.get("backgroundUrl"));
+        if (!isBlank(bgUrl)) {
+            log.info("   ✅ [SAVE] Background S3 URL 직접 사용 | url={}", truncateUrl(bgUrl));
+            job.setBackgroundUrl(bgUrl);
+        }
+
+        // 5. [FIX] suggestedTags & imageCategory (AI 서버에서 누락된 경우 DB 덮어쓰기 방지)
+        try {
+            if (response.containsKey("suggestedTags")) {
+                Object tags = response.get("suggestedTags");
+                if (tags instanceof java.util.List) {
+                    @SuppressWarnings("unchecked")
+                    java.util.List<String> tagList = (java.util.List<String>) tags;
+                    job.setSuggestedTags(tagList);
+                    log.info("   ✅ [SAVE] suggestedTags 저장: {}", tagList);
+                }
+            }
+            if (response.containsKey("imageCategory")) {
+                job.setImageCategory(asString(response.get("imageCategory")));
+                log.info("   ✅ [SAVE] imageCategory 저장: {}", job.getImageCategory());
+            }
+
+            // [NEW] screenshots 저장 (Stale overwrite 방지)
+            if (response.containsKey("screenshots")) {
+                Object ss = response.get("screenshots");
+                if (ss instanceof java.util.Map) {
+                    @SuppressWarnings("unchecked")
+                    java.util.Map<String, String> ssMap = (java.util.Map<String, String>) ss;
+                    job.setScreenshotUrls(ssMap);
+                    log.info("   ✅ [SAVE] screenshots {}개 저장", ssMap.size());
+                }
+            }
+
+            // 6. [NEW] parts, finalTarget, subject 저장
+            if (response.containsKey("parts")) {
+                Object p = response.get("parts");
+                if (p instanceof Number) {
+                    job.setParts(((Number) p).intValue());
+                }
+            }
+            if (response.containsKey("finalTarget")) {
+                Object ft = response.get("finalTarget");
+                if (ft instanceof Number) {
+                    job.setFinalTarget(((Number) ft).intValue());
+                }
+            }
+            if (response.containsKey("subject")) {
+                String sub = asString(response.get("subject"));
+                if (!isBlank(sub)) {
+                    job.setTitle(sub);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("   ⚠️ [SAVE] Tags/Category/Meta 저장 실패: {}", e.getMessage());
         }
 
         // ⚠️ ldrData (base64)가 있으면 여전히 디코딩 후 S3 업로드 필요 (S3 미사용 환경 대비)
