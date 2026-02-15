@@ -59,6 +59,8 @@ public class MyService {
                 throw new IllegalArgumentException("닉네임은 비어 있을 수 없습니다.");
             if (nickname.length() > 20)
                 throw new IllegalArgumentException("닉네임은 20자 이하여야 합니다.");
+            if (userRepository.existsByNicknameAndIdNot(nickname, user.getId()))
+                throw new IllegalArgumentException("Nickname is already taken.");
             user.setNickname(nickname);
         }
 

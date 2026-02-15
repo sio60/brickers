@@ -352,6 +352,31 @@ export default function AdminPage() {
     };
 
     // [NEW] 작업 중단/재시도 핸들러
+    const handleUserRoleChange = async (userId: string, nextRole: "USER" | "ADMIN") => {
+        const confirmMessage = nextRole === "ADMIN"
+            ? "Grant admin role to this user?"
+            : "Change this user role to USER?";
+        if (!confirm(confirmMessage)) return;
+
+        try {
+            const res = await authFetch(`/api/admin/users/${userId}/role`, {
+                method: "POST",
+                body: JSON.stringify({ role: nextRole })
+            });
+            if (res.ok) {
+                alert(nextRole === "ADMIN" ? "Admin role granted." : "Role changed to USER.");
+                fetchUsers();
+                return;
+            }
+
+            const error = await res.json().catch(() => null);
+            alert(error?.message || t.admin.failed);
+        } catch (e) {
+            console.error(e);
+            alert(t.admin.error);
+        }
+    };
+
     const handleJobAction = async (jobId: string, action: 'retry' | 'cancel') => {
         if (!confirm(`Are you sure you want to ${action} this job?`)) return;
         try {
@@ -656,20 +681,20 @@ export default function AdminPage() {
                         {/* [NEW] Jobs Tab */}
                         {activeTab === "jobs" && (
                             <div className={styles.list}>
-                                <div className="flex items-center justify-between mb-4">
+                                <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                                     <h2 className="text-xl font-bold">{t.admin.jobs?.title || "All Jobs Management"}</h2>
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-wrap gap-2">
                                         <input
                                             type="text"
                                             placeholder={t.admin.jobs?.searchPlaceholder || "User Search (Nickname/Email)"}
                                             value={userSearch}
                                             onChange={(e) => setUserSearch(e.target.value)}
-                                            className="px-3 py-1 border border-gray-300 rounded text-sm w-64"
+                                            className="px-3 py-1 border border-gray-300 rounded text-sm w-full sm:w-64"
                                         />
                                         <select
                                             value={filterStatus}
                                             onChange={(e) => setFilterStatus(e.target.value)}
-                                            className="px-3 py-1 border border-gray-300 rounded text-sm"
+                                            className="px-3 py-1 border border-gray-300 rounded text-sm whitespace-nowrap"
                                         >
                                             <option value="">{t.admin.jobs?.filter?.all || "All Status"}</option>
                                             <option value="QUEUED">{t.admin.jobs?.filter?.queued || "Queued"}</option>
@@ -678,7 +703,7 @@ export default function AdminPage() {
                                             <option value="FAILED">{t.admin.jobs?.filter?.failed || "Failed"}</option>
                                             <option value="CANCELED">{t.admin.jobs?.filter?.canceled || "Canceled"}</option>
                                         </select>
-                                        <label className="flex items-center gap-2 px-3 py-1 border border-gray-300 rounded text-sm bg-white cursor-pointer select-none">
+                                        <label className="flex items-center gap-2 px-3 py-1 border border-gray-300 rounded text-sm bg-white cursor-pointer select-none whitespace-nowrap">
                                             <input
                                                 type="checkbox"
                                                 checked={reportedOnly}
@@ -687,12 +712,12 @@ export default function AdminPage() {
                                             />
                                             {t.admin.jobs?.filter?.reportedOnly || "View Reported Only"}
                                         </label>
-                                        <button onClick={fetchJobs} className="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200 text-sm">
+                                        <button onClick={fetchJobs} className="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200 text-sm whitespace-nowrap">
                                             {t.admin.jobs?.action?.refresh || "Refresh"}
                                         </button>
                                     </div>
                                 </div>
-                                <table className="w-full text-left border-collapse bg-white rounded-lg overflow-hidden shadow-sm">
+                                <table className="w-full table-fixed text-left border-collapse bg-white rounded-lg overflow-hidden shadow-sm">
                                     <thead className="bg-gray-50 border-b border-gray-100">
                                         <tr className="text-gray-500 uppercase font-black text-[10px] tracking-wider">
                                             <th className="px-4 py-3 w-20 text-center">{t.admin.jobs?.table?.image || "Image"}</th>
@@ -717,11 +742,18 @@ export default function AdminPage() {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-2">
-                                                    <div className="font-black text-sm text-gray-900 leading-tight mb-1">{job.title || (t.admin.jobs?.table?.untitledJob || "Untitled Job")}</div>
-                                                    <div className="text-[10px] text-gray-400 font-mono tracking-tighter" title={job.id}>{job.id}</div>
+                                                <td className="px-4 py-2 min-w-0">
+                                                    <div
+                                                        className="font-black text-sm text-gray-900 leading-tight mb-1 truncate"
+                                                        title={job.title || (t.admin.jobs?.table?.untitledJob || "Untitled Job")}
+                                                    >
+                                                        {job.title || (t.admin.jobs?.table?.untitledJob || "Untitled Job")}
+                                                    </div>
+                                                    <div className="text-[10px] text-gray-400 font-mono tracking-tight truncate" title={job.id}>
+                                                        {job.id}
+                                                    </div>
                                                 </td>
-                                                <td className="px-4 py-2">
+                                                <td className="px-4 py-2 min-w-0">
                                                     <div className="text-sm font-bold text-gray-800 truncate mb-0.5">{job.userInfo?.nickname || (t.admin.jobs?.table?.unknownUser || "Unknown")}</div>
                                                     <div className="text-[10px] text-gray-400 truncate opacity-70">{job.userInfo?.email || job.userId}</div>
                                                 </td>
@@ -732,7 +764,9 @@ export default function AdminPage() {
                                                                 job.status === 'RUNNING' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
                                                         {job.status}
                                                     </span>
-                                                    <div className="text-[9px] font-bold text-gray-400 mt-1.5 uppercase tracking-wider">{job.stage}</div>
+                                                    <div className="text-[9px] font-bold text-gray-400 mt-1.5 uppercase tracking-wider truncate" title={job.stage}>
+                                                        {job.stage}
+                                                    </div>
                                                 </td>
                                                 <td className="px-4 py-2 text-right">
                                                     <div className="text-xs font-bold text-gray-700">
@@ -757,23 +791,23 @@ export default function AdminPage() {
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
-                                                    <div className="flex justify-end gap-2">
+                                                    <div className="flex justify-end gap-2 flex-wrap">
                                                         <button
                                                             onClick={() => setTraceJobId(job.id)}
-                                                            className="text-xs text-gray-600 hover:text-black font-medium px-2 py-1 border border-gray-200 rounded hover:bg-gray-50"
+                                                            className="text-xs text-gray-600 hover:text-black font-medium px-2 py-1 border border-gray-200 rounded hover:bg-gray-50 whitespace-nowrap"
                                                         >
                                                             HISTORY
                                                         </button>
                                                         <button
                                                             onClick={() => setConclusionJobId(job.id)}
-                                                            className="text-xs text-indigo-600 hover:text-indigo-800 font-bold px-2 py-1 border border-indigo-100 rounded bg-indigo-50/30 hover:bg-indigo-50 transition-colors"
+                                                            className="text-xs text-indigo-600 hover:text-indigo-800 font-bold px-2 py-1 border border-indigo-100 rounded bg-indigo-50/30 hover:bg-indigo-50 transition-colors whitespace-nowrap"
                                                         >
                                                             CONCLUSION
                                                         </button>
                                                         {(job.status === 'FAILED' || job.status === 'CANCELED') && (
                                                             <button
                                                                 onClick={() => handleJobAction(job.id, 'retry')}
-                                                                className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 border border-blue-200 rounded hover:bg-blue-50"
+                                                                className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 border border-blue-200 rounded hover:bg-blue-50 whitespace-nowrap"
                                                             >
                                                                 {t.admin.jobs?.action?.retry || "Retry"}
                                                             </button>
@@ -781,7 +815,7 @@ export default function AdminPage() {
                                                         {(job.status === 'QUEUED' || job.status === 'RUNNING') && (
                                                             <button
                                                                 onClick={() => handleJobAction(job.id, 'cancel')}
-                                                                className="text-xs text-red-600 hover:text-red-800 font-medium px-2 py-1 border border-red-200 rounded hover:bg-red-50"
+                                                                className="text-xs text-red-600 hover:text-red-800 font-medium px-2 py-1 border border-red-200 rounded hover:bg-red-50 whitespace-nowrap"
                                                             >
                                                                 {t.admin.jobs?.action?.cancel || "Cancel"}
                                                             </button>
@@ -926,6 +960,7 @@ export default function AdminPage() {
                                         <tr>
                                             <th style={{ padding: "12px", textAlign: "left" }}>User info</th>
                                             <th style={{ padding: "12px", textAlign: "left" }}>Membership</th>
+                                            <th style={{ padding: "12px", textAlign: "left" }}>Role</th>
                                             <th style={{ padding: "12px", textAlign: "left" }}>Status</th>
                                             <th style={{ padding: "12px", textAlign: "left" }}>Actions</th>
                                         </tr>
@@ -947,6 +982,20 @@ export default function AdminPage() {
                                                     </span>
                                                 </td>
                                                 <td style={{ padding: "12px" }}>
+                                                    <span
+                                                        className={styles.statusBadge}
+                                                        style={{
+                                                            background: user.role === "ADMIN" ? "#f6ffed" : "#f0f5ff",
+                                                            color: user.role === "ADMIN" ? "#389e0d" : "#1d39c4",
+                                                            padding: "4px 8px",
+                                                            borderRadius: "4px",
+                                                            fontSize: "12px"
+                                                        }}
+                                                    >
+                                                        {user.role || "USER"}
+                                                    </span>
+                                                </td>
+                                                <td style={{ padding: "12px" }}>
                                                     <span className={`${styles.statusBadge}`}
                                                         style={{
                                                             background: user.accountState === "ACTIVE" ? "#f6ffed" : user.accountState === "SUSPENDED" ? "#fff1f0" : "#fffbe6",
@@ -958,21 +1007,37 @@ export default function AdminPage() {
                                                     </span>
                                                 </td>
                                                 <td style={{ padding: "12px" }}>
-                                                    {user.accountState === "ACTIVE" ? (
+                                                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                                                        {user.accountState === "ACTIVE" ? (
+                                                            <button
+                                                                onClick={() => handleUserSuspend(user.id)}
+                                                                style={{ padding: "6px 12px", borderRadius: "4px", border: "1px solid #ff4d4f", background: "#fff", color: "#ff4d4f", cursor: "pointer", fontSize: "12px" }}
+                                                            >
+                                                                Suspend
+                                                            </button>
+                                                        ) : user.accountState === "SUSPENDED" ? (
+                                                            <button
+                                                                onClick={() => handleUserActivate(user.id)}
+                                                                style={{ padding: "6px 12px", borderRadius: "4px", border: "1px solid #52c41a", background: "#fff", color: "#52c41a", cursor: "pointer", fontSize: "12px" }}
+                                                            >
+                                                                Activate
+                                                            </button>
+                                                        ) : null}
                                                         <button
-                                                            onClick={() => handleUserSuspend(user.id)}
-                                                            style={{ padding: "6px 12px", borderRadius: "4px", border: "1px solid #ff4d4f", background: "#fff", color: "#ff4d4f", cursor: "pointer", fontSize: "12px" }}
+                                                            onClick={() => handleUserRoleChange(user.id, user.role === "ADMIN" ? "USER" : "ADMIN")}
+                                                            style={{
+                                                                padding: "6px 12px",
+                                                                borderRadius: "4px",
+                                                                border: "1px solid #1677ff",
+                                                                background: "#fff",
+                                                                color: "#1677ff",
+                                                                cursor: "pointer",
+                                                                fontSize: "12px"
+                                                            }}
                                                         >
-                                                            Suspend
+                                                            {user.role === "ADMIN" ? "Set USER" : "Set ADMIN"}
                                                         </button>
-                                                    ) : user.accountState === "SUSPENDED" ? (
-                                                        <button
-                                                            onClick={() => handleUserActivate(user.id)}
-                                                            style={{ padding: "6px 12px", borderRadius: "4px", border: "1px solid #52c41a", background: "#fff", color: "#52c41a", cursor: "pointer", fontSize: "12px" }}
-                                                        >
-                                                            Activate
-                                                        </button>
-                                                    ) : null}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}

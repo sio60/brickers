@@ -857,7 +857,7 @@ function MyPageContent() {
                                         <h3 className={styles.inquiry__title}>{inquiry.title}</h3>
 
                                         {expandedInquiryId === inquiry.id && (
-                                            <div style={{ marginTop: '12px', borderTop: '1px solid #eee', paddingTop: '12px' }}>
+                                            <div className={styles.inquiry__expand}>
                                                 <p className={styles.inquiry__content}>{inquiry.content}</p>
                                                 {inquiry.answer && (
                                                     <div className={styles.inquiry__answer}>
@@ -888,17 +888,15 @@ function MyPageContent() {
                                         key={report.id}
                                         className={styles.mypage__inquiryCard}
                                         onClick={() => setExpandedReportId(expandedReportId === report.id ? null : report.id)}
-                                        style={{ cursor: 'pointer', position: 'relative' }}
+                                        style={{ cursor: 'pointer' }}
                                     >
-                                        {/* Header: Status and Date */}
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                        <div className={styles.inquiry__header}>
                                             <span className={`${styles.report__statusBadge} ${report.status === 'RESOLVED' ? styles.resolved : styles.pending}`}>
                                                 {getReportStatusLabel(report.status)}
                                             </span>
                                             <span className={styles.inquiry__date}>{formatDate(report.createdAt)}</span>
                                         </div>
 
-                                        {/* Main Content: Type, Reason, Description */}
                                         <span className={styles.report__type}>{getReportTargetLabel(report.targetType)}</span>
                                         <span className={styles.report__reason}>{getReportReasonLabel(report.reason)}</span>
 
@@ -909,7 +907,6 @@ function MyPageContent() {
                                             {t.reports.dataId}: {report.targetId || report.dataId || "N/A"}
                                         </div>
 
-                                        {/* Admin Answer (Resolution Note) - Show when expanded */}
                                         {expandedReportId === report.id && (report.resolutionNote || report.adminComment) && (
                                             <div className={styles.report__adminAnswerBox}>
                                                 <div className={styles.report__adminTitleBadge}>
@@ -956,11 +953,11 @@ function MyPageContent() {
                                         <h3 className={styles.inquiry__title}>
                                             {order.planName || "Unknown Plan"}
                                         </h3>
-                                        <p style={{ color: '#666', fontSize: '14px', margin: '4px 0 0' }}>
+                                        <p className={styles.refund__amount}>
                                             {order.amount?.toLocaleString()}원
                                         </p>
                                         {order.cancelReason && (
-                                            <div style={{ marginTop: '8px', padding: '8px 12px', background: '#f9f9f9', borderRadius: '6px', fontSize: '13px', color: '#888' }}>
+                                            <div className={styles.refund__reasonBox}>
                                                 {(t as any).refunds.cancelReason}: {order.cancelReason}
                                             </div>
                                         )}
