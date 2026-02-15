@@ -23,8 +23,30 @@ export default function GalleryPanel({ title, activeCategory, onCategoryChange, 
 
     const menuItems: MenuItem[] = [
         { id: 'all', label: t.main.galleryList.allCreations },
+        { id: 'level1', label: t.main.galleryList.level1 },
+        { id: 'level2', label: t.main.galleryList.level2 },
+        { id: 'level3', label: t.main.galleryList.level3 },
+        { id: 'pro', label: t.main.galleryList.pro },
         { id: 'bookmarks', label: t.main.galleryList.myBookmarks },
     ];
+
+    const getCategoryTitle = () => {
+        switch (activeCategory) {
+            case 'level1':
+                return t.main.galleryList.level1;
+            case 'level2':
+                return t.main.galleryList.level2;
+            case 'level3':
+                return t.main.galleryList.level3;
+            case 'pro':
+                return t.main.galleryList.pro;
+            case 'bookmarks':
+                return t.main.galleryList.myBookmarks;
+            case 'all':
+            default:
+                return t.main.galleryList.allCreations;
+        }
+    };
 
     return (
         <div className="gallery-layout w-full max-w-[1200px] mx-auto my-1 flex h-[calc(100vh-140px)] gap-4 px-2">
@@ -64,7 +86,7 @@ export default function GalleryPanel({ title, activeCategory, onCategoryChange, 
                     <div className="flex-shrink-0 flex items-center justify-between px-6 py-2 border-b border-gray-50">
                         {title && (
                             <h2 className="text-3xl font-black text-black tracking-tighter italic">
-                                {activeCategory === 'all' ? t.main.galleryList.allCreations : t.main.galleryList.myBookmarks}
+                                {getCategoryTitle()}
                             </h2>
                         )}
                         {rightAction && (

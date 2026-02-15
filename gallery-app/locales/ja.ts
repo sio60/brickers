@@ -25,6 +25,10 @@ export const ja = {
         galleryList: {
             workspace: "ワークスペース",
             allCreations: "全ギャラリー",
+            level1: "レベル 1",
+            level2: "レベル 2",
+            level3: "レベル 3",
+            pro: "PRO",
             myBookmarks: "マイブックマーク",
             gallery: "ギャラリー"
         }

@@ -11,6 +11,9 @@ import com.brickers.backend.gallery.entity.Visibility;
 import com.brickers.backend.gallery.repository.GalleryBookmarkRepository;
 import com.brickers.backend.gallery.repository.GalleryPostRepository;
 import com.brickers.backend.gallery.repository.GalleryReactionRepository;
+import com.brickers.backend.job.entity.GenerateJobEntity;
+import com.brickers.backend.job.entity.KidsLevel;
+import com.brickers.backend.job.repository.GenerateJobRepository;
 import com.brickers.backend.user.entity.User;
 import com.brickers.backend.user.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +33,14 @@ public class GalleryService {
     private final GalleryPostRepository galleryPostRepository;
     private final GalleryBookmarkRepository galleryBookmarkRepository;
     private final GalleryReactionRepository galleryReactionRepository;
+    private final GenerateJobRepository generateJobRepository;
     private final CurrentUserService currentUserService;
     private final GalleryRevalidateService revalidateService;
+
+    private static final int LEVEL1_MIN_PARTS = 100;
+    private static final int LEVEL2_MIN_PARTS = 200;
+    private static final int LEVEL3_MIN_PARTS = 300;
+    private static final int PRO_MIN_PARTS = 1000;
 
     /** 게시글 생성: 로그인 유저를 author로 설정하고 게시글을 저장한다. */
     public GalleryResponse create(Authentication auth, GalleryCreateRequest req) {
@@ -47,6 +56,7 @@ public class GalleryService {
         }
 
         LocalDateTime now = LocalDateTime.now();
+        KidsLevel postLevel = resolvePostLevel(jobId, req.getParts());
         GalleryPostEntity post = GalleryPostEntity.builder()
                 .jobId(jobId) // ✅ jobId 저장
                 .authorId(me.getId())
@@ -60,6 +70,7 @@ public class GalleryService {
                 .sourceImageUrl(normalizeUrlOrNull(req.getSourceImageUrl()))
                 .glbUrl(normalizeUrlOrNull(req.getGlbUrl()))
                 .parts(req.getParts())
+                .level(postLevel)
                 .imageCategory(req.getImageCategory()) // [NEW]
                 .backgroundUrl(normalizeUrlOrNull(req.getBackgroundUrl())) // [NEW]
                 .screenshotUrls(req.getScreenshotUrls())
@@ -78,11 +89,17 @@ public class GalleryService {
     }
 
     /** 공개 게시글 목록: PUBLIC + deleted=false를 최신순(createdAt DESC)으로 페이징 조회한다. */
-    public Page<GalleryResponse> listPublic(int page, int size, String sort, Authentication authOrNull) {
+    public Page<GalleryResponse> listPublic(int page, int size, String sort, String level, Authentication authOrNull) {
         Pageable pageable = pageReq(page, size, sort);
+        KidsLevel targetLevel = parseLevel(level);
+        Page<GalleryPostEntity> result;
 
-        Page<GalleryPostEntity> result = galleryPostRepository.findByDeletedFalseAndVisibility(Visibility.PUBLIC,
-                pageable);
+        if (targetLevel == null) {
+            result = galleryPostRepository.findByDeletedFalseAndVisibility(Visibility.PUBLIC, pageable);
+        } else {
+            result = galleryPostRepository.findByDeletedFalseAndVisibilityAndLevel(Visibility.PUBLIC, targetLevel,
+                    pageable);
+        }
 
         String userId = currentUserService.getUserIdOrNull(authOrNull);
         return result.map(p -> this.toResponseWithUserState(p, userId));
@@ -106,7 +123,7 @@ public class GalleryService {
             return result.map(p -> this.toResponseWithUserState(p, userId));
         }
 
-        return listPublic(page, size, sort, authOrNull);
+        return listPublic(page, size, sort, null, authOrNull);
     }
 
     private PageRequest pageReq(int page, int size, String sort) {
@@ -260,6 +277,52 @@ public class GalleryService {
         return null;
     }
 
+    private KidsLevel parseLevel(String level) {
+        if (level == null || level.isBlank()) {
+            return null;
+        }
+
+        String normalized = level.trim().toLowerCase();
+        return switch (normalized) {
+            case "l1", "level1", "level-1", "1" -> KidsLevel.LEVEL_1;
+            case "l2", "level2", "level-2", "2" -> KidsLevel.LEVEL_2;
+            case "l3", "level3", "level-3", "3" -> KidsLevel.LEVEL_3;
+            case "pro" -> KidsLevel.PRO;
+            default -> null;
+        };
+    }
+
+    private KidsLevel resolvePostLevel(String jobId, Integer parts) {
+        if (jobId != null && !jobId.isBlank()) {
+            Optional<GenerateJobEntity> job = generateJobRepository.findById(jobId);
+            if (job.isPresent() && job.get().getLevel() != null) {
+                return job.get().getLevel();
+            }
+        }
+
+        return inferLevelFromParts(parts);
+    }
+
+    private KidsLevel inferLevelFromParts(Integer parts) {
+        if (parts == null) {
+            return null;
+        }
+
+        if (parts >= PRO_MIN_PARTS) {
+            return KidsLevel.PRO;
+        }
+        if (parts >= LEVEL3_MIN_PARTS) {
+            return KidsLevel.LEVEL_3;
+        }
+        if (parts >= LEVEL2_MIN_PARTS) {
+            return KidsLevel.LEVEL_2;
+        }
+        if (parts >= LEVEL1_MIN_PARTS) {
+            return KidsLevel.LEVEL_1;
+        }
+        return null;
+    }
+
     private GalleryResponse toResponse(GalleryPostEntity post) {
         return toResponseWithUserState(post, null);
     }
@@ -293,10 +356,11 @@ public class GalleryService {
                 .sourceImageUrl(post.getSourceImageUrl())
                 .glbUrl(post.getGlbUrl())
                 .parts(post.getParts())
+                .level(post.getLevel())
                 .imageCategory(post.getImageCategory()) // [NEW]
                 .backgroundUrl(post.getBackgroundUrl()) // [NEW]
                 .screenshotUrls(post.getScreenshotUrls())
-                .isPro(post.getParts() != null && post.getParts() >= 1000)
+                .isPro(post.getLevel() == KidsLevel.PRO || (post.getParts() != null && post.getParts() >= PRO_MIN_PARTS))
                 .visibility(post.getVisibility())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
