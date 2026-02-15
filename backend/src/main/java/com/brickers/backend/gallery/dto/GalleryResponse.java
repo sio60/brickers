@@ -30,6 +30,8 @@ public class GalleryResponse {
     private KidsLevel level;
     private Map<String, String> screenshotUrls;
     private boolean isPro;
+    private String imageCategory; // [NEW]
+    private String backgroundUrl; // [NEW]
 
     private Visibility visibility;
 

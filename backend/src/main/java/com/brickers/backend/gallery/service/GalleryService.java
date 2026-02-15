@@ -71,6 +71,8 @@ public class GalleryService {
                 .glbUrl(normalizeUrlOrNull(req.getGlbUrl()))
                 .parts(req.getParts())
                 .level(postLevel)
+                .imageCategory(req.getImageCategory()) // [NEW]
+                .backgroundUrl(normalizeUrlOrNull(req.getBackgroundUrl())) // [NEW]
                 .screenshotUrls(req.getScreenshotUrls())
                 .visibility(req.getVisibility() == null ? Visibility.PUBLIC : req.getVisibility())
                 .deleted(false)
@@ -355,6 +357,8 @@ public class GalleryService {
                 .glbUrl(post.getGlbUrl())
                 .parts(post.getParts())
                 .level(post.getLevel())
+                .imageCategory(post.getImageCategory()) // [NEW]
+                .backgroundUrl(post.getBackgroundUrl()) // [NEW]
                 .screenshotUrls(post.getScreenshotUrls())
                 .isPro(post.getLevel() == KidsLevel.PRO || (post.getParts() != null && post.getParts() >= PRO_MIN_PARTS))
                 .visibility(post.getVisibility())

@@ -54,6 +54,11 @@ public class GalleryPostEntity {
 
     @Indexed
     private KidsLevel level;
+    /** 이미지 분류 카테고리 (Animal, Character 등) */
+    private String imageCategory;
+
+    /** 배경 이미지 S3 URL (Nano Banana/Gemini 생성) */
+    private String backgroundUrl;
 
     @Builder.Default
     private Visibility visibility = Visibility.PUBLIC;

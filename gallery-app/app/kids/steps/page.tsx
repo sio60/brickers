@@ -689,6 +689,8 @@ function KidsStepPageContent() {
     const [shareBackgroundUrl, setShareBackgroundUrl] = useState<string | null>(null);
     const [isSharing, setIsSharing] = useState(false);
     const [shareUrl, setShareUrl] = useState<string | null>(null);
+    const [imageCategory, setImageCategory] = useState<string | null>(null); // [NEW]
+    const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null); // [NEW]
 
     const revokeAll = (arr: string[]) => {
         arr.forEach((u) => { try { URL.revokeObjectURL(u); } catch { } });
@@ -846,6 +848,8 @@ function KidsStepPageContent() {
                     if (data.pdfUrl || data.pdf_url) setServerPdfUrl(data.pdfUrl || data.pdf_url);
                     if (data.screenshotUrls) setJobScreenshotUrls(data.screenshotUrls);
                     if (data.backgroundUrl) setShareBackgroundUrl(data.backgroundUrl);
+                    if (data.imageCategory) setImageCategory(data.imageCategory); // [NEW]
+                    if (data.previewImageUrl) setPreviewImageUrl(data.previewImageUrl); // [NEW]
                     setJobLoaded(true);
                 }
             } catch (e) {
@@ -952,12 +956,14 @@ function KidsStepPageContent() {
                 title: inputTitle,
                 content: t.kids.steps.galleryModal.content,
                 tags: suggestedTags.length > 0 ? suggestedTags : ["Kids", "Brick"],
-                thumbnailUrl: jobThumbnailUrl || undefined,
+                thumbnailUrl: previewImageUrl || jobThumbnailUrl || undefined, // [CHANGE] Rendered brick image preferred
                 ldrUrl: ldrUrl || undefined,
                 sourceImageUrl: jobThumbnailUrl || undefined,
                 glbUrl: glbUrl || undefined,
                 parts: brickCount || undefined,
                 screenshotUrls: jobScreenshotUrls || undefined,
+                imageCategory: imageCategory || undefined, // [NEW]
+                backgroundUrl: shareBackgroundUrl || undefined, // [NEW]
                 visibility: "PUBLIC",
             });
             alert(t.kids.steps.galleryModal.success);
