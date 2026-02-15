@@ -1,14 +1,17 @@
 package com.brickers.backend.admin.user.service;
 
 import com.brickers.backend.admin.user.dto.AdminUserDto;
-import com.brickers.backend.user.entity.User;
-import com.brickers.backend.user.repository.UserRepository;
 import com.brickers.backend.user.entity.AccountState;
+import com.brickers.backend.user.entity.User;
+import com.brickers.backend.user.entity.UserRole;
+import com.brickers.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +22,6 @@ public class AdminUserService {
     @Transactional(readOnly = true)
     public Page<AdminUserDto> getUsers(Pageable pageable) {
         return userRepository.findAll(pageable).map(AdminUserDto::from);
-        // TODO: 검색 기능 추가 (e.g. findByNicknameContainingOrEmailContaining)
     }
 
     @Transactional
@@ -35,11 +37,40 @@ public class AdminUserService {
     public AdminUserDto activateUser(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-        // User 엔티티에 activate 메서드가 없으므로 직접 세터 사용
         user.setAccountState(AccountState.ACTIVE);
         user.setSuspendedAt(null);
         user.setSuspendedReason(null);
-        user.setUpdatedAt(java.time.LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+        return AdminUserDto.from(user);
+    }
+
+    @Transactional
+    public AdminUserDto updateUserRole(String userId, String role, String actorUserId) {
+        if (role == null || role.isBlank()) {
+            throw new IllegalArgumentException("Role is required.");
+        }
+
+        UserRole targetRole;
+        try {
+            targetRole = UserRole.valueOf(role.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid role: " + role);
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+        if (actorUserId != null && actorUserId.equals(userId) && targetRole == UserRole.USER) {
+            throw new IllegalArgumentException("You cannot demote your own admin role.");
+        }
+
+        if (user.getRole() == targetRole) {
+            return AdminUserDto.from(user);
+        }
+
+        user.setRole(targetRole);
+        user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
         return AdminUserDto.from(user);
     }
