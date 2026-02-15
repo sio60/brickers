@@ -177,7 +177,7 @@ public class GoogleAnalyticsService {
                     .addMetrics(Metric.newBuilder().setName("eventCount"))
                     .setDimensionFilter(FilterExpression.newBuilder()
                             .setFilter(Filter.newBuilder()
-                                    .setFieldName("customUser:nickname") // userId 대신 닉네임 사용
+                                    .setFieldName("customUser:userId")
                                     .setStringFilter(Filter.StringFilter.newBuilder()
                                             .setValue(userId)) // 주의: 여기서 userId 변수는 이제 닉네임을 담게 됨
                                     .build())
@@ -264,7 +264,7 @@ public class GoogleAnalyticsService {
         try {
             RunReportRequest request = RunReportRequest.newBuilder()
                     .setProperty("properties/" + propertyId)
-                    .addDimensions(Dimension.newBuilder().setName("customUser:nickname")) // GA4 User Property: nickname
+                    .addDimensions(Dimension.newBuilder().setName("customUser:userId"))
                     .addMetrics(Metric.newBuilder().setName("eventCount"))
                     .addDateRanges(DateRange.newBuilder()
                             .setStartDate(days + "daysAgo")
@@ -412,7 +412,7 @@ public class GoogleAnalyticsService {
             List<RunReportRequest> requests2 = new ArrayList<>();
             requests2.add(RunReportRequest.newBuilder()
                     .setProperty("properties/" + propertyId)
-                    .addDimensions(Dimension.newBuilder().setName("customUser:nickname"))
+                    .addDimensions(Dimension.newBuilder().setName("customUser:userId"))
                     .addMetrics(Metric.newBuilder().setName("eventCount"))
                     .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
                     .setLimit(5)

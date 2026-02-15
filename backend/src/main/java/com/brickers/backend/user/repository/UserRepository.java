@@ -29,6 +29,7 @@ public interface UserRepository extends MongoRepository<User, String> {
 
     // 닉네임 존재 여부 확인
     boolean existsByNickname(String nickname);
+    boolean existsByNicknameAndIdNot(String nickname, String id);
 
     // 이메일 존재 여부 확인
     boolean existsByEmail(String email);

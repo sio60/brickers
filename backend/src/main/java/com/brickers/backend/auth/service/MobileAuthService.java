@@ -101,7 +101,7 @@ public class MobileAuthService {
         User user = User.builder()
                 .provider("kakao")
                 .providerId(kakaoUser.id)
-                .nickname(kakaoUser.nickname != null ? kakaoUser.nickname : "User" + kakaoUser.id.substring(0, 6))
+                .nickname(resolveUniqueNickname(kakaoUser.nickname, kakaoUser.id))
                 .email(kakaoUser.email)
                 .profileImage(kakaoUser.profileImage)
                 .role(UserRole.USER)
@@ -112,6 +112,32 @@ public class MobileAuthService {
 
         user.ensureDefaults();
         return userRepository.save(user);
+    }
+
+    private String resolveUniqueNickname(String rawNickname, String seed) {
+        String fallback = "User" + (seed != null && seed.length() >= 6 ? seed.substring(0, 6) : "000000");
+        String base = (rawNickname != null && !rawNickname.isBlank()) ? rawNickname.trim() : fallback;
+        if (base.length() > 20) {
+            base = base.substring(0, 20);
+        }
+
+        if (!userRepository.existsByNickname(base)) {
+            return base;
+        }
+
+        // Keep nickname <= 20 chars while appending numeric suffix.
+        for (int i = 1; i <= 9999; i++) {
+            String suffix = "_" + i;
+            int baseLen = Math.max(1, 20 - suffix.length());
+            String candidate = base.length() > baseLen ? base.substring(0, baseLen) : base;
+            candidate = candidate + suffix;
+            if (!userRepository.existsByNickname(candidate)) {
+                return candidate;
+            }
+        }
+
+        String fallbackUnique = "User" + (System.currentTimeMillis() % 1_000_000_000L);
+        return fallbackUnique.length() > 20 ? fallbackUnique.substring(0, 20) : fallbackUnique;
     }
 
     private record KakaoUserInfo(String id, String nickname, String email, String profileImage) {
