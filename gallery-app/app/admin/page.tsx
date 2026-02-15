@@ -105,6 +105,38 @@ type Comment = {
     updatedAt: string;
 };
 
+const createdAtTime = (createdAt?: string) => {
+    if (!createdAt) return 0;
+    const time = new Date(createdAt).getTime();
+    return Number.isNaN(time) ? 0 : time;
+};
+
+const sortInquiriesByPendingAnswer = (items: Inquiry[]) => {
+    return [...items].sort((a, b) => {
+        const aPending = !a.answer?.content?.trim();
+        const bPending = !b.answer?.content?.trim();
+
+        if (aPending !== bPending) {
+            return aPending ? -1 : 1;
+        }
+
+        return createdAtTime(b.createdAt) - createdAtTime(a.createdAt);
+    });
+};
+
+const sortReportsByPendingAnswer = (items: Report[]) => {
+    return [...items].sort((a, b) => {
+        const aPending = a.status === "PENDING" || !a.resolutionNote?.trim();
+        const bPending = b.status === "PENDING" || !b.resolutionNote?.trim();
+
+        if (aPending !== bPending) {
+            return aPending ? -1 : 1;
+        }
+
+        return createdAtTime(b.createdAt) - createdAtTime(a.createdAt);
+    });
+};
+
 export default function AdminPage() {
     const router = useRouter();
     const { t } = useLanguage();
@@ -203,7 +235,7 @@ export default function AdminPage() {
             const res = await authFetch("/api/admin/inquiries?page=0&size=20");
             if (res.ok) {
                 const data = await res.json();
-                setInquiries(data.content || []);
+                setInquiries(sortInquiriesByPendingAnswer(data.content || []));
             }
         } catch (e) {
             console.error(e);
@@ -394,7 +426,7 @@ export default function AdminPage() {
             const res = await authFetch("/api/admin/reports?page=0&size=20");
             if (res.ok) {
                 const data = await res.json();
-                setReports(data.content || []);
+                setReports(sortReportsByPendingAnswer(data.content || []));
             }
         } catch (e) {
             console.error(e);
