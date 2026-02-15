@@ -171,10 +171,10 @@ public class ReportService {
     // --- Admin Side ---
 
     public Page<ReportResponse> getAllReports(int page, int size) {
-        // 처리되지 않은 신고(resolvedAt == null)를 먼저 보여주고, 같은 그룹 내에서는 최신순 정렬
+        // 처리되지 않은 신고(resolvedAt == null)를 먼저 보여주고, 같은 그룹 내에서는 오래된순 정렬
         Sort sort = Sort.by(
                 Sort.Order.asc("resolvedAt"),
-                Sort.Order.desc("createdAt"));
+                Sort.Order.asc("createdAt"));
         Pageable pageable = PageRequest.of(page, size, sort);
         return reportRepository.findAll(pageable).map(it -> {
             ReportResponse resp = ReportResponse.from(it);

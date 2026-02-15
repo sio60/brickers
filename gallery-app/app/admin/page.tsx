@@ -120,7 +120,7 @@ const sortInquiriesByPendingAnswer = (items: Inquiry[]) => {
             return aPending ? -1 : 1;
         }
 
-        return createdAtTime(b.createdAt) - createdAtTime(a.createdAt);
+        return createdAtTime(a.createdAt) - createdAtTime(b.createdAt);
     });
 };
 
@@ -133,7 +133,7 @@ const sortReportsByPendingAnswer = (items: Report[]) => {
             return aPending ? -1 : 1;
         }
 
-        return createdAtTime(b.createdAt) - createdAtTime(a.createdAt);
+        return createdAtTime(a.createdAt) - createdAtTime(b.createdAt);
     });
 };
 
