@@ -40,6 +40,8 @@ interface PipelineSummary {
         final_target: number;
         ldr_size_kb: number;
         bom_unique_parts: number;
+        est_cost?: number; // [NEW]
+        token_count?: number; // [NEW]
     };
     coscientist?: {
         success: boolean;
@@ -228,6 +230,17 @@ export default function AgentConclusionViewer({ jobId, onClose }: AgentConclusio
                                             <span className="px-2.5 py-1 bg-white/20 rounded-lg text-xs font-bold backdrop-blur-sm">
                                                 💰 Budget {pipelineSummary.budget}
                                             </span>
+                                            {/* [NEW] Cost & Token Display */}
+                                            {pipelineSummary.result.est_cost !== undefined && (
+                                                <span className="px-2.5 py-1 bg-green-500/30 rounded-lg text-xs font-bold backdrop-blur-sm border border-green-400/30">
+                                                    💸 ${pipelineSummary.result.est_cost.toFixed(4)}
+                                                </span>
+                                            )}
+                                            {pipelineSummary.result.token_count !== undefined && (
+                                                <span className="px-2.5 py-1 bg-blue-500/30 rounded-lg text-xs font-bold backdrop-blur-sm border border-blue-400/30">
+                                                    🪙 {pipelineSummary.result.token_count.toLocaleString()} T
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
 

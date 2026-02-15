@@ -242,6 +242,57 @@ public class KidsAsyncWorker {
             log.warn("   ⚠️ [SAVE] Tags/Category/Meta 저장 실패: {}", e.getMessage());
         }
 
+        // 6.5 [NEW] Stability Score
+        try {
+            if (response.containsKey("stabilityScore")) {
+                Object val = response.get("stabilityScore");
+                if (val instanceof Number) {
+                    job.setStabilityScore(((Number) val).intValue());
+                    log.info("   ✅ [SAVE] Stability Score: {}", job.getStabilityScore());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("   ⚠️ [SAVE] Stability Score 저장 실패: {}", e.getMessage());
+        }
+
+        // 7. [NEW] Cost & Token Usage
+        try {
+            // tokenCount
+            if (response.containsKey("tokenCount")) {
+                Object val = response.get("tokenCount");
+                if (val instanceof Number) {
+                    job.setTokenCount(((Number) val).intValue());
+                    log.info("   ✅ [SAVE] Token Count: {}", job.getTokenCount());
+                }
+            }
+
+            // estCost (AI가 계산해서 준 경우)
+            if (response.containsKey("estCost")) {
+                Object val = response.get("estCost");
+                if (val instanceof Number) {
+                    job.setEstCost(((Number) val).doubleValue());
+                    log.info("   ✅ [SAVE] Est Cost (from AI): ${}", job.getEstCost());
+                }
+            }
+
+            // Fallback Calculation if estCost is missing
+            if (job.getEstCost() == null) {
+                double baseCost = 0.30; // Tripo default
+                if (job.getTokenCount() != null) {
+                    // Approximate: $0.15 / 1M tokens (Gemini Flash blended) = 0.00000015
+                    double tokenCost = job.getTokenCount() * 0.00000015;
+                    double total = baseCost + tokenCost;
+                    job.setEstCost(Math.round(total * 10000.0) / 10000.0); // 소수점 4자리 반올림
+                    log.info("   ✅ [SAVE] Est Cost (Calculated): ${}", job.getEstCost());
+                } else {
+                    job.setEstCost(0.35); // Default fallback
+                    log.info("   ✅ [SAVE] Est Cost (Default): $0.35");
+                }
+            }
+        } catch (Exception e) {
+            log.warn("   ⚠️ [SAVE] Cost Calculation Failed: {}", e.getMessage());
+        }
+
         // ⚠️ ldrData (base64)가 있으면 여전히 디코딩 후 S3 업로드 필요 (S3 미사용 환경 대비)
         String ldrData = asString(response.get("ldrData"));
         if (!isBlank(ldrData) && ldrData.startsWith("data:")) {

@@ -52,4 +52,7 @@ public class SqsMessage {
     private Integer finalTarget;
     private List<String> tags;
     private String errorMessage;
+    private Double estCost; // [New]
+    private Integer tokenCount; // [New]
+    private Integer stabilityScore; // [New]
 }

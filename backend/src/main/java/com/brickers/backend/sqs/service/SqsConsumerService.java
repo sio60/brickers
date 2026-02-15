@@ -169,11 +169,33 @@ public class SqsConsumerService {
             if (result.getBackgroundUrl() != null && !result.getBackgroundUrl().isBlank()) {
                 job.setBackgroundUrl(result.getBackgroundUrl());
             }
+
+            // [New] Cost & Token Usage
+            if (result.getTokenCount() != null) {
+                job.setTokenCount(result.getTokenCount());
+            }
+            if (result.getEstCost() != null) {
+                job.setEstCost(result.getEstCost());
+            }
+            if (result.getStabilityScore() != null) {
+                job.setStabilityScore(result.getStabilityScore());
+            }
+            // Fallback for Cost (Optional: SQS message should ideally have it)
+            if (job.getEstCost() == null) {
+                if (job.getTokenCount() != null) {
+                    double baseCost = 0.30;
+                    double tokenCost = job.getTokenCount() * 0.00000015;
+                    job.setEstCost(Math.round((baseCost + tokenCost) * 10000.0) / 10000.0);
+                } else {
+                    job.setEstCost(0.35); // Default fallback
+                }
+            }
+
             job.markDone();
 
             jobRepository.save(job);
 
-            log.info("   ✅ Job 완료 처리 | jobId={} | ldrUrl={}", job.getId(), job.getLdrUrl());
+            log.info("   ✅ Job 완료 처리 | jobId={} | estCost=${}", job.getId(), job.getEstCost());
 
         } else {
             // 실패 - 에러 메시지 저장

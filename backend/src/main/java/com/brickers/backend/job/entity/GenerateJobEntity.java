@@ -121,6 +121,15 @@ public class GenerateJobEntity {
     /** 실패 시 에러 메시지 */
     private String errorMessage;
 
+    /** 예상 비용 (USD) - 토큰 비용 + Tripo($0.3) */
+    private Double estCost; // [New]
+
+    /** 사용된 총 토큰 수 */
+    private Integer tokenCount; // [New]
+
+    /** 구조적 안정성 점수 (0~100) - AI가 계산 */
+    private Integer stabilityScore; // [New]
+
     /** 소프트 삭제 여부 (신고 조치 등) */
     @Builder.Default
     private boolean deleted = false;

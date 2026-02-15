@@ -6,6 +6,7 @@ import com.brickers.backend.admin.stats.dto.JobStatsDto;
 import com.brickers.backend.admin.stats.dto.StatsSummaryDto;
 import com.brickers.backend.admin.stats.dto.TokenStatsDto;
 import com.brickers.backend.gallery.repository.GalleryPostRepository;
+import com.brickers.backend.job.entity.GenerateJobEntity; // [New]
 import com.brickers.backend.job.entity.JobStatus;
 import com.brickers.backend.job.repository.GenerateJobRepository;
 import com.brickers.backend.payment.entity.PaymentOrder;
@@ -57,6 +58,10 @@ public class AdminStatsService {
         long completedJobs = jobRepository.countByStatus(JobStatus.DONE);
         long failedJobs = jobRepository.countByStatus(JobStatus.FAILED);
 
+        // [New] Total Cost & Tokens (Aggregation)
+        Double totalEstCost = jobRepository.sumTotalEstCost();
+        Long totalTokens = jobRepository.sumTotalTokenCount();
+
         return StatsSummaryDto.builder()
                 .totalUsers(totalUsers)
                 .newUsersToday(newUsersToday)
@@ -67,6 +72,8 @@ public class AdminStatsService {
                 .activeJobs(activeJobs)
                 .completedJobs(completedJobs)
                 .failedJobs(failedJobs)
+                .totalEstCost(totalEstCost != null ? Math.round(totalEstCost * 100.0) / 100.0 : 0.0)
+                .totalTokens(totalTokens != null ? totalTokens : 0L)
                 .build();
     }
 
@@ -82,20 +89,37 @@ public class AdminStatsService {
             LocalDateTime start = date.atStartOfDay();
             LocalDateTime end = date.atTime(LocalTime.MAX);
 
-            // 해당 일자의 Job 통계 (createdAt 기준)
-            long successCount = jobRepository.countByStatusAndUpdatedAtAfter(JobStatus.DONE, start);
-            long failedCount = jobRepository.countByStatusAndUpdatedAtAfter(JobStatus.FAILED, start);
+            // Fetch jobs for the day
+            List<GenerateJobEntity> dailyJobs = jobRepository.findByCreatedAtBetween(start, end);
 
-            // 간단한 추정 (정확한 일별 통계를 위해서는 별도 집계 필요)
-            long total = successCount + failedCount;
-            double successRate = total > 0 ? (double) successCount / total * 100 : 0;
+            long totalGenerations = dailyJobs.size();
+            long successfulGenerations = 0;
+            long failedGenerations = 0;
+            long totalTokens = 0;
+            double totalEstCost = 0.0;
+
+            for (GenerateJobEntity job : dailyJobs) {
+                if (job.getStatus() == JobStatus.DONE) {
+                    successfulGenerations++;
+                    if (job.getTokenCount() != null)
+                        totalTokens += job.getTokenCount();
+                    if (job.getEstCost() != null)
+                        totalEstCost += job.getEstCost();
+                } else if (job.getStatus() == JobStatus.FAILED) {
+                    failedGenerations++;
+                }
+            }
+
+            double successRate = totalGenerations > 0 ? (double) successfulGenerations / totalGenerations * 100 : 0;
 
             stats.add(TokenStatsDto.builder()
                     .date(date)
-                    .totalGenerations(total)
-                    .successfulGenerations(successCount)
-                    .failedGenerations(failedCount)
+                    .totalGenerations(totalGenerations)
+                    .successfulGenerations(successfulGenerations)
+                    .failedGenerations(failedGenerations)
                     .successRate(Math.round(successRate * 100.0) / 100.0)
+                    .totalTokens(totalTokens)
+                    .totalEstCost(Math.round(totalEstCost * 100.0) / 100.0)
                     .build());
         }
         return stats;
