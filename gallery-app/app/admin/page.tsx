@@ -12,7 +12,7 @@ import AdminAIReport from "@/components/admin/AdminAIReport";
 import { useAdminAI } from "@/hooks/useAdminAI";
 
 // SSR 제외
-const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
+// SSR 제외
 const BrickJudgeViewer = dynamic(() => import("@/components/admin/BrickJudgeViewer"), { ssr: false });
 const AgentTraceViewer = dynamic(() => import("@/components/admin/AgentTraceViewer"), { ssr: false });
 const AgentConclusionViewer = dynamic(() => import("@/components/admin/AgentConclusionViewer"), { ssr: false });
@@ -506,8 +506,6 @@ export default function AdminPage() {
 
     return (
         <div className={styles.page}>
-            <Background3D entryDirection="float" />
-
             <div className={styles.container}>
                 <div className={styles.layout}>
                     <aside className={styles.sidebar}>
@@ -592,7 +590,7 @@ export default function AdminPage() {
                                 {activeTab === "brick-judge" && (t.admin.brickJudge?.title || "Brick Judge")}
                                 {activeTab === "gallery" && t.admin.sidebar.gallery}
                             </h1>
-                            <button className={styles.closeBtn} onClick={() => router.back()}>✕</button>
+                            <button className={styles.closeBtn} onClick={() => router.push('/')}>✕</button>
                         </header>
 
                         {activeTab === "dashboard" && (
