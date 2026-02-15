@@ -28,6 +28,8 @@ public class GalleryResponse {
     private Integer parts;
     private Map<String, String> screenshotUrls;
     private boolean isPro;
+    private String imageCategory; // [NEW]
+    private String backgroundUrl; // [NEW]
 
     private Visibility visibility;
 

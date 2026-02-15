@@ -60,6 +60,8 @@ public class GalleryService {
                 .sourceImageUrl(normalizeUrlOrNull(req.getSourceImageUrl()))
                 .glbUrl(normalizeUrlOrNull(req.getGlbUrl()))
                 .parts(req.getParts())
+                .imageCategory(req.getImageCategory()) // [NEW]
+                .backgroundUrl(normalizeUrlOrNull(req.getBackgroundUrl())) // [NEW]
                 .screenshotUrls(req.getScreenshotUrls())
                 .visibility(req.getVisibility() == null ? Visibility.PUBLIC : req.getVisibility())
                 .deleted(false)
@@ -291,6 +293,8 @@ public class GalleryService {
                 .sourceImageUrl(post.getSourceImageUrl())
                 .glbUrl(post.getGlbUrl())
                 .parts(post.getParts())
+                .imageCategory(post.getImageCategory()) // [NEW]
+                .backgroundUrl(post.getBackgroundUrl()) // [NEW]
                 .screenshotUrls(post.getScreenshotUrls())
                 .isPro(post.getParts() != null && post.getParts() >= 1000)
                 .visibility(post.getVisibility())

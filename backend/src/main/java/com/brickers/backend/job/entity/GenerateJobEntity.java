@@ -60,6 +60,9 @@ public class GenerateJobEntity {
     /** 사용자 표시용 제목(선택) */
     private String title;
 
+    /** 이미지 분류 전체 카테고리 (Animal, Character, 등) */
+    private String imageCategory; // [New]
+
     /** 언어 설정 (ko, en, ja) */
     private String language;
 
@@ -111,6 +114,9 @@ public class GenerateJobEntity {
 
     /** 엔진이 시도한 최종 타겟 해상도 */
     private Integer finalTarget;
+
+    /** LMM (AI 모델) 순수 생성 시간 (ms) */
+    private Integer lmmLatency; // [New]
 
     /** 실패 시 에러 메시지 */
     private String errorMessage;

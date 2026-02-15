@@ -20,5 +20,7 @@ public class GalleryCreateRequest {
     private String glbUrl; // GLB 파일 URL
     private Integer parts; // 최종 브릭 개수
     private Map<String, String> screenshotUrls; // 6면 스크린샷 URL 맵
+    private String imageCategory; // [NEW]
+    private String backgroundUrl; // [NEW]
     private Visibility visibility; // null이면 PUBLIC
 }

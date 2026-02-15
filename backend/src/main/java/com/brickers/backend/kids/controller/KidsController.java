@@ -208,6 +208,27 @@ public class KidsController {
     }
 
     /**
+     * AI Server에서 Gemini 이미지 카테고리 저장
+     * Python: PATCH /api/kids/jobs/{jobId}/category
+     */
+    @PatchMapping("/jobs/{jobId}/category")
+    public ResponseEntity<Void> updateJobCategory(
+            @PathVariable String jobId,
+            @RequestHeader("X-Internal-Token") String token,
+            @RequestBody Map<String, String> body) {
+        if (internalApiToken.isBlank() || !internalApiToken.equals(token)) {
+            log.warn("[KidsController] 카테고리 업데이트 토큰 불일치");
+            return ResponseEntity.status(403).build();
+        }
+        String category = body.get("category");
+        if (category == null || category.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        kidsService.updateJobCategory(jobId, category);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * ✅ 배경 생성 및 합성 (공유용)
      */
     @PostMapping(value = "/share/background", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
