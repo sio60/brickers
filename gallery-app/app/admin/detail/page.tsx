@@ -9,7 +9,7 @@ import DeepInsights from "@/components/admin/DeepInsights";
 import { useAdminAI } from "@/hooks/useAdminAI";
 
 // SSR 제외
-const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
+// SSR 제외
 
 // 타 메인 페이지와 동일한 타입 및 로직 유지 (사용자 요청에 따라 UI 복제)
 type Inquiry = { id: string; title: string; content: string; status: string; createdAt: string; userId: string; userEmail?: string; answer?: { content: string; answeredAt: string; } };
@@ -29,8 +29,6 @@ export default function AdminDetailPage() {
 
     return (
         <div className={styles.page}>
-            <Background3D entryDirection="float" />
-
             <div className={styles.container}>
                 <div className={styles.layout}>
                     <aside className={styles.sidebar}>
