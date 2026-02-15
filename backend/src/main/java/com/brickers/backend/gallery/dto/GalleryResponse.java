@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.brickers.backend.gallery.entity.Visibility;
+import com.brickers.backend.job.entity.KidsLevel;
 
 @Data
 @Builder
@@ -26,6 +27,7 @@ public class GalleryResponse {
     private String sourceImageUrl;
     private String glbUrl;
     private Integer parts;
+    private KidsLevel level;
     private Map<String, String> screenshotUrls;
     private boolean isPro;
 

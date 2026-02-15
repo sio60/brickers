@@ -4,6 +4,7 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import com.brickers.backend.job.entity.KidsLevel;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -50,6 +51,9 @@ public class GalleryPostEntity {
 
     /** 최종 브릭 개수 */
     private Integer parts;
+
+    @Indexed
+    private KidsLevel level;
 
     @Builder.Default
     private Visibility visibility = Visibility.PUBLIC;

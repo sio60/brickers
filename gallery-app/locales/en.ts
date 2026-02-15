@@ -25,6 +25,10 @@ export const en = {
         galleryList: {
             workspace: "Workspace",
             allCreations: "All Creations",
+            level1: "Level 1",
+            level2: "Level 2",
+            level3: "Level 3",
+            pro: "PRO",
             myBookmarks: "My Bookmarks",
             gallery: "Gallery"
         }

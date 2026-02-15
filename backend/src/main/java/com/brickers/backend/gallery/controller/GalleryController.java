@@ -45,8 +45,9 @@ public class GalleryController {
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "12") int size,
             @RequestParam(name = "sort", defaultValue = "latest") String sort,
+            @RequestParam(name = "level", required = false) String level,
             Authentication authOrNull) {
-        return galleryService.listPublic(page, size, sort, authOrNull);
+        return galleryService.listPublic(page, size, sort, level, authOrNull);
     }
 
     /** 🔍 공개 게시글 검색 */

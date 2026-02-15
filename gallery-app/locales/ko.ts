@@ -25,6 +25,10 @@ export const ko = {
         galleryList: {
             workspace: "워크스페이스",
             allCreations: "전체 갤러리",
+            level1: "레벨 1",
+            level2: "레벨 2",
+            level3: "레벨 3",
+            pro: "프로",
             myBookmarks: "내 북마크",
             gallery: "갤러리"
         }

@@ -9,6 +9,13 @@ import { GalleryItem } from '../types/gallery';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 
+const CATEGORY_TO_LEVEL_PARAM: Record<string, string | undefined> = {
+    level1: 'l1',
+    level2: 'l2',
+    level3: 'l3',
+    pro: 'pro',
+};
+
 type Props = {
     initialItems: GalleryItem[];
     initialHasMore: boolean;
@@ -31,10 +38,20 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
     const fetchData = useCallback(async (targetPage: number, targetSort: string, targetCategory: string) => {
         setLoading(true);
         try {
-            const endpoint = targetCategory === 'bookmarks' ? '/api/gallery/bookmarks/my' : '/api/gallery';
+            const isBookmarksCategory = targetCategory === 'bookmarks';
+            const endpoint = isBookmarksCategory ? '/api/gallery/bookmarks/my' : '/api/gallery';
             const fetcher = isAuthenticated ? authFetch : fetch;
+            const params = new URLSearchParams({
+                page: String(targetPage),
+                size: '24',
+                sort: targetSort,
+            });
+            const levelParam = CATEGORY_TO_LEVEL_PARAM[targetCategory];
+            if (levelParam && !isBookmarksCategory) {
+                params.set('level', levelParam);
+            }
 
-            const res = await fetcher(`${endpoint}?page=${targetPage}&size=24&sort=${targetSort}`);
+            const res = await fetcher(`${endpoint}?${params.toString()}`);
             if (res.ok) {
                 const data = await res.json();
                 const content = (data.content || []).map((item: any) => {
@@ -42,7 +59,7 @@ export default function GalleryClient({ initialItems, initialHasMore, initialTot
                     return {
                         ...item,
                         id: item.id || item.postId,
-                        bookmarked: targetCategory === 'bookmarks' ? true : item.bookmarked,
+                        bookmarked: isBookmarksCategory ? true : item.bookmarked,
                         myReaction: isLiked ? 'LIKE' : null,
                         authorNickname: item.authorNickname || item.nickname,
                         authorProfileImage: item.authorProfileImage || item.profileImage,
