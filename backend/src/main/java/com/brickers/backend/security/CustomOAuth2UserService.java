@@ -119,7 +119,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     // ✅ 닉네임/프로필 이미지는 "비어있을 때만" 채움 (유저 수정값 보호)
                     if ((existingUser.getNickname() == null || existingUser.getNickname().isBlank())
                             && nicknameFinal != null && !nicknameFinal.isBlank()) {
-                        existingUser.setNickname(nicknameFinal);
+                        existingUser.setNickname(resolveUniqueNickname(nicknameFinal, providerIdFinal));
                     }
 
                     if ((existingUser.getProfileImage() == null || existingUser.getProfileImage().isBlank())
@@ -138,7 +138,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                             .provider(providerFinal)
                             .providerId(providerIdFinal)
                             .email(emailFinal)
-                            .nickname(nicknameFinal)
+                            .nickname(resolveUniqueNickname(nicknameFinal, providerIdFinal))
                             .profileImage(profileImageFinal)
                             .bio("자기소개를 해주세요!")
                             .role(UserRole.USER) // ✅ 신규는 무조건 USER
@@ -157,5 +157,30 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         log.info("사용자 저장 완료 - id: {}, provider: {}, role: {}, membershipPlan: {}, accountState: {}",
                 user.getId(), providerFinal, user.getRole(), user.getMembershipPlan(), user.getAccountState());
+    }
+
+    private String resolveUniqueNickname(String rawNickname, String seed) {
+        String fallback = "User" + (seed != null && seed.length() >= 6 ? seed.substring(0, 6) : "000000");
+        String base = (rawNickname != null && !rawNickname.isBlank()) ? rawNickname.trim() : fallback;
+        if (base.length() > 20) {
+            base = base.substring(0, 20);
+        }
+
+        if (!userRepository.existsByNickname(base)) {
+            return base;
+        }
+
+        for (int i = 1; i <= 9999; i++) {
+            String suffix = "_" + i;
+            int baseLen = Math.max(1, 20 - suffix.length());
+            String candidate = base.length() > baseLen ? base.substring(0, baseLen) : base;
+            candidate = candidate + suffix;
+            if (!userRepository.existsByNickname(candidate)) {
+                return candidate;
+            }
+        }
+
+        String fallbackUnique = "User" + (System.currentTimeMillis() % 1_000_000_000L);
+        return fallbackUnique.length() > 20 ? fallbackUnique.substring(0, 20) : fallbackUnique;
     }
 }
