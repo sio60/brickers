@@ -65,7 +65,7 @@ public class KidsService {
         if ((finalImageUrl == null || finalImageUrl.isBlank()) && (prompt != null && !prompt.isBlank())) {
             try {
                 log.info("[Brickers] 프롬프트로 이미지 생성 시작: {}", prompt);
-                byte[] imageBytes = generateImageFromPrompt(prompt);
+                byte[] imageBytes = generateImageFromPrompt(prompt, age, title, language);
                 String fileName = "dalle_" + java.util.UUID.randomUUID() + ".png";
 
                 // S3 업로드
@@ -137,13 +137,14 @@ public class KidsService {
         return startGeneration(userId, sourceImageUrl, age, budget, title, null, null);
     }
 
-    private byte[] generateImageFromPrompt(String prompt) {
+    private byte[] generateImageFromPrompt(String prompt, String age, String title, String language) {
+        String finalPrompt = buildEnhancedImagePrompt(prompt, age, title, language);
         // OpenAI DALL-E 3 API 호출
         // Request Body: { "model": "dall-e-3", "prompt": "...", "n": 1, "size":
         // "1024x1024", "response_format": "b64_json" }
         Map<String, Object> requestBody = Map.of(
                 "model", "dall-e-3",
-                "prompt", prompt + " (LEGO style, simple, clean background)", // 스타일 강제
+                "prompt", finalPrompt,
                 "n", 1,
                 "size", "1024x1024",
                 "response_format", "b64_json");
@@ -170,6 +171,51 @@ public class KidsService {
 
         String b64Json = (String) data.get(0).get("b64_json");
         return java.util.Base64.getDecoder().decode(b64Json);
+    }
+
+    private String buildEnhancedImagePrompt(String rawPrompt, String age, String title, String language) {
+        String userPrompt = normalizePrompt(rawPrompt);
+        KidsLevel level = ageToKidsLevel(age);
+
+        String complexityGuide = switch (level) {
+            case LEVEL_1 -> "Complexity target: very simple, big chunky shapes, minimal details.";
+            case LEVEL_2 -> "Complexity target: simple-to-medium details, clear color separation.";
+            case LEVEL_3 -> "Complexity target: medium details with clear structural readability.";
+            case PRO -> "Complexity target: richer details allowed, but keep buildable geometry.";
+        };
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("Create one single LEGO-style concept image for brick model generation. ");
+        builder.append("User request: \"").append(userPrompt).append("\". ");
+
+        if (title != null && !title.isBlank()) {
+            builder.append("Optional title context: \"").append(normalizePrompt(title)).append("\". ");
+        }
+        if (language != null && !language.isBlank()) {
+            builder.append("Language hint: ").append(language.trim()).append(". ");
+        }
+
+        builder.append(complexityGuide).append(" ");
+        builder.append("Hard requirements: single subject, centered composition, full object visible, ");
+        builder.append("clean light background, toy-like but realistic LEGO brick texture, clear silhouette, ");
+        builder.append("physically buildable and stable structure, no floating impossible parts, ");
+        builder.append("prefer simple color blocks over noisy micro details, ");
+        builder.append("no text, letters, logos, watermark, UI elements, collage, split layout, ");
+        builder.append("and avoid blur or extreme shadows.");
+
+        return builder.toString();
+    }
+
+    private String normalizePrompt(String text) {
+        if (text == null || text.isBlank()) {
+            return "";
+        }
+        String normalized = text.replaceAll("\\s+", " ").trim();
+        int maxLength = 300;
+        if (normalized.length() > maxLength) {
+            return normalized.substring(0, maxLength);
+        }
+        return normalized;
     }
 
     public GenerateJobEntity getJobStatus(String jobId) {

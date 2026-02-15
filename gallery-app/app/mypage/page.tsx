@@ -632,8 +632,7 @@ function MyPageContent() {
                                                 </>
                                             ) : (
                                                 <input
-                                                    className={styles.mypage__formInput}
-                                                    style={{ width: 'auto', display: 'inline-block', fontSize: '24px', fontWeight: 'bold', padding: '4px 8px' }}
+                                                    className={`${styles.mypage__formInput} ${styles.mypage__nicknameInput}`}
                                                     value={editNickname}
                                                     onChange={(e) => setEditNickname(e.target.value)}
                                                     placeholder={t.profile.nickname}
@@ -685,7 +684,7 @@ function MyPageContent() {
                                         <div className={styles.stat__header}>
                                             <span className={styles.stat__label}>{t.mypage.stats.joinedAt}</span>
                                         </div>
-                                        <span className={styles.stat__value} style={{ fontSize: '24px' }}>
+                                        <span className={`${styles.stat__value} ${styles.stat__valueDate}`}>
                                             {profile.createdAt ? formatDate(profile.createdAt) : "-"}
                                         </span>
                                     </div>
@@ -701,7 +700,7 @@ function MyPageContent() {
                         <h2 className={styles.mypage__sectionTitle}>{t.membership.title}</h2>
                         {profile && (
                             <div className={styles.mypage__card}>
-                                <span className={styles.mypage__roleBadge} style={{ fontSize: '18px', marginBottom: '20px', display: 'inline-block' }}>
+                                <span className={`${styles.mypage__roleBadge} ${styles.mypage__roleBadgeLarge}`}>
                                     {profile.membershipPlan}
                                 </span>
                                 <p className={styles.mypage__planDesc}>
@@ -710,10 +709,9 @@ function MyPageContent() {
 
                                 {/* 멤버십 해지 버튼 (무료 플랜이 아닐 경우에만 표시 예시 - 여기선 조건 없이 표시하거나 플랜 체크) */}
                                 {profile.membershipPlan !== 'FREE' && (
-                                    <div style={{ marginTop: '24px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
+                                    <div className={styles.mypage__membershipActionArea}>
                                         <button
                                             className={styles.mypage__textBtn}
-                                            style={{ color: '#999', textDecoration: 'underline', fontSize: '14px' }}
                                             onClick={() => setIsCancelModalOpen(true)}
                                         >
                                             {t.membership.cancelBtn || "멤버십 해지 / 환불 신청"}
