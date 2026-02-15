@@ -1,7 +1,5 @@
-import dynamic from "next/dynamic";
 import AdminRouteGuard from "@/components/admin/AdminRouteGuard";
-
-const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
+import AdminBackground from "@/components/admin/AdminBackground";
 
 export default function AdminLayout({
     children,
@@ -10,7 +8,7 @@ export default function AdminLayout({
 }) {
     return (
         <AdminRouteGuard>
-            <Background3D entryDirection="float" />
+            <AdminBackground />
             {children}
         </AdminRouteGuard>
     );
