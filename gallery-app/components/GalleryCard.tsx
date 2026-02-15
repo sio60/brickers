@@ -26,6 +26,7 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
     const slug = `${safeTitle}-${item.id}`;
     const displayImageUrl = item.sourceImageUrl || item.thumbnailUrl;
     const hasValidImage = isValidImageUrl(displayImageUrl);
+    const displayedBrickCount = item.parts ?? item.brickCount;
 
     const handleLikeClick = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -158,6 +159,12 @@ export default function GalleryCard({ item, isLoggedIn, onLikeToggle, onBookmark
                     <div className="text-[11px] text-gray-400 font-medium">
                         {formatDate(item.createdAt)}
                     </div>
+
+                    {typeof displayedBrickCount === 'number' && displayedBrickCount > 0 && (
+                        <div className="text-[11px] text-gray-500 font-bold">
+                            {displayedBrickCount.toLocaleString()} {t.kids.bricks}
+                        </div>
+                    )}
                 </div>
             </div>
         </Link>
