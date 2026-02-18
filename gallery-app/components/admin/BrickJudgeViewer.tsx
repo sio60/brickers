@@ -295,11 +295,26 @@ export default function BrickJudgeViewer() {
     const [modelError, setModelError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [focusBrickId, setFocusBrickId] = useState<number | null>(null);
+    const [viewMode, setViewMode] = useState<"final" | "initial">("final"); // [NEW]
 
     // Job 리스트 로드
     useEffect(() => {
         fetchJobs();
     }, []);
+
+    // Job 선택 시 초기화
+    useEffect(() => {
+        if (selectedJob) {
+            setViewMode("final");
+        }
+    }, [selectedJob?.id]);
+
+    // 뷰 모드 변경 시 재분석 (또는 초기 로드)
+    useEffect(() => {
+        if (selectedJob) {
+            analyzeJob(selectedJob, viewMode);
+        }
+    }, [viewMode]);
 
     const fetchJobs = async () => {
         setLoading(true);
@@ -318,8 +333,13 @@ export default function BrickJudgeViewer() {
         }
     };
 
-    const handleAnalyze = async (job: JobListItem) => {
+    const handleSelectJob = (job: JobListItem) => {
+        if (selectedJob?.id === job.id) return;
         setSelectedJob(job);
+        // useEffect에서 analyzeJob 호출됨 (viewMode가 'final'로 초기화되면서)
+    };
+
+    const analyzeJob = async (job: JobListItem, mode: "final" | "initial") => {
         setJudgeResult(null);
         setFocusBrickId(null);
         setModelError(null);
@@ -327,10 +347,17 @@ export default function BrickJudgeViewer() {
         setJudging(true);
 
         try {
+            // [NEW] 모드에 따른 URL 선택
+            const targetUrl = mode === "initial" ? job.initialLdrUrl : job.ldrUrl;
+
+            if (!targetUrl) {
+                throw new Error("LDR URL not found");
+            }
+
             const res = await authFetch("/api/admin/judge", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ldrUrl: job.ldrUrl }),
+                body: JSON.stringify({ ldrUrl: targetUrl }),
             });
 
             if (res.ok) {
@@ -390,7 +417,7 @@ export default function BrickJudgeViewer() {
                                 key={job.id}
                                 job={job}
                                 selected={selectedJob?.id === job.id}
-                                onSelect={() => handleAnalyze(job)}
+                                onSelect={() => handleSelectJob(job)}
                             />
                         ))
                     )}
@@ -400,7 +427,32 @@ export default function BrickJudgeViewer() {
             {/* Right Panel: 3D Viewer + Results */}
             <div className="flex-1 flex flex-col gap-4">
                 {/* 3D Viewer */}
-                <div className="flex-1 bg-white rounded-xl border border-gray-200 overflow-hidden relative">
+                <div className="flex-1 bg-white rounded-xl border border-gray-200 overflow-hidden relative flex flex-col">
+
+                    {/* [NEW] View Mode Toggle */}
+                    {selectedJob?.initialLdrUrl && (
+                        <div className="absolute top-4 left-4 z-30 flex bg-white/90 backdrop-blur rounded-lg p-1 border border-gray-200 shadow-sm">
+                            <button
+                                onClick={() => setViewMode("initial")}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${viewMode === "initial"
+                                        ? "bg-black text-white shadow-sm"
+                                        : "text-gray-600 hover:bg-gray-100"
+                                    }`}
+                            >
+                                Initial Model
+                            </button>
+                            <button
+                                onClick={() => setViewMode("final")}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${viewMode === "final"
+                                        ? "bg-black text-white shadow-sm"
+                                        : "text-gray-600 hover:bg-gray-100"
+                                    }`}
+                            >
+                                Final Model
+                            </button>
+                        </div>
+                    )}
+
                     {judging && (
                         <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
                             <div className="text-center">
@@ -434,10 +486,11 @@ export default function BrickJudgeViewer() {
                         </div>
                     ) : judgeResult?.ldr_content ? (
                         <Canvas
-                            key={selectedJob?.id || "empty"}
+                            key={`${selectedJob?.id}-${viewMode}`} // [NEW] Key update verifies reload
                             camera={{ position: [0, 200, 600], fov: 45, near: 0.1, far: 100000 }}
                             dpr={[1, 2]}
                             frameloop="demand"
+                            className="flex-1"
                         >
                             <ThrottledDriver />
                             <color attach="background" args={["#f8f9fa"]} />
