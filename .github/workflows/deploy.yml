@@ -109,14 +109,14 @@ jobs:
             fi
 
             echo "📄 Creating .env file..."
+            # AI_SERVER_URL은 start-mac.sh가 Tunnel URL로 동적 관리하므로 기존 값 보존
+            EXISTING_AI_URL=$(grep '^AI_SERVER_URL=' .env 2>/dev/null | cut -d= -f2- || echo "")
+
             cat > .env <<'EOF'
             DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
 
             # MongoDB
             PRIMARY_MONGODB_URI=${{ secrets.PRIMARY_MONGODB_URI }}
-
-            # AI Server (Mac Studio via Cloudflare Tunnel)
-            AI_SERVER_URL=${{ secrets.AI_SERVER_URL }}
 
             # Frontend Vars (런타임 참조용)
             VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
@@ -184,6 +184,15 @@ jobs:
             GA4_PROPERTY_ID=${{ secrets.GA4_PROPERTY_ID }}
             GA4_CREDENTIALS_JSON=${{ secrets.GA4_CREDENTIALS_JSON }}
             EOF
+
+            # AI_SERVER_URL: 기존 Tunnel URL 보존, 없으면 Secret fallback
+            if [ -n "$EXISTING_AI_URL" ]; then
+              echo "AI_SERVER_URL=$EXISTING_AI_URL" >> .env
+              echo "✅ AI_SERVER_URL preserved: $EXISTING_AI_URL"
+            else
+              echo "AI_SERVER_URL=${{ secrets.AI_SERVER_URL }}" >> .env
+              echo "⚠️ AI_SERVER_URL fallback to secret"
+            fi
 
             echo "🔐 Docker Hub login..."
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
