@@ -256,6 +256,7 @@ export const en = {
             confirm: "Generate",
             previewSub: "Rotate the model to check",
             freeUserNotice: "* Free users need to upgrade to use this feature",
+            fileTooLarge: "* File size must be under 10MB",
             promptTitle: "Create with Text",
             promptSub: "Describe what you imagine",
             promptInputTitle: "What do you want to make?",

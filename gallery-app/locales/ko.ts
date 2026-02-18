@@ -270,7 +270,8 @@ export const ko = {
             promptInputPlaceholder: "예: 날개 달린 자동차, 무지개 색깔의 성",
             promptInputHint: "자세하게 적을수록 좋아요!",
             promptConfirm: "이대로 만들기",
-            freeUserNotice: "* 무료 회원은 결제 후 이용 가능합니다"
+            freeUserNotice: "* 무료 회원은 결제 후 이용 가능합니다",
+            fileTooLarge: "* 파일 크기는 10MB 이하만 가능합니다"
         },
         steps: {
             back: "뒤로",
