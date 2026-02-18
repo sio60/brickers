@@ -38,6 +38,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
     const isPro = user?.membershipPlan === "PRO";
     const [showUpgrade, setShowUpgrade] = useState(false);
     const [showLogin, setShowLogin] = useState(false);
+    const [fileSizeError, setFileSizeError] = useState(false);
 
     useEffect(() => {
         if (!open) {
@@ -66,7 +67,6 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
 
     const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/avif"];
     const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-    const [fileSizeError, setFileSizeError] = useState(false);
 
     const handleFile = (f: File) => {
         setFileSizeError(false);
