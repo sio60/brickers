@@ -343,10 +343,10 @@ export default function AdminPage() {
                                                         value={answerTexts[item.id] || ""}
                                                         onChange={(e) => setAnswerTexts(prev => ({ ...prev, [item.id]: e.target.value }))}
                                                     />
-                                                    <div className="actions">
+                                                    <div className="actions" style={{ display: 'flex', gap: '8px', alignSelf: 'flex-end' }}>
                                                         <button
-                                                            className="btn-secondary"
                                                             onClick={() => handleReportResolve(item.id, false)}
+                                                            style={{ background: '#eee', color: '#000' }}
                                                         >
                                                             {t.admin.report.reject}
                                                         </button>
@@ -391,10 +391,10 @@ export default function AdminPage() {
                                                     value={answerTexts[item.orderId] || ""}
                                                     onChange={(e) => setAnswerTexts(prev => ({ ...prev, [item.orderId]: e.target.value }))}
                                                 />
-                                                <div className="actions">
+                                                <div className="actions" style={{ display: 'flex', gap: '8px', alignSelf: 'flex-end' }}>
                                                     <button
-                                                        className="btn-secondary"
                                                         onClick={() => handleRefundReject(item.orderId)}
+                                                        style={{ background: '#eee', color: '#000' }}
                                                     >
                                                         {t.admin.refund.reject}
                                                     </button>
@@ -409,19 +409,10 @@ export default function AdminPage() {
                                 {refunds.length === 0 && <p className="empty-msg">{t.admin.refund.empty}</p>}
                             </div>
                         )}
-
-                        {activeTab === "users" && (
-                            <div className="admin__dashboard">
-                                <p className="empty-msg">
-                                    Users management is currently unavailable in this view.
-                                </p>
-                            </div>
-                        )}
-
                         {activeTab === "gallery" && (
-                            <div className="admin__dashboard gallery-section">
-                                <h3 className="text-xl font-bold mb-4 text-black">갤러리 관리 (3D 뷰어)</h3>
-                                <p className="mb-8 text-gray-600">
+                            <div className="admin__dashboard" style={{ padding: '2rem', textAlign: 'center', color: '#000' }}>
+                                <h3 style={{ color: 'black', marginBottom: '1rem' }}>갤러리 관리 (3D 뷰어)</h3>
+                                <p style={{ color: '#333', marginBottom: '2rem' }}>
                                     아래 버튼을 클릭하여 Rust 기반 3D 뷰어를 엽니다.<br />
                                     (메인 서버에 통합됨)
                                 </p>
@@ -429,13 +420,24 @@ export default function AdminPage() {
                                     href="/brick-judge/viewer"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="gallery-cta"
+                                    style={{
+                                        display: 'inline-block',
+                                        padding: '15px 30px',
+                                        fontSize: '18px',
+                                        fontWeight: 'bold',
+                                        color: 'white',
+                                        backgroundColor: '#E60000',
+                                        borderRadius: '8px',
+                                        textDecoration: 'none',
+                                        boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
+                                        transition: 'transform 0.2s'
+                                    }}
                                 >
                                     🚀 3D 뷰어 열기
                                 </a>
-                                <div className="gallery-info-box">
-                                    <strong>✅ 자동 실행됨:</strong>
-                                    <ul>
+                                <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: '#e6fffa', borderRadius: '4px', textAlign: 'left', display: 'inline-block' }}>
+                                    <strong style={{ color: '#2c7a7b' }}>✅ 자동 실행됨:</strong>
+                                    <ul style={{ margin: '0.5rem 0 0 1.5rem', color: '#285e61', fontSize: '0.9rem' }}>
                                         <li>이제 별도의 Rust 서버를 켤 필요가 없습니다.</li>
                                         <li>메인 백엔드(app.py)가 실행 중이면 바로 접속 가능합니다.</li>
                                     </ul>
