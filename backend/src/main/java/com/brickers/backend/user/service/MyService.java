@@ -137,6 +137,30 @@ public class MyService {
                 .build();
     }
 
+    /** 멤버십 해지 (FREE로 변경) */
+    public CancelMembershipResponse cancelMembership(Authentication authentication, CancelMembershipRequest req) {
+        User user = currentUserService.get(authentication);
+
+        if (user.getMembershipPlan() == MembershipPlan.FREE) {
+            return CancelMembershipResponse.builder()
+                    .success(false)
+                    .message("이미 FREE 멤버십 상태입니다.")
+                    .build();
+        }
+
+        user.setMembershipPlan(MembershipPlan.FREE);
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        log.info("[MyService] Membership CANCELED | userId={} | reason={}", user.getId(),
+                (req != null) ? req.getReason() : "No reason provided");
+
+        return CancelMembershipResponse.builder()
+                .success(true)
+                .message("멤버십 해지가 완료되었습니다.")
+                .build();
+    }
+
     /** 멤버십 업그레이드 (PRO로 변경) */
     public MyMembershipResponse upgradeMembership(Authentication authentication,
             GooglePayVerifyRequest req) {
