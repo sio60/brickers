@@ -302,19 +302,12 @@ export default function BrickJudgeViewer() {
         fetchJobs();
     }, []);
 
-    // Job 선택 시 초기화
-    useEffect(() => {
-        if (selectedJob) {
-            setViewMode("final");
-        }
-    }, [selectedJob?.id]);
-
-    // 뷰 모드 변경 시 재분석 (또는 초기 로드)
+    // Job 선택 또는 뷰 모드 변경 시 재분석 (초기 로드 포함)
     useEffect(() => {
         if (selectedJob) {
             analyzeJob(selectedJob, viewMode);
         }
-    }, [viewMode]);
+    }, [selectedJob, viewMode]);
 
     const fetchJobs = async () => {
         setLoading(true);
@@ -336,7 +329,7 @@ export default function BrickJudgeViewer() {
     const handleSelectJob = (job: JobListItem) => {
         if (selectedJob?.id === job.id) return;
         setSelectedJob(job);
-        // useEffect에서 analyzeJob 호출됨 (viewMode가 'final'로 초기화되면서)
+        setViewMode("final"); // Job 변경 시 항상 final 모드로 초기화
     };
 
     const analyzeJob = async (job: JobListItem, mode: "final" | "initial") => {
@@ -435,8 +428,8 @@ export default function BrickJudgeViewer() {
                             <button
                                 onClick={() => setViewMode("initial")}
                                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${viewMode === "initial"
-                                        ? "bg-black text-white shadow-sm"
-                                        : "text-gray-600 hover:bg-gray-100"
+                                    ? "bg-black text-white shadow-sm"
+                                    : "text-gray-600 hover:bg-gray-100"
                                     }`}
                             >
                                 Initial Model
@@ -444,8 +437,8 @@ export default function BrickJudgeViewer() {
                             <button
                                 onClick={() => setViewMode("final")}
                                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${viewMode === "final"
-                                        ? "bg-black text-white shadow-sm"
-                                        : "text-gray-600 hover:bg-gray-100"
+                                    ? "bg-black text-white shadow-sm"
+                                    : "text-gray-600 hover:bg-gray-100"
                                     }`}
                             >
                                 Final Model
