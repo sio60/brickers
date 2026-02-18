@@ -3,6 +3,7 @@
     width: 100%;
     position: relative;
     padding-top: 80px;
+    background: #f5f5f7;
 }
 
 .container {
@@ -10,12 +11,11 @@
     margin: 20px auto;
     position: relative;
     z-index: 5;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-radius: 40px;
+    background: #fff;
+    border-radius: 16px;
     height: calc(100vh - 140px);
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.2);
-    border: 3px solid #000;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e5e5;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -27,50 +27,57 @@
     overflow: hidden;
 }
 
+/* ─── Sidebar ─── */
 .sidebar {
-    width: 240px;
-    background: #000;
-    color: #fff;
+    width: 220px;
+    background: #fafafa;
+    border-right: 1px solid #e5e5e5;
     display: flex;
     flex-direction: column;
-    padding: 40px 0;
+    padding: 24px 0;
 }
 
 .sidebarTitle {
-    padding: 0 32px 24px;
-    font-size: 20px;
-    font-weight: 900;
-    color: #ffe135;
-    border-bottom: 1px solid #333;
-    margin-bottom: 24px;
+    padding: 0 24px 20px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 8px;
 }
 
 .sidebarItem {
-    padding: 16px 32px;
+    padding: 10px 24px;
     border: none;
     background: transparent;
     text-align: left;
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s ease;
     color: #888;
+    border-left: 3px solid transparent;
 }
 
 .sidebarItem:hover {
-    color: #fff;
-    background: #222;
+    color: #333;
+    background: #f0f0f0;
 }
 
 .sidebarItem.active {
-    color: #000;
-    background: #ffe135;
+    color: #111;
+    font-weight: 600;
+    background: #fff;
+    border-left-color: #111;
 }
 
+/* ─── Content ─── */
 .content {
     flex: 1;
     overflow-y: auto;
-    padding: 32px 48px;
+    padding: 28px 36px;
     display: flex;
     flex-direction: column;
 }
@@ -79,84 +86,92 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: 20px;
-    border-bottom: 2px solid #eee;
-    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 24px;
 }
 
 .title {
-    font-size: 28px;
-    font-weight: 900;
+    font-size: 20px;
+    font-weight: 600;
     margin: 0;
-    color: #000;
+    color: #111;
 }
 
 .closeBtn {
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
     border: none;
-    background: transparent;
+    background: #f5f5f5;
     cursor: pointer;
-    font-size: 24px;
-    font-weight: bold;
+    font-size: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    color: #000;
+    transition: background 0.15s ease;
+    color: #666;
+    border-radius: 8px;
 }
 
 .closeBtn:hover {
-    transform: rotate(90deg) scale(1.1);
+    background: #eee;
+    color: #111;
 }
 
+/* ─── Dashboard ─── */
 .dashboard {
-    color: #444;
+    color: #555;
 }
 
 .statsGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 24px;
-    margin-top: 32px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
 }
 
 .statCard {
-    background: #f8f9fa;
-    padding: 24px;
-    border-radius: 20px;
-    border: 2px solid #eee;
+    background: #fafafa;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #eee;
 }
 
 .statCard h3 {
-    margin: 0 0 12px;
-    font-size: 15px;
-    font-weight: 800;
-    color: #888;
+    margin: 0 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .statValue {
-    font-size: 32px;
-    font-weight: 950;
+    font-size: 28px;
+    font-weight: 700;
     margin: 0;
-    color: #000;
+    color: #111;
 }
 
+/* ─── Lists & Tables ─── */
 .list {
     display: flex;
     flex-direction: column;
-    border-top: 2px solid #000;
 }
 
 .list table {
     table-layout: fixed;
-    border-radius: 0 0 20px 20px;
 }
 
 .list th {
     background: #fafafa;
-    border-bottom: 2px solid #000;
+    border-bottom: 1px solid #eee;
     white-space: nowrap;
+    font-size: 11px;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .list td {
@@ -170,110 +185,109 @@
 .listItem {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 24px 8px;
+    gap: 12px;
+    padding: 20px 0;
     background: #fff;
-    border-radius: 0;
-    border-bottom: 1px solid #eee;
-    transition: background 0.2s;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.15s;
 }
 
 .listItem:hover {
-    background: #fcfcfc;
+    background: #fafafa;
 }
 
 .listItem h4 {
-    margin: 0 0 12px;
+    margin: 0 0 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 16px;
-    font-weight: 800;
+    font-size: 14px;
+    font-weight: 600;
 }
 
 .listItem p {
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.6;
-    color: #444;
+    color: #555;
     margin: 0;
 }
 
 .inquiry {}
 
 .inquiryMain h4 {
-    margin: 0 0 12px;
+    margin: 0 0 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 16px;
-    font-weight: 800;
+    font-size: 14px;
+    font-weight: 600;
 }
 
 .inquiryMain p {
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.6;
-    color: #444;
+    color: #555;
     margin: 0;
 }
 
 .meta {
     font-size: 12px;
-    color: #999;
-    margin-top: 8px;
+    color: #aaa;
+    margin-top: 6px;
 }
 
+/* ─── Answer Section ─── */
 .answerSection {
-    padding-top: 16px;
+    padding-top: 12px;
     margin-top: 0;
-    border-top: 1px dashed #eee;
+    border-top: 1px solid #f0f0f0;
 }
 
 .answerForm {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 }
 
 .answerForm textarea {
     width: 100%;
-    min-height: 100px;
+    min-height: 80px;
     padding: 12px;
-    border-radius: 12px;
-    border: 1px solid #000;
+    border-radius: 8px;
+    border: 1px solid #ddd;
     font-family: inherit;
-    font-size: 14px;
+    font-size: 13px;
     resize: none;
-    background: #fff;
+    background: #fafafa;
+    transition: border-color 0.15s;
 }
 
 .answerForm textarea:focus {
     outline: none;
-    box-shadow: none;
-    border-color: #ffe135;
+    border-color: #999;
+    background: #fff;
 }
 
 .answerForm button {
     align-self: flex-end;
-    padding: 10px 24px;
-    background: #000;
+    padding: 8px 20px;
+    background: #111;
     color: #fff;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     font-size: 13px;
-    font-weight: 800;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.15s;
 }
 
 .answerForm button:hover {
-    transform: translateY(-2px);
-    background: #ffe135;
-    color: #000;
+    background: #333;
 }
 
 .answer.active {
     background: transparent;
-    padding: 16px 0 0 20px;
+    padding: 12px 0 0 16px;
     border-radius: 0;
     border: none;
     position: relative;
@@ -283,71 +297,73 @@
     content: "↳";
     position: absolute;
     left: 0;
-    top: 16px;
-    font-size: 18px;
-    color: #000;
-    font-weight: bold;
+    top: 12px;
+    font-size: 14px;
+    color: #999;
 }
 
 .answerLabel {
     font-size: 10px;
-    font-weight: 900;
-    color: #000;
-    background: transparent;
-    border: 1px solid #000;
+    font-weight: 600;
+    color: #666;
+    background: #f5f5f5;
+    border: none;
     display: inline-block;
     padding: 2px 8px;
     border-radius: 4px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .answerContent {
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.6;
-    color: #000;
+    color: #333;
     font-weight: 400;
 }
 
 .answerDate {
     font-size: 11px;
-    color: #999;
-    margin-top: 8px;
+    color: #aaa;
+    margin-top: 6px;
     text-align: right;
 }
 
+/* ─── Status Badges ─── */
 .statusBadge {
-    padding: 4px 12px;
+    padding: 3px 10px;
     border-radius: 4px;
     font-size: 11px;
-    font-weight: 800;
+    font-weight: 600;
     text-transform: uppercase;
-    border: 1px solid #000;
+    letter-spacing: 0.02em;
+    border: none;
 }
 
 .OPEN,
 .PENDING {
-    background: #fff;
-    color: #000;
+    background: #f5f5f5;
+    color: #666;
 }
 
 .ANSWERED,
 .RESOLVED {
-    background: #000;
-    color: #fff;
+    background: #f0f0f0;
+    color: #333;
 }
 
 .CLOSED,
 .REJECTED {
-    background: #eee;
-    color: #666;
-    border-color: #ddd;
+    background: #f5f5f5;
+    color: #999;
 }
 
 .emptyMsg {
     text-align: center;
-    color: #999;
+    color: #aaa;
     padding: 40px;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .actions {
@@ -357,10 +373,11 @@
 }
 
 .rejectBtn {
-    background: #eee !important;
-    color: #000 !important;
+    background: #f5f5f5 !important;
+    color: #666 !important;
 }
 
+/* ─── Responsive ─── */
 @media (max-width: 768px) {
     .page {
         padding-top: 60px;
@@ -368,7 +385,7 @@
 
     .container {
         margin: 10px;
-        border-radius: 20px;
+        border-radius: 12px;
         height: calc(100vh - 80px);
     }
 
@@ -381,6 +398,8 @@
         flex-direction: row;
         padding: 0;
         overflow-x: auto;
+        border-right: none;
+        border-bottom: 1px solid #eee;
     }
 
     .sidebarTitle {
@@ -388,9 +407,16 @@
     }
 
     .sidebarItem {
-        padding: 12px 16px;
+        padding: 10px 16px;
         white-space: nowrap;
-        font-size: 14px;
+        font-size: 13px;
+        border-left: none;
+        border-bottom: 2px solid transparent;
+    }
+
+    .sidebarItem.active {
+        border-left-color: transparent;
+        border-bottom-color: #111;
     }
 
     .content {
@@ -398,7 +424,7 @@
     }
 
     .title {
-        font-size: 20px;
+        font-size: 18px;
     }
 
     .statsGrid {
