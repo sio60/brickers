@@ -30,6 +30,7 @@ export type JobListItem = {
     };
     title: string;
     ldrUrl: string;
+    initialLdrUrl?: string; // [NEW] 초기 모델 URL (비교용)
     sourceImageUrl: string;
     previewImageUrl: string;
     createdAt: string;
