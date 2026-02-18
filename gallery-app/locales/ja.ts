@@ -256,6 +256,7 @@ export const ja = {
             confirm: "生成する",
             previewSub: "モデルを回転させて確認してください",
             freeUserNotice: "* 無料会員はアップグレード後にご利用いただけます",
+            fileTooLarge: "* ファイルサイズは10MB以下にしてください",
             drawTitle: "お絵描きで作る",
             drawSub: "ウェブで直接絵を描いてみましょう",
             drawTool: {
