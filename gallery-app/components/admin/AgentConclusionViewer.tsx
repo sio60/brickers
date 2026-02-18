@@ -91,18 +91,40 @@ export default function AgentConclusionViewer({ jobId, onClose }: AgentConclusio
                 }
 
                 // 4. Final Report 탐색 (end 노드 → PipelineSummary fallback)
+                // 4. Final Report 탐색 (end 노드 → PipelineSummary fallback)
+                let reportData = null;
                 const endNode = traces.find(t => t.nodeName === "end" || t.nodeName === "__end__" || t.output?.final_report);
+
                 if (endNode) {
-                    setFinalReport(endNode.output?.final_report || endNode.output);
-                } else if (summaryTrace?.output?.coscientist) {
-                    // PipelineSummary의 coscientist 데이터를 fallback으로 사용
+                    reportData = endNode.output?.final_report || endNode.output;
+                }
+
+                // [FIX] PipelineSummary의 coscientist 데이터를 fallback/merge
+                if (summaryTrace?.output?.coscientist) {
                     const cos = summaryTrace.output.coscientist;
-                    setFinalReport({
-                        success: cos.success,
-                        total_attempts: cos.total_attempts,
-                        message: cos.message || "N/A",
-                        tool_usage: cos.tool_usage || {},
-                    });
+
+                    if (!reportData) {
+                        // endNode가 없으면 전적으로 summary 데이터 사용
+                        reportData = {
+                            success: cos.success,
+                            total_attempts: cos.total_attempts,
+                            message: cos.message || "N/A",
+                            tool_usage: cos.tool_usage || {},
+                        };
+                    } else {
+                        // endNode가 있어도 tool_usage가 비어있다면 summary에서 가져와 병합
+                        if ((!reportData.tool_usage || Object.keys(reportData.tool_usage).length === 0) && cos.tool_usage) {
+                            reportData.tool_usage = cos.tool_usage;
+                        }
+                        // 메시지도 비어있다면 병합
+                        if (!reportData.message && cos.message) {
+                            reportData.message = cos.message;
+                        }
+                    }
+                }
+
+                if (reportData) {
+                    setFinalReport(reportData);
                 }
 
             } catch (e: any) {
