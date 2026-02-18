@@ -115,15 +115,8 @@ jobs:
             # MongoDB
             PRIMARY_MONGODB_URI=${{ secrets.PRIMARY_MONGODB_URI }}
 
-            # AI / Python Service
+            # AI Server (Mac Studio via Cloudflare Tunnel)
             AI_SERVER_URL=${{ secrets.AI_SERVER_URL }}
-            AI_PORT=${{ secrets.AI_PORT }}
-            AI_MONGODB_URI=${{ secrets.AI_MONGODB_URI }}
-            AI_MONGODB_NAME=${{ secrets.AI_MONGODB_NAME }}
-            AI_PARTS_COLLECTION=${{ secrets.AI_PARTS_COLLECTION }}
-            AI_VECTOR_INDEX=${{ secrets.AI_VECTOR_INDEX }}
-            AI_VECTOR_FIELD=${{ secrets.AI_VECTOR_FIELD }}
-            AI_EMBEDDING_DIMS=${{ secrets.AI_EMBEDDING_DIMS }}
 
             # Frontend Vars (런타임 참조용)
             VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
@@ -171,13 +164,6 @@ jobs:
 
             # OpenAI (챗봇용)
             APP_OPENAI_API_KEY=${{ secrets.APP_OPENAI_API_KEY }}
-
-            # Gemini (배경 생성)
-            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-            NANO_BANANA_MODEL=${{ secrets.NANO_BANANA_MODEL }}
-
-            # Tripo 3D
-            TRIPO_API_KEY=${{ secrets.TRIPO_API_KEY }}
 
             # SQS (2개 Queue 분리)
             AWS_SQS_ENABLED=true
