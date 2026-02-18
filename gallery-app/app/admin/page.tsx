@@ -593,11 +593,10 @@ export default function AdminPage() {
                         </button>
 
                         {/* 상세 관리 버튼 이동 */}
-                        <div className="mt-auto pt-4 border-t border-[#333]">
+                        <div className="mt-auto pt-4 border-t border-gray-100">
                             <button
                                 className={styles.sidebarItem}
                                 onClick={() => router.push("/admin/detail")}
-                                style={{ color: '#ffe135' }}
                             >
                                 상세 관리 →
                             </button>
@@ -639,15 +638,15 @@ export default function AdminPage() {
                                 </div>
 
                                 {/* [NEW] Admin Intel-Query UI */}
-                                <div className="bg-[#f8f9fa] border-2 border-[#eee] p-10 rounded-[40px] mt-12 mb-12">
-                                    <h1 className="text-2xl font-black mb-3">Admin Intel-Query</h1>
-                                    <p className="font-bold text-gray-800">지표에 대해 궁금한 점을 물어보세요. AI가 실시간 데이터를 분석하여 보고서를 작성합니다.</p>
+                                <div className="bg-white border border-gray-200 p-8 rounded-xl mt-8 mb-8 shadow-sm">
+                                    <h1 className="text-xl font-bold mb-2 text-gray-800">Admin Intel-Query</h1>
+                                    <p className="text-sm text-gray-500 mb-6">Ask AI about your metrics for real-time analysis.</p>
 
-                                    <div className="mt-8 flex gap-3">
+                                    <div className="flex gap-2">
                                         <input
                                             type="text"
                                             placeholder="예: 최근 유저들이 가장 많이 이탈하는 구간과 이유를 분석해줘"
-                                            className="flex-1 px-6 py-4 rounded-2xl border-2 border-[#eee] font-medium focus:outline-none focus:border-[#ffe135] focus:ring-4 focus:ring-[#ffe135]/10 transition-all bg-white"
+                                            className="flex-1 px-4 py-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-gray-400 transition-all bg-gray-50"
                                             id="adminQueryInputMain"
                                             onKeyPress={(e) => e.key === 'Enter' && aiState.handleQuerySubmit((e.target as HTMLInputElement).value)}
                                         />
@@ -657,20 +656,20 @@ export default function AdminPage() {
                                                 aiState.handleQuerySubmit(input.value);
                                             }}
                                             disabled={aiState.isQuerying}
-                                            className="px-8 py-4 bg-black text-[#ffe135] rounded-2xl font-black hover:bg-[#222] active:scale-95 transition-all disabled:opacity-50"
+                                            className="px-6 py-3 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 active:scale-95 transition-all disabled:opacity-50"
                                         >
-                                            {aiState.isQuerying ? "분석 중..." : "질문하기"}
+                                            {aiState.isQuerying ? "Analyzing..." : "Ask AI"}
                                         </button>
                                     </div>
                                 </div>
 
                                 {aiState.isQuerying && (
-                                    <div className="flex items-center justify-center p-8 text-gray-400 bg-gray-50 rounded-2xl animate-pulse mb-8 border-2 border-dashed border-[#ffe135]/30">
-                                        <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+                                    <div className="flex items-center justify-center p-6 text-gray-400 bg-gray-50 rounded-xl animate-pulse mb-8 border border-dashed border-gray-300 text-sm">
+                                        <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                         </svg>
-                                        AI가 실시간 데이터를 분석하여 보고서 하단에 답변을 작성 중입니다...
+                                        AI is analyzing real-time data...
                                     </div>
                                 )}
 
@@ -689,12 +688,12 @@ export default function AdminPage() {
                                             placeholder={t.admin.jobs?.searchPlaceholder || "User Search (Nickname/Email)"}
                                             value={userSearch}
                                             onChange={(e) => setUserSearch(e.target.value)}
-                                            className="px-3 py-1 border border-gray-300 rounded text-sm w-full sm:w-64"
+                                            className="px-3 py-2 border border-gray-200 rounded-md text-sm w-full sm:w-64 focus:outline-none focus:border-gray-400"
                                         />
                                         <select
                                             value={filterStatus}
                                             onChange={(e) => setFilterStatus(e.target.value)}
-                                            className="px-3 py-1 border border-gray-300 rounded text-sm whitespace-nowrap"
+                                            className="px-3 py-2 border border-gray-200 rounded-md text-sm whitespace-nowrap focus:outline-none focus:border-gray-400 bg-white"
                                         >
                                             <option value="">{t.admin.jobs?.filter?.all || "All Status"}</option>
                                             <option value="QUEUED">{t.admin.jobs?.filter?.queued || "Queued"}</option>
@@ -703,23 +702,23 @@ export default function AdminPage() {
                                             <option value="FAILED">{t.admin.jobs?.filter?.failed || "Failed"}</option>
                                             <option value="CANCELED">{t.admin.jobs?.filter?.canceled || "Canceled"}</option>
                                         </select>
-                                        <label className="flex items-center gap-2 px-3 py-1 border border-gray-300 rounded text-sm bg-white cursor-pointer select-none whitespace-nowrap">
+                                        <label className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-md text-sm bg-white cursor-pointer select-none whitespace-nowrap hover:bg-gray-50">
                                             <input
                                                 type="checkbox"
                                                 checked={reportedOnly}
                                                 onChange={(e) => setReportedOnly(e.target.checked)}
-                                                className="w-4 h-4"
+                                                className="w-4 h-4 accent-black"
                                             />
                                             {t.admin.jobs?.filter?.reportedOnly || "View Reported Only"}
                                         </label>
-                                        <button onClick={fetchJobs} className="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200 text-sm whitespace-nowrap">
+                                        <button onClick={fetchJobs} className="px-3 py-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 text-sm whitespace-nowrap font-medium text-gray-700">
                                             {t.admin.jobs?.action?.refresh || "Refresh"}
                                         </button>
                                     </div>
                                 </div>
-                                <table className="w-full table-fixed text-left border-collapse bg-white rounded-lg overflow-hidden shadow-sm">
-                                    <thead className="bg-gray-50 border-b border-gray-100">
-                                        <tr className="text-gray-500 uppercase font-black text-[10px] tracking-wider">
+                                <table className="w-full table-fixed text-left border-collapse">
+                                    <thead className="bg-gray-50 border-b border-gray-200">
+                                        <tr className="text-gray-500 uppercase font-semibold text-[11px] tracking-wider">
                                             <th className="px-4 py-3 w-20 text-center">{t.admin.jobs?.table?.image || "Image"}</th>
                                             <th className="px-4 py-3">{t.admin.jobs?.table?.jobInfo || "Job Info"}</th>
                                             <th className="px-4 py-3 w-40">{t.admin.jobs?.table?.user || "User"}</th>
@@ -733,43 +732,43 @@ export default function AdminPage() {
                                     <tbody className="divide-y divide-gray-100">
                                         {jobs.map((job) => (
                                             <tr key={job.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-4 py-2 text-center">
-                                                    <div className="w-12 h-12 bg-gray-50 rounded-xl overflow-hidden relative mx-auto border border-gray-100 shadow-sm">
+                                                <td className="px-4 py-3 text-center border-b border-gray-100">
+                                                    <div className="w-10 h-10 bg-gray-100 rounded-md overflow-hidden relative mx-auto border border-gray-200">
                                                         {job.previewImageUrl || job.sourceImageUrl ? (
                                                             <img src={job.previewImageUrl || job.sourceImageUrl} alt="job" className="w-full h-full object-cover" />
                                                         ) : (
-                                                            <div className="flex items-center justify-center w-full h-full text-gray-300 text-[10px] font-bold">{t.admin.jobs?.table?.noImage || "NO IMG"}</div>
+                                                            <div className="flex items-center justify-center w-full h-full text-gray-300 text-[9px] font-bold">NO IMG</div>
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-2 min-w-0">
+                                                <td className="px-4 py-3 min-w-0 border-b border-gray-100">
                                                     <div
-                                                        className="font-black text-sm text-gray-900 leading-tight mb-1 truncate"
+                                                        className="font-medium text-sm text-gray-900 leading-tight mb-1 truncate"
                                                         title={job.title || (t.admin.jobs?.table?.untitledJob || "Untitled Job")}
                                                     >
                                                         {job.title || (t.admin.jobs?.table?.untitledJob || "Untitled Job")}
                                                     </div>
-                                                    <div className="text-[10px] text-gray-400 font-mono tracking-tight truncate" title={job.id}>
+                                                    <div className="text-[11px] text-gray-400 font-mono tracking-tight truncate select-all" title={job.id}>
                                                         {job.id}
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-2 min-w-0">
-                                                    <div className="text-sm font-bold text-gray-800 truncate mb-0.5">{job.userInfo?.nickname || (t.admin.jobs?.table?.unknownUser || "Unknown")}</div>
-                                                    <div className="text-[10px] text-gray-400 truncate opacity-70">{job.userInfo?.email || job.userId}</div>
+                                                <td className="px-4 py-3 min-w-0 border-b border-gray-100">
+                                                    <div className="text-sm text-gray-700 truncate mb-0.5">{job.userInfo?.nickname || (t.admin.jobs?.table?.unknownUser || "Unknown")}</div>
+                                                    <div className="text-[11px] text-gray-400 truncate">{job.userInfo?.email || job.userId}</div>
                                                 </td>
-                                                <td className="px-4 py-2 text-center">
-                                                    <span className={`inline-block px-2 py-1 rounded-lg text-[10px] font-black tracking-tight border
-                                                        ${job.status === 'DONE' ? 'bg-green-50 text-green-700 border-green-200' :
-                                                            job.status === 'FAILED' ? 'bg-red-50 text-red-700 border-red-200' :
-                                                                job.status === 'RUNNING' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+                                                <td className="px-4 py-3 text-center border-b border-gray-100">
+                                                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border
+                                                        ${job.status === 'DONE' ? 'bg-green-50 text-green-700 border-green-100' :
+                                                            job.status === 'FAILED' ? 'bg-red-50 text-red-700 border-red-100' :
+                                                                job.status === 'RUNNING' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-gray-50 text-gray-600 border-gray-100'}`}>
                                                         {job.status}
                                                     </span>
-                                                    <div className="text-[9px] font-bold text-gray-400 mt-1.5 uppercase tracking-wider truncate" title={job.stage}>
+                                                    <div className="text-[10px] text-gray-400 mt-1 uppercase tracking-wider truncate" title={job.stage}>
                                                         {job.stage}
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-2 text-right">
-                                                    <div className="text-xs font-bold text-gray-700">
+                                                <td className="px-4 py-3 text-right border-b border-gray-100">
+                                                    <div className="text-xs text-gray-600 font-mono">
                                                         {job.estCost ? `$${job.estCost.toFixed(4)}` : "-"}
                                                     </div>
                                                 </td>
@@ -778,36 +777,34 @@ export default function AdminPage() {
                                                         {job.tokenCount ? job.tokenCount.toLocaleString() : "-"}
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-2">
+                                                <td className="px-4 py-3 border-b border-gray-100">
                                                     <div className="flex flex-col gap-1">
-                                                        <div className="flex items-center gap-1.5 text-[10px] text-gray-500 font-medium">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 opacity-60"></span>
+                                                        <div className="text-[10px] text-gray-500">
                                                             {new Date(job.createdAt).toLocaleDateString()}
                                                         </div>
-                                                        <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-gray-300 opacity-60"></span>
-                                                            {new Date(job.updatedAt).toLocaleDateString()}
+                                                        <div className="text-[10px] text-gray-400">
+                                                            {new Date(job.updatedAt).toLocaleTimeString()}
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-3 text-right">
+                                                <td className="px-4 py-3 text-right border-b border-gray-100">
                                                     <div className="flex justify-end gap-2 flex-wrap">
                                                         <button
                                                             onClick={() => setTraceJobId(job.id)}
-                                                            className="text-xs text-gray-600 hover:text-black font-medium px-2 py-1 border border-gray-200 rounded hover:bg-gray-50 whitespace-nowrap"
+                                                            className="text-xs text-gray-500 hover:text-gray-900 font-medium px-2 py-1 transition-colors whitespace-nowrap underline decoration-gray-300 hover:decoration-gray-900 underline-offset-2"
                                                         >
-                                                            HISTORY
+                                                            Log
                                                         </button>
                                                         <button
                                                             onClick={() => setConclusionJobId(job.id)}
-                                                            className="text-xs text-indigo-600 hover:text-indigo-800 font-bold px-2 py-1 border border-indigo-100 rounded bg-indigo-50/30 hover:bg-indigo-50 transition-colors whitespace-nowrap"
+                                                            className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 transition-colors whitespace-nowrap underline decoration-blue-200 hover:decoration-blue-800 underline-offset-2"
                                                         >
-                                                            CONCLUSION
+                                                            Conclusion
                                                         </button>
                                                         {(job.status === 'FAILED' || job.status === 'CANCELED') && (
                                                             <button
                                                                 onClick={() => handleJobAction(job.id, 'retry')}
-                                                                className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 border border-blue-200 rounded hover:bg-blue-50 whitespace-nowrap"
+                                                                className="text-xs text-gray-600 hover:text-black font-medium px-2 py-1 border border-gray-200 rounded hover:bg-gray-50 whitespace-nowrap"
                                                             >
                                                                 {t.admin.jobs?.action?.retry || "Retry"}
                                                             </button>
@@ -877,31 +874,31 @@ export default function AdminPage() {
                                         <tbody className="divide-y divide-gray-100">
                                             {comments.map((comment: Comment) => (
                                                 <tr key={comment.id} className="hover:bg-gray-50 transition-colors text-sm text-gray-700">
-                                                    <td className="px-6 py-4">
-                                                        <div className="max-w-md break-words">{comment.content}</div>
+                                                    <td className="px-6 py-4 border-b border-gray-100">
+                                                        <div className="max-w-md break-words text-gray-600">{comment.content}</div>
                                                     </td>
-                                                    <td className="px-6 py-4 font-medium">{comment.authorNickname || 'Unknown'}</td>
-                                                    <td className="px-6 py-4 text-xs text-gray-500 font-mono">{comment.postId.substring(0, 8)}...</td>
-                                                    <td className="px-6 py-4 text-xs text-gray-500">
+                                                    <td className="px-6 py-4 border-b border-gray-100 font-medium text-gray-800">{comment.authorNickname || 'Unknown'}</td>
+                                                    <td className="px-6 py-4 border-b border-gray-100 text-xs text-gray-400 font-mono">{comment.postId.substring(0, 8)}...</td>
+                                                    <td className="px-6 py-4 border-b border-gray-100 text-xs text-gray-400">
                                                         {new Date(comment.createdAt).toLocaleDateString()} <br />
                                                         {new Date(comment.createdAt).toLocaleTimeString()}
                                                     </td>
-                                                    <td className="px-6 py-4">
+                                                    <td className="px-6 py-4 border-b border-gray-100">
                                                         {comment.deleted ? (
-                                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-red-50 text-red-600 border border-red-100">
                                                                 Deleted
                                                             </span>
                                                         ) : (
-                                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-600 border border-green-100">
                                                                 Active
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td className="px-6 py-4 text-right">
+                                                    <td className="px-6 py-4 border-b border-gray-100 text-right">
                                                         {!comment.deleted && (
                                                             <button
                                                                 onClick={() => handleDeleteComment(comment.id)}
-                                                                className="text-red-500 hover:text-red-700 font-medium text-xs border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-all"
+                                                                className="text-gray-400 hover:text-red-600 font-medium text-xs hover:bg-red-50 px-3 py-1.5 rounded transition-all"
                                                             >
                                                                 Delete
                                                             </button>
@@ -949,9 +946,9 @@ export default function AdminPage() {
                                         placeholder={t.admin.users?.searchPlaceholder || "Search by email or nickname..."}
                                         value={searchTerm}
                                         onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                                        style={{ padding: "10px", borderRadius: "8px", border: "1px solid #ddd", flex: 1 }}
+                                        className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
                                     />
-                                    <button onClick={fetchUsers} style={{ padding: "10px 20px", borderRadius: "8px", border: "none", background: "#000", color: "#fff", cursor: "pointer" }}>
+                                    <button onClick={fetchUsers} className="px-6 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
                                         Search
                                     </button>
                                 </div>
@@ -1011,29 +1008,21 @@ export default function AdminPage() {
                                                         {user.accountState === "ACTIVE" ? (
                                                             <button
                                                                 onClick={() => handleUserSuspend(user.id)}
-                                                                style={{ padding: "6px 12px", borderRadius: "4px", border: "1px solid #ff4d4f", background: "#fff", color: "#ff4d4f", cursor: "pointer", fontSize: "12px" }}
+                                                                className="px-3 py-1 text-xs border border-red-200 text-red-600 rounded hover:bg-red-50 transition-colors"
                                                             >
                                                                 Suspend
                                                             </button>
                                                         ) : user.accountState === "SUSPENDED" ? (
                                                             <button
                                                                 onClick={() => handleUserActivate(user.id)}
-                                                                style={{ padding: "6px 12px", borderRadius: "4px", border: "1px solid #52c41a", background: "#fff", color: "#52c41a", cursor: "pointer", fontSize: "12px" }}
+                                                                className="px-3 py-1 text-xs border border-green-200 text-green-600 rounded hover:bg-green-50 transition-colors"
                                                             >
                                                                 Activate
                                                             </button>
                                                         ) : null}
                                                         <button
                                                             onClick={() => handleUserRoleChange(user.id, user.role === "ADMIN" ? "USER" : "ADMIN")}
-                                                            style={{
-                                                                padding: "6px 12px",
-                                                                borderRadius: "4px",
-                                                                border: "1px solid #1677ff",
-                                                                background: "#fff",
-                                                                color: "#1677ff",
-                                                                cursor: "pointer",
-                                                                fontSize: "12px"
-                                                            }}
+                                                            className="px-3 py-1 text-xs border border-blue-200 text-blue-600 rounded hover:bg-blue-50 transition-colors"
                                                         >
                                                             {user.role === "ADMIN" ? "Set USER" : "Set ADMIN"}
                                                         </button>
