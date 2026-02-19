@@ -54,22 +54,42 @@ function LandingPageContent({ initialItems }: Props) {
         setIsAgeModalOpen(true);
     };
 
-    const handleLevelSelect = (url: string | null, file: File | null, age: string, prompt?: string) => {
+    const compressImage = (file: File, maxDim = 2048, quality = 0.8): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const img = new window.Image();
+            img.onload = () => {
+                let { width, height } = img;
+                if (width > maxDim || height > maxDim) {
+                    const ratio = Math.min(maxDim / width, maxDim / height);
+                    width = Math.round(width * ratio);
+                    height = Math.round(height * ratio);
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = reject;
+            img.src = URL.createObjectURL(file);
+        });
+    };
+
+    const handleLevelSelect = async (url: string | null, file: File | null, age: string, prompt?: string) => {
         if (prompt) {
-            // sessionStorage.setItem('pendingPrompt', prompt);
             router.push(`/kids/main?age=${age}&prompt=${encodeURIComponent(prompt)}`);
         } else if (file) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                const dataUrl = reader.result as string;
+            try {
+                const dataUrl = await compressImage(file);
                 sessionStorage.setItem('pendingUpload', JSON.stringify({
                     name: file.name,
                     type: file.type,
                     dataUrl
                 }));
-                router.push(`/kids/main?age=${age}`);
-            };
-            reader.readAsDataURL(file);
+            } catch {
+                console.error('Failed to store upload');
+            }
+            router.push(`/kids/main?age=${age}`);
         } else if (url) {
             const modelParam = `&model=${encodeURIComponent(url)}`;
             router.push(`/kids/main?age=${age}${modelParam}`);

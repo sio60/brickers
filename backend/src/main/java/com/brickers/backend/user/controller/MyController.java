@@ -52,6 +52,13 @@ public class MyController {
         return myService.upgradeMembership(authentication, req);
     }
 
+    @PostMapping("/membership/cancel")
+    public CancelMembershipResponse cancelMembership(
+            Authentication authentication,
+            @RequestBody(required = false) CancelMembershipRequest req) {
+        return myService.cancelMembership(authentication, req);
+    }
+
     @DeleteMapping("/account")
     public DeleteMyAccountResponse deleteMyAccount(Authentication authentication) {
         return myService.requestDeleteMyAccount(authentication);

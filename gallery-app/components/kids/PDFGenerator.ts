@@ -47,7 +47,7 @@ export async function generatePdfFromServer(
     };
 
     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/instructions/pdf-with-bom`, {
+        const res = await fetch(`/api/instructions/pdf-with-bom`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

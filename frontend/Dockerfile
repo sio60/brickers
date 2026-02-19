@@ -65,8 +65,12 @@ RUN apk add --no-cache nodejs
 # supervisord 설치
 RUN apk add --no-cache supervisor
 
-# Nginx 설정 복사
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+# Nginx 설정 복사 (envsubst 템플릿)
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf.template
+
+# entrypoint 복사 (envsubst + supervisord 실행)
+COPY frontend/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Next.js 앱 복사
 WORKDIR /app
@@ -83,4 +87,4 @@ ENV PORT=3000
 
 EXPOSE 80 443 3000
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+CMD ["/entrypoint.sh"]

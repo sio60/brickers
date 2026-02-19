@@ -39,6 +39,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
     const isPro = user?.membershipPlan === "PRO";
     const [showUpgrade, setShowUpgrade] = useState(false);
     const [showLogin, setShowLogin] = useState(false);
+    const [fileSizeError, setFileSizeError] = useState(false);
 
     useEffect(() => {
         if (!open) {
@@ -66,9 +67,15 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
     };
 
     const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/avif"];
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
     const handleFile = (f: File) => {
+        setFileSizeError(false);
         if (!ALLOWED_TYPES.includes(f.type)) return;
+        if (f.size > MAX_FILE_SIZE) {
+            setFileSizeError(true);
+            return;
+        }
         setFile(f);
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPreviewUrl(URL.createObjectURL(f));
@@ -196,6 +203,11 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                         <div className={styles.uploadNotice} style={{ marginTop: '8px', fontSize: '13px', color: '#ff4444', fontWeight: 'bold' }}>
                                             {t.kids.modelSelect?.freeUserNotice || '* Free users need to upgrade'}
                                         </div>
+                                        {fileSizeError && (
+                                            <div style={{ marginTop: '8px', fontSize: '13px', color: '#ff4444', fontWeight: 'bold' }}>
+                                                {t.kids.modelSelect?.fileTooLarge || 'File size must be under 10MB'}
+                                            </div>
+                                        )}
                                     </>
                                 )}
                             </div>
