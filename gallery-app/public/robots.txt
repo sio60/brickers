@@ -1,0 +1,26 @@
+# Brickers - robots.txt
+# Allow major search engines, block everything else
+
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 5
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 5
+
+User-agent: Yeti
+Allow: /
+Crawl-delay: 10
+
+User-agent: *
+Disallow: /api/
+Disallow: /auth/
+Disallow: /oauth2/
+Disallow: /admin
+Disallow: /mypage
+Disallow: /kids/steps
+Disallow: /kids/viewer
+Crawl-delay: 10
+
+Sitemap: https://brickers.shop/sitemap.xml
