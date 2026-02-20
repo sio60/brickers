@@ -174,6 +174,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, [accessToken]);
 
     useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        if (user?.id) {
+            localStorage.setItem("userId", String(user.id));
+
+            const nickname = typeof user.nickname === "string" ? user.nickname.trim() : "";
+            if (nickname) {
+                localStorage.setItem("nickname", nickname);
+            } else {
+                localStorage.removeItem("nickname");
+            }
+            return;
+        }
+
+        // Keep previous cache while auth bootstrap is still in progress.
+        if (!isLoading) {
+            localStorage.removeItem("userId");
+            localStorage.removeItem("nickname");
+        }
+    }, [user, isLoading]);
+
+    useEffect(() => {
         // 첫 진입/새로고침 시 access 복구
         refresh();
         // eslint-disable-next-line react-hooks/exhaustive-deps

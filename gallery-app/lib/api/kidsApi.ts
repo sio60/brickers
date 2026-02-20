@@ -11,6 +11,7 @@ export interface PuzzleRank {
 
 export interface PuzzleRankRequest {
     userId: string;
+    nickname?: string;
     timeSpent: number;
 }
 
