@@ -374,8 +374,10 @@ public class KidsService {
             log.error("[AgentTrace] DB 저장 실패: {}", e.getMessage());
         }
 
-        // 2. SSE 전송 (기존 로직 재사용)
-        addAgentLog(jobId, request.getStep(), request.getMessage());
+        // 2. SSE 전송 (TRACE는 관리자용 DB 저장만, 프론트 SSE 미전송)
+        if (!"TRACE".equals(request.getStep())) {
+            addAgentLog(jobId, request.getStep(), request.getMessage());
+        }
     }
 
     /**
