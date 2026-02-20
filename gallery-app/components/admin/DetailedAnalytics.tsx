@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     BarChart, Bar, Legend, Cell, PieChart, Pie
@@ -76,13 +76,15 @@ export default function DetailedAnalytics() {
         </div>
     );
 
-    // 날짜 포맷팅 (YYYYMMDD -> MM/DD) 및 정렬 (오름차순)
-    const formattedDailyUsers = [...dailyUsers]
-        .sort((a, b) => a.date.localeCompare(b.date)) // 날짜 오름차순
-        .map(d => ({
-            ...d,
-            date: d.date.length === 8 ? `${d.date.substring(4, 6)}/${d.date.substring(6, 8)}` : d.date
-        }));
+    // 날짜 포맷팅 (YYYYMMDD -> MM/DD) 및 정렬 (오름차순) - useMemo 적용
+    const formattedDailyUsers = useMemo(() => {
+        return [...dailyUsers]
+            .sort((a, b) => a.date.localeCompare(b.date)) // 날짜 오름차순
+            .map(d => ({
+                ...d,
+                date: d.date.length === 8 ? `${d.date.substring(4, 6)}/${d.date.substring(6, 8)}` : d.date
+            }));
+    }, [dailyUsers]);
 
     return (
         <div className="space-y-8 animate-fadeIn">
