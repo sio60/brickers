@@ -92,21 +92,25 @@ export default function DetailedAnalytics() {
         fetchAllData();
     }, [authFetch]);
 
+    // 날짜 포맷팅 (YYYYMMDD -> MM/DD) 및 정렬 (오름차순) - useMemo 적용
+    // ⚠️ 반드시 early return(loading) 위에 배치 — 훅 호출 순서 보장 (React #310 방지)
+    const formattedDailyUsers = useMemo(() => {
+        if (!Array.isArray(dailyUsers) || dailyUsers.length === 0) return [];
+        return [...dailyUsers]
+            .filter(d => d && typeof d.date === 'string')
+            .sort((a, b) => a.date.localeCompare(b.date))
+            .map(d => ({
+                ...d,
+                date: d.date.length === 8 ? `${d.date.substring(4, 6)}/${d.date.substring(6, 8)}` : d.date,
+                count: typeof d.count === 'number' ? d.count : Number(d.count) || 0
+            }));
+    }, [dailyUsers]);
+
     if (loading) return (
         <div className="flex justify-center p-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
         </div>
     );
-
-    // 날짜 포맷팅 (YYYYMMDD -> MM/DD) 및 정렬 (오름차순) - useMemo 적용
-    const formattedDailyUsers = useMemo(() => {
-        return [...dailyUsers]
-            .sort((a, b) => a.date.localeCompare(b.date)) // 날짜 오름차순
-            .map(d => ({
-                ...d,
-                date: d.date.length === 8 ? `${d.date.substring(4, 6)}/${d.date.substring(6, 8)}` : d.date
-            }));
-    }, [dailyUsers]);
 
     return (
         <div className="space-y-8 animate-fadeIn">
@@ -166,15 +170,15 @@ export default function DetailedAnalytics() {
                             <div className="grid grid-cols-3 gap-6">
                                 <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center">
                                     <p className="text-gray-500 font-bold mb-2">⏳ 평균 생성 시간</p>
-                                    <p className="text-3xl font-black text-blue-600">{Math.round(performance.performance.avgWaitTime || 0)}초</p>
+                                    <p className="text-3xl font-black text-blue-600">{Math.round(Number(performance?.performance?.avgWaitTime) || 0)}초</p>
                                 </div>
                                 <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center">
                                     <p className="text-gray-500 font-bold mb-2">💸 평균 소모 비용</p>
-                                    <p className="text-3xl font-black text-green-600">${(performance.performance.avgCost || 0).toFixed(3)}</p>
+                                    <p className="text-3xl font-black text-green-600">${(Number(performance?.performance?.avgCost) || 0).toFixed(3)}</p>
                                 </div>
                                 <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center">
                                     <p className="text-gray-500 font-bold mb-2">🧱 평균 브릭 수</p>
-                                    <p className="text-3xl font-black text-purple-600">{Math.round(performance.performance.avgBrickCount || 0)}개</p>
+                                    <p className="text-3xl font-black text-purple-600">{Math.round(Number(performance?.performance?.avgBrickCount) || 0)}개</p>
                                 </div>
                             </div>
                         </section>
@@ -227,7 +231,7 @@ export default function DetailedAnalytics() {
                                 <XAxis type="number" hide />
                                 <YAxis dataKey="tag" type="category" width={80} tick={{ fontSize: 11, fontWeight: 'bold' }} interval={0} />
                                 <Tooltip cursor={{ fill: '#f1f2f6' }} contentStyle={{ borderRadius: '12px', border: '2px solid black', fontWeight: 'bold' }} />
-                                <Bar dataKey="count" name="사용 횟수" fill="#ff9f43" radius={[0, 8, 8, 0]} label={{ position: 'right', fontWeight: 'bold', fontSize: 12 }}>
+                                <Bar dataKey="count" name="사용 횟수" fill="#ff9f43" radius={[0, 8, 8, 0]} label={{ position: 'right', fontWeight: 'bold', fontSize: 12, formatter: (v: any) => String(v ?? '') }}>
                                     {topTags.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
                                     ))}
@@ -257,8 +261,8 @@ export default function DetailedAnalytics() {
                                     <td className="py-4 px-4">
                                         {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
                                     </td>
-                                    <td className="py-4 px-4 font-mono text-sm">{user.userId}</td>
-                                    <td className="py-4 px-4 text-right text-lg">{user.eventCount.toLocaleString()}</td>
+                                    <td className="py-4 px-4 font-mono text-sm">{String(user.userId ?? '')}</td>
+                                    <td className="py-4 px-4 text-right text-lg">{(typeof user.eventCount === 'number' ? user.eventCount : Number(user.eventCount) || 0).toLocaleString()}</td>
                                     <td className="py-4 px-4 text-right">
                                         <div className="w-24 h-2 bg-gray-100 rounded-full inline-block overflow-hidden">
                                             <div
