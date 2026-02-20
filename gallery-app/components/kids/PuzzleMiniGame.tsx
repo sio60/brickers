@@ -20,9 +20,9 @@ const BACKGROUND_IMAGE = "/game.png";
 
 export default function PuzzleMiniGame({ percent, message, jobId, age }: PuzzleMiniGameProps) {
     const { t } = useLanguage();
-    const { user } = useAuth(); // 사용자 정보 가져오기
+    const { user } = useAuth(); // ??????類ｋ궖 揶쎛?紐꾩궎疫?
 
-    // 타일 위치 상태 (0 ~ 8)
+    // ?????袁⑺뒄 ?怨밴묶 (0 ~ 8)
     const [tiles, setTiles] = useState<number[]>([]);
     const [moves, setMoves] = useState(0);
     const [seconds, setSeconds] = useState(0);
@@ -31,12 +31,12 @@ export default function PuzzleMiniGame({ percent, message, jobId, age }: PuzzleM
     const [ranking, setRanking] = useState<PuzzleRank[]>([]);
     const [myRank, setMyRank] = useState<number | null>(null);
 
-    // 초기화
+    // ?λ뜃由??
     useEffect(() => {
         resetGame();
     }, []);
 
-    // 타이머
+    // ??????
     useEffect(() => {
         let interval: NodeJS.Timeout;
         if (isActive && !isWin) {
@@ -56,7 +56,7 @@ export default function PuzzleMiniGame({ percent, message, jobId, age }: PuzzleM
         setIsWin(false);
         setMyRank(null);
 
-        // 셔플
+        // ?酉逾?
         shuffle(initialTiles);
     }, []);
 
@@ -64,7 +64,7 @@ export default function PuzzleMiniGame({ percent, message, jobId, age }: PuzzleM
         let currentBoard = [...array];
         let emptyPos = currentBoard.indexOf(TOTAL_TILES - 1);
 
-        // 보장된 퍼즐 해결 가능성을 위해 유효한 이동으로 셔플 (100회)
+        // 癰귣똻?????깆ス ??욧퍙 揶쎛?關苑???袁る퉸 ?醫륁뒞????猷??곗쨮 ?酉逾?(100??
         for (let i = 0; i < 100; i++) {
             const adjacents = getAdjacents(emptyPos);
             const randomNeighbor = adjacents[Math.floor(Math.random() * adjacents.length)];
@@ -77,9 +77,9 @@ export default function PuzzleMiniGame({ percent, message, jobId, age }: PuzzleM
         setTiles(currentBoard);
         setIsActive(true);
 
-        // [NEW] 트래킹: 게임 시작
+        // [NEW] ?紐껋삋?? 野껊슣????뽰삂
         gtag.trackGameAction("game_start", {
-            game_difficulty: "normal", // 현재 3x3 고정
+            game_difficulty: "normal", // ?袁⑹삺 3x3 ?⑥쥙??
             wait_time_at_moment: seconds,
             job_id: jobId
         });
@@ -113,7 +113,7 @@ export default function PuzzleMiniGame({ percent, message, jobId, age }: PuzzleM
             setTiles(newTiles);
             setMoves(prev => prev + 1);
 
-            // 승리 체크
+            // ?諛멤봺 筌ｋ똾寃?
             if (newTiles.every((val, i) => val === i)) {
                 handleWin();
             }
@@ -122,24 +122,27 @@ export default function PuzzleMiniGame({ percent, message, jobId, age }: PuzzleM
 
     const handleWin = async () => {
         setIsWin(true);
-        // 로그인되어 있으면 닉네임 사용, 아니면 Guest
-        const nickname = user?.nickname || localStorage.getItem('nickname') || 'Guest';
-        // userId는 고유 식별자가 필요하지만, API가 닉네임을 표시용으로 쓴다면 닉네임을 보냄
-        const userId = user?.id || "guest";
+        // 嚥≪뮄??紐껊┷????됱몵筌???곌퐬?????? ?袁⑤빍筌?Guest
+        const cachedNickname = localStorage.getItem("nickname");
+        const cachedUserId = localStorage.getItem("userId");
+        const nickname = user?.nickname || cachedNickname || "Guest";
+        const userId = user?.id || cachedUserId || "guest";
+        // userId???⑥쥙? ??명?癒? ?袁⑹뒄???筌? API揶쎛 ??곌퐬?袁⑹뱽 ??뽯뻻??뱀몵嚥????롳쭖???곌퐬?袁⑹뱽 癰귣?源?
+        
 
         try {
-            // 랭킹 저장
-            await savePuzzleRank({ userId, timeSpent: seconds });
+            // ??沅?????
+            const savedRank = await savePuzzleRank({ userId, nickname, timeSpent: seconds });
 
-            // 최신 랭킹 조회
+            // 筌ㅼ뮇????沅?鈺곌퀬??
             const topRanking = await getPuzzleRanking();
             setRanking(topRanking);
 
-            // 내 순위 찾기
-            const myIdx = topRanking.findIndex(r => r.userId === userId && Math.abs(r.timeSpent - seconds) < 0.1);
+            // ????뽰맄 筌≪뼐由?
+            const myIdx = topRanking.findIndex(r => r.id === savedRank.id);
             if (myIdx !== -1) setMyRank(myIdx + 1);
 
-            // [NEW] 트래킹: 게임 완료
+            // [NEW] ?紐껋삋?? 野껊슣???袁⑥┷
             gtag.trackGameAction("game_complete", {
                 game_difficulty: "normal",
                 game_moves: moves,
@@ -148,7 +151,7 @@ export default function PuzzleMiniGame({ percent, message, jobId, age }: PuzzleM
                 rank: myIdx !== -1 ? myIdx + 1 : undefined
             });
         } catch (err) {
-            console.error("랭킹 시스템 오류:", err);
+            console.error("??沅???뽯뮞????살첒:", err);
         }
     };
 
@@ -203,10 +206,10 @@ export default function PuzzleMiniGame({ percent, message, jobId, age }: PuzzleM
                 </div>
 
                 <div className={styles.referenceSection}>
-                    <span className={styles.referenceLabel}>원본</span>
+                    <span className={styles.referenceLabel}>?癒?궚</span>
                     <img
                         src={BACKGROUND_IMAGE}
-                        alt="원본 이미지"
+                        alt="?癒?궚 ???筌왖"
                         className={styles.referenceImage}
                     />
                 </div>
@@ -215,10 +218,10 @@ export default function PuzzleMiniGame({ percent, message, jobId, age }: PuzzleM
             {isWin && (
                 <div className={styles.overlay}>
                     <div className={styles.victoryCard}>
-                        <h2>축하합니다!</h2>
+                        <h2>축하합니다</h2>
                         <div className={styles.victoryStats}>
                             <p>기록: {formatTime(seconds)} ({moves}회 이동)</p>
-                            {myRank && <p>현재 랭킹 <strong>{myRank}위</strong>입니다!</p>}
+                            {myRank && <p>현재 랭킹 <strong>{myRank}위</strong>입니다</p>}
                         </div>
 
                         <div className={styles.rankingList}>
@@ -245,3 +248,4 @@ export default function PuzzleMiniGame({ percent, message, jobId, age }: PuzzleM
         </div>
     );
 }
+

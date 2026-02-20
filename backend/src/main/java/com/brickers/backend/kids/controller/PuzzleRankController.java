@@ -20,7 +20,7 @@ public class PuzzleRankController {
      */
     @PostMapping("/rank")
     public PuzzleRank recordRank(@RequestBody PuzzleRankRequest request) {
-        return puzzleRankService.saveRank(request.getUserId(), request.getTimeSpent());
+        return puzzleRankService.saveRank(request.getUserId(), request.getNickname(), request.getTimeSpent());
     }
 
     /**
