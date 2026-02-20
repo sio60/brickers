@@ -69,4 +69,6 @@ public interface GenerateJobRepository extends MongoRepository<GenerateJobEntity
 
         // [New] Fetch jobs by date range for daily stats calculation
         java.util.List<GenerateJobEntity> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+        long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }

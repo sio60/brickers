@@ -255,6 +255,44 @@ public class GoogleAnalyticsService {
     }
 
     /**
+     * 인기 검색어 순위를 조회합니다. (user_search 이벤트 search_term 기반)
+     */
+    public List<TopTagResponse> getTopKeywords(int days, int limit) throws IOException {
+        if (analyticsDataClient == null)
+            return new ArrayList<>();
+
+        RunReportRequest request = RunReportRequest.newBuilder()
+                .setProperty("properties/" + propertyId)
+                .addDimensions(Dimension.newBuilder().setName("customEvent:search_term"))
+                .addMetrics(Metric.newBuilder().setName("eventCount"))
+                .setDimensionFilter(FilterExpression.newBuilder()
+                        .setFilter(Filter.newBuilder()
+                                .setFieldName("eventName")
+                                .setStringFilter(Filter.StringFilter.newBuilder().setValue("user_search"))
+                                .build())
+                        .build())
+                .addDateRanges(DateRange.newBuilder()
+                        .setStartDate(days + "daysAgo")
+                        .setEndDate("today"))
+                .setLimit(limit)
+                .build();
+
+        RunReportResponse response = analyticsDataClient.runReport(request);
+
+        List<TopTagResponse> result = new ArrayList<>();
+        for (Row row : response.getRowsList()) {
+            String keyword = row.getDimensionValues(0).getValue();
+            long count = Long.parseLong(row.getMetricValues(0).getValue());
+
+            if (keyword != null && !keyword.isEmpty() && !keyword.equals("(not set)")) {
+                result.add(new TopTagResponse(keyword, count));
+            }
+        }
+
+        return result;
+    }
+
+    /**
      * 활동량이 가장 많은 상위 사용자들을 조회합니다.
      */
     public List<HeavyUserResponse> getHeavyUsers(int days, int limit) throws IOException {
@@ -346,6 +384,7 @@ public class GoogleAnalyticsService {
         List<DailyTrendResponse> dailyUsers = new ArrayList<>();
         List<TopPageResponse> topPages = new ArrayList<>();
         List<TopTagResponse> topTags = new ArrayList<>();
+        List<TopTagResponse> topKeywords = new ArrayList<>(); // [NEW] 검색어 추가
         List<HeavyUserResponse> heavyUsers = new ArrayList<>();
         Map<String, List<DailyTrendResponse>> eventStats = new HashMap<>();
 
@@ -448,6 +487,20 @@ public class GoogleAnalyticsService {
             requests2.add(buildEventRequest("generate_success", days));
             requests2.add(buildEventRequest("gallery_register_attempt", 1));
 
+            // [NEW] 검색어 요청 추가
+            requests2.add(RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDimensions(Dimension.newBuilder().setName("customEvent:search_term"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                            .setFilter(Filter.newBuilder()
+                                    .setFieldName("eventName")
+                                    .setStringFilter(Filter.StringFilter.newBuilder().setValue("user_search"))
+                                    .build()))
+                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                    .setLimit(10)
+                    .build());
+
             BatchRunReportsResponse batchResponse2 = analyticsDataClient
                     .batchRunReports(BatchRunReportsRequest.newBuilder()
                             .setProperty("properties/" + propertyId).addAllRequests(requests2).build());
@@ -470,13 +523,23 @@ public class GoogleAnalyticsService {
                 eventStats.put("success_1d",
                         success7d.isEmpty() ? List.of() : List.of(success7d.get(success7d.size() - 1)));
                 eventStats.put("gallery_attempt_1d", gallery1d);
+
+                // [NEW] 검색어 결과 처리
+                if (batchResponse2.getReportsCount() >= 5) {
+                    for (Row row : batchResponse2.getReports(4).getRowsList()) {
+                        String kw = row.getDimensionValues(0).getValue();
+                        if (!kw.isEmpty() && !kw.equals("(not set)")) {
+                            topKeywords.add(new TopTagResponse(kw, Long.parseLong(row.getMetricValues(0).getValue())));
+                        }
+                    }
+                }
             }
 
         } catch (Exception e) {
             log.error("Failed to get full proposal report: {}", e.getMessage());
         }
 
-        return new FullReportResponse(summary, dailyUsers, topPages, topTags, heavyUsers, eventStats);
+        return new FullReportResponse(summary, dailyUsers, topPages, topTags, topKeywords, heavyUsers, eventStats);
     }
 
     /**

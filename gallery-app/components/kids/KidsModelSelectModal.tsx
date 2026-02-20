@@ -10,6 +10,7 @@ import LoginModal from "@/components/common/LoginModal";
 import UpgradeModal from "@/components/UpgradeModal";
 import KidsDrawingCanvas from "./KidsDrawingCanvas";
 import styles from "./KidsModelSelectModal.module.css";
+import * as gtag from "@/lib/gtag";
 
 // SSR 제외
 const KidsLdrPreview = dynamic(() => import("./KidsLdrPreview"), { ssr: false });
@@ -328,7 +329,10 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                     <button
                                         className={styles.confirmBtn}
                                         disabled={!prompt.trim()}
-                                        onClick={() => onSelect(null, null, prompt)}
+                                        onClick={() => {
+                                            gtag.trackUserFeedback({ action: 'search', search_term: prompt });
+                                            onSelect(null, null, prompt);
+                                        }}
                                     >
                                         {t.kids.modelSelect.promptConfirm}
                                     </button>

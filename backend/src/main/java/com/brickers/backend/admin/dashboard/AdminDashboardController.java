@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @PreAuthorize("hasAuthority('ROLE_ADMIN')")
 @RestController
@@ -28,9 +30,12 @@ public class AdminDashboardController {
 
     @GetMapping
     public AdminDashboardStats getDashboardStats() {
+        LocalDateTime start = LocalDateTime.now().with(LocalTime.MIN);
+        LocalDateTime end = LocalDateTime.now().with(LocalTime.MAX);
+
         return AdminDashboardStats.builder()
                 .totalUsers(userRepository.count())
-                .totalJobs(jobRepository.count())
+                .totalJobs(jobRepository.countByCreatedAtBetween(start, end))
                 .totalOrders(paymentOrderRepository.count())
                 .totalGalleryPosts(galleryPostRepository.count())
                 .build();

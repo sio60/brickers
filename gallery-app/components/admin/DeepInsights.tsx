@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     ScatterChart, Scatter, ZAxis, Cell
@@ -44,24 +44,30 @@ export default function DeepInsights() {
     if (loading) return null;
     if (!data) return null;
 
-    // Process Category Data for Stacked Bar
-    const categoryData = data.categoryStats.map(c => ({
-        ...c,
-        total: c.successCount + c.failCount,
-        successRate: (c.successCount + c.failCount) > 0
-            ? Math.round((c.successCount / (c.successCount + c.failCount)) * 100)
-            : 0
-    })).sort((a, b) => b.total - a.total);
+    // Process Category Data for Stacked Bar - useMemo 적용
+    const categoryData = useMemo(() => {
+        if (!data) return [];
+        return data.categoryStats.map(c => ({
+            ...c,
+            total: c.successCount + c.failCount,
+            successRate: (c.successCount + c.failCount) > 0
+                ? Math.round((c.successCount / (c.successCount + c.failCount)) * 100)
+                : 0
+        })).sort((a, b) => b.total - a.total);
+    }, [data]);
 
-    // Process Keyword Data for Bubble Cloud (Scatter)
-    const keywordData = data.keywordStats.map((k, i) => ({
-        x: (i % 5) * 100 + Math.random() * 50,
-        y: Math.floor(i / 5) * 100 + Math.random() * 50,
-        z: k.count * 100, // Size
-        keyword: k.keyword,
-        count: k.count,
-        fill: COLORS[i % COLORS.length]
-    }));
+    // Process Keyword Data for Bubble Cloud (Scatter) - useMemo 적용
+    const keywordData = useMemo(() => {
+        if (!data) return [];
+        return data.keywordStats.map((k, i) => ({
+            x: (i % 5) * 100 + Math.random() * 50,
+            y: Math.floor(i / 5) * 100 + Math.random() * 50,
+            z: k.count * 100, // Size
+            keyword: k.keyword,
+            count: k.count,
+            fill: COLORS[i % COLORS.length]
+        }));
+    }, [data]);
 
     return (
         <div className="space-y-8 animate-fadeIn mt-12 bg-gray-50 p-8 rounded-[32px] border-4 border-black border-dashed">

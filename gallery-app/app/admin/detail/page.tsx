@@ -4,9 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import styles from "../AdminPage.module.css"; // 경로 수정
-import DetailedAnalytics from "@/components/admin/DetailedAnalytics";
-import DeepInsights from "@/components/admin/DeepInsights";
 import { useAdminAI } from "@/hooks/useAdminAI";
+
+// SSR 제외 및 동적 임포트
+const DetailedAnalytics = dynamic(() => import("@/components/admin/DetailedAnalytics"), { ssr: false });
+const DeepInsights = dynamic(() => import("@/components/admin/DeepInsights"), { ssr: false });
 
 // SSR 제외
 // SSR 제외

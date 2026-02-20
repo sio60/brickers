@@ -128,7 +128,7 @@ export default function PuzzleMiniGame({ percent, message, jobId, age }: PuzzleM
         const nickname = user?.nickname || cachedNickname || "Guest";
         const userId = user?.id || cachedUserId || "guest";
         // userId???⑥쥙? ??명?癒? ?袁⑹뒄???筌? API揶쎛 ??곌퐬?袁⑹뱽 ??뽯뻻??뱀몵嚥????롳쭖???곌퐬?袁⑹뱽 癰귣?源?
-        
+
 
         try {
             // ??沅?????
@@ -206,10 +206,10 @@ export default function PuzzleMiniGame({ percent, message, jobId, age }: PuzzleM
                 </div>
 
                 <div className={styles.referenceSection}>
-                    <span className={styles.referenceLabel}>?癒?궚</span>
+                    <span className={styles.referenceLabel}>원본</span>
                     <img
                         src={BACKGROUND_IMAGE}
-                        alt="?癒?궚 ???筌왖"
+                        alt="원본 이미지"
                         className={styles.referenceImage}
                     />
                 </div>
