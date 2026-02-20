@@ -19,19 +19,20 @@ public class PuzzleRankService {
     private final PuzzleRankRepository puzzleRankRepository;
     private final UserRepository userRepository;
 
-    /**
-     * 퍼즐 랭킹 기록 저장
-     */
-    public PuzzleRank saveRank(String userId, Double timeSpent) {
-        log.info("퍼즐 랭킹 저장 요청: userId={}, timeSpent={}s", userId, timeSpent);
+    public PuzzleRank saveRank(String userId, String nickname, Double timeSpent) {
+        String normalizedUserId = normalizeUserId(userId);
+        log.info("Puzzle rank save request: userId={}, nickname={}, timeSpent={}s", normalizedUserId, nickname, timeSpent);
 
-        User user = userRepository.findById(userId)
-                .orElse(null);
+        User user = "guest".equalsIgnoreCase(normalizedUserId)
+                ? null
+                : userRepository.findById(normalizedUserId).orElse(null);
+
+        String resolvedNickname = resolveNickname(user, nickname, normalizedUserId);
 
         PuzzleRank rank = PuzzleRank.builder()
-                .userId(userId)
+                .userId(normalizedUserId)
                 .email(user != null ? user.getEmail() : "Guest")
-                .nickname(user != null ? user.getNickname() : "Guest")
+                .nickname(resolvedNickname)
                 .timeSpent(timeSpent)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -39,10 +40,27 @@ public class PuzzleRankService {
         return puzzleRankRepository.save(rank);
     }
 
-    /**
-     * 상위 랭킹 10위 조회
-     */
     public List<PuzzleRank> getTopRanking() {
         return puzzleRankRepository.findTop10ByOrderByTimeSpentAsc();
+    }
+
+    private String normalizeUserId(String userId) {
+        if (userId == null || userId.isBlank()) {
+            return "guest";
+        }
+        return userId.trim();
+    }
+
+    private String resolveNickname(User user, String fallbackNickname, String userId) {
+        if (user != null && user.getNickname() != null && !user.getNickname().isBlank()) {
+            return user.getNickname();
+        }
+        if (fallbackNickname != null && !fallbackNickname.isBlank()) {
+            return fallbackNickname.trim();
+        }
+        if (userId == null || userId.isBlank() || "guest".equalsIgnoreCase(userId)) {
+            return "Guest";
+        }
+        return userId;
     }
 }
