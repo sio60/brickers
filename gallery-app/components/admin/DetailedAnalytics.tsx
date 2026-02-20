@@ -52,14 +52,36 @@ export default function DetailedAnalytics() {
                     authFetch("/api/admin/analytics/heavy-users?days=30&limit=10")
                 ]);
 
-                if (usersRes.ok) setDailyUsers(await usersRes.json());
+                if (usersRes.ok) {
+                    const data = await usersRes.json();
+                    setDailyUsers(Array.isArray(data) ? data : []);
+                }
                 if (genRes.ok) {
                     const data = await genRes.json();
-                    setGenTrend(data.sort((a: DailyTrend, b: DailyTrend) => a.date.localeCompare(b.date)));
+                    if (Array.isArray(data)) {
+                        setGenTrend(data.sort((a: DailyTrend, b: DailyTrend) => a.date.localeCompare(b.date)));
+                    } else {
+                        setGenTrend([]);
+                    }
                 }
-                if (perfRes.ok) setPerformance(await perfRes.json());
-                if (tagsRes.ok) setTopTags(await tagsRes.json());
-                if (heavyRes.ok) setHeavyUsers(await heavyRes.json());
+                if (perfRes.ok) {
+                    const data = await perfRes.json();
+                    // Validate structure
+                    if (data && typeof data === 'object' && Array.isArray(data.failureStats)) {
+                        setPerformance(data);
+                    } else {
+                        console.error("Invalid performance data format:", data);
+                        setPerformance(null);
+                    }
+                }
+                if (tagsRes.ok) {
+                    const data = await tagsRes.json();
+                    setTopTags(Array.isArray(data) ? data : []);
+                }
+                if (heavyRes.ok) {
+                    const data = await heavyRes.json();
+                    setHeavyUsers(Array.isArray(data) ? data : []);
+                }
             } catch (e) {
                 console.error("Failed to fetch detailed analytics", e);
             } finally {
@@ -125,7 +147,7 @@ export default function DetailedAnalytics() {
                                             cx="50%"
                                             cy="50%"
                                             outerRadius={80}
-                                            label={({ name }) => name}
+                                            label={(props: any) => String(props.name || '')}
                                         >
                                             {performance.failureStats.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
