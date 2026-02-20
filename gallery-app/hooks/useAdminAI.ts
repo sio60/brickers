@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export interface AdminAIState {
@@ -129,9 +129,12 @@ export function useAdminAI(activeTab: string) {
     }, [authFetch]);
 
     // 대시보드 진입 시 자동 분석 & 5분 주기 폴링
+    const handleDeepAnalyzeRef = useRef(handleDeepAnalyze);
+    handleDeepAnalyzeRef.current = handleDeepAnalyze;
+
     useEffect(() => {
         if (activeTab === "dashboard" && !autoAnalyzeDone && !state.deepAnalyzing) {
-            handleDeepAnalyze();
+            handleDeepAnalyzeRef.current();
             setAutoAnalyzeDone(true);
         }
 
@@ -140,7 +143,7 @@ export function useAdminAI(activeTab: string) {
             interval = setInterval(() => {
                 if (!state.deepAnalyzing) {
                     console.log("[AI Analyst] Periodic auto-refreshing...");
-                    handleDeepAnalyze();
+                    handleDeepAnalyzeRef.current();
                 }
             }, 300000);
         }
@@ -148,7 +151,7 @@ export function useAdminAI(activeTab: string) {
         return () => {
             if (interval) clearInterval(interval);
         };
-    }, [activeTab, autoAnalyzeDone, state.deepAnalyzing, handleDeepAnalyze]);
+    }, [activeTab, autoAnalyzeDone, state.deepAnalyzing]);
 
     return {
         ...state,
