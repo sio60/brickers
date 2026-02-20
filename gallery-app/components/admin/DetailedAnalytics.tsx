@@ -1,99 +1,16 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     BarChart, Bar, Legend, Cell, PieChart, Pie
 } from 'recharts';
-import { useAuth } from "@/contexts/AuthContext";
+import { useAdminDetailData } from '@/contexts/AdminDetailDataContext';
 
 const COLORS = ['#ffe135', '#ff9f43', '#ee5253', '#10ac84', '#5f27cd', '#48dbfb', '#2e86de', '#ff6b6b', '#feca57', '#a29bfe'];
 
-
-interface DailyTrend {
-    date: string;
-    count: number;
-}
-
-interface TopTag {
-    tag: string;
-    count: number;
-}
-
-interface HeavyUser {
-    userId: string;
-    eventCount: number;
-}
-
-interface PerformanceResponse {
-    failureStats: { reason: string; count: number }[];
-    performance: {
-        avgWaitTime: number;
-        avgCost: number;
-        avgBrickCount: number;
-    };
-}
-
 export default function DetailedAnalytics() {
-    const { authFetch } = useAuth();
-    const [loading, setLoading] = useState(true);
-    const [dailyUsers, setDailyUsers] = useState<DailyTrend[]>([]);
-    const [genTrend, setGenTrend] = useState<DailyTrend[]>([]); // [NEW] Generation Trend
-    const [performance, setPerformance] = useState<PerformanceResponse | null>(null); // [NEW] Performance Data
-    const [topTags, setTopTags] = useState<TopTag[]>([]);
-    const [heavyUsers, setHeavyUsers] = useState<HeavyUser[]>([]);
+    const { dailyUsers, genTrend, performance, topTags, heavyUsers, loading } = useAdminDetailData();
 
-    useEffect(() => {
-        const fetchAllData = async () => {
-            try {
-                const [usersRes, genRes, perfRes, tagsRes, heavyRes] = await Promise.all([
-                    authFetch("/api/admin/analytics/daily-users?days=30"),
-                    authFetch("/api/admin/analytics/generation-trend?days=7"),
-                    authFetch("/api/admin/analytics/performance?days=30"),
-                    authFetch("/api/admin/analytics/top-tags?days=30&limit=10"),
-                    authFetch("/api/admin/analytics/heavy-users?days=30&limit=10")
-                ]);
-
-                if (usersRes.ok) {
-                    const data = await usersRes.json();
-                    setDailyUsers(Array.isArray(data) ? data : []);
-                }
-                if (genRes.ok) {
-                    const data = await genRes.json();
-                    if (Array.isArray(data)) {
-                        setGenTrend(data.sort((a: DailyTrend, b: DailyTrend) => a.date.localeCompare(b.date)));
-                    } else {
-                        setGenTrend([]);
-                    }
-                }
-                if (perfRes.ok) {
-                    const data = await perfRes.json();
-                    // Validate structure
-                    if (data && typeof data === 'object' && Array.isArray(data.failureStats)) {
-                        setPerformance(data);
-                    } else {
-                        console.error("Invalid performance data format:", data);
-                        setPerformance(null);
-                    }
-                }
-                if (tagsRes.ok) {
-                    const data = await tagsRes.json();
-                    setTopTags(Array.isArray(data) ? data : []);
-                }
-                if (heavyRes.ok) {
-                    const data = await heavyRes.json();
-                    setHeavyUsers(Array.isArray(data) ? data : []);
-                }
-            } catch (e) {
-                console.error("Failed to fetch detailed analytics", e);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchAllData();
-    }, [authFetch]);
-
-    // 날짜 포맷팅 (YYYYMMDD -> MM/DD) 및 정렬 (오름차순) - useMemo 적용
-    // ⚠️ 반드시 early return(loading) 위에 배치 — 훅 호출 순서 보장 (React #310 방지)
+    // ⚠️ 모든 useMemo는 early return 위에 배치 — 훅 호출 순서 보장 (React #310 방지)
     const formattedDailyUsers = useMemo(() => {
         if (!Array.isArray(dailyUsers) || dailyUsers.length === 0) return [];
         return [...dailyUsers]
@@ -198,13 +115,13 @@ export default function DetailedAnalytics() {
                                     dataKey="date"
                                     tick={{ fontSize: 12, fontWeight: 'bold' }}
                                     stroke="#000"
-                                    tickFormatter={(str) => str.length === 8 ? `${str.substring(4, 6)}/${str.substring(6, 8)}` : str}
+                                    tickFormatter={(str) => typeof str === 'string' && str.length === 8 ? `${str.substring(4, 6)}/${str.substring(6, 8)}` : String(str)}
                                 />
                                 <YAxis tick={{ fontSize: 12, fontWeight: 'bold' }} stroke="#000" allowDecimals={false} />
                                 <Tooltip
                                     contentStyle={{ borderRadius: '16px', border: '2px solid black', fontWeight: 'bold', boxShadow: '4px 4px 0px rgba(0,0,0,0.1)' }}
                                     cursor={{ stroke: '#ffe135', strokeWidth: 2 }}
-                                    labelFormatter={(label) => label.length === 8 ? `${label.substring(0, 4)}년 ${label.substring(4, 6)}월 ${label.substring(6, 8)}일` : label}
+                                    labelFormatter={(label) => typeof label === 'string' && label.length === 8 ? `${label.substring(0, 4)}년 ${label.substring(4, 6)}월 ${label.substring(6, 8)}일` : String(label)}
                                 />
                                 <Legend />
                                 <Line
@@ -267,7 +184,7 @@ export default function DetailedAnalytics() {
                                         <div className="w-24 h-2 bg-gray-100 rounded-full inline-block overflow-hidden">
                                             <div
                                                 className="h-full bg-black"
-                                                style={{ width: `${Math.min(100, (user.eventCount / (heavyUsers[0]?.eventCount || 1)) * 100)}%` }}
+                                                style={{ width: `${Math.min(100, (Number(user.eventCount) || 0) / (Number(heavyUsers[0]?.eventCount) || 1) * 100)}%` }}
                                             />
                                         </div>
                                     </td>
