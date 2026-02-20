@@ -1,73 +1,50 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     ScatterChart, Scatter, ZAxis, Cell
 } from 'recharts';
-import { useAuth } from "@/contexts/AuthContext";
-
-interface DeepInsightResponse {
-    categoryStats: {
-        category: string;
-        successCount: number;
-        failCount: number;
-    }[];
-    qualityStats: any[];
-    keywordStats: {
-        keyword: string;
-        count: number;
-    }[];
-}
+import { useAdminDetailData } from '@/contexts/AdminDetailDataContext';
 
 const COLORS = ['#ffe135', '#ff9f43', '#ee5253', '#10ac84', '#5f27cd', '#48dbfb', '#2e86de', '#ff6b6b', '#feca57', '#a29bfe'];
 
 export default function DeepInsights() {
-    const { authFetch } = useAuth();
-    const [data, setData] = useState<DeepInsightResponse | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { deepInsight, loading } = useAdminDetailData();
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await authFetch("/api/admin/analytics/deep-insights?days=30");
-                if (res.ok) {
-                    setData(await res.json());
-                }
-            } catch (e) {
-                console.error("Failed to fetch deep insights", e);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, [authFetch]);
-
-    if (loading) return null;
-    if (!data) return null;
-
-    // Process Category Data for Stacked Bar - useMemo 적용
+    // ⚠️ 모든 useMemo는 early return 위에 배치 — 훅 호출 순서 보장 (React #310 방지)
     const categoryData = useMemo(() => {
-        if (!data) return [];
-        return data.categoryStats.map(c => ({
+        if (!deepInsight?.categoryStats) return [];
+        return deepInsight.categoryStats.map(c => ({
             ...c,
             total: c.successCount + c.failCount,
             successRate: (c.successCount + c.failCount) > 0
                 ? Math.round((c.successCount / (c.successCount + c.failCount)) * 100)
                 : 0
         })).sort((a, b) => b.total - a.total);
-    }, [data]);
+    }, [deepInsight]);
 
-    // Process Keyword Data for Bubble Cloud (Scatter) - useMemo 적용
     const keywordData = useMemo(() => {
-        if (!data) return [];
-        return data.keywordStats.map((k, i) => ({
+        if (!deepInsight?.keywordStats) return [];
+        return deepInsight.keywordStats.map((k, i) => ({
             x: (i % 5) * 100 + Math.random() * 50,
             y: Math.floor(i / 5) * 100 + Math.random() * 50,
-            z: k.count * 100, // Size
+            z: k.count * 100,
             keyword: k.keyword,
             count: k.count,
             fill: COLORS[i % COLORS.length]
         }));
-    }, [data]);
+    }, [deepInsight]);
+
+    if (loading) return (
+        <div className="flex justify-center p-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+        </div>
+    );
+
+    if (!deepInsight) return (
+        <div className="text-center text-gray-400 font-bold p-12">
+            유저 성향 데이터를 불러올 수 없습니다.
+        </div>
+    );
 
     return (
         <div className="space-y-8 animate-fadeIn mt-12 bg-gray-50 p-8 rounded-[32px] border-4 border-black border-dashed">
@@ -120,8 +97,8 @@ export default function DeepInsights() {
                                                 const data = payload[0].payload;
                                                 return (
                                                     <div className="bg-black text-white p-3 rounded-lg text-sm font-bold shadow-xl">
-                                                        <p className="text-yellow-400 text-lg">"{data.keyword}"</p>
-                                                        <p>검색 횟수: {data.count}회</p>
+                                                        <p className="text-yellow-400 text-lg">"{String(data.keyword)}"</p>
+                                                        <p>검색 횟수: {Number(data.count)}회</p>
                                                     </div>
                                                 );
                                             }
