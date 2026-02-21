@@ -1,0 +1,433 @@
+.kidsPage {
+  min-height: 100vh;
+  width: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+
+  position: relative;
+  isolation: isolate;
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  /* ✅ 결과가 길어지면 스크롤 */
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.kidsUpload,
+.kidsPage__cta,
+.kidsPage__error,
+.kidsResult {
+  width: 100%;
+}
+
+/* 어두운 오버레이 */
+.kidsPage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: -1;
+}
+
+/* ✅ 공룡 */
+.kidsPage__dino {
+  position: absolute;
+  left: 0;
+  bottom: 4px;
+  width: min(760px, 60vw);
+  height: auto;
+
+  transform: translateX(-100%);
+  transition: transform 350ms ease;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.kidsPage:hover .kidsPage__dino {
+  transform: translateX(-50%);
+}
+
+.kidsPage__center {
+  width: 100%;
+  max-width: 1100px;
+  /* ✅ 3개 나란히 위해 늘림 */
+  margin: 0 auto;
+  min-height: calc(100vh - 48px);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+
+  padding-top: 8vh;
+  gap: 18px;
+
+  position: relative;
+  z-index: 3;
+}
+
+
+/* 업로드 카드 */
+.kidsUpload {
+  width: 100%;
+  border-radius: 18px;
+  padding: 18px;
+  cursor: pointer;
+
+  background: rgba(255, 255, 255, 0.92);
+  border: 2px dashed rgba(0, 0, 0, 0.18);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.kidsUpload:hover {
+  transform: translateY(-1px);
+}
+
+.kidsUpload--drag {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.35);
+}
+
+.kidsUpload__input {
+  display: none;
+}
+
+.kidsUpload__title {
+  font-size: 18px;
+  font-weight: 900;
+  color: #111;
+}
+
+.kidsUpload__sub {
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.kidsUpload__hint {
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+/* 미리보기 */
+.kidsUpload__previewWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kidsUpload__preview {
+  width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  display: block;
+}
+
+.kidsUpload__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kidsUpload__filename {
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(0, 0, 0, 0.75);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kidsUpload__remove {
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-weight: 900;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* 생성 버튼 */
+.kidsPage__cta {
+  width: 100%;
+  height: 56px;
+  border: 0;
+  border-radius: 16px;
+  font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
+
+  background: #ffffff;
+  color: #111;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.25);
+}
+
+.kidsPage__cta:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* 에러 */
+.kidsPage__error {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 0, 0, 0.12);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 800;
+  text-align: center;
+}
+
+/* ✅ 결과 카드 */
+.kidsResult {
+  width: 100%;
+  margin-top: 8px;
+
+  border-radius: 18px;
+  overflow: hidden;
+
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+
+  flex: 0 0 auto;
+}
+
+.kidsResult__img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.kidsUpload__toggle {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.kidsUpload__toggleBtn {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.75);
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.kidsUpload__toggleBtn.isActive {
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  border-color: rgba(0, 0, 0, 0.75);
+}
+
+/* ✅ 타이틀 */
+.kidsPage__title {
+  font-size: 28px;
+  font-weight: 900;
+  color: #000000;
+  text-align: center;
+}
+
+.kidsPage__sub {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+/* ✅ 싱글뷰 레이아웃 */
+.kidsPage__singleView {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 이전 2열 레이아웃 (사용 안 함) */
+.kidsPage__content {
+  display: none;
+}
+
+/* ✅ 3D 미리보기 섹션 */
+.kidsPage__3dSection {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+}
+
+.kidsPage__sectionLabel {
+  font-size: 16px;
+  font-weight: 900;
+  color: #111;
+  margin-bottom: 12px;
+}
+
+.kidsPage__3dViewer {
+  width: 100%;
+  height: 450px;
+  background: #f8f9fa;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* ✅ 결과 타이틀 - 카드 위에 표시 */
+.kidsPage__resultTitle {
+  font-size: 24px;
+  font-weight: 800;
+  color: #111;
+  text-align: center;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+/* ✅ 결과 카드 */
+.kidsPage__resultCard {
+  width: 100%;
+  max-width: 800px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 2px solid #111;
+  padding: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.kidsPage__resultCard .kidsPage__3dViewer {
+  height: 500px;
+  border-radius: 0;
+  background: #fafafa;
+}
+
+/* Empty state */
+.kidsPage__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #888;
+  font-weight: 700;
+}
+
+/* ✅ 결과 섹션 */
+.kidsPage__resultSection {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+}
+
+.kidsPage__resultViewer {
+  height: 400px;
+  background: #f8f9fa;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kidsPage__resultImg {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* ✅ 로딩 */
+.kidsPage__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: #666;
+  font-weight: 700;
+}
+
+.kidsPage__spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ✅ 원본 미리보기 */
+.kidsPage__originalPreview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.kidsPage__originalPreview img {
+  max-width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.kidsPage__originalLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #888;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .kidsPage__content {
+    grid-template-columns: 1fr;
+  }
+
+  .kidsPage__3dViewer,
+  .kidsPage__resultViewer {
+    height: 300px;
+  }
+}
+
+/* ✅ NEXT 버튼 */
+.kidsPage__nextBtn {
+  margin-top: 20px;
+  padding: 16px 48px;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.kidsPage__nextBtn:hover {
+  background: #333;
+  transform: scale(1.05);
+}
