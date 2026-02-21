@@ -88,6 +88,8 @@ type AdminJob = {
     stage: string;
     sourceImageUrl?: string;
     previewImageUrl?: string;
+    initialLdrUrl?: string; // [NEW]
+    ldrUrl?: string; // [NEW]
     createdAt: string;
     updatedAt: string;
     errorMessage?: string;
@@ -1213,9 +1215,17 @@ export default function AdminPage() {
                 <AgentTraceViewer jobId={traceJobId} onClose={() => setTraceJobId(null)} />
             )}
             {/* [NEW] Conclusion Viewer Modal */}
-            {conclusionJobId && (
-                <AgentConclusionViewer jobId={conclusionJobId} onClose={() => setConclusionJobId(null)} />
-            )}
+            {conclusionJobId && (() => {
+                const job = jobs.find(j => j.id === conclusionJobId);
+                return (
+                    <AgentConclusionViewer
+                        jobId={conclusionJobId}
+                        initialLdrUrl={job?.initialLdrUrl}
+                        finalLdrUrl={job?.ldrUrl}
+                        onClose={() => setConclusionJobId(null)}
+                    />
+                );
+            })()}
         </div >
     );
 }
