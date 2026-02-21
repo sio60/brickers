@@ -2,20 +2,22 @@
     min-height: 100vh;
     width: 100%;
     position: relative;
-    padding-top: 80px;
+    padding-top: 72px;
+    /* Header height */
+    background: #fff;
 }
 
 .container {
-    max-width: 1200px;
-    margin: 20px auto;
+    width: 100%;
+    max-width: none;
+    margin: 0;
     position: relative;
     z-index: 5;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-radius: 40px;
-    height: calc(100vh - 140px);
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.2);
-    border: 3px solid #000;
+    background: #fff;
+    height: calc(100vh - 72px);
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;

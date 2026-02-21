@@ -40,7 +40,6 @@ export default function AdminDetailPage() {
                                 <h1 className={styles.title}>
                                     {activeTab === "dashboard" ? "상세 분석 대시보드" : "유저 성향 분석"}
                                 </h1>
-                                <button className={styles.closeBtn} onClick={() => router.push('/admin')}>✕</button>
                             </header>
 
                             <div className={styles.dashboard}>

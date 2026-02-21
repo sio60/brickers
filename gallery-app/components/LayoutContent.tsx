@@ -17,7 +17,7 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
     return (
         <div className={`appLayout lang-${language}`}>
             <Header />
-            {!isAuthWaitingPage && !isStepsPage && <BackgroundBricks />}
+            {!isAuthWaitingPage && !isStepsPage && !isAdminRoute && <BackgroundBricks />}
             <main className="appLayout__content">
                 {children}
             </main>
