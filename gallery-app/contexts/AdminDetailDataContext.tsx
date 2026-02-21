@@ -15,37 +15,49 @@ interface PerformanceData {
 interface DeepInsightData {
     categoryStats: { category: string; successCount: number; failCount: number; }[];
     qualityStats: any[];
-    keywordStats: { keyword: string; count: number; }[];
 }
 
-interface AdminDetailData {
-    // DetailedAnalytics 데이터
-    dailyUsers: DailyUser[];
-    genTrend: DailyTrend[];
+export interface ProductIntelligenceResponse {
+    funnel: Array<{ stage: string; count: number }>;
+    quality: {
+        avgStability: number;
+        avgBrickCount: number;
+        avgLatency: number;
+        totalCost: number;
+    };
+    exits: Array<{ step: string; count: number }>;
+}
+
+// New types introduced by the diff for AdminDetailContextType
+interface DailyUserData { date: string; count: number; }
+interface GenerationTrendData { date: string; count: number; }
+
+interface AdminDetailContextType {
+    dailyUsers: DailyUserData[] | null;
+    genTrend: GenerationTrendData[] | null;
     performance: PerformanceData | null;
-    topTags: TagStat[];
-    heavyUsers: HeavyUser[];
-    // DeepInsights 데이터
+    topTags: Array<{ tag: string; count: number }> | null;
+    heavyUsers: Array<{ userId: string; email: string; generationCount: number }> | null;
     deepInsight: DeepInsightData | null;
-    // 상태
+    productIntelligence: ProductIntelligenceResponse | null;
     loading: boolean;
     error: string | null;
-    // 재로드
-    refetch: () => void;
+    refetch: () => Promise<void>;
 }
 
-const AdminDetailDataContext = createContext<AdminDetailData | null>(null);
+const AdminDetailDataContext = createContext<AdminDetailContextType | null>(null);
 
 // ── Provider ──────────────────────────────────────────
 export function AdminDetailDataProvider({ children }: { children: React.ReactNode }) {
     const { authFetch } = useAuth();
 
-    const [dailyUsers, setDailyUsers] = useState<DailyUser[]>([]);
-    const [genTrend, setGenTrend] = useState<DailyTrend[]>([]);
+    const [dailyUsers, setDailyUsers] = useState<DailyUserData[] | null>(null);
+    const [genTrend, setGenTrend] = useState<GenerationTrendData[] | null>(null);
     const [performance, setPerformance] = useState<PerformanceData | null>(null);
-    const [topTags, setTopTags] = useState<TagStat[]>([]);
-    const [heavyUsers, setHeavyUsers] = useState<HeavyUser[]>([]);
+    const [topTags, setTopTags] = useState<Array<{ tag: string; count: number }> | null>(null);
+    const [heavyUsers, setHeavyUsers] = useState<AdminDetailContextType['heavyUsers']>(null);
     const [deepInsight, setDeepInsight] = useState<DeepInsightData | null>(null);
+    const [productIntelligence, setProductIntelligence] = useState<ProductIntelligenceResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [fetched, setFetched] = useState(false);
@@ -56,14 +68,17 @@ export function AdminDetailDataProvider({ children }: { children: React.ReactNod
         setError(null);
 
         try {
-            const [usersRes, genRes, perfRes, tagsRes, heavyRes, deepRes] = await Promise.allSettled([
+            const results = await Promise.allSettled([
                 authFetch("/api/admin/analytics/daily-users?days=30"),
                 authFetch("/api/admin/analytics/generation-trend?days=7"),
                 authFetch("/api/admin/analytics/performance?days=30"),
                 authFetch("/api/admin/analytics/top-tags?days=30&limit=10"),
-                authFetch("/api/admin/analytics/heavy-users?days=30&limit=10"),
+                authFetch("/api/admin/analytics/heavy-users?days=30"),
                 authFetch("/api/admin/analytics/deep-insights?days=30"),
+                authFetch("/api/admin/analytics/product-intelligence?days=30"),
             ]);
+
+            const [usersRes, genRes, perfRes, tagsRes, heavyRes, deepRes, prodIntelRes] = results;
 
             // Helper: 안전하게 JSON 파싱
             const safeJson = async (res: PromiseSettledResult<Response>) => {
@@ -93,7 +108,14 @@ export function AdminDetailDataProvider({ children }: { children: React.ReactNod
             if (Array.isArray(heavyData)) setHeavyUsers(heavyData);
 
             const deepData = await safeJson(deepRes);
-            if (deepData && typeof deepData === 'object') setDeepInsight(deepData);
+            if (deepData && typeof deepData === 'object') {
+                setDeepInsight(deepData);
+            }
+
+            const prodIntelData = await safeJson(prodIntelRes);
+            if (prodIntelData && typeof prodIntelData === 'object') {
+                setProductIntelligence(prodIntelData);
+            }
 
             setFetched(true);
         } catch (e: any) {
@@ -108,14 +130,19 @@ export function AdminDetailDataProvider({ children }: { children: React.ReactNod
         fetchAllData();
     }, [fetchAllData]);
 
-    const refetch = useCallback(() => {
+    const refetch = useCallback(async () => {
         setFetched(false);
-    }, []);
+        await fetchAllData(); // Ensure refetch actually triggers a new fetch
+    }, [fetchAllData]);
 
     const value = useMemo(() => ({
         dailyUsers, genTrend, performance, topTags, heavyUsers,
-        deepInsight, loading, error, refetch,
-    }), [dailyUsers, genTrend, performance, topTags, heavyUsers, deepInsight, loading, error, refetch]);
+        deepInsight,
+        productIntelligence,
+        loading,
+        error,
+        refetch,
+    }), [dailyUsers, genTrend, performance, topTags, heavyUsers, deepInsight, productIntelligence, loading, error, refetch]);
 
     return (
         <AdminDetailDataContext.Provider value={value}>

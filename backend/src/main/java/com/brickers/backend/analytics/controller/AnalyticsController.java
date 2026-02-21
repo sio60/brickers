@@ -111,17 +111,6 @@ public class AnalyticsController {
         return ResponseEntity.ok(gaService.getUserActivity(userId, days));
     }
 
-    @GetMapping("/top-keywords")
-    public ResponseEntity<List<TopTagResponse>> getTopKeywords(
-            @RequestHeader(name = "X-Internal-Token", required = false) String token,
-            @RequestParam(name = "days", defaultValue = "30") int days,
-            @RequestParam(name = "limit", defaultValue = "10") int limit) throws IOException {
-        if (!isAdminOrInternal(token)) {
-            return ResponseEntity.status(403).build();
-        }
-        return ResponseEntity.ok(gaService.getTopKeywords(days, limit));
-    }
-
     @GetMapping("/top-tags")
     public ResponseEntity<List<TopTagResponse>> getTopTags(
             @RequestHeader(name = "X-Internal-Token", required = false) String token,
