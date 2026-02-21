@@ -53,8 +53,8 @@ jobs:
       - name: Build and Push Frontend
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./frontend/Dockerfile
+          context: ./gallery-app
+          file: ./gallery-app/Dockerfile
           platforms: linux/amd64
           push: true
           tags: |
