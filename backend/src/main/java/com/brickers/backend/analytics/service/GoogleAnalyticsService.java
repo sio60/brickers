@@ -531,6 +531,7 @@ public class GoogleAnalyticsService {
                     .addMetrics(Metric.newBuilder().setName("customEvent:stability_score"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:brick_count"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:lmm_latency"))
+                    .addMetrics(Metric.newBuilder().setName("customEvent:wait_time"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
                     .setDimensionFilter(FilterExpression.newBuilder()
                             .setFilter(Filter.newBuilder()
@@ -549,7 +550,8 @@ public class GoogleAnalyticsService {
                         Double.parseDouble(row.getMetricValues(0).getValue()),
                         Double.parseDouble(row.getMetricValues(1).getValue()),
                         Double.parseDouble(row.getMetricValues(2).getValue()),
-                        Double.parseDouble(row.getMetricValues(3).getValue()));
+                        Double.parseDouble(row.getMetricValues(3).getValue()),
+                        Double.parseDouble(row.getMetricValues(4).getValue()));
             }
         } catch (Exception e) {
             log.warn("Failed to fetch Engine Quality (likely unregistered metric): {}", e.getMessage());
@@ -738,9 +740,17 @@ public class GoogleAnalyticsService {
                 long count = Long.parseLong(row.getMetricValues(4).getValue()); // Index shifted
 
                 if (count > 0) {
+                    double avgCost = totalCost / count;
+                    // GA4 'Currency' custom metrics sometimes return micros (x1,000,000) depending
+                    // on config.
+                    // If avg is absurdly high (>$10 per run), scale it down by 1,000,000.
+                    if (avgCost > 10.0) {
+                        avgCost = avgCost / 1_000_000.0;
+                    }
+
                     performance = new PerformanceResponse.PerformanceStat(
                             totalWait / count,
-                            totalCost / count,
+                            avgCost,
                             totalBricks / count,
                             totalTokens / count); // [New]
                 }
@@ -777,9 +787,16 @@ public class GoogleAnalyticsService {
                     long count = Long.parseLong(row.getMetricValues(3).getValue());
 
                     if (count > 0) {
+                        double avgCost = totalCost / count;
+                        // GA4 'Currency' custom metrics sometimes return micros (x1,000,000) depending
+                        // on config.
+                        if (avgCost > 10.0) {
+                            avgCost = avgCost / 1_000_000.0;
+                        }
+
                         performance = new PerformanceResponse.PerformanceStat(
                                 totalWait / count,
-                                totalCost / count,
+                                avgCost,
                                 totalBricks / count,
                                 0); // tokenCount default 0
                     }
