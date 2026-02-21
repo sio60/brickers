@@ -54,9 +54,11 @@ interface PipelineSummary {
 interface AgentConclusionViewerProps {
     jobId: string;
     onClose: () => void;
+    initialLdrUrl?: string; // [NEW]
+    finalLdrUrl?: string; // [NEW]
 }
 
-export default function AgentConclusionViewer({ jobId, onClose }: AgentConclusionViewerProps) {
+export default function AgentConclusionViewer({ jobId, onClose, initialLdrUrl, finalLdrUrl }: AgentConclusionViewerProps) {
     const [loading, setLoading] = useState(true);
     const [beforeMetrics, setBeforeMetrics] = useState<Metrics | null>(null);
     const [afterMetrics, setAfterMetrics] = useState<Metrics | null>(null);
@@ -420,7 +422,23 @@ export default function AgentConclusionViewer({ jobId, onClose }: AgentConclusio
                 </div>
 
                 {/* 푸터 */}
-                <div className="p-6 bg-gray-50 border-t flex justify-end">
+                <div className="p-6 bg-gray-50 border-t flex items-center justify-between">
+                    <div className="flex gap-3">
+                        {initialLdrUrl ? (
+                            <a href={initialLdrUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-colors shadow-sm text-sm">
+                                ⬇️ Before LDR (원터치)
+                            </a>
+                        ) : (
+                            <span className="px-4 py-2 bg-gray-100 border border-gray-200 text-gray-400 rounded-xl font-bold text-sm">Before LDR 없음</span>
+                        )}
+                        {finalLdrUrl ? (
+                            <a href={finalLdrUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm text-sm">
+                                ⬇️ After LDR (수정본)
+                            </a>
+                        ) : (
+                            <span className="px-4 py-2 bg-gray-100 border border-gray-200 text-gray-400 rounded-xl font-bold text-sm">After LDR 없음</span>
+                        )}
+                    </div>
                     <button onClick={onClose} className="px-6 py-3 bg-black text-white rounded-xl font-black hover:bg-gray-900 transition-all active:scale-95 shadow-lg">
                         확인 완료
                     </button>
