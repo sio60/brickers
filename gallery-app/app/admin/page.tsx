@@ -178,6 +178,7 @@ export default function AdminPage() {
     // [NEW] Trace Viewer State
     const [traceJobId, setTraceJobId] = useState<string | null>(null);
     const [conclusionJobId, setConclusionJobId] = useState<string | null>(null);
+    const [targetVerifyJobId, setTargetVerifyJobId] = useState<string | null>(null); // [NEW] VERIFY 버튼 타겟
 
 
 
@@ -806,6 +807,17 @@ export default function AdminPage() {
                                                         >
                                                             CONCLUSION
                                                         </button>
+                                                        {job.status === 'DONE' && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    setTargetVerifyJobId(job.id);
+                                                                    setActiveTab("brick-judge");
+                                                                }}
+                                                                className="text-xs text-green-600 hover:text-green-800 font-bold px-2 py-1 border border-green-100 rounded bg-green-50/30 hover:bg-green-50 transition-colors whitespace-nowrap"
+                                                            >
+                                                                VERIFY
+                                                            </button>
+                                                        )}
                                                         {(job.status === 'FAILED' || job.status === 'CANCELED') && (
                                                             <button
                                                                 onClick={() => handleJobAction(job.id, 'retry')}
@@ -1204,7 +1216,7 @@ export default function AdminPage() {
                         )}
                         {activeTab === "brick-judge" && (
                             <div className="space-y-6 animate-fadeIn">
-                                <BrickJudgeViewer />
+                                <BrickJudgeViewer initialSelectedId={targetVerifyJobId || undefined} />
                             </div>
                         )}
                     </main>
