@@ -117,3 +117,29 @@ export const trackUserFeedback = (params: {
         ...rest
     });
 };
+
+/**
+ * 컨버전 퍼널 트래킹 (Conversion Funnel)
+ */
+export const trackFunnel = (stage: "01_visit_landing" | "02_click_start" | "03_upload_image" | "04_generate_request" | "05_generate_success" | "06_view_result" | "07_download_pdf" | "08_share", params?: any) => {
+    event({
+        action: "funnel_progress",
+        category: "Funnel",
+        label: stage,
+        funnel_stage: stage,
+        ...params
+    });
+};
+
+/**
+ * 이탈 지점 트래킹 (Exit Points)
+ */
+export const trackExit = (step: string, params?: any) => {
+    event({
+        action: "user_exit",
+        category: "Exit",
+        label: step,
+        exit_step: step,
+        ...params
+    });
+};

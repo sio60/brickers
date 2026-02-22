@@ -254,6 +254,9 @@ export default function GalleryDetailClient({ item }: Props) {
             setShowToast(true);
             setTimeout(() => setShowToast(false), 2000);
             gtag.event({ action: 'share_gallery', category: 'Engagement', label: item.id });
+
+            // [GA4] 08_share 퍼널 로깅
+            gtag.trackFunnel("08_share", { job_id: item.id });
         } catch (err) {
             console.error('Failed to copy: ', err);
             alert(t.detail?.copyFailed || 'Failed to copy URL.');

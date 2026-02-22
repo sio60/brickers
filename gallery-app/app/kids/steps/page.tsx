@@ -942,6 +942,8 @@ function KidsStepPageContent() {
                 job_id: jobId || undefined,
                 label: "PDF_StepPage"
             });
+            // [GA4] 07_download_pdf 트래킹
+            gtag.trackFunnel("07_download_pdf", { job_id: jobId || undefined });
         } else {
             alert(t.kids.steps?.pdfWait);
         }
