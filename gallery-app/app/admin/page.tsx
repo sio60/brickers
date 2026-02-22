@@ -620,7 +620,6 @@ export default function AdminPage() {
                                 {activeTab === "brick-judge" && (t.admin.brickJudge?.title || "Brick Judge")}
                                 {activeTab === "gallery" && t.admin.sidebar.gallery}
                             </h1>
-                            <button className={styles.closeBtn} onClick={() => router.push('/')}>✕</button>
                         </header>
 
                         {activeTab === "dashboard" && (
