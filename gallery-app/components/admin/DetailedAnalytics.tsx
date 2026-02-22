@@ -84,18 +84,22 @@ export default function DetailedAnalytics() {
                         {/* Performance Stats */}
                         <section className="bg-white p-8 rounded-[32px] border-2 border-black shadow-sm lg:col-span-2 flex flex-col justify-center">
                             <h3 className="text-xl font-black mb-8">⚡ 시스템 성능 지표 (평균)</h3>
-                            <div className="grid grid-cols-3 gap-6">
-                                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center">
-                                    <p className="text-gray-500 font-bold mb-2">⏳ 평균 생성 시간</p>
-                                    <p className="text-3xl font-black text-blue-600">{Math.round(Number(performance?.performance?.avgWaitTime) || 0)}초</p>
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center flex flex-col justify-center">
+                                    <p className="text-gray-500 font-bold mb-2 text-sm">⏳ 생성 시간</p>
+                                    <p className="text-2xl lg:text-3xl font-black text-blue-600 truncate">{Math.round(Number(performance?.performance?.avgWaitTime) || 0)}s</p>
                                 </div>
-                                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center">
-                                    <p className="text-gray-500 font-bold mb-2">💸 평균 소모 비용</p>
-                                    <p className="text-3xl font-black text-green-600">${(Number(performance?.performance?.avgCost) || 0).toFixed(3)}</p>
+                                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center flex flex-col justify-center">
+                                    <p className="text-gray-500 font-bold mb-2 text-sm">💸 소모 비용</p>
+                                    <p className="text-2xl lg:text-3xl font-black text-green-600 truncate">${(Number(performance?.performance?.avgCost) || 0).toFixed(3)}</p>
                                 </div>
-                                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center">
-                                    <p className="text-gray-500 font-bold mb-2">🧱 평균 브릭 수</p>
-                                    <p className="text-3xl font-black text-purple-600">{Math.round(Number(performance?.performance?.avgBrickCount) || 0)}개</p>
+                                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center flex flex-col justify-center">
+                                    <p className="text-gray-500 font-bold mb-2 text-sm">🧱 사용 브릭</p>
+                                    <p className="text-2xl lg:text-3xl font-black text-purple-600 truncate">{Math.round(Number(performance?.performance?.avgBrickCount) || 0)}</p>
+                                </div>
+                                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center flex flex-col justify-center">
+                                    <p className="text-gray-500 font-bold mb-2 text-sm">🤖 토큰 소모</p>
+                                    <p className="text-2xl lg:text-3xl font-black text-red-500 truncate">{Math.round(Number(performance?.performance?.tokenCount) || 0).toLocaleString()}</p>
                                 </div>
                             </div>
                         </section>
@@ -109,7 +113,7 @@ export default function DetailedAnalytics() {
                     <h3 className="text-xl font-black mb-6">🚀 일별 브릭 생성 활성화 (최근 7일)</h3>
                     <div className="h-[350px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={genTrend} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                            <LineChart data={genTrend || []} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                 <XAxis
                                     dataKey="date"
@@ -143,13 +147,13 @@ export default function DetailedAnalytics() {
                     <h3 className="text-xl font-black mb-6">🏷️ 인기 생성 태그 (Top 10)</h3>
                     <div className="h-[350px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={topTags} layout="vertical" margin={{ left: 0 }}>
+                            <BarChart data={topTags || []} layout="vertical" margin={{ left: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                                 <XAxis type="number" hide />
                                 <YAxis dataKey="tag" type="category" width={80} tick={{ fontSize: 11, fontWeight: 'bold' }} interval={0} />
                                 <Tooltip cursor={{ fill: '#f1f2f6' }} contentStyle={{ borderRadius: '12px', border: '2px solid black', fontWeight: 'bold' }} />
                                 <Bar dataKey="count" name="사용 횟수" fill="#ff9f43" radius={[0, 8, 8, 0]} label={{ position: 'right', fontWeight: 'bold', fontSize: 12, formatter: (v: any) => String(v ?? '') }}>
-                                    {topTags.map((entry, index) => (
+                                    {(topTags || []).map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
                                     ))}
                                 </Bar>
@@ -173,18 +177,18 @@ export default function DetailedAnalytics() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {heavyUsers.map((user, idx) => (
+                            {Array.isArray(heavyUsers) && heavyUsers.map((user, idx) => (
                                 <tr key={idx} className="hover:bg-gray-50 transition-colors font-bold text-gray-700">
                                     <td className="py-4 px-4">
                                         {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
                                     </td>
                                     <td className="py-4 px-4 font-mono text-sm">{String(user.userId ?? '')}</td>
-                                    <td className="py-4 px-4 text-right text-lg">{(typeof user.eventCount === 'number' ? user.eventCount : Number(user.eventCount) || 0).toLocaleString()}</td>
+                                    <td className="py-4 px-4 text-right text-lg">{(typeof user.generationCount === 'number' ? user.generationCount : Number(user.generationCount) || 0).toLocaleString()}</td>
                                     <td className="py-4 px-4 text-right">
                                         <div className="w-24 h-2 bg-gray-100 rounded-full inline-block overflow-hidden">
                                             <div
                                                 className="h-full bg-black"
-                                                style={{ width: `${Math.min(100, (Number(user.eventCount) || 0) / (Number(heavyUsers[0]?.eventCount) || 1) * 100)}%` }}
+                                                style={{ width: `${Math.min(100, (Number(user.generationCount) || 0) / (Number(heavyUsers[0]?.generationCount) || 1) * 100)}%` }}
                                             />
                                         </div>
                                     </td>

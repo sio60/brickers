@@ -255,44 +255,6 @@ public class GoogleAnalyticsService {
     }
 
     /**
-     * 인기 검색어 순위를 조회합니다. (user_search 이벤트 search_term 기반)
-     */
-    public List<TopTagResponse> getTopKeywords(int days, int limit) throws IOException {
-        if (analyticsDataClient == null)
-            return new ArrayList<>();
-
-        RunReportRequest request = RunReportRequest.newBuilder()
-                .setProperty("properties/" + propertyId)
-                .addDimensions(Dimension.newBuilder().setName("customEvent:search_term"))
-                .addMetrics(Metric.newBuilder().setName("eventCount"))
-                .setDimensionFilter(FilterExpression.newBuilder()
-                        .setFilter(Filter.newBuilder()
-                                .setFieldName("eventName")
-                                .setStringFilter(Filter.StringFilter.newBuilder().setValue("user_search"))
-                                .build())
-                        .build())
-                .addDateRanges(DateRange.newBuilder()
-                        .setStartDate(days + "daysAgo")
-                        .setEndDate("today"))
-                .setLimit(limit)
-                .build();
-
-        RunReportResponse response = analyticsDataClient.runReport(request);
-
-        List<TopTagResponse> result = new ArrayList<>();
-        for (Row row : response.getRowsList()) {
-            String keyword = row.getDimensionValues(0).getValue();
-            long count = Long.parseLong(row.getMetricValues(0).getValue());
-
-            if (keyword != null && !keyword.isEmpty() && !keyword.equals("(not set)")) {
-                result.add(new TopTagResponse(keyword, count));
-            }
-        }
-
-        return result;
-    }
-
-    /**
      * 활동량이 가장 많은 상위 사용자들을 조회합니다.
      */
     public List<HeavyUserResponse> getHeavyUsers(int days, int limit) throws IOException {
@@ -384,7 +346,7 @@ public class GoogleAnalyticsService {
         List<DailyTrendResponse> dailyUsers = new ArrayList<>();
         List<TopPageResponse> topPages = new ArrayList<>();
         List<TopTagResponse> topTags = new ArrayList<>();
-        List<TopTagResponse> topKeywords = new ArrayList<>(); // [NEW] 검색어 추가
+        ProductIntelligenceResponse productIntelligence = null;
         List<HeavyUserResponse> heavyUsers = new ArrayList<>();
         Map<String, List<DailyTrendResponse>> eventStats = new HashMap<>();
 
@@ -487,20 +449,6 @@ public class GoogleAnalyticsService {
             requests2.add(buildEventRequest("generate_success", days));
             requests2.add(buildEventRequest("gallery_register_attempt", 1));
 
-            // [NEW] 검색어 요청 추가
-            requests2.add(RunReportRequest.newBuilder()
-                    .setProperty("properties/" + propertyId)
-                    .addDimensions(Dimension.newBuilder().setName("customEvent:search_term"))
-                    .addMetrics(Metric.newBuilder().setName("eventCount"))
-                    .setDimensionFilter(FilterExpression.newBuilder()
-                            .setFilter(Filter.newBuilder()
-                                    .setFieldName("eventName")
-                                    .setStringFilter(Filter.StringFilter.newBuilder().setValue("user_search"))
-                                    .build()))
-                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
-                    .setLimit(10)
-                    .build());
-
             BatchRunReportsResponse batchResponse2 = analyticsDataClient
                     .batchRunReports(BatchRunReportsRequest.newBuilder()
                             .setProperty("properties/" + propertyId).addAllRequests(requests2).build());
@@ -523,23 +471,17 @@ public class GoogleAnalyticsService {
                 eventStats.put("success_1d",
                         success7d.isEmpty() ? List.of() : List.of(success7d.get(success7d.size() - 1)));
                 eventStats.put("gallery_attempt_1d", gallery1d);
-
-                // [NEW] 검색어 결과 처리
-                if (batchResponse2.getReportsCount() >= 5) {
-                    for (Row row : batchResponse2.getReports(4).getRowsList()) {
-                        String kw = row.getDimensionValues(0).getValue();
-                        if (!kw.isEmpty() && !kw.equals("(not set)")) {
-                            topKeywords.add(new TopTagResponse(kw, Long.parseLong(row.getMetricValues(0).getValue())));
-                        }
-                    }
-                }
             }
+
+            // 3. [NEW] Product Intelligence 추가 (별도 메서드 호출)
+            productIntelligence = getProductIntelligence(days);
 
         } catch (Exception e) {
             log.error("Failed to get full proposal report: {}", e.getMessage());
         }
 
-        return new FullReportResponse(summary, dailyUsers, topPages, topTags, topKeywords, heavyUsers, eventStats);
+        return new FullReportResponse(summary, dailyUsers, topPages, topTags, productIntelligence, heavyUsers,
+                eventStats);
     }
 
     /**
@@ -589,6 +531,7 @@ public class GoogleAnalyticsService {
                     .addMetrics(Metric.newBuilder().setName("customEvent:stability_score"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:brick_count"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:lmm_latency"))
+                    .addMetrics(Metric.newBuilder().setName("customEvent:wait_time"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
                     .setDimensionFilter(FilterExpression.newBuilder()
                             .setFilter(Filter.newBuilder()
@@ -607,7 +550,8 @@ public class GoogleAnalyticsService {
                         Double.parseDouble(row.getMetricValues(0).getValue()),
                         Double.parseDouble(row.getMetricValues(1).getValue()),
                         Double.parseDouble(row.getMetricValues(2).getValue()),
-                        Double.parseDouble(row.getMetricValues(3).getValue()));
+                        Double.parseDouble(row.getMetricValues(3).getValue()),
+                        Double.parseDouble(row.getMetricValues(4).getValue()));
             }
         } catch (Exception e) {
             log.warn("Failed to fetch Engine Quality (likely unregistered metric): {}", e.getMessage());
@@ -645,7 +589,6 @@ public class GoogleAnalyticsService {
             return null;
 
         List<DeepInsightResponse.CategoryStat> categoryStats = new ArrayList<>();
-        List<DeepInsightResponse.KeywordStat> keywordStats = new ArrayList<>();
         // QualityStat is placeholder for now as correlation is complex
         List<DeepInsightResponse.QualityStat> qualityStats = new ArrayList<>();
 
@@ -693,40 +636,11 @@ public class GoogleAnalyticsService {
             } catch (Exception e) {
                 log.warn("Failed to fetch Category Stats (likely unregistered dimension): {}", e.getMessage());
             }
-
-            // 2. Search Keywords (Independent Try-Catch)
-            try {
-                RunReportRequest searchRequest = RunReportRequest.newBuilder()
-                        .setProperty("properties/" + propertyId)
-                        .addDimensions(Dimension.newBuilder().setName("customEvent:search_term"))
-                        .addMetrics(Metric.newBuilder().setName("eventCount"))
-                        .setDimensionFilter(FilterExpression.newBuilder()
-                                .setFilter(Filter.newBuilder()
-                                        .setFieldName("eventName")
-                                        .setStringFilter(Filter.StringFilter.newBuilder().setValue("user_search"))
-                                        .build())
-                                .build())
-                        .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
-                        .setLimit(20)
-                        .build();
-
-                RunReportResponse searchResp = analyticsDataClient.runReport(searchRequest);
-                for (Row row : searchResp.getRowsList()) {
-                    String keyword = row.getDimensionValues(0).getValue();
-                    if (!keyword.isEmpty() && !keyword.equals("(not set)")) {
-                        keywordStats.add(new DeepInsightResponse.KeywordStat(
-                                keyword,
-                                Long.parseLong(row.getMetricValues(0).getValue())));
-                    }
-                }
-            } catch (Exception e) {
-                log.warn("Failed to fetch Search Keywords (likely unregistered dimension): {}", e.getMessage());
-            }
         } catch (Exception e) { // Corrected general catch block
             log.error("Failed to fetch Deep Insights (General): {}", e.getMessage());
         }
 
-        return new DeepInsightResponse(categoryStats, qualityStats, keywordStats);
+        return new DeepInsightResponse(categoryStats, qualityStats);
     }
 
     /**
@@ -826,9 +740,17 @@ public class GoogleAnalyticsService {
                 long count = Long.parseLong(row.getMetricValues(4).getValue()); // Index shifted
 
                 if (count > 0) {
+                    double avgCost = totalCost / count;
+                    // GA4 'Currency' custom metrics sometimes return micros (x1,000,000) depending
+                    // on config.
+                    // If avg is absurdly high (>$10 per run), scale it down by 1,000,000.
+                    if (avgCost > 10.0) {
+                        avgCost = avgCost / 1_000_000.0;
+                    }
+
                     performance = new PerformanceResponse.PerformanceStat(
                             totalWait / count,
-                            totalCost / count,
+                            avgCost,
                             totalBricks / count,
                             totalTokens / count); // [New]
                 }
@@ -865,9 +787,16 @@ public class GoogleAnalyticsService {
                     long count = Long.parseLong(row.getMetricValues(3).getValue());
 
                     if (count > 0) {
+                        double avgCost = totalCost / count;
+                        // GA4 'Currency' custom metrics sometimes return micros (x1,000,000) depending
+                        // on config.
+                        if (avgCost > 10.0) {
+                            avgCost = avgCost / 1_000_000.0;
+                        }
+
                         performance = new PerformanceResponse.PerformanceStat(
                                 totalWait / count,
-                                totalCost / count,
+                                avgCost,
                                 totalBricks / count,
                                 0); // tokenCount default 0
                     }

@@ -9,7 +9,8 @@ public record ProductIntelligenceResponse(
     public record FunnelStage(String stage, long count) {
     }
 
-    public record EngineQuality(double avgStability, double avgBrickCount, double avgLatency, double totalCost) {
+    public record EngineQuality(double avgStability, double avgBrickCount, double avgLatency, double avgWaitTime,
+            double totalCost) {
     }
 
     public record ExitPoint(String step, long count) {
