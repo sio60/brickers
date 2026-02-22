@@ -118,28 +118,23 @@ export const trackUserFeedback = (params: {
     });
 };
 
-/**
- * 컨버전 퍼널 트래킹 (Conversion Funnel)
- */
 export const trackFunnel = (stage: "01_visit_landing" | "02_click_start" | "03_upload_image" | "04_generate_request" | "05_generate_success" | "06_view_result" | "07_download_pdf" | "08_share", params?: any) => {
-    event({
-        action: "funnel_progress",
-        category: "Funnel",
-        label: stage,
-        funnel_stage: stage,
-        ...params
-    });
+    if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("event", `funnel_${stage}`, {
+            ...params,
+        });
+    }
 };
 
 /**
- * 이탈 지점 트래킹 (Exit Points)
+ * 이탈 지점 트래킹 함수
+ * event_name: 'exit_{step}'
  */
-export const trackExit = (step: string, params?: any) => {
-    event({
-        action: "user_exit",
-        category: "Exit",
-        label: step,
-        exit_step: step,
-        ...params
-    });
+export const trackExit = (step: string, reason?: string, params?: Record<string, any>) => {
+    if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("event", `exit_${step}`, {
+            exit_reason: reason,
+            ...params,
+        });
+    }
 };

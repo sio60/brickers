@@ -2,6 +2,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { MetricCard } from "./conclusion/MetricCard";
+import { Timeline } from "./conclusion/Timeline";
+import { CoScientistInfo } from "./conclusion/CoScientistInfo";
+import { PipelineSummaryBanner } from "./conclusion/PipelineSummaryBanner";
 
 interface AgentTrace {
     id: string;
@@ -93,7 +97,6 @@ export default function AgentConclusionViewer({ jobId, onClose, initialLdrUrl, f
                 }
 
                 // 4. Final Report 탐색 (end 노드 → PipelineSummary fallback)
-                // 4. Final Report 탐색 (end 노드 → PipelineSummary fallback)
                 let reportData = null;
                 const endNode = traces.find(t => t.nodeName === "end" || t.nodeName === "__end__" || t.output?.final_report);
 
@@ -156,50 +159,6 @@ export default function AgentConclusionViewer({ jobId, onClose, initialLdrUrl, f
         return `${sec.toFixed(1)}초`;
     };
 
-    // 단계별 상태 아이콘
-    const stepIcon = (status: string) => {
-        switch (status) {
-            case "SUCCESS": return "✅";
-            case "FALLBACK": return "⚠️";
-            case "FAILURE": return "❌";
-            default: return "⏳";
-        }
-    };
-
-    // 타임라인 바 너비 계산 (비율)
-    const getBarWidth = (stepSec: number, totalSec: number) => {
-        if (totalSec <= 0) return 0;
-        return Math.max(8, Math.min(100, (stepSec / totalSec) * 100));
-    };
-
-    const MetricCard = ({ label, before, after, isScore = false }: { label: string, before: number, after: number, isScore?: boolean }) => {
-        const diff = after - before;
-        const isImproved = isScore ? diff > 0 : diff < 0;
-        const colorClass = diff === 0 ? "text-gray-500" : (isImproved ? "text-green-600" : "text-red-600");
-
-        return (
-            <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                <div className="text-xs font-bold text-gray-400 uppercase mb-2">{label}</div>
-                <div className="flex items-end justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="text-center">
-                            <div className="text-[10px] text-gray-400">Before</div>
-                            <div className="text-lg font-bold text-gray-700">{before}{isScore ? '점' : ''}</div>
-                        </div>
-                        <div className="text-gray-300">→</div>
-                        <div className="text-center">
-                            <div className="text-[10px] text-gray-400">After</div>
-                            <div className="text-lg font-bold text-gray-900">{after}{isScore ? '점' : ''}</div>
-                        </div>
-                    </div>
-                    <div className={`text-sm font-black ${colorClass}`}>
-                        {diff > 0 ? '+' : ''}{diff} {isImproved ? '▲' : '▼'}
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
     return (
         <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
             <div className="bg-[#f8f9fa] w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-white/20">
@@ -225,115 +184,9 @@ export default function AgentConclusionViewer({ jobId, onClose, initialLdrUrl, f
                             {/* ============ 파이프라인 요약 ============ */}
                             {pipelineSummary && (
                                 <>
-                                    {/* 요약 배너 */}
-                                    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-5 rounded-2xl text-white">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <div>
-                                                <div className="text-xs font-bold opacity-70 uppercase tracking-wider">Pipeline Complete</div>
-                                                <div className="text-lg font-black mt-0.5">
-                                                    {pipelineSummary.subject || "Unknown"}
-                                                    <span className="text-sm font-medium opacity-80 ml-2">({pipelineSummary.engine})</span>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-3xl font-black">{formatDuration(pipelineSummary.total_time_sec)}</div>
-                                                <div className="text-xs opacity-70">총 소요시간</div>
-                                            </div>
-                                        </div>
-                                        {/* 결과 요약 칩 */}
-                                        <div className="flex flex-wrap gap-2 mt-2">
-                                            <span className="px-2.5 py-1 bg-white/20 rounded-lg text-xs font-bold backdrop-blur-sm">
-                                                🧱 {pipelineSummary.result.parts}개 브릭
-                                            </span>
-                                            <span className="px-2.5 py-1 bg-white/20 rounded-lg text-xs font-bold backdrop-blur-sm">
-                                                📦 {pipelineSummary.result.bom_unique_parts}종 부품
-                                            </span>
-                                            <span className="px-2.5 py-1 bg-white/20 rounded-lg text-xs font-bold backdrop-blur-sm">
-                                                📄 {pipelineSummary.result.ldr_size_kb}KB
-                                            </span>
-                                            <span className="px-2.5 py-1 bg-white/20 rounded-lg text-xs font-bold backdrop-blur-sm">
-                                                💰 Budget {pipelineSummary.budget}
-                                            </span>
-                                            {/* [NEW] Cost & Token Display */}
-                                            {pipelineSummary.result.est_cost !== undefined && (
-                                                <span className="px-2.5 py-1 bg-green-500/30 rounded-lg text-xs font-bold backdrop-blur-sm border border-green-400/30">
-                                                    💸 ${pipelineSummary.result.est_cost.toFixed(4)}
-                                                </span>
-                                            )}
-                                            {pipelineSummary.result.token_count !== undefined && (
-                                                <span className="px-2.5 py-1 bg-blue-500/30 rounded-lg text-xs font-bold backdrop-blur-sm border border-blue-400/30">
-                                                    🪙 {pipelineSummary.result.token_count.toLocaleString()} T
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* 단계별 타임라인 */}
-                                    <div className="bg-white p-5 rounded-2xl border border-gray-100">
-                                        <h3 className="text-sm font-black text-gray-900 mb-4 flex items-center gap-2">
-                                            <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
-                                            단계별 실행 내역
-                                        </h3>
-                                        <div className="space-y-3">
-                                            {pipelineSummary.steps.map((step, i) => (
-                                                <div key={i} className="flex items-center gap-3">
-                                                    <span className="text-base w-6 text-center">{stepIcon(step.status)}</span>
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center justify-between mb-1">
-                                                            <span className="text-xs font-bold text-gray-700 truncate">{step.name}</span>
-                                                            <span className="text-xs font-bold text-gray-900 ml-2 flex-shrink-0">
-                                                                {formatDuration(step.duration_sec)}
-                                                            </span>
-                                                        </div>
-                                                        {/* 타임라인 바 */}
-                                                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                                            <div
-                                                                className={`h-full rounded-full transition-all duration-500 ${step.status === "SUCCESS" ? "bg-indigo-400" :
-                                                                    step.status === "FALLBACK" ? "bg-amber-400" : "bg-red-400"
-                                                                    }`}
-                                                                style={{ width: `${getBarWidth(step.duration_sec, pipelineSummary.total_time_sec)}%` }}
-                                                            />
-                                                        </div>
-                                                        <div className="text-[10px] text-gray-400 mt-0.5 truncate">{step.detail}</div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* CoScientist 정보 */}
-                                    {pipelineSummary.coscientist && (
-                                        <div className="bg-white p-5 rounded-2xl border border-gray-100">
-                                            <h3 className="text-sm font-black text-gray-900 mb-3 flex items-center gap-2">
-                                                <span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
-                                                CoScientist 에이전트
-                                            </h3>
-                                            <div className="flex items-center gap-4 mb-3">
-                                                <div className={`px-3 py-1.5 rounded-lg text-xs font-black border-2 ${pipelineSummary.coscientist.success
-                                                    ? "bg-green-50 text-green-700 border-green-100"
-                                                    : "bg-red-50 text-red-700 border-red-100"
-                                                    }`}>
-                                                    {pipelineSummary.coscientist.success ? "SUCCESS" : "FAILED"}
-                                                </div>
-                                                <span className="text-xs text-gray-500">
-                                                    시도: <span className="font-bold text-gray-900">{pipelineSummary.coscientist.total_attempts}회</span>
-                                                </span>
-                                            </div>
-                                            {pipelineSummary.coscientist.message && (
-                                                <p className="text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg mb-3">{pipelineSummary.coscientist.message}</p>
-                                            )}
-                                            {/* 도구 사용 현황 */}
-                                            {Object.keys(pipelineSummary.coscientist.tool_usage).length > 0 && (
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {Object.entries(pipelineSummary.coscientist.tool_usage).map(([tool, count]) => (
-                                                        <span key={tool} className="px-2.5 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-bold border border-purple-100">
-                                                            {tool}: {count}회
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
+                                    <PipelineSummaryBanner summary={pipelineSummary} formatDuration={formatDuration} />
+                                    <Timeline steps={pipelineSummary.steps} totalTimeSec={pipelineSummary.total_time_sec} formatDuration={formatDuration} />
+                                    {pipelineSummary.coscientist && <CoScientistInfo coscientist={pipelineSummary.coscientist} />}
                                 </>
                             )}
 

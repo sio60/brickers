@@ -128,7 +128,10 @@ function LandingPageContent({ initialItems }: Props) {
 
             <AgeSelectionModal
                 isOpen={isAgeModalOpen}
-                onClose={() => setIsAgeModalOpen(false)}
+                onClose={() => {
+                    gtag.trackExit("age_selection", "modal_close");
+                    setIsAgeModalOpen(false);
+                }}
                 onSelect={handleLevelSelect}
             />
         </div>
