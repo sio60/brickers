@@ -434,36 +434,25 @@ public class GoogleAnalyticsService {
                         .limit(10)
                         .forEach(e -> topTags.add(new TopTagResponse(e.getKey(), e.getValue())));
             }
+        } catch (Exception e) {
+            log.error("Failed to get Batch 1 (Summary/Tags) report: {}", e.getMessage());
+        }
 
-            // Batch 2: Heavy Users & Event Stats
-            List<RunReportRequest> requests2 = new ArrayList<>();
-            requests2.add(RunReportRequest.newBuilder()
-                    .setProperty("properties/" + propertyId)
-                    .addDimensions(Dimension.newBuilder().setName("customUser:userId"))
-                    .addMetrics(Metric.newBuilder().setName("eventCount"))
-                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
-                    .setLimit(5)
-                    .build());
-
-            requests2.add(buildEventRequest("generate_fail", days));
-            requests2.add(buildEventRequest("generate_success", days));
-            requests2.add(buildEventRequest("gallery_register_attempt", 1));
+        // Batch 2: Event Stats
+        try {
+            List<RunReportRequest> requestsStats = new ArrayList<>();
+            requestsStats.add(buildEventRequest("generate_fail", days));
+            requestsStats.add(buildEventRequest("generate_success", days));
+            requestsStats.add(buildEventRequest("gallery_register_attempt", 1));
 
             BatchRunReportsResponse batchResponse2 = analyticsDataClient
                     .batchRunReports(BatchRunReportsRequest.newBuilder()
-                            .setProperty("properties/" + propertyId).addAllRequests(requests2).build());
+                            .setProperty("properties/" + propertyId).addAllRequests(requestsStats).build());
 
-            if (batchResponse2.getReportsCount() >= 4) {
-                for (Row row : batchResponse2.getReports(0).getRowsList()) {
-                    String uid = row.getDimensionValues(0).getValue();
-                    if (!uid.isEmpty() && !uid.equals("(not set)")) {
-                        heavyUsers.add(new HeavyUserResponse(uid, Long.parseLong(row.getMetricValues(0).getValue())));
-                    }
-                }
-
-                List<DailyTrendResponse> fail7d = processTrendResponse(batchResponse2.getReports(1));
-                List<DailyTrendResponse> success7d = processTrendResponse(batchResponse2.getReports(2));
-                List<DailyTrendResponse> gallery1d = processTrendResponse(batchResponse2.getReports(3));
+            if (batchResponse2.getReportsCount() >= 3) {
+                List<DailyTrendResponse> fail7d = processTrendResponse(batchResponse2.getReports(0));
+                List<DailyTrendResponse> success7d = processTrendResponse(batchResponse2.getReports(1));
+                List<DailyTrendResponse> gallery1d = processTrendResponse(batchResponse2.getReports(2));
 
                 eventStats.put("fail_7d", fail7d);
                 eventStats.put("success_7d", success7d);
@@ -472,12 +461,37 @@ public class GoogleAnalyticsService {
                         success7d.isEmpty() ? List.of() : List.of(success7d.get(success7d.size() - 1)));
                 eventStats.put("gallery_attempt_1d", gallery1d);
             }
-
-            // 3. [NEW] Product Intelligence 추가 (별도 메서드 호출)
-            productIntelligence = getProductIntelligence(days);
-
         } catch (Exception e) {
-            log.error("Failed to get full proposal report: {}", e.getMessage());
+            log.error("Failed to fetch Event Stats: {}", e.getMessage());
+        }
+
+        // Batch 3: Heavy Users (Isolated because customUser:userId might be
+        // unregistered)
+        try {
+            RunReportRequest heavyRequest = RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDimensions(Dimension.newBuilder().setName("customUser:userId"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                    .setLimit(5)
+                    .build();
+
+            RunReportResponse heavyResp = analyticsDataClient.runReport(heavyRequest);
+            for (Row row : heavyResp.getRowsList()) {
+                String uid = row.getDimensionValues(0).getValue();
+                if (!uid.isEmpty() && !uid.equals("(not set)")) {
+                    heavyUsers.add(new HeavyUserResponse(uid, Long.parseLong(row.getMetricValues(0).getValue())));
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to fetch Heavy Users (likely unregistered customUser:userId): {}", e.getMessage());
+        }
+
+        // 3. [NEW] Product Intelligence
+        try {
+            productIntelligence = getProductIntelligence(days);
+        } catch (Exception e) {
+            log.warn("Failed to fetch Product Intelligence: {}", e.getMessage());
         }
 
         return new FullReportResponse(summary, dailyUsers, topPages, topTags, productIntelligence, heavyUsers,
@@ -757,16 +771,15 @@ public class GoogleAnalyticsService {
             }
 
         } catch (Exception e) {
-            // [Fallback] If token_count is not registered yet, try without it
-            log.warn("Failed to fetch performance details with token_count. Retrying without it. Error: {}",
+            log.error(
+                    "Failed to fetch performance details with token_count. Retrying with safe metrics only. Error: {}",
                     e.getMessage());
             try {
                 RunReportRequest fallbackRequest = RunReportRequest.newBuilder()
                         .setProperty("properties/" + propertyId)
                         .addMetrics(Metric.newBuilder().setName("customEvent:wait_time"))
-                        .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
+                        // customEvent:est_cost is also removed to prevent failure
                         .addMetrics(Metric.newBuilder().setName("customEvent:brick_count"))
-                        // token_count excluded
                         .addMetrics(Metric.newBuilder().setName("eventCount"))
                         .setDimensionFilter(FilterExpression.newBuilder()
                                 .setFilter(Filter.newBuilder()
@@ -781,28 +794,19 @@ public class GoogleAnalyticsService {
                 if (!fallbackResp.getRowsList().isEmpty()) {
                     Row row = fallbackResp.getRowsList().get(0);
                     double totalWait = Double.parseDouble(row.getMetricValues(0).getValue());
-                    double totalCost = Double.parseDouble(row.getMetricValues(1).getValue());
-                    double totalBricks = Double.parseDouble(row.getMetricValues(2).getValue());
-                    // totalTokens is 0
-                    long count = Long.parseLong(row.getMetricValues(3).getValue());
+                    double totalBricks = Double.parseDouble(row.getMetricValues(1).getValue());
+                    long count = Long.parseLong(row.getMetricValues(2).getValue());
 
                     if (count > 0) {
-                        double avgCost = totalCost / count;
-                        // GA4 'Currency' custom metrics sometimes return micros (x1,000,000) depending
-                        // on config.
-                        if (avgCost > 10.0) {
-                            avgCost = avgCost / 1_000_000.0;
-                        }
-
                         performance = new PerformanceResponse.PerformanceStat(
                                 totalWait / count,
-                                avgCost,
+                                0, // estCost default 0
                                 totalBricks / count,
                                 0); // tokenCount default 0
                     }
                 }
-            } catch (Exception ex) {
-                log.error("Failed to fetch performance details (Retry failed): {}", ex.getMessage());
+            } catch (Exception fallbackEx) {
+                log.error("Failed to fetch performance details (Retry failed): {}", fallbackEx.getMessage());
             }
         }
 

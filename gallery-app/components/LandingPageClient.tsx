@@ -9,6 +9,7 @@ import CarouselGallery from "@/components/CarouselGallery";
 import AgeSelectionModal from "@/components/kids/AgeSelectionModal";
 import { GalleryItem } from "@/types/gallery";
 import styles from '@/app/LandingPage.module.css';
+import * as gtag from '@/lib/gtag';
 
 // SSR 제외 컴포넌트
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
@@ -25,6 +26,11 @@ function LandingPageContent({ initialItems }: Props) {
     const [isAgeModalOpen, setIsAgeModalOpen] = useState(false);
     const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(initialItems);
     const [isLoading, setIsLoading] = useState(initialItems.length === 0);
+
+    // [GA4] 01_visit_landing 트래킹
+    useEffect(() => {
+        gtag.trackFunnel("01_visit_landing");
+    }, []);
 
     // 클라이언트 사이드 fallback: initialItems가 비어있으면 직접 fetch
     useEffect(() => {
@@ -47,6 +53,7 @@ function LandingPageContent({ initialItems }: Props) {
     }, [initialItems]);
 
     const handleGoMake = () => {
+        gtag.trackFunnel("02_click_start");
         if (!isAuthenticated) {
             router.push('?login=true');
             return;

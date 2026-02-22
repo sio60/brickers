@@ -75,6 +75,9 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
                 search_term: targetPrompt || undefined
             });
 
+            // [GA4] 03_upload_image 트래킹 (프롬프트/이미지 공통)
+            gtag.trackFunnel("03_upload_image", { label: targetPrompt ? 'prompt' : 'image' });
+
             try {
                 let sourceImageUrl = "";
                 let fileTitle = "prompt_gen";
@@ -108,6 +111,9 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
                     title: fileTitle,
                     language,
                 };
+
+                // [GA4] 04_generate_request 트래킹
+                gtag.trackFunnel("04_generate_request");
 
                 const startRes = await authFetchRef.current('/api/kids/generate', {
                     method: "POST",
@@ -210,6 +216,9 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
                             token_count: statusData.tokenCount, // [New] Token Tracking
                             stability_score: statusData.stabilityScore // [New] Stability Score
                         });
+
+                        // [GA4] 05_generate_success 트래킹
+                        gtag.trackFunnel("05_generate_success", { job_id: jid, age: age });
 
                         // [NEW] Track Search Term Fallback (If no user prompt, use identified tags/subject)
                         if (!targetPrompt) {
