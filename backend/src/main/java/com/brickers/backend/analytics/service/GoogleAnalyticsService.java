@@ -510,17 +510,18 @@ public class GoogleAnalyticsService {
         List<ProductIntelligenceResponse.ExitPoint> exits = new ArrayList<>();
 
         // 1. Funnel Analysis (Independent Try-Catch)
+        // [FIX] 커스텀 측정기준 등록 누락 문제를 방지하기 위해 eventName = funnel_* 로 직접 쿼리
         try {
             RunReportRequest funnelRequest = RunReportRequest.newBuilder()
                     .setProperty("properties/" + propertyId)
-                    .addDimensions(Dimension.newBuilder().setName("customEvent:funnel_stage"))
+                    .addDimensions(Dimension.newBuilder().setName("eventName"))
                     .addMetrics(Metric.newBuilder().setName("eventCount"))
                     .setDimensionFilter(FilterExpression.newBuilder()
-                            .setNotExpression(FilterExpression.newBuilder()
-                                    .setFilter(Filter.newBuilder()
-                                            .setFieldName("customEvent:funnel_stage")
-                                            .setStringFilter(
-                                                    Filter.StringFilter.newBuilder().setValue("(not set)").build())
+                            .setFilter(Filter.newBuilder()
+                                    .setFieldName("eventName")
+                                    .setStringFilter(Filter.StringFilter.newBuilder()
+                                            .setMatchType(Filter.StringFilter.MatchType.BEGINS_WITH)
+                                            .setValue("funnel_")
                                             .build())
                                     .build())
                             .build())
@@ -530,12 +531,16 @@ public class GoogleAnalyticsService {
             RunReportResponse funnelResp = analyticsDataClient.runReport(funnelRequest);
 
             for (Row row : funnelResp.getRowsList()) {
+                String fullEventName = row.getDimensionValues(0).getValue();
+                String stage = fullEventName.startsWith("funnel_") ? fullEventName.substring(7) : fullEventName;
                 funnel.add(new ProductIntelligenceResponse.FunnelStage(
-                        row.getDimensionValues(0).getValue(),
+                        stage,
                         Long.parseLong(row.getMetricValues(0).getValue())));
             }
+            // 스테이지 순서대로 정렬 (01_, 02_ ...)
+            funnel.sort(java.util.Comparator.comparing(ProductIntelligenceResponse.FunnelStage::stage));
         } catch (Exception e) {
-            log.warn("Failed to fetch Funnel Analysis (likely unregistered dimension): {}", e.getMessage());
+            log.warn("Failed to fetch Funnel Analysis (eventName query fallback): {}", e.getMessage());
         }
 
         // 2. Engine Quality Metrics (Independent Try-Catch)
@@ -572,23 +577,35 @@ public class GoogleAnalyticsService {
         }
 
         // 3. Exit Point Analysis (Independent Try-Catch)
+        // [FIX] eventName = exit_* 로 직접 쿼리
         try {
             RunReportResponse exitResp = analyticsDataClient.runReport(RunReportRequest.newBuilder()
                     .setProperty("properties/" + propertyId)
-                    .addDimensions(Dimension.newBuilder().setName("customEvent:exit_step"))
+                    .addDimensions(Dimension.newBuilder().setName("eventName"))
                     .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                            .setFilter(Filter.newBuilder()
+                                    .setFieldName("eventName")
+                                    .setStringFilter(Filter.StringFilter.newBuilder()
+                                            .setMatchType(Filter.StringFilter.MatchType.BEGINS_WITH)
+                                            .setValue("exit_")
+                                            .build())
+                                    .build())
+                            .build())
                     .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
                     .setLimit(10).build());
 
             for (Row row : exitResp.getRowsList()) {
-                String step = row.getDimensionValues(0).getValue();
-                if (!step.isEmpty() && !step.equals("(not set)")) {
+                String fullEventName = row.getDimensionValues(0).getValue();
+                String step = fullEventName.startsWith("exit_") ? fullEventName.substring(5) : fullEventName;
+                if (!step.isEmpty()) {
                     exits.add(new ProductIntelligenceResponse.ExitPoint(step,
                             Long.parseLong(row.getMetricValues(0).getValue())));
                 }
             }
+            exits.sort((a, b) -> Long.compare(b.count(), a.count())); // 이탈 횟수 내림차순 정렬
         } catch (Exception e) {
-            log.warn("Failed to fetch Exit Points (likely unregistered dimension): {}", e.getMessage());
+            log.warn("Failed to fetch Exit Points (eventName query fallback): {}", e.getMessage());
         }
         return new ProductIntelligenceResponse(funnel, quality, exits);
     }
