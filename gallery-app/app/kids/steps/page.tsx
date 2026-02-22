@@ -1030,7 +1030,10 @@ function KidsStepPageContent() {
             <BackgroundBricks />
             <ShareModal
                 isOpen={shareModalOpen}
-                onClose={() => setShareModalOpen(false)}
+                onClose={() => {
+                    gtag.trackExit("share_modal", "modal_close");
+                    setShareModalOpen(false);
+                }}
                 backgroundUrl={shareBackgroundUrl}
                 ldrUrl={ldrUrl}
                 loading={!shareBackgroundUrl || !ldrUrl}
@@ -1384,7 +1387,10 @@ function KidsStepPageContent() {
                                 t={t}
                                 onRegister={handleRegisterGallery}
                                 isSubmitting={isSubmitting}
-                                onClose={() => setIsGalleryModalOpen(false)}
+                                onClose={() => {
+                                    gtag.trackExit("gallery_register_modal", "modal_close");
+                                    setIsGalleryModalOpen(false);
+                                }}
                             />
                         </div>
                     </div>
@@ -1421,7 +1427,10 @@ function KidsStepPageContent() {
                                 />
                             </div>
                             <div className="galleryModal__actions">
-                                <button className="galleryModal__btn galleryModal__btn--cancel" onClick={() => setIsColorModalOpen(false)}>{t.kids.steps.galleryModal.cancel}</button>
+                                <button className="galleryModal__btn galleryModal__btn--cancel" onClick={() => {
+                                    gtag.trackExit("color_theme_modal", "modal_close");
+                                    setIsColorModalOpen(false);
+                                }}>{t.kids.steps.galleryModal.cancel}</button>
                                 <button className="galleryModal__btn galleryModal__btn--confirm" onClick={handleApplyColor} disabled={!selectedTheme || isApplyingColor}>
                                     {isApplyingColor ? "..." : t.common?.apply}
                                 </button>

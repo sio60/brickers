@@ -43,6 +43,14 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
     useEffect(() => { authFetchRef.current = authFetch; }, [authFetch]);
     useEffect(() => { tRef.current = t; }, [t]);
 
+    const statusRef = useRef(status);
+    const jobIdRef = useRef(jobId);
+    const stageRef = useRef(currentStage);
+
+    useEffect(() => { statusRef.current = status; }, [status]);
+    useEffect(() => { jobIdRef.current = jobId; }, [jobId]);
+    useEffect(() => { stageRef.current = currentStage; }, [currentStage]);
+
     useEffect(() => {
         const promptText = (targetPrompt ?? "").trim();
         if (!rawFile && !promptText) return;
@@ -268,6 +276,15 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
         return () => {
             alive = false;
             try { abort.abort(); } catch { }
+
+            // [GA4] 이탈 지점 트래킹: 생성 도중 페이지 이탈(언마운트)
+            if (statusRef.current === 'loading') {
+                gtag.trackExit('generation_flow', 'user_left_while_loading', {
+                    job_id: jobIdRef.current || 'pending',
+                    stage: stageRef.current
+                });
+            }
+
             const currentJob = useJobStore.getState().activeJob;
             if (currentJob && currentJob.status !== 'DONE' && currentJob.status !== 'FAILED') {
                 useJobStore.getState().startPolling(currentJob.jobId, currentJob.age);
