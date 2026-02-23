@@ -9,7 +9,9 @@ import {
     Bar,
     LabelList,
     Legend,
-    CartesianGrid
+    CartesianGrid,
+    PieChart,
+    Pie
 } from 'recharts';
 import { useAdminDetailData } from '@/contexts/AdminDetailDataContext';
 
@@ -49,6 +51,15 @@ export default function DeepInsights() {
             count: item.count
         }));
     }, [productIntelligence?.exits]);
+
+    // 4. 연령별 분포 가공
+    const ageData = useMemo(() => {
+        if (!deepInsight?.ageStats) return [];
+        return deepInsight.ageStats.map(item => ({
+            name: item.ageGroup,
+            value: item.count
+        })).sort((a, b) => b.value - a.value);
+    }, [deepInsight?.ageStats]);
 
     if (loading) return (
         <div className="flex justify-center p-12">
@@ -156,6 +167,43 @@ export default function DeepInsights() {
                                         <LabelList dataKey="count" position="top" style={{ fontWeight: 'black', fill: '#000' }} />
                                     </Bar>
                                 </BarChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
+                </section>
+
+                {/* 4. Age Distribution (NEW) */}
+                <section className="bg-white p-8 rounded-[24px] border-2 border-black shadow-none">
+                    <h3 className="text-xl font-black mb-2">👶 연령대별 생성 비중</h3>
+                    <p className="text-sm text-gray-500 mb-6 font-bold">어떤 나이대의 아이들이 많이 사용하나요?</p>
+                    <div className="h-[350px] w-full">
+                        {ageData.length === 0 ? (
+                            <div className="h-full w-full flex items-center justify-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                                <div className="text-center text-gray-400 font-bold">연령 데이터가 없습니다</div>
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={ageData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={100}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                        nameKey="name"
+                                        label={({ name, percent }) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
+                                    >
+                                        {ageData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[(index + 4) % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        contentStyle={{ borderRadius: '16px', border: '2px solid black', fontWeight: 'bold' }}
+                                    />
+                                    <Legend verticalAlign="bottom" height={36} />
+                                </PieChart>
                             </ResponsiveContainer>
                         )}
                     </div>
