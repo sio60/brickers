@@ -1,13 +1,18 @@
 package com.brickers.backend.user.service;
 
 import com.brickers.backend.gallery.service.GalleryService;
+import com.brickers.backend.gallery.entity.GalleryCommentEntity;
+import com.brickers.backend.gallery.entity.GalleryPostEntity;
+import com.brickers.backend.gallery.repository.GalleryCommentRepository;
+import com.brickers.backend.gallery.repository.GalleryPostRepository;
+import com.brickers.backend.gallery.service.GalleryRevalidateService;
 import com.brickers.backend.job.entity.GenerateJobEntity;
 import com.brickers.backend.job.entity.JobStage;
 import com.brickers.backend.job.entity.JobStatus;
 import com.brickers.backend.job.repository.GenerateJobRepository;
 import com.brickers.backend.payment.dto.GooglePayVerifyRequest;
 import com.brickers.backend.payment.service.PaymentService;
-import com.brickers.backend.user.MySettingsResponse;
+import com.brickers.backend.user.dto.MySettingsResponse;
 import com.brickers.backend.user.dto.*;
 import com.brickers.backend.user.entity.AccountState;
 import com.brickers.backend.user.entity.MembershipPlan;
@@ -38,9 +43,9 @@ public class MyService {
     private final GalleryService galleryService;
     private final GenerateJobRepository generateJobRepository;
     private final PaymentService paymentService;
-    private final com.brickers.backend.gallery.repository.GalleryPostRepository galleryPostRepository;
-    private final com.brickers.backend.gallery.repository.GalleryCommentRepository galleryCommentRepository;
-    private final com.brickers.backend.gallery.service.GalleryRevalidateService galleryRevalidateService;
+    private final GalleryPostRepository galleryPostRepository;
+    private final GalleryCommentRepository galleryCommentRepository;
+    private final GalleryRevalidateService galleryRevalidateService;
 
     /** 내 프로필 조회 */
     public MyProfileResponse getMyProfile(Authentication authentication) {
@@ -96,7 +101,7 @@ public class MyService {
             String userId = user.getId();
 
             // 1. 갤러리 포스트 동기화
-            List<com.brickers.backend.gallery.entity.GalleryPostEntity> posts = galleryPostRepository
+            List<GalleryPostEntity> posts = galleryPostRepository
                     .findByAuthorId(userId);
             if (!posts.isEmpty()) {
                 posts.forEach(p -> {
@@ -109,7 +114,7 @@ public class MyService {
             }
 
             // 2. 갤러리 댓글 동기화
-            List<com.brickers.backend.gallery.entity.GalleryCommentEntity> comments = galleryCommentRepository
+            List<GalleryCommentEntity> comments = galleryCommentRepository
                     .findByAuthorId(userId);
             if (!comments.isEmpty()) {
                 comments.forEach(c -> {
