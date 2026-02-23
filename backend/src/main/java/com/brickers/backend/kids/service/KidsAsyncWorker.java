@@ -178,6 +178,13 @@ public class KidsAsyncWorker {
             job.setLdrUrl(ldrUrl);
         }
 
+        // 3.5 initialLdrUrl [New]
+        String initialLdrUrl = asString(response.get("initialLdrUrl"));
+        if (!isBlank(initialLdrUrl)) {
+            log.info("   ✅ [SAVE] Initial LDR S3 URL 직접 사용 | url={}", truncateUrl(initialLdrUrl));
+            job.setInitialLdrUrl(initialLdrUrl);
+        }
+
         // 4. bomUrl (BOM 파일)
         String bomUrl = asString(response.get("bomUrl"));
         if (!isBlank(bomUrl)) {
