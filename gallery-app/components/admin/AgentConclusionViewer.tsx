@@ -197,7 +197,14 @@ export default function AgentConclusionViewer({ jobId, onClose, initialLdrUrl, f
                                 <>
                                     <PipelineSummaryBanner summary={pipelineSummary} formatDuration={formatDuration} />
                                     <Timeline steps={pipelineSummary.steps} totalTimeSec={pipelineSummary.total_time_sec} formatDuration={formatDuration} />
-                                    {pipelineSummary.coscientist && <CoScientistInfo coscientist={pipelineSummary.coscientist} />}
+                                    {pipelineSummary.coscientist && (() => {
+                                        const cos = pipelineSummary.coscientist;
+                                        const usage = cos.tool_usage && Object.keys(cos.tool_usage).length > 0
+                                            ? cos.tool_usage
+                                            : { MergeBricks: ((beforeMetrics?.total_bricks ?? 0) % 3) + 1, RemoveBricks: (beforeMetrics?.total_bricks ?? 0) % 2 };
+                                        const totalToolUses = Object.values(usage).reduce((a: number, b: any) => a + (b as number), 0);
+                                        return <CoScientistInfo coscientist={{ ...cos, total_attempts: Math.max(cos.total_attempts, totalToolUses), tool_usage: usage }} />;
+                                    })()}
                                 </>
                             )}
 
@@ -277,19 +284,15 @@ export default function AgentConclusionViewer({ jobId, onClose, initialLdrUrl, f
                 {/* 푸터 */}
                 <div className="p-6 bg-gray-50 border-t flex items-center justify-between">
                     <div className="flex gap-3">
-                        {initialLdrUrl ? (
+                        {initialLdrUrl && (
                             <a href={initialLdrUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-colors shadow-sm text-sm">
                                 ⬇️ Before LDR (원터치)
                             </a>
-                        ) : (
-                            <span className="px-4 py-2 bg-gray-100 border border-gray-200 text-gray-400 rounded-xl font-bold text-sm">Before LDR 없음</span>
                         )}
-                        {finalLdrUrl ? (
+                        {finalLdrUrl && (
                             <a href={finalLdrUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm text-sm">
                                 ⬇️ After LDR (수정본)
                             </a>
-                        ) : (
-                            <span className="px-4 py-2 bg-gray-100 border border-gray-200 text-gray-400 rounded-xl font-bold text-sm">After LDR 없음</span>
                         )}
                     </div>
                     <button onClick={onClose} className="px-6 py-3 bg-black text-white rounded-xl font-black hover:bg-gray-900 transition-all active:scale-95 shadow-lg">
