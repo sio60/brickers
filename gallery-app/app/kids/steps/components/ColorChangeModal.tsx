@@ -48,8 +48,8 @@ export default function ColorChangeModal({
         <div className={styles.galleryModalOverlay} onClick={onClose}>
             <div className={styles.colorModal__splitContainer} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.colorModal__leftPanel}>
-                    <button className={styles.modalCloseBtn} onClick={onClose}>\u2715</button>
-                    <h3 className={styles.galleryModal__title}>{t.kids.steps.colorThemeTitle || "\uC0C9\uC0C1 \uD14C\uB9C8 \uC120\uD0DD"}</h3>
+                    <button className={styles.modalCloseBtn} onClick={onClose}>✕</button>
+                    <h3 className={styles.galleryModal__title}>{t.kids.steps.colorThemeTitle || "색상 테마 선택"}</h3>
                     <div className={styles.colorModal__themes}>
                         {colorThemes.length === 0 ? <div className={styles.colorModal__loading}>{t.kids.steps?.themeLoading || t.common.loading}</div> : (
                             colorThemes.map((theme: ThemeInfo) => (
