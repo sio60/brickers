@@ -267,4 +267,8 @@ public class AnalyticsController {
         return ResponseEntity.ok(gaService.getPerformanceDetails(days));
     }
 
+    @GetMapping("/diagnostic")
+    public ResponseEntity<?> getDiagnostic(@RequestParam(defaultValue = "30") int days) {
+        return ResponseEntity.ok(gaService.getDiagnosticInfo(days));
+    }
 }
