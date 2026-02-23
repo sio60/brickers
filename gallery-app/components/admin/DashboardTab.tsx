@@ -1,9 +1,8 @@
 import React from "react";
-import AdminAIReport from "./AdminAIReport";
+import { useAdminDashboard } from "@/hooks/admin/useAdminDashboard";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface DashboardTabProps {
-    t: any;
-    stats: any;
     aiState: {
         isQuerying: boolean;
         handleQuerySubmit: (query: string) => void;
@@ -12,7 +11,10 @@ interface DashboardTabProps {
     activeTab: string;
 }
 
-export default function DashboardTab({ t, stats, aiState, activeTab }: DashboardTabProps) {
+export default function DashboardTab({ aiState, activeTab }: DashboardTabProps) {
+    const { t } = useLanguage();
+    const { stats } = useAdminDashboard();
+
     return (
         <div className="flex flex-col gap-6">
             <p className="text-gray-600 font-medium">{t.admin.welcome}</p>

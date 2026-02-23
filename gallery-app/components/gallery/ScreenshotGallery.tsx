@@ -6,7 +6,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { GalleryItem } from '@/types/gallery';
 import dynamic from 'next/dynamic';
 
-const Viewer3D = dynamic(() => import('@/components/Viewer3D'), { ssr: false });
+const Viewer3D = dynamic(() => import('@/components/three/Viewer3D'), { ssr: false });
 
 type ViewName = 'front' | 'back' | 'left' | 'right' | 'top' | 'bottom';
 
