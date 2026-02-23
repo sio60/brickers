@@ -23,6 +23,7 @@ export interface ProductIntelligenceResponse {
         avgStability: number;
         avgBrickCount: number;
         avgLatency: number;
+        avgWaitTime: number;
         totalCost: number;
     };
     exits: Array<{ step: string; count: number }>;
