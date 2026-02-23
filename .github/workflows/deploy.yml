@@ -54,7 +54,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./frontend/Dockerfile
+          file: ./gallery-app/Dockerfile.prod
           platforms: linux/amd64
           push: true
           tags: |

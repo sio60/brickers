@@ -254,27 +254,7 @@ export default function AgentConclusionViewer({ jobId, onClose, initialLdrUrl, f
                                         />
                                     </div>
 
-                                    {/* 도구 사용 현황 */}
-                                    {(() => {
-                                        const usage = finalReport?.tool_usage && Object.keys(finalReport.tool_usage).length > 0
-                                            ? finalReport.tool_usage
-                                            : { MergeBricks: (beforeMetrics.total_bricks % 3) + 1, RemoveBricks: beforeMetrics.total_bricks % 2 };
-                                        return (
-                                            <div className="bg-white p-5 rounded-2xl border border-gray-100">
-                                                <h3 className="text-sm font-black text-gray-900 mb-3 flex items-center gap-2">
-                                                    <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
-                                                    Strategy Tool Usage
-                                                </h3>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {Object.entries(usage).map(([tool, count]: [string, any]) => (
-                                                        <div key={tool} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold border border-indigo-100">
-                                                            {tool}: {count}회
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        );
-                                    })()}
+
                                 </>
                             )}
                         </>
