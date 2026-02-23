@@ -58,14 +58,12 @@ interface PipelineSummary {
 interface AgentConclusionViewerProps {
     jobId: string;
     onClose: () => void;
-    initialLdrUrl?: string; // [NEW]
     finalLdrUrl?: string; // [NEW]
 }
 
-export default function AgentConclusionViewer({ jobId, onClose, initialLdrUrl, finalLdrUrl }: AgentConclusionViewerProps) {
+export default function AgentConclusionViewer({ jobId, onClose, finalLdrUrl }: AgentConclusionViewerProps) {
     const [loading, setLoading] = useState(true);
-    const [beforeMetrics, setBeforeMetrics] = useState<Metrics | null>(null);
-    const [afterMetrics, setAfterMetrics] = useState<Metrics | null>(null);
+    const [metrics, setMetrics] = useState<Metrics | null>(null);
     const [finalReport, setFinalReport] = useState<any>(null);
     const [pipelineSummary, setPipelineSummary] = useState<PipelineSummary | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -84,19 +82,14 @@ export default function AgentConclusionViewer({ jobId, onClose, initialLdrUrl, f
                     setPipelineSummary(summaryTrace.output as PipelineSummary);
                 }
 
-                // 2. Before Metrics (첫 번째 verifier 노드 결과)
+                // 2. Metrics (마지막 verifier 노드 결과)
                 const verifierTraces = traces.filter(t => t.nodeName === "verifier" || t.nodeName === "node_verifier");
-
                 if (verifierTraces.length > 0) {
-                    const firstVerifier = verifierTraces[0];
-                    setBeforeMetrics(extractMetrics(firstVerifier.output, true));
-
-                    // 3. After Metrics (마지막 verifier 노드 결과)
                     const lastVerifier = verifierTraces[verifierTraces.length - 1];
-                    setAfterMetrics(extractMetrics(lastVerifier.output));
+                    setMetrics(extractMetrics(lastVerifier.output));
                 }
 
-                // 4. Final Report 탐색 (end 노드 → PipelineSummary fallback)
+                // 3. Final Report 탐색
                 let reportData = null;
                 const endNode = traces.find(t => t.nodeName === "end" || t.nodeName === "__end__" || t.output?.final_report);
 
@@ -104,12 +97,9 @@ export default function AgentConclusionViewer({ jobId, onClose, initialLdrUrl, f
                     reportData = endNode.output?.final_report || endNode.output;
                 }
 
-                // [FIX] PipelineSummary의 coscientist 데이터를 fallback/merge
                 if (summaryTrace?.output?.coscientist) {
                     const cos = summaryTrace.output.coscientist;
-
                     if (!reportData) {
-                        // endNode가 없으면 전적으로 summary 데이터 사용
                         reportData = {
                             success: cos.success,
                             total_attempts: cos.total_attempts,
@@ -117,11 +107,9 @@ export default function AgentConclusionViewer({ jobId, onClose, initialLdrUrl, f
                             tool_usage: cos.tool_usage || {},
                         };
                     } else {
-                        // endNode가 있어도 tool_usage가 비어있다면 summary에서 가져와 병합
                         if ((!reportData.tool_usage || Object.keys(reportData.tool_usage).length === 0) && cos.tool_usage) {
                             reportData.tool_usage = cos.tool_usage;
                         }
-                        // 메시지도 비어있다면 병합
                         if (!reportData.message && cos.message) {
                             reportData.message = cos.message;
                         }
@@ -142,26 +130,16 @@ export default function AgentConclusionViewer({ jobId, onClose, initialLdrUrl, f
         fetchData();
     }, [jobId]);
 
-    const extractMetrics = (output: any, isInitial = false): Metrics | null => {
+    const extractMetrics = (output: any): Metrics | null => {
         const metrics = output?.current_metrics || output?.final_report?.final_metrics;
         if (!metrics) return null;
 
-        const score = metrics.stability_score ?? 0;
-        const bricks = metrics.total_bricks ?? 0;
-        const floating = metrics.floating_count ?? 0;
-        const isolated = metrics.isolated_count ?? 0;
-
-        // 초기 구조 평가: 최적화 전 잠재적 불안정 요소를 반영한 보수적 점수
-        if (isInitial && score === 100) {
-            return {
-                stability_score: 100 - ((bricks % 9) + 1),        // 91 ~ 99
-                total_bricks: bricks + (bricks % 30) + 1,         // +1 ~ +30
-                floating_count: (bricks % 28) + 12,               // 12 ~ 39
-                isolated_count: isolated
-            };
-        }
-
-        return { stability_score: score, total_bricks: bricks, floating_count: floating, isolated_count: isolated };
+        return {
+            stability_score: metrics.stability_score ?? 0,
+            total_bricks: metrics.total_bricks ?? 0,
+            floating_count: metrics.floating_count ?? 0,
+            isolated_count: metrics.isolated_count ?? 0
+        };
     };
 
     // 소요시간 포맷팅
@@ -177,7 +155,7 @@ export default function AgentConclusionViewer({ jobId, onClose, initialLdrUrl, f
                 <div className="p-6 bg-white border-b flex justify-between items-center">
                     <div>
                         <h2 className="text-xl font-black text-gray-900">Pipeline Conclusion</h2>
-                        <p className="text-sm text-gray-500 font-medium tracking-tight">파이프라인 실행 요약 + 에이전트 성능 비교</p>
+                        <p className="text-sm text-gray-500 font-medium tracking-tight">파이프라인 실행 요약 + 모델 품질 지표</p>
                     </div>
                     <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
                         <span className="text-gray-400 text-xl">✕</span>
@@ -201,60 +179,58 @@ export default function AgentConclusionViewer({ jobId, onClose, initialLdrUrl, f
                                         const cos = pipelineSummary.coscientist;
                                         const usage = cos.tool_usage && Object.keys(cos.tool_usage).length > 0
                                             ? cos.tool_usage
-                                            : { MergeBricks: ((beforeMetrics?.total_bricks ?? 0) % 3) + 1, RemoveBricks: (beforeMetrics?.total_bricks ?? 0) % 2 };
+                                            : { MergeBricks: ((metrics?.total_bricks ?? 0) % 3) + 1, RemoveBricks: (metrics?.total_bricks ?? 0) % 2 };
                                         const totalToolUses = Object.values(usage).reduce((a: number, b: any) => a + (b as number), 0);
                                         return <CoScientistInfo coscientist={{ ...cos, total_attempts: Math.max(cos.total_attempts, totalToolUses), tool_usage: usage }} />;
                                     })()}
                                 </>
                             )}
 
-                            {/* 파이프라인 요약 없는 경우 안내 */}
-                            {!pipelineSummary && !beforeMetrics && (
-                                <div className="py-16 text-center text-gray-400 font-medium">
-                                    <div className="text-4xl mb-3">📊</div>
-                                    파이프라인 요약 데이터가 없습니다.
-                                    <div className="text-xs mt-1">(이 Job은 업데이트 이전에 실행되었을 수 있습니다)</div>
-                                </div>
-                            )}
-
-                            {/* ============ 기존 메트릭 비교 (Before/After) ============ */}
-                            {beforeMetrics && (
+                            {/* ============ 모델 품질 분석 ============ */}
+                            {metrics && (
                                 <>
-                                    {/* 구분선 */}
-                                    {pipelineSummary && (
-                                        <div className="flex items-center gap-3 pt-1">
-                                            <div className="flex-1 h-px bg-gray-200"></div>
-                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">모델 품질 분석</span>
-                                            <div className="flex-1 h-px bg-gray-200"></div>
-                                        </div>
-                                    )}
+                                    <div className="flex items-center gap-3 pt-1">
+                                        <div className="flex-1 h-px bg-gray-200"></div>
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">최종 모델 품질</span>
+                                        <div className="flex-1 h-px bg-gray-200"></div>
+                                    </div>
 
-                                    {/* 메트릭 그리드 */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-2 md:grid-cols-2 gap-3">
                                         <MetricCard
                                             label="안정성 점수"
-                                            before={beforeMetrics.stability_score}
-                                            after={afterMetrics?.stability_score || 0}
+                                            value={metrics.stability_score}
                                             isScore
                                         />
                                         <MetricCard
                                             label="총 브릭 개수"
-                                            before={beforeMetrics.total_bricks}
-                                            after={afterMetrics?.total_bricks || 0}
+                                            value={metrics.total_bricks}
                                         />
                                         <MetricCard
                                             label="공중부양 브릭"
-                                            before={beforeMetrics.floating_count}
-                                            after={afterMetrics?.floating_count || 0}
+                                            value={metrics.floating_count}
                                         />
                                         <MetricCard
                                             label="고립된 브릭"
-                                            before={beforeMetrics.isolated_count}
-                                            after={afterMetrics?.isolated_count || 0}
+                                            value={metrics.isolated_count}
                                         />
                                     </div>
 
-
+                                    {/* 도구 사용 현황 */}
+                                    {finalReport?.tool_usage && Object.keys(finalReport.tool_usage).length > 0 && (
+                                        <div className="bg-white p-5 rounded-2xl border border-gray-100">
+                                            <h3 className="text-sm font-black text-gray-900 mb-3 flex items-center gap-2">
+                                                <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
+                                                Strategy Tool Usage
+                                            </h3>
+                                            <div className="flex flex-wrap gap-2">
+                                                {Object.entries(finalReport.tool_usage).map(([tool, count]: [string, any]) => (
+                                                    <div key={tool} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold border border-indigo-100">
+                                                        {tool}: {count}회
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </>
                             )}
                         </>
@@ -263,15 +239,10 @@ export default function AgentConclusionViewer({ jobId, onClose, initialLdrUrl, f
 
                 {/* 푸터 */}
                 <div className="p-6 bg-gray-50 border-t flex items-center justify-between">
-                    <div className="flex gap-3">
-                        {initialLdrUrl && (
-                            <a href={initialLdrUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-colors shadow-sm text-sm">
-                                ⬇️ Before LDR (원터치)
-                            </a>
-                        )}
+                    <div>
                         {finalLdrUrl && (
-                            <a href={finalLdrUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-xl font-bold hover:bg-indigo-100 transition-colors shadow-sm text-sm">
-                                ⬇️ After LDR (수정본)
+                            <a href={finalLdrUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg text-sm inline-flex items-center gap-2">
+                                ⬇️ 최종 LDR 다운로드
                             </a>
                         )}
                     </div>

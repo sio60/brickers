@@ -152,10 +152,6 @@ public class SqsConsumerService {
             job.setCorrectedImageUrl(result.getCorrectedUrl());
             job.setGlbUrl(result.getGlbUrl());
             job.setLdrUrl(result.getLdrUrl());
-            // [New] Initial LDR URL (for comparison)
-            if (result.getInitialLdrUrl() != null && !result.getInitialLdrUrl().isBlank()) {
-                job.setInitialLdrUrl(result.getInitialLdrUrl());
-            }
             job.setBomUrl(result.getBomUrl());
             // pdfUrl: 빈 문자열이면 null 유지 (Blueprint 서버가 나중에 업데이트)
             if (result.getPdfUrl() != null && !result.getPdfUrl().isBlank()) {
