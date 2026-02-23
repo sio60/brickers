@@ -21,16 +21,13 @@ export default function BrickJudgeViewer({ initialSelectedId }: BrickJudgeViewer
 
     const [jobs, setJobs] = useState<JobListItem[]>([]);
     const [selectedJob, setSelectedJob] = useState<JobListItem | null>(null);
-    const [judgeResult, setJudgeResult] = useState<JudgeResult | null>(null); // 현재 보여지는 결과
-    const [initialJudgeResult, setInitialJudgeResult] = useState<JudgeResult | null>(null); // 초기 모델 결과
-    const [finalJudgeResult, setFinalJudgeResult] = useState<JudgeResult | null>(null); // 최종 모델 결과
+    const [judgeResult, setJudgeResult] = useState<JudgeResult | null>(null);
     const [loading, setLoading] = useState(false);
     const [judging, setJudging] = useState(false);
     const [modelLoading, setModelLoading] = useState(false);
     const [modelError, setModelError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [focusBrickId, setFocusBrickId] = useState<number | null>(null);
-    const [viewMode, setViewMode] = useState<"final" | "initial">("final"); // [NEW]
 
     // Job 리스트 로드
     useEffect(() => {
@@ -43,8 +40,6 @@ export default function BrickJudgeViewer({ initialSelectedId }: BrickJudgeViewer
             const target = jobs.find(j => j.id === initialSelectedId);
             if (target) {
                 handleSelectJob(target);
-                // 자동 선택 시에는 마지막(final) 결과를 먼저 보여주도록 설정
-                setViewMode("final");
             }
         }
     }, [initialSelectedId, jobs]);
@@ -52,24 +47,10 @@ export default function BrickJudgeViewer({ initialSelectedId }: BrickJudgeViewer
     // Job 선택 시 관련 결과 초기화 및 로드
     useEffect(() => {
         if (selectedJob) {
-            setInitialJudgeResult(null);
-            setFinalJudgeResult(null);
             setJudgeResult(null);
-
-            // 두 버전 모두 분석 (병렬)
-            analyzeJob(selectedJob, "initial");
-            analyzeJob(selectedJob, "final");
+            analyzeJob(selectedJob);
         }
     }, [selectedJob]);
-
-    // 뷰 모드 변경 시 현재 결과 업데이트
-    useEffect(() => {
-        if (viewMode === "initial") {
-            setJudgeResult(initialJudgeResult);
-        } else {
-            setJudgeResult(finalJudgeResult);
-        }
-    }, [viewMode, initialJudgeResult, finalJudgeResult]);
 
     const fetchJobs = async () => {
         setLoading(true);
@@ -91,14 +72,13 @@ export default function BrickJudgeViewer({ initialSelectedId }: BrickJudgeViewer
     const handleSelectJob = (job: JobListItem) => {
         if (selectedJob?.id === job.id) return;
         setSelectedJob(job);
-        setViewMode("final"); // Job 변경 시 항상 final 모드로 초기화
     };
 
-    const analyzeJob = async (job: JobListItem, mode: "final" | "initial") => {
-        const targetUrl = mode === "initial" ? job.initialLdrUrl : job.ldrUrl;
+    const analyzeJob = async (job: JobListItem) => {
+        const targetUrl = job.ldrUrl;
         if (!targetUrl) return;
 
-        if (mode === viewMode) setJudging(true);
+        setJudging(true);
         setModelError(null);
 
         try {
@@ -110,18 +90,16 @@ export default function BrickJudgeViewer({ initialSelectedId }: BrickJudgeViewer
 
             if (res.ok) {
                 const data: JudgeResult = await res.json();
-                if (mode === "initial") setInitialJudgeResult(data);
-                else setFinalJudgeResult(data);
-
-                if (mode === viewMode) setModelLoading(true);
+                setJudgeResult(data);
+                setModelLoading(true);
             } else {
-                console.error(`[BrickJudge] ${mode} Judge failed:`, res.status);
+                console.error(`[BrickJudge] Judge failed:`, res.status);
             }
         } catch (e) {
-            console.error(`[BrickJudge] ${mode} Judge error:`, e);
-            if (mode === viewMode) setModelError(e instanceof Error ? e.message : "Unknown error");
+            console.error(`[BrickJudge] Judge error:`, e);
+            setModelError(e instanceof Error ? e.message : "Unknown error");
         } finally {
-            if (mode === viewMode) setJudging(false);
+            setJudging(false);
         }
     };
 
@@ -178,29 +156,6 @@ export default function BrickJudgeViewer({ initialSelectedId }: BrickJudgeViewer
                 {/* 3D Viewer */}
                 <div className="flex-1 bg-white rounded-xl border border-gray-200 overflow-hidden relative flex flex-col">
 
-                    {/* [NEW] View Mode Toggle */}
-                    {selectedJob?.initialLdrUrl && (
-                        <div className="absolute top-4 left-4 z-30 flex bg-white/90 backdrop-blur rounded-lg p-1 border border-gray-200 shadow-sm">
-                            <button
-                                onClick={() => setViewMode("initial")}
-                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${viewMode === "initial"
-                                    ? "bg-black text-white shadow-sm"
-                                    : "text-gray-600 hover:bg-gray-100"
-                                    }`}
-                            >
-                                Initial Model
-                            </button>
-                            <button
-                                onClick={() => setViewMode("final")}
-                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${viewMode === "final"
-                                    ? "bg-black text-white shadow-sm"
-                                    : "text-gray-600 hover:bg-gray-100"
-                                    }`}
-                            >
-                                Final Model
-                            </button>
-                        </div>
-                    )}
 
                     {judging && (
                         <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
@@ -235,7 +190,7 @@ export default function BrickJudgeViewer({ initialSelectedId }: BrickJudgeViewer
                         </div>
                     ) : judgeResult?.ldr_content ? (
                         <Canvas
-                            key={`${selectedJob?.id}-${viewMode}`} // [NEW] Key update verifies reload
+                            key={selectedJob?.id}
                             camera={{ position: [0, 200, 600], fov: 45, near: 0.1, far: 100000 }}
                             dpr={[1, 2]}
                             frameloop="demand"
@@ -270,116 +225,84 @@ export default function BrickJudgeViewer({ initialSelectedId }: BrickJudgeViewer
                     ) : null}
                 </div>
 
-                {/* [NEW] Comparison & Results Panel */}
-                {(initialJudgeResult || finalJudgeResult) && (
+                {/* Summary & Detailed Issues */}
+                {judgeResult && (
                     <div className="bg-white rounded-xl border border-gray-200 p-4 shrink-0 overflow-y-auto max-h-[400px]">
-
-                        {/* Comparison Table */}
-                        <div className="grid grid-cols-3 gap-4 mb-6 border-b pb-4">
-                            <div className="text-center p-3 rounded-lg bg-gray-50">
-                                <p className="text-xs text-gray-400 mb-1">Metrics</p>
-                                <div className="space-y-2 mt-4">
-                                    <p className="text-sm font-semibold text-gray-700">{bj.score}</p>
-                                    <p className="text-sm font-semibold text-gray-700">{bj.brickCount}</p>
-                                    <p className="text-sm font-semibold text-gray-700">{bj.issueCount}</p>
-                                </div>
+                        {/* Summary Metrics */}
+                        <div className="grid grid-cols-4 gap-4 mb-6 border-b pb-4">
+                            <div className="text-center p-3 rounded-lg bg-indigo-50/50 border border-indigo-100 shadow-sm">
+                                <p className="text-[10px] font-bold text-indigo-500 uppercase mb-1">{bj.score}</p>
+                                <p className={`text-xl font-black ${judgeResult.score >= 80 ? 'text-green-600' : 'text-red-600'}`}>
+                                    {judgeResult.score}점
+                                </p>
                             </div>
-
-                            <div className={`text-center p-3 rounded-lg border transition-all ${viewMode === 'initial' ? 'ring-2 ring-black bg-white shadow-md' : 'bg-gray-50/50'}`}>
-                                <div className="flex flex-col items-center">
-                                    <p className="text-xs font-bold text-gray-500 mb-1">BEFORE (Initial)</p>
-                                    {initialJudgeResult ? (
-                                        <div className="space-y-2 mt-4">
-                                            <p className={`text-lg font-bold ${initialJudgeResult.score >= 80 ? 'text-green-600' : 'text-red-600'}`}>
-                                                {initialJudgeResult.score}점
-                                            </p>
-                                            <p className="text-sm text-gray-600 font-medium">{initialJudgeResult.brick_count}</p>
-                                            <p className="text-sm text-gray-600 font-medium">{initialJudgeResult.issues.length}</p>
-                                            <a href={selectedJob?.initialLdrUrl} download className="block mt-4 text-[10px] bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1 px-2 rounded transition-colors">
-                                                ⬇️ LDR DOWNLOAD
-                                            </a>
-                                        </div>
-                                    ) : (
-                                        <div className="mt-8 text-xs text-gray-300 italic">No Initial Model</div>
-                                    )}
-                                </div>
+                            <div className="text-center p-3 rounded-lg bg-gray-50 border border-gray-100 shadow-sm">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">{bj.brickCount}</p>
+                                <p className="text-xl font-black text-gray-800">{judgeResult.brick_count}</p>
                             </div>
-
-                            <div className={`text-center p-3 rounded-lg border transition-all ${viewMode === 'final' ? 'ring-2 ring-black bg-white shadow-md' : 'bg-gray-50/50'}`}>
-                                <div className="flex flex-col items-center">
-                                    <p className="text-xs font-bold text-indigo-500 mb-1">AFTER (Modified)</p>
-                                    {finalJudgeResult ? (
-                                        <div className="space-y-2 mt-4">
-                                            <p className={`text-lg font-bold ${finalJudgeResult.score >= 80 ? 'text-green-600' : 'text-red-600'}`}>
-                                                {finalJudgeResult.score}점
-                                            </p>
-                                            <p className="text-sm text-gray-600 font-medium">{finalJudgeResult.brick_count}</p>
-                                            <p className="text-sm text-gray-600 font-medium">{finalJudgeResult.issues.length}</p>
-                                            <a href={selectedJob?.ldrUrl} download className="block mt-4 text-[10px] bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold py-1 px-2 rounded transition-colors">
-                                                ⬇️ LDR DOWNLOAD
-                                            </a>
-                                        </div>
-                                    ) : (
-                                        <div className="mt-8 text-xs text-gray-300 italic">Loading Results...</div>
-                                    )}
-                                </div>
+                            <div className="text-center p-3 rounded-lg bg-gray-50 border border-gray-100 shadow-sm">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">{bj.issueCount}</p>
+                                <p className="text-xl font-black text-gray-800">{judgeResult.issues.length}</p>
+                            </div>
+                            <div className="flex items-center justify-center p-2">
+                                <a href={selectedJob?.ldrUrl} download className="w-full flex items-center justify-center gap-2 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl transition-all shadow-md active:scale-95 text-xs">
+                                    ⬇️ DOWNLOAD LDR
+                                </a>
                             </div>
                         </div>
 
                         {/* Current View Detailed Issues */}
-                        {judgeResult && (
-                            <div className="mt-4">
-                                <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 px-1">
-                                    {viewMode === 'initial' ? 'Initial' : 'Final'} Model Issues ({(judgeResult.issues ?? []).length})
-                                </h4>
+                        <div className="mt-4">
+                            <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 px-1">
+                                Model Issues ({(judgeResult.issues ?? []).length})
+                            </h4>
 
-                                {(judgeResult.issues ?? []).length > 0 ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                        {(judgeResult.issues ?? [])
-                                            .sort((a, b) => (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9))
-                                            .map((issue, idx) => (
-                                                <button
-                                                    key={idx}
-                                                    onClick={() =>
-                                                        setFocusBrickId(
-                                                            focusBrickId === issue.brick_id ? null : issue.brick_id
-                                                        )
-                                                    }
-                                                    className={`text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors border ${focusBrickId === issue.brick_id
-                                                        ? "bg-gray-100 border-gray-400 shadow-sm"
-                                                        : "bg-white border-gray-100 hover:border-gray-300"
+                            {(judgeResult.issues ?? []).length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    {(judgeResult.issues ?? [])
+                                        .sort((a, b) => (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9))
+                                        .map((issue, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() =>
+                                                    setFocusBrickId(
+                                                        focusBrickId === issue.brick_id ? null : issue.brick_id
+                                                    )
+                                                }
+                                                className={`text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors border ${focusBrickId === issue.brick_id
+                                                    ? "bg-gray-100 border-gray-400 shadow-sm"
+                                                    : "bg-white border-gray-100 hover:border-gray-300"
+                                                    }`}
+                                            >
+                                                <div
+                                                    className="w-3 h-3 rounded-sm shrink-0"
+                                                    style={{ backgroundColor: issue.color }}
+                                                />
+                                                <span className="flex-1 text-xs text-gray-700 truncate">{issue.message}</span>
+                                                <span
+                                                    className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${issue.severity === "critical"
+                                                        ? "bg-red-100 text-red-700"
+                                                        : issue.severity === "high"
+                                                            ? "bg-orange-100 text-orange-700"
+                                                            : "bg-yellow-100 text-yellow-700"
                                                         }`}
                                                 >
-                                                    <div
-                                                        className="w-3 h-3 rounded-sm shrink-0"
-                                                        style={{ backgroundColor: issue.color }}
-                                                    />
-                                                    <span className="flex-1 text-xs text-gray-700 truncate">{issue.message}</span>
-                                                    <span
-                                                        className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${issue.severity === "critical"
-                                                            ? "bg-red-100 text-red-700"
-                                                            : issue.severity === "high"
-                                                                ? "bg-orange-100 text-orange-700"
-                                                                : "bg-yellow-100 text-yellow-700"
-                                                            }`}
-                                                    >
-                                                        {issue.severity[0]}
-                                                    </span>
-                                                </button>
-                                            ))}
-                                    </div>
-                                ) : (
-                                    <div className="p-4 bg-green-50 rounded-lg text-center">
-                                        <p className="text-green-600 text-sm font-bold">✨ {bj.noIssues}</p>
-                                    </div>
-                                )}
-
-                                <ColorLegend t={bj} />
-                                <div className="mt-4 text-[10px] text-gray-300 italic">
-                                    {bj.elapsed}: {(judgeResult.elapsed_ms ?? 0).toFixed(1)}ms
+                                                    {issue.severity[0]}
+                                                </span>
+                                            </button>
+                                        ))}
                                 </div>
+                            ) : (
+                                <div className="p-4 bg-green-50 rounded-lg text-center">
+                                    <p className="text-green-600 text-sm font-bold">✨ {bj.noIssues}</p>
+                                </div>
+                            )}
+
+                            <ColorLegend t={bj} />
+                            <div className="mt-4 text-[10px] text-gray-300 italic">
+                                {bj.elapsed}: {(judgeResult.elapsed_ms ?? 0).toFixed(1)}ms
                             </div>
-                        )}
+                        </div>
                     </div>
                 )}
             </div>
