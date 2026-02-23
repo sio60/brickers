@@ -10,18 +10,24 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import com.brickers.backend.job.repository.GenerateJobRepository;
+import com.brickers.backend.job.entity.GenerateJobEntity;
+import com.brickers.backend.job.entity.JobStatus;
+import lombok.RequiredArgsConstructor;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class GoogleAnalyticsService {
+
+    private final GenerateJobRepository jobRepository;
 
     @Value("${google.analytics.property-id}")
     private String propertyId;
@@ -583,74 +589,26 @@ public class GoogleAnalyticsService {
                 double cost = Double.parseDouble(row.getMetricValues(4).getValue());
                 long count = Long.parseLong(row.getMetricValues(5).getValue());
 
-                // [FIX] Auto-Scale if the metric is in Micros (GA4 standard for Currency)
-                if (isMicrosMetric.getOrDefault(4, false)) {
-                    log.info("💰 [GA4] est_cost is Currency (Micros). Scaling down by 1,000,000.");
-                    cost = cost / 1_000_000.0;
-                }
-
-                log.info("📊 [GA4 Quality Metrics] Count: {}, Processed Cost: {}", count, cost);
+                // [FIX] Custom Metrics in GA4 don't follow Micros standard by default.
+                // Raw value ~21,454 matches Total Wait Time (seconds) accurately.
+                // Reverting scaling to show raw values as per user request (Total 1-month
+                // time).
+                log.info("📊 [GA4 Quality Metrics] Count: {}, Raw SumCost: {}", count, cost);
 
                 if (count > 0) {
                     double avgCost = cost / count;
-                    double avgTokenToday = 0;
-                    double avgCostToday = 0;
-
-                    // [NEW] Fetch Today's Specific Metrics (to solve dilution by old LLM-only data)
-                    try {
-                        RunReportResponse todayResp = analyticsDataClient.runReport(RunReportRequest.newBuilder()
-                                .setProperty("properties/" + propertyId)
-                                .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
-                                .addMetrics(Metric.newBuilder().setName("customEvent:token_count"))
-                                .addMetrics(Metric.newBuilder().setName("eventCount"))
-                                .setDimensionFilter(FilterExpression.newBuilder()
-                                        .setFilter(Filter.newBuilder()
-                                                .setFieldName("eventName")
-                                                .setStringFilter(
-                                                        Filter.StringFilter.newBuilder().setValue("generate_success"))
-                                                .build()))
-                                .addDateRanges(DateRange.newBuilder().setStartDate("today").setEndDate("today"))
-                                .build());
-
-                        // Log todayResp size for debugging
-                        log.info("📅 [GA4 Today Query] Rows: {}, Headers Type: {}", todayResp.getRowsCount(),
-                                todayResp.getMetricHeadersCount() > 0 ? todayResp.getMetricHeaders(0).getType()
-                                        : "N/A");
-
-                        if (todayResp.getRowsCount() > 0) {
-                            Row tRow = todayResp.getRows(0);
-                            double tCost = Double.parseDouble(tRow.getMetricValues(0).getValue());
-                            double tToken = Double.parseDouble(tRow.getMetricValues(1).getValue());
-                            long tCount = Long.parseLong(tRow.getMetricValues(2).getValue());
-
-                            if (tCount > 0) {
-                                // Scaling for today's cost too
-                                if (todayResp.getMetricHeaders(0)
-                                        .getType() == com.google.analytics.data.v1beta.MetricType.TYPE_CURRENCY) {
-                                    tCost = tCost / 1_000_000.0;
-                                }
-                                avgCostToday = tCost / tCount;
-                                avgTokenToday = tToken / tCount;
-                                log.info("📅 [GA4 Today] AvgCost: ${}, AvgToken: {}", avgCostToday, avgTokenToday);
-                            }
-                        }
-                    } catch (Exception te) {
-                        log.warn("Failed to fetch Today's metrics: {}", te.getMessage());
-                    }
+                    TodayMetrics today = calculateTodayMetrics();
 
                     quality = new ProductIntelligenceResponse.EngineQuality(
                             stability / count,
                             bricks / count,
                             latency / count,
                             wait / count,
-                            avgCost,
-                            cost,
-                            avgCostToday,
-                            avgTokenToday);
+                            avgCost, cost, today.avgCost(), today.avgToken(), today.avgWaitTime());
                 }
             }
         } catch (Exception e) {
-            log.warn("Failed to fetch Engine Quality (likely unregistered metric): {}", e.getMessage());
+            log.error("Error in getProductIntelligence: {}", e.getMessage());
         }
 
         // 3. Exit Point Analysis (Independent Try-Catch)
@@ -687,6 +645,42 @@ public class GoogleAnalyticsService {
         return new ProductIntelligenceResponse(funnel, quality, exits);
     }
 
+    private record TodayMetrics(double avgCost, double avgToken, double avgWaitTime) {
+    }
+
+    private TodayMetrics calculateTodayMetrics() {
+        try {
+            LocalDateTime startOfDay = LocalDateTime.now().with(LocalTime.MIN);
+            LocalDateTime endOfDay = LocalDateTime.now().with(LocalTime.MAX);
+            List<GenerateJobEntity> todayJobs = jobRepository.findByCreatedAtBetween(startOfDay, endOfDay)
+                    .stream()
+                    .filter(j -> j.getStatus() == JobStatus.DONE)
+                    .collect(Collectors.toList());
+
+            if (!todayJobs.isEmpty()) {
+                double totalCost = todayJobs.stream()
+                        .mapToDouble(j -> j.getEstCost() != null ? j.getEstCost() : 0.0)
+                        .sum();
+                long totalTokens = todayJobs.stream()
+                        .mapToLong(j -> j.getTokenCount() != null ? j.getTokenCount() : 0L)
+                        .sum();
+                double totalWaitTime = todayJobs.stream()
+                        .mapToDouble(j -> {
+                            if (j.getCreatedAt() != null && j.getUpdatedAt() != null) {
+                                return java.time.Duration.between(j.getCreatedAt(), j.getUpdatedAt()).getSeconds();
+                            }
+                            return 0.0;
+                        })
+                        .sum();
+                return new TodayMetrics(totalCost / todayJobs.size(), (double) totalTokens / todayJobs.size(),
+                        totalWaitTime / todayJobs.size());
+            }
+        } catch (Exception e) {
+            log.warn("Failed to calculate today's metrics from DB: {}", e.getMessage());
+        }
+        return new TodayMetrics(0, 0, 0);
+    }
+
     /**
      * [NEW] 심층 분석 (Deep Insights) 데이터 조회
      * 1. 카테고리별 성공/실패율
@@ -699,6 +693,7 @@ public class GoogleAnalyticsService {
         log.info("📊 [GA4] Entering getDeepInsights ({} days)", days);
         List<DeepInsightResponse.CategoryStat> categoryStats = new ArrayList<>();
         List<DeepInsightResponse.QualityStat> qualityStats = new ArrayList<>();
+        List<DeepInsightResponse.AgeStat> ageStats = new ArrayList<>();
 
         // 1. Category Success Rate
         try {
@@ -744,7 +739,35 @@ public class GoogleAnalyticsService {
                     e.getMessage());
         }
 
-        return new DeepInsightResponse(categoryStats, qualityStats);
+        // 2. Age Distribution (NEW)
+        try {
+            RunReportRequest ageRequest = RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDimensions(Dimension.newBuilder().setName("customEvent:age"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                            .setFilter(Filter.newBuilder()
+                                    .setFieldName("eventName")
+                                    .setStringFilter(Filter.StringFilter.newBuilder().setValue("generate_success"))
+                                    .build())
+                            .build())
+                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                    .build();
+
+            RunReportResponse ageResp = analyticsDataClient.runReport(ageRequest);
+            log.info("   [GA4 Deep] Age query success. Rows: {}", ageResp.getRowsCount());
+            for (Row row : ageResp.getRowsList()) {
+                String ageGroup = row.getDimensionValues(0).getValue();
+                long count = Long.parseLong(row.getMetricValues(0).getValue());
+                if (!ageGroup.isEmpty() && !ageGroup.equals("(not set)")) {
+                    ageStats.add(new DeepInsightResponse.AgeStat(ageGroup, count));
+                }
+            }
+        } catch (Exception e) {
+            log.warn("   [GA4 Deep] FAILED to fetch Age Stats: {}", e.getMessage());
+        }
+
+        return new DeepInsightResponse(categoryStats, qualityStats, ageStats);
     }
 
     /**
@@ -791,7 +814,7 @@ public class GoogleAnalyticsService {
 
         log.info("📊 [GA4] Entering getPerformanceDetails ({} days)", days);
         List<FailureStat> failureStats = new ArrayList<>();
-        PerformanceStat performance = new PerformanceResponse.PerformanceStat(0.0, 0.0, 0.0, 0.0, 0.0);
+        PerformanceStat performance = new PerformanceResponse.PerformanceStat(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
         // 1. Failure Analysis (By error_type)
         try {
@@ -845,6 +868,18 @@ public class GoogleAnalyticsService {
                 Row row = perfResp.getRowsList().get(0);
                 log.info("   [GA4 Performance] Success fetching Wait, Cost, Bricks, Tokens.");
                 performance = calculatePerformanceStat(row, perfResp.getMetricHeadersList(), 0, 1, 2, 3, 4);
+
+                // [NEW] Inject Today's Performance Data from DB
+                TodayMetrics today = calculateTodayMetrics();
+                performance = new PerformanceResponse.PerformanceStat(
+                        performance.avgWaitTime(),
+                        performance.avgCost(),
+                        performance.totalCost(),
+                        performance.avgBrickCount(),
+                        performance.tokenCount(),
+                        today.avgCost(),
+                        today.avgToken(),
+                        today.avgWaitTime());
             }
         } catch (Exception e) {
             log.warn("   [GA4 Performance] FAILED fetching all metrics together. Retrying with safe ones... Error: {}",
@@ -902,30 +937,31 @@ public class GoogleAnalyticsService {
                     : 0;
 
             if (count > 0) {
-                // [FIX] Auto-Scale if the metric is in Micros (GA4 standard for Currency)
+                // [FIX] Custom Metrics (like est_cost) may return raw values or Micros.
+                // Reverting 1/1M scaling to show raw values as per user request (Total 1-month
+                // time).
                 double totalCostDollars = cost;
-                if (costIdx >= 0 && costIdx < headers.size()) {
-                    com.google.analytics.data.v1beta.MetricType type = headers.get(costIdx).getType();
-                    if (type == com.google.analytics.data.v1beta.MetricType.TYPE_CURRENCY) {
-                        log.info("� [GA4 Performance] cost is Currency. Scaling by 1/1,000,000.");
-                        totalCostDollars = cost / 1_000_000.0;
-                    }
-                }
+                log.info("💰 [GA4 Performance] Raw cost value from GA: " + cost);
 
                 log.info("📈 [GA4 Performance Calc] Count: {}, SumCost: ${}, AvgToken: {}",
                         count, totalCostDollars, tokens / count);
+
+                TodayMetrics today = calculateTodayMetrics();
 
                 return new PerformanceResponse.PerformanceStat(
                         wait / count,
                         totalCostDollars / count,
                         totalCostDollars,
                         bricks / count,
-                        tokens / count);
+                        tokens / count,
+                        today.avgCost(),
+                        today.avgToken(),
+                        today.avgWaitTime());
             }
         } catch (Exception e) {
             log.error("Error calculating performance stat: {}", e.getMessage());
         }
-        return new PerformanceResponse.PerformanceStat(0.0, 0.0, 0.0, 0.0, 0.0);
+        return new PerformanceResponse.PerformanceStat(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     }
 
     public Map<String, Object> getDiagnosticInfo(int days) {

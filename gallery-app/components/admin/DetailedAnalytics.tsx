@@ -90,19 +90,11 @@ export default function DetailedAnalytics() {
                                     <p className="text-2xl lg:text-3xl font-black text-blue-600 truncate">{Math.round(Number(performance?.performance?.avgWaitTime) || 0)}s</p>
                                 </div>
                                 <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center flex flex-col justify-center">
-                                    <p className="text-gray-500 font-bold mb-2 text-sm">💸 소모 비용 (Total / Avg)</p>
+                                    <p className="text-gray-500 font-bold mb-2 text-sm">💸 소모 비용 (Avg)</p>
                                     <div className="flex flex-col items-center">
                                         <p className="text-2xl lg:text-3xl font-black text-green-600 truncate">
-                                            ${(Number(performance?.performance?.totalCost) || 0).toFixed(4)}
+                                            ${(Number(performance?.performance?.avgCostToday) || 0).toFixed(4)}
                                         </p>
-                                        <div className="flex flex-col gap-0.5 mt-1">
-                                            <p className="text-[10px] text-gray-400 font-bold">
-                                                All-time Avg: ${(Number(performance?.performance?.avgCost) || 0).toFixed(5)}
-                                            </p>
-                                            <p className="text-[10px] text-blue-500 font-black bg-blue-50 px-2 py-0.5 rounded-full">
-                                                Today Avg: ${(Number(performance?.performance?.avgCostToday) || 0).toFixed(4)}
-                                            </p>
-                                        </div>
                                     </div>
                                 </div>
                                 <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center flex flex-col justify-center">
@@ -110,13 +102,10 @@ export default function DetailedAnalytics() {
                                     <p className="text-2xl lg:text-3xl font-black text-purple-600 truncate">{Math.round(Number(performance?.performance?.avgBrickCount) || 0)}</p>
                                 </div>
                                 <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center flex flex-col justify-center">
-                                    <p className="text-gray-500 font-bold mb-2 text-sm">🤖 토큰 소모</p>
+                                    <p className="text-gray-500 font-bold mb-2 text-sm">🤖 토큰 소모 (Avg)</p>
                                     <div className="flex flex-col items-center">
                                         <p className="text-2xl lg:text-3xl font-black text-red-500 truncate">
-                                            {Math.round(Number(performance?.performance?.tokenCount) || 0).toLocaleString()}
-                                        </p>
-                                        <p className="text-[10px] text-orange-500 font-black bg-orange-50 px-2 py-0.5 rounded-full mt-1">
-                                            Today Avg: {Math.round(Number(performance?.performance?.avgTokenToday) || 0).toLocaleString()}
+                                            {Math.round(Number(performance?.performance?.avgTokenToday) || 0).toLocaleString()}
                                         </p>
                                     </div>
                                 </div>
