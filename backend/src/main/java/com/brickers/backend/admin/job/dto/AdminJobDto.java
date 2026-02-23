@@ -34,7 +34,6 @@ public class AdminJobDto {
     private String correctedImageUrl;
     private String glbUrl;
     private String ldrUrl;
-    private String initialLdrUrl; // [New]
     private String blueprintPdfKey;
     private String instructionsPdfUrl;
     private String modelKey; // [Added for compatibility]
@@ -68,7 +67,6 @@ public class AdminJobDto {
                 // .modelKey(job.getModelKey()) // Deprecated
                 .modelKey(job.getLdrUrl()) // Map LDR URL to modelKey for compatibility
                 .ldrUrl(ldrUrl) // Keep the original ldrUrl field with fallback logic
-                .initialLdrUrl(job.getInitialLdrUrl()) // [New]
                 .blueprintPdfKey(job.getBlueprintPdfKey())
                 .instructionsPdfUrl(job.getInstructionsPdfUrl())
                 // .bomKey(job.getBomKey()) // Deprecated
