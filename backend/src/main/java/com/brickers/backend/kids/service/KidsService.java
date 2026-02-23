@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -406,7 +407,7 @@ public class KidsService {
                 try {
                     emitter.send(SseEmitter.event()
                             .name("agent-log")
-                            .data(logEntry, org.springframework.http.MediaType.TEXT_PLAIN));
+                            .data(logEntry, new org.springframework.http.MediaType("text", "plain", StandardCharsets.UTF_8)));
                 } catch (IOException e) {
                     dead.add(emitter);
                 }
@@ -433,7 +434,7 @@ public class KidsService {
                     try {
                         emitter.send(SseEmitter.event()
                                 .name("agent-log")
-                                .data(logEntry, org.springframework.http.MediaType.TEXT_PLAIN));
+                                .data(logEntry, new org.springframework.http.MediaType("text", "plain", StandardCharsets.UTF_8)));
                     } catch (IOException e) {
                         break;
                     }
