@@ -1048,7 +1048,7 @@ function KidsStepPageContent() {
                     setShareModalOpen(false);
                 }}
                 backgroundUrl={shareBackgroundUrl}
-                ldrUrl={ldrUrl}
+                ldrUrl={sortedBlobUrl || ldrUrl}
                 loading={!shareBackgroundUrl || !ldrUrl}
             />
 
