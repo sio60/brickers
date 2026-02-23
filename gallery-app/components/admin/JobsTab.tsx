@@ -14,6 +14,7 @@ export interface AdminJob {
     stage: string;
     sourceImageUrl?: string;
     previewImageUrl?: string;
+    initialLdrUrl?: string;
     ldrUrl?: string;
     createdAt: string;
     updatedAt: string;

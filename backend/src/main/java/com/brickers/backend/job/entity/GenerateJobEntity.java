@@ -83,6 +83,9 @@ public class GenerateJobEntity {
     /** LDR 파일 URL (레고 조립 설명서) */
     private String ldrUrl;
 
+    /** 초기 생성된 LDR 파일 URL (에이전트 수정 전) */
+    private String initialLdrUrl; // [New]
+
     /** 모델 산출물 key (예: model.glb / model.ldr) - 레거시 호환용 */
     @Deprecated
     private String modelKey;
