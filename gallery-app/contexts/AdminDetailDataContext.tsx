@@ -10,7 +10,15 @@ interface TagStat { tag: string; count: number; }
 interface HeavyUser { userId: string; eventCount: number; }
 interface PerformanceData {
     failureStats: { reason: string; count: number; }[];
-    performance: { avgWaitTime: number; avgCost: number; totalCost: number; avgBrickCount: number; tokenCount: number; };
+    performance: {
+        avgWaitTime: number;
+        avgCost: number;
+        totalCost: number;
+        avgBrickCount: number;
+        tokenCount: number;
+        avgCostToday?: number;
+        avgTokenToday?: number;
+    };
 }
 interface DeepInsightData {
     categoryStats: { category: string; successCount: number; failCount: number; }[];
@@ -24,7 +32,10 @@ export interface ProductIntelligenceResponse {
         avgBrickCount: number;
         avgLatency: number;
         avgWaitTime: number;
+        avgCost: number;
         totalCost: number;
+        avgCostToday: number;
+        avgTokenToday: number;
     };
     exits: Array<{ step: string; count: number }>;
 }
