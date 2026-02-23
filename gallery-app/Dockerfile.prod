@@ -66,10 +66,10 @@ RUN apk add --no-cache nodejs
 RUN apk add --no-cache supervisor
 
 # Nginx 설정 복사 (envsubst 템플릿)
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf.template
+COPY gallery-app/nginx.conf /etc/nginx/conf.d/default.conf.template
 
 # entrypoint 복사 (envsubst + supervisord 실행)
-COPY frontend/entrypoint.sh /entrypoint.sh
+COPY gallery-app/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Next.js 앱 복사
@@ -78,7 +78,7 @@ COPY --from=runner /app ./
 
 # supervisord 설정
 RUN mkdir -p /etc/supervisor.d /var/log/supervisor
-COPY frontend/supervisord.conf /etc/supervisor.d/supervisord.ini
+COPY gallery-app/supervisord.conf /etc/supervisor.d/supervisord.ini
 
 # 환경변수
 ENV NODE_ENV=production
