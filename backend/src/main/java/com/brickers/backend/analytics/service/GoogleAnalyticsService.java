@@ -576,9 +576,7 @@ public class GoogleAnalyticsService {
 
                 if (count > 0) {
                     double totalCost = cost;
-                    // If total sum is large, scale it to dollars first
-                    if (totalCost > 100.0)
-                        totalCost = totalCost / 1_000_000.0;
+                    // Note: Costs are in USD. Scaling removed.
 
                     quality = new ProductIntelligenceResponse.EngineQuality(
                             stability / count,
@@ -841,14 +839,9 @@ public class GoogleAnalyticsService {
                     : 0;
 
             if (count > 0) {
-                // Scaling: If total cost is high (e.g. > 1.0) and tokens exist, check if it's
-                // Micros
+                // Scaling: We are now sending values in USD directly.
+                // Legacy condition (>100.0 / 1M) removed to ensure precision.
                 double totalCostDollars = cost;
-                // If sum is very large (e.g. > 100), assume Micros.
-                // $100 is a safe threshold for total cost of many generations in small period.
-                if (totalCostDollars > 100.0) {
-                    totalCostDollars = totalCostDollars / 1_000_000.0;
-                }
 
                 // [DEBUG LOG] Print all indices and values
                 for (int i = 0; i < metricCount; i++) {
