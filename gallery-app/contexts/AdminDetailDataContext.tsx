@@ -10,7 +10,7 @@ interface TagStat { tag: string; count: number; }
 interface HeavyUser { userId: string; eventCount: number; }
 interface PerformanceData {
     failureStats: { reason: string; count: number; }[];
-    performance: { avgWaitTime: number; avgCost: number; avgBrickCount: number; tokenCount: number; };
+    performance: { avgWaitTime: number; avgCost: number; totalCost: number; avgBrickCount: number; tokenCount: number; };
 }
 interface DeepInsightData {
     categoryStats: { category: string; successCount: number; failCount: number; }[];

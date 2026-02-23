@@ -13,6 +13,7 @@ public record PerformanceResponse(
         public record PerformanceStat(
                         double avgWaitTime,
                         double avgCost,
+                        double totalCost,
                         double avgBrickCount,
                         double tokenCount) {
         }

@@ -90,8 +90,15 @@ export default function DetailedAnalytics() {
                                     <p className="text-2xl lg:text-3xl font-black text-blue-600 truncate">{Math.round(Number(performance?.performance?.avgWaitTime) || 0)}s</p>
                                 </div>
                                 <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center flex flex-col justify-center">
-                                    <p className="text-gray-500 font-bold mb-2 text-sm">💸 소모 비용</p>
-                                    <p className="text-2xl lg:text-3xl font-black text-green-600 truncate">${(Number(performance?.performance?.avgCost) || 0).toFixed(3)}</p>
+                                    <p className="text-gray-500 font-bold mb-2 text-sm">💸 소모 비용 (Total / Avg)</p>
+                                    <div className="flex flex-col items-center">
+                                        <p className="text-2xl lg:text-3xl font-black text-green-600 truncate">
+                                            ${(Number(performance?.performance?.totalCost) || 0).toFixed(4)}
+                                        </p>
+                                        <p className="text-xs text-gray-400 font-bold">
+                                            Avg: ${(Number(performance?.performance?.avgCost) || 0).toFixed(5)}
+                                        </p>
+                                    </div>
                                 </div>
                                 <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center flex flex-col justify-center">
                                     <p className="text-gray-500 font-bold mb-2 text-sm">🧱 사용 브릭</p>
