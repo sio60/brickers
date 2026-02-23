@@ -612,6 +612,11 @@ public class GoogleAnalyticsService {
                                 .addDateRanges(DateRange.newBuilder().setStartDate("today").setEndDate("today"))
                                 .build());
 
+                        // Log todayResp size for debugging
+                        log.info("📅 [GA4 Today Query] Rows: {}, Headers Type: {}", todayResp.getRowsCount(),
+                                todayResp.getMetricHeadersCount() > 0 ? todayResp.getMetricHeaders(0).getType()
+                                        : "N/A");
+
                         if (todayResp.getRowsCount() > 0) {
                             Row tRow = todayResp.getRows(0);
                             double tCost = Double.parseDouble(tRow.getMetricValues(0).getValue());
@@ -839,7 +844,7 @@ public class GoogleAnalyticsService {
             if (!perfResp.getRowsList().isEmpty()) {
                 Row row = perfResp.getRowsList().get(0);
                 log.info("   [GA4 Performance] Success fetching Wait, Cost, Bricks, Tokens.");
-                performance = calculatePerformanceStat(row, 0, 1, 2, 3, 4);
+                performance = calculatePerformanceStat(row, perfResp.getMetricHeadersList(), 0, 1, 2, 3, 4);
             }
         } catch (Exception e) {
             log.warn("   [GA4 Performance] FAILED fetching all metrics together. Retrying with safe ones... Error: {}",
@@ -863,7 +868,7 @@ public class GoogleAnalyticsService {
                 RunReportResponse safeResp = analyticsDataClient.runReport(safeRequest);
                 if (!safeResp.getRowsList().isEmpty()) {
                     Row row = safeResp.getRowsList().get(0);
-                    performance = calculatePerformanceStat(row, 0, 1, 2, -1, 3);
+                    performance = calculatePerformanceStat(row, safeResp.getMetricHeadersList(), 0, 1, 2, -1, 3);
                     log.info("   [GA4 Performance] Safe metrics fetched successfully.");
                 }
             } catch (Exception ex2) {
@@ -875,7 +880,8 @@ public class GoogleAnalyticsService {
         return new PerformanceResponse(failureStats, performance);
     }
 
-    private PerformanceResponse.PerformanceStat calculatePerformanceStat(Row row, int waitIdx, int costIdx,
+    private PerformanceResponse.PerformanceStat calculatePerformanceStat(Row row,
+            List<com.google.analytics.data.v1beta.MetricHeader> headers, int waitIdx, int costIdx,
             int brickIdx, int tokenIdx, int countIdx) {
         try {
             int metricCount = row.getMetricValuesList().size();
@@ -896,20 +902,23 @@ public class GoogleAnalyticsService {
                     : 0;
 
             if (count > 0) {
-                // Scaling: We are now sending values in USD directly.
-                // Legacy condition (>100.0 / 1M) removed to ensure precision.
+                // [FIX] Auto-Scale if the metric is in Micros (GA4 standard for Currency)
                 double totalCostDollars = cost;
-
-                // [DEBUG LOG] Print all indices and values
-                for (int i = 0; i < metricCount; i++) {
-                    log.info("🔍 [GA4 RAW] Index {}: {} = {}", i, row.getMetricValues(i).getValue(),
-                            (i < 5) ? (new String[] { "wait", "cost", "bricks", "tokens", "count" })[i] : "unknown");
+                if (costIdx >= 0 && costIdx < headers.size()) {
+                    com.google.analytics.data.v1beta.MetricType type = headers.get(costIdx).getType();
+                    if (type == com.google.analytics.data.v1beta.MetricType.TYPE_CURRENCY) {
+                        log.info("� [GA4 Performance] cost is Currency. Scaling by 1/1,000,000.");
+                        totalCostDollars = cost / 1_000_000.0;
+                    }
                 }
 
-                log.info("📈 [GA4 Performance Calc] Count: {}, SumCost: {}, SumTokens: {}, AvgWait: {}",
-                        count, totalCostDollars, tokens, wait / count);
+                log.info("📈 [GA4 Performance Calc] Count: {}, SumCost: ${}, AvgToken: {}",
+                        count, totalCostDollars, tokens / count);
 
-                return new PerformanceResponse.PerformanceStat(wait / count, totalCostDollars / count, totalCostDollars,
+                return new PerformanceResponse.PerformanceStat(
+                        wait / count,
+                        totalCostDollars / count,
+                        totalCostDollars,
                         bricks / count,
                         tokens / count);
             }
@@ -933,6 +942,7 @@ public class GoogleAnalyticsService {
                 Row row = resp.getRows(0);
                 result.put("raw_cost_sum", row.getMetricValues(0).getValue());
                 result.put("event_count", row.getMetricValues(1).getValue());
+                result.put("cost_metric_type", resp.getMetricHeaders(0).getType().toString());
             }
         } catch (Exception e) {
             result.put("error", e.getMessage());
