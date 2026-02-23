@@ -23,7 +23,6 @@ public class GalleryReactionService {
     private final GalleryReactionRepository reactionRepository;
     private final GalleryPostRepository postRepository;
     private final CurrentUserService currentUserService;
-
     private final MongoTemplate mongoTemplate;
 
     /** 좋아요/싫어요 토글(전환 포함) + post 카운트 갱신 */
@@ -123,5 +122,4 @@ public class GalleryReactionService {
                 update,
                 GalleryPostEntity.class);
     }
-
 }

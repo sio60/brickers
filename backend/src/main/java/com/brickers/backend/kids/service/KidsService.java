@@ -35,7 +35,7 @@ public class KidsService {
     private final GenerateJobRepository generateJobRepository;
     private final StorageService storageService;
     private final KidsAsyncWorker kidsAsyncWorker;
-    private final com.brickers.backend.kids.client.AiRenderClient aiRenderClient; // [NEW]
+    private final AiRenderClient aiRenderClient; // [NEW]
     private final UserRepository userRepository;
     private final SqsProducerService sqsProducerService;
     private final com.brickers.backend.kids.repository.AgentTraceRepository agentTraceRepository; // [NEW]

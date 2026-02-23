@@ -27,20 +27,11 @@ public class GalleryCommentService {
         // 1. Fetch all comments for the post
         java.util.List<GalleryCommentEntity> allComments = commentRepository.findByPostIdAndDeletedFalse(postId);
 
-        // DEBUG: Log all comments
-        System.out.println("[DEBUG] postId: " + postId + ", Total comments fetched: " + allComments.size());
-        for (GalleryCommentEntity c : allComments) {
-            System.out.println("[DEBUG] Comment id=" + c.getId() + ", parentId=" + c.getParentId() + ", content="
-                    + c.getContent());
-        }
-
         // 2. Filter root comments (parentId is null or empty)
         java.util.List<GalleryCommentEntity> rootComments = allComments.stream()
                 .filter(c -> c.getParentId() == null || c.getParentId().isBlank())
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .collect(java.util.stream.Collectors.toList());
-
-        System.out.println("[DEBUG] Root comments count: " + rootComments.size());
 
         // 3. Pagination in memory
         int start = Math.min(page * size, rootComments.size());
@@ -65,9 +56,6 @@ public class GalleryCommentService {
                 .sorted((a, b) -> a.getCreatedAt().compareTo(b.getCreatedAt()))
                 .map(child -> toResponseWithChildren(child, allComments)) // Recursive call for nested replies
                 .collect(java.util.stream.Collectors.toList());
-
-        // DEBUG: Log children count for each comment
-        System.out.println("[DEBUG] Comment id=" + root.getId() + " has " + children.size() + " children");
 
         response.setChildren(children);
         return response;

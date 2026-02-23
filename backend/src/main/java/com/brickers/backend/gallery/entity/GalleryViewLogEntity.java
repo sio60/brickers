@@ -29,7 +29,6 @@ public class GalleryViewLogEntity {
     private String viewerKey;
 
     /**
-     * ]
      * ✅ TTL 기준 시간 (24h 후 자동 삭제)
      */
     @Indexed(name = "ttl_createdAt", expireAfterSeconds = 60 * 60 * 24)
