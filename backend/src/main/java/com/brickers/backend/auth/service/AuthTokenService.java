@@ -5,10 +5,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
-import com.brickers.backend.auth.jwt.JwtProvider;
-import com.brickers.backend.auth.refresh.RefreshToken;
-import com.brickers.backend.auth.refresh.RefreshTokenRepository;
-import com.brickers.backend.auth.refresh.TokenHash;
+import com.brickers.backend.auth.entity.RefreshToken;
+import com.brickers.backend.auth.repository.RefreshTokenRepository;
+import com.brickers.backend.auth.entity.TokenHash;
 
 import java.time.Instant;
 import java.util.Map;

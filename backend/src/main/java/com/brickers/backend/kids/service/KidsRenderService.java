@@ -1,7 +1,7 @@
 package com.brickers.backend.kids.service;
 
 import com.brickers.backend.job.repository.GenerateJobRepository;
-import com.brickers.backend.kids.client.AiRenderClient;
+import com.brickers.backend.kids.service.AiRenderClient;
 import com.brickers.backend.kids.dto.KidsPdfRequest;
 import com.brickers.backend.kids.dto.KidsPdfResponse;
 

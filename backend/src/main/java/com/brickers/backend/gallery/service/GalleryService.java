@@ -360,7 +360,8 @@ public class GalleryService {
                 .imageCategory(post.getImageCategory()) // [NEW]
                 .backgroundUrl(post.getBackgroundUrl()) // [NEW]
                 .screenshotUrls(post.getScreenshotUrls())
-                .isPro(post.getLevel() == KidsLevel.PRO || (post.getParts() != null && post.getParts() >= PRO_MIN_PARTS))
+                .isPro(post.getLevel() == KidsLevel.PRO
+                        || (post.getParts() != null && post.getParts() >= PRO_MIN_PARTS))
                 .visibility(post.getVisibility())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())

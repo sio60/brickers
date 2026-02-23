@@ -1,7 +1,7 @@
 package com.brickers.backend.user.controller;
 
 import com.brickers.backend.payment.dto.GooglePayVerifyRequest;
-import com.brickers.backend.user.MySettingsResponse;
+import com.brickers.backend.user.dto.MySettingsResponse;
 import com.brickers.backend.user.dto.*;
 
 import com.brickers.backend.user.service.MyService;

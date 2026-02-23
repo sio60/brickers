@@ -112,6 +112,5 @@ public class GalleryBookmarkService {
 
         // ✅ 필터링으로 items 개수가 줄 수 있으니 total을 items.size로 맞추는게 UI에 더 직관적
         return new PageImpl<>(items, pageable, bookmarks.getTotalElements());
-        // (원래대로 하고 싶으면 bookmarks.getTotalElements()로 돌리면 됨)
     }
 }

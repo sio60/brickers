@@ -1,8 +1,8 @@
 package com.brickers.backend.config;
 
-import com.brickers.backend.auth.jwt.JwtAuthFilter;
-import com.brickers.backend.auth.oauth.OAuth2LoginSuccessHandler;
-import com.brickers.backend.security.CustomOAuth2UserService;
+import com.brickers.backend.auth.filter.JwtAuthFilter;
+import com.brickers.backend.auth.handler.OAuth2LoginSuccessHandler;
+import com.brickers.backend.auth.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
