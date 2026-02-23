@@ -2,10 +2,10 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import GalleryDetailActions from '@/components/GalleryDetailActions';
+import GalleryDetailActions from '@/components/gallery/GalleryDetailActions';
 
-import GalleryDetailClient from '@/components/GalleryDetailClient';
-import BackgroundBricks from '@/components/BackgroundBricks';
+import GalleryDetailClient from '@/components/gallery/GalleryDetailClient';
+import BackgroundBricks from '@/components/layout/BackgroundBricks';
 
 type Props = {
     params: Promise<{ slug: string }>

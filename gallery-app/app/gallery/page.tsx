@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
-import GalleryClient from '@/components/GalleryClient';
+import GalleryClient from '@/components/gallery/GalleryClient';
 import { GalleryItem, PageResponse } from '@/types/gallery';
-import BackgroundBricks from '@/components/BackgroundBricks';
+import BackgroundBricks from '@/components/layout/BackgroundBricks';
 
 // Metadata for the gallery home page
 export const metadata: Metadata = {

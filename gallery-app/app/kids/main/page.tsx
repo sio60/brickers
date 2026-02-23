@@ -15,6 +15,7 @@ import { useBrickGeneration } from "@/hooks/useBrickGeneration";
 import { GenerationLoadingView } from "./components/GenerationLoadingView";
 import { GenerationResultView } from "./components/GenerationResultView";
 import ShareModal from "@/components/kids/ShareModal";
+import styles from "./KidsPage.module.css";
 
 // SSR 제외
 const Background3D = dynamic(() => import("@/components/three/Background3D"), { ssr: false });
@@ -134,10 +135,10 @@ function KidsPageContent() {
         }
     };
 
-    if (!isFileLoaded) return <div className="page">Loading...</div>;
+    if (!isFileLoaded) return <div className={styles.page}>Loading...</div>;
 
     return (
-        <div className="page">
+        <div className={styles.page}>
             <ShareModal
                 isOpen={shareModalOpen}
                 onClose={() => setShareModalOpen(false)}
@@ -148,7 +149,7 @@ function KidsPageContent() {
 
             <Background3D entryDirection="float" />
 
-            <div className="center">
+            <div className={styles.center}>
                 {generation.status === "loading" && (
                     <GenerationLoadingView
                         percent={generation.progressPercent}
@@ -171,7 +172,7 @@ function KidsPageContent() {
                 )}
 
                 {generation.status === "error" && (
-                    <div className="error">
+                    <div className={styles.error}>
                         <div style={{ fontWeight: "bold", marginBottom: "8px" }}>{t.kids.generate.failed}</div>
                         {t.kids.generate.error}
                         <br />
@@ -181,29 +182,29 @@ function KidsPageContent() {
 
                 {/* 색상 변경 모달 (Modularize later if needed) */}
                 {isColorModalOpen && (
-                    <div className="colorModalOverlay" onClick={() => setIsColorModalOpen(false)}>
-                        <div className="colorModal" onClick={(e) => e.stopPropagation()}>
-                            <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)} aria-label="close">✕</button>
-                            <h3 className="colorModal__title">{t.kids.steps?.colorThemeTitle || "색상 테마 선택"}</h3>
-                            <div className="colorModal__themes">
+                    <div className={styles.colorModalOverlay} onClick={() => setIsColorModalOpen(false)}>
+                        <div className={styles.colorModal} onClick={(e) => e.stopPropagation()}>
+                            <button className={styles.modalCloseBtn} onClick={() => setIsColorModalOpen(false)} aria-label="close">✕</button>
+                            <h3 className={styles.colorModal__title}>{t.kids.steps?.colorThemeTitle || "색상 테마 선택"}</h3>
+                            <div className={styles.colorModal__themes}>
                                 {colorThemes.length === 0 ? (
-                                    <div className="colorModal__loading">{t.common?.loading || "테마 로딩 중..."}</div>
+                                    <div className={styles.colorModal__loading}>{t.common?.loading || "테마 로딩 중..."}</div>
                                 ) : (
                                     colorThemes.map((theme) => (
                                         <button
                                             key={theme.name}
-                                            className={`colorModal__themeBtn ${selectedTheme === theme.name ? "colorModal__themeBtn--selected" : ""}`}
+                                            className={`${styles.colorModal__themeBtn} ${selectedTheme === theme.name ? styles['colorModal__themeBtn--selected'] : ""}`}
                                             onClick={() => setSelectedTheme(theme.name)}
                                         >
-                                            <span className="colorModal__themeName">{theme.name}</span>
-                                            <span className="colorModal__themeDesc">{theme.description}</span>
+                                            <span className={styles.colorModal__themeName}>{theme.name}</span>
+                                            <span className={styles.colorModal__themeDesc}>{theme.description}</span>
                                         </button>
                                     ))
                                 )}
                             </div>
-                            <div className="colorModal__actions">
-                                <button className="colorModal__btn colorModal__btn--cancel" onClick={() => setIsColorModalOpen(false)}>{t.common.cancel}</button>
-                                <button className="colorModal__btn colorModal__btn--confirm" onClick={handleApplyColor} disabled={!selectedTheme || isApplyingColor}>
+                            <div className={styles.colorModal__actions}>
+                                <button className={`${styles.colorModal__btn} ${styles['colorModal__btn--cancel']}`} onClick={() => setIsColorModalOpen(false)}>{t.common.cancel}</button>
+                                <button className={`${styles.colorModal__btn} ${styles['colorModal__btn--confirm']}`} onClick={handleApplyColor} disabled={!selectedTheme || isApplyingColor}>
                                     {isApplyingColor ? (t.common?.applying || '...') : (t.common?.apply || '적용')}
                                 </button>
                             </div>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState, useMemo } from 'react';
-import styles from './KidsDrawingCanvas.module.css';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 function buildCursor(tool: 'brush' | 'eraser', size: number, color: string): string {
@@ -146,33 +145,36 @@ export default function KidsDrawingCanvas({ onCancel, onDone }: Props) {
     };
 
     return (
-        <div className={styles.container}>
-            <div className={styles.toolbar}>
-                <div className={styles.tools}>
+        <div className="flex flex-col h-full gap-4 bg-white">
+            <div className="flex flex-wrap items-center gap-4 p-3 bg-[#f1f3f5] rounded-xl">
+                <div className="flex gap-2">
                     <button
-                        className={`${styles.toolBtn} ${tool === 'brush' ? styles.active : ''}`}
+                        className={`px-4 py-2 rounded-lg border cursor-pointer font-bold text-sm ${tool === 'brush' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white border-[#dee2e6]'}`}
                         onClick={() => setTool('brush')}
                     >
                         🎨 {t.kids.modelSelect.drawTool.brush}
                     </button>
                     <button
-                        className={`${styles.toolBtn} ${tool === 'eraser' ? styles.active : ''}`}
+                        className={`px-4 py-2 rounded-lg border cursor-pointer font-bold text-sm ${tool === 'eraser' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white border-[#dee2e6]'}`}
                         onClick={() => setTool('eraser')}
                     >
                         🧽 {t.kids.modelSelect.drawTool.eraser}
                     </button>
-                    <button className={styles.clearBtn} onClick={handleClear}>
+                    <button
+                        className="px-4 py-2 rounded-lg border border-[#dee2e6] bg-white cursor-pointer font-bold text-sm"
+                        onClick={handleClear}
+                    >
                         🧹 {t.kids.modelSelect.drawTool.clear}
                     </button>
                 </div>
 
-                <div className={styles.divider} />
+                <div className="w-px h-6 bg-[#dee2e6]" />
 
-                <div className={styles.pallete}>
+                <div className="flex gap-1.5 flex-wrap">
                     {COLORS.map(c => (
                         <button
                             key={c}
-                            className={`${styles.colorBtn} ${color === c && tool === 'brush' ? styles.colorActive : ''}`}
+                            className={`w-6 h-6 rounded-full border-2 border-white cursor-pointer p-0 ${color === c && tool === 'brush' ? 'shadow-[0_0_0_2px_#3b82f6]' : 'shadow-[0_0_0_1px_#dee2e6]'}`}
                             style={{ backgroundColor: c }}
                             onClick={() => {
                                 setColor(c);
@@ -182,9 +184,9 @@ export default function KidsDrawingCanvas({ onCancel, onDone }: Props) {
                     ))}
                 </div>
 
-                <div className={styles.divider} />
+                <div className="w-px h-6 bg-[#dee2e6]" />
 
-                <div className={styles.sizeControl}>
+                <div className="flex items-center gap-2 text-sm font-bold">
                     <label>{t.kids.modelSelect.drawTool.size}</label>
                     <input
                         type="range"
@@ -192,11 +194,11 @@ export default function KidsDrawingCanvas({ onCancel, onDone }: Props) {
                         value={brushSize}
                         onChange={(e) => setBrushSize(parseInt(e.target.value))}
                     />
-                    <span className={styles.sizeValue}>{brushSize}px</span>
+                    <span className="min-w-[40px]">{brushSize}px</span>
                 </div>
             </div>
 
-            <div className={styles.canvasArea}>
+            <div className="flex-1 bg-[#dee2e6] rounded-xl overflow-hidden flex items-center justify-center">
                 <canvas
                     ref={canvasRef}
                     width={1200}
@@ -208,17 +210,20 @@ export default function KidsDrawingCanvas({ onCancel, onDone }: Props) {
                     onTouchStart={startDrawing}
                     onTouchMove={draw}
                     onTouchEnd={stopDrawing}
-                    className={styles.canvas}
+                    className="bg-white shadow-[0_4px_12px_rgba(0,0,0,0.1)] max-w-full max-h-full aspect-[4/3] touch-none border border-[#ddd] rounded-lg"
                     style={{ cursor: cursorStyle }}
                 />
             </div>
 
-            <div className={styles.footer} style={{ marginTop: '10px' }}>
-                <button className={styles.cancelBtn} onClick={onCancel}>
+            <div className="flex justify-end gap-3" style={{ marginTop: '10px' }}>
+                <button
+                    className="px-6 py-2.5 rounded-lg border border-[#dee2e6] bg-white cursor-pointer font-bold"
+                    onClick={onCancel}
+                >
                     {t.common.cancel}
                 </button>
                 <button
-                    className={styles.doneBtn}
+                    className="px-8 py-2.5 rounded-lg border-none bg-green-500 text-white cursor-pointer font-black text-base hover:bg-green-600"
                     onClick={handleDone}
                     style={{ backgroundColor: '#000000', color: '#ffffff', border: '1px solid #000' }}
                 >

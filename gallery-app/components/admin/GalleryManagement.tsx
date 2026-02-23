@@ -1,7 +1,7 @@
 import { useEffect, useState, ChangeEvent, KeyboardEvent } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import EditGalleryModal from "@/components/EditGalleryModal";
+import EditGalleryModal from "@/components/gallery/EditGalleryModal";
 import { updateGalleryPost } from "@/lib/api/galleryApi";
 import { GalleryList, type GalleryPost } from "./gallery/GalleryList";
 import { GalleryPagination } from "./gallery/GalleryPagination";

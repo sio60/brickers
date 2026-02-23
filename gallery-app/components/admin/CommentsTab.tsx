@@ -1,4 +1,5 @@
 import React from "react";
+import { useAdminComments } from "@/hooks/admin/useAdminComments";
 
 export interface Comment {
     id: string;
@@ -11,23 +12,16 @@ export interface Comment {
     updatedAt: string;
 }
 
-interface CommentsTabProps {
-    comments: Comment[];
-    fetchComments: () => void;
-    handleDeleteComment: (id: string) => void;
-    commentPage: number;
-    setCommentPage: React.Dispatch<React.SetStateAction<number>>;
-    commentTotalPages: number;
-}
+export default function CommentsTab() {
+    const {
+        comments,
+        commentPage,
+        setCommentPage,
+        commentTotalPages,
+        fetchComments,
+        handleDeleteComment,
+    } = useAdminComments();
 
-export default function CommentsTab({
-    comments,
-    fetchComments,
-    handleDeleteComment,
-    commentPage,
-    setCommentPage,
-    commentTotalPages
-}: CommentsTabProps) {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between mb-4">

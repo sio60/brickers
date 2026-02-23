@@ -6,33 +6,10 @@ import { useThree } from "@react-three/fiber";
 import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { CDN_BASE, createLDrawURLModifier } from "@/lib/ldrawUrlModifier";
+import { patchThreeNullChildren, removeNullChildren, disposeObject3D } from "@/lib/three/threeUtils";
 import { NORMAL_COLOR } from "./constants";
 
-/* Monkey-patch: null children 방지 */
-const _origAdd = THREE.Object3D.prototype.add;
-THREE.Object3D.prototype.add = function (...objects: THREE.Object3D[]) {
-    return _origAdd.apply(this, objects.filter(o => o != null));
-};
-
-function removeNullChildren(obj: THREE.Object3D) {
-    if (!obj) return;
-    if (obj.children) {
-        obj.children = obj.children.filter(c => c !== null && c !== undefined);
-        obj.children.forEach(c => removeNullChildren(c));
-    }
-}
-
-function disposeObject3D(root: THREE.Object3D) {
-    if (!root) return;
-    removeNullChildren(root);
-    root.traverse((obj: any) => {
-        if (!obj) return;
-        if (obj.geometry) obj.geometry.dispose?.();
-        const mat = obj.material;
-        if (Array.isArray(mat)) mat.forEach((m: any) => m?.dispose?.());
-        else mat?.dispose?.();
-    });
-}
+patchThreeNullChildren();
 
 interface JudgeLdrModelProps {
     ldrContent: string;
