@@ -28,7 +28,7 @@ export const MetricCard = ({ label, before, after, isScore = false }: MetricCard
                     </div>
                 </div>
                 <div className={`text-sm font-black ${colorClass}`}>
-                    {diff > 0 ? '+' : ''}{diff} {isImproved ? '▲' : '▼'}
+                    {diff > 0 ? '+' : ''}{diff} {diff > 0 ? '▲' : diff < 0 ? '▼' : ''}
                 </div>
             </div>
         </div>
