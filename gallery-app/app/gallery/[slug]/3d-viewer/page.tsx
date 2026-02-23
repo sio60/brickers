@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-const Viewer3D = dynamic(() => import('@/components/Viewer3D'), { ssr: false });
+const Viewer3D = dynamic(() => import('@/components/three/Viewer3D'), { ssr: false });
 
 function Viewer3DContent() {
     const searchParams = useSearchParams();

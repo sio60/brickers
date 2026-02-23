@@ -7,9 +7,8 @@ import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginModal from "@/components/common/LoginModal";
-import UpgradeModal from "@/components/UpgradeModal";
+import UpgradeModal from "@/components/common/UpgradeModal";
 import KidsDrawingCanvas from "./KidsDrawingCanvas";
-import styles from "./KidsModelSelectModal.module.css";
 import * as gtag from "@/lib/gtag";
 
 // SSR 제외
@@ -124,28 +123,28 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
 
     return (
         <>
-            <div className={styles.overlay} onClick={onClose}>
-                <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className="fixed inset-0 z-[2000] bg-black/55 flex items-center justify-center p-4" onClick={onClose}>
+                <div className="w-[min(900px,96vw)] rounded-[20px] bg-white/95 backdrop-blur-[10px] shadow-[0_24px_80px_rgba(0,0,0,0.35)] overflow-hidden" onClick={(e) => e.stopPropagation()}>
                     {step === 'select' ? (
                         <>
-                            <div className={styles.head}>
-                                <div className={styles.title}>{t.kids.modelSelect.title}</div>
-                                <div className={styles.sub}>{t.kids.modelSelect.sub}</div>
-                                <button className={styles.close} onClick={onClose} aria-label="close">
+                            <div className="relative px-5 pt-4 pb-2.5">
+                                <div className="text-2xl font-black text-[#111]">{t.kids.modelSelect.title}</div>
+                                <div className="mt-1 text-[13px] font-extrabold text-black/50">{t.kids.modelSelect.sub}</div>
+                                <button className="absolute right-4 top-4 w-11 h-11 border-none bg-transparent cursor-pointer text-2xl font-bold flex items-center justify-center transition-all duration-200 text-black hover:rotate-90 hover:scale-110" onClick={onClose} aria-label="close">
                                     ✕
                                 </button>
                             </div>
 
-                            <div className={styles.grid}>
+                            <div className="grid grid-cols-2 max-[600px]:grid-cols-1 gap-3 px-5 pb-4">
 
 
                                 {items.map((it) => (
                                     <div
                                         key={it.url}
-                                        className={`${styles.card} ${selectedUrl === it.url ? styles.isSelected : ""}`}
+                                        className={`rounded-2xl bg-white/95 shadow-[0_8px_24px_rgba(0,0,0,0.1)] overflow-hidden border-3 cursor-pointer transition-[border-color] duration-200 hover:border-black/15 ${selectedUrl === it.url ? "border-blue-500" : "border-transparent"}`}
                                         onClick={() => handleModelClick(it.url)}
                                     >
-                                        <div className={styles.cardViewer}>
+                                        <div className="h-[200px] max-[600px]:h-[150px] p-2 relative">
                                             {it.thumbnail ? (
                                                 <Image
                                                     src={it.thumbnail}
@@ -154,15 +153,15 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                                     style={{ objectFit: "contain" }}
                                                 />
                                             ) : (
-                                                <div className={styles.noPreview}>
+                                                <div className="flex items-center justify-center h-full text-[#999]">
                                                     {t.common.noPreview}
                                                 </div>
                                             )}
                                         </div>
 
-                                        <div className={styles.cardFooter}>
-                                            <div className={styles.cardLabel}>{it.title}</div>
-                                            <div className={styles.cardPick}>{t.kids.modelSelect.pick}</div>
+                                        <div className="flex items-center justify-between gap-2 px-3 pt-2 pb-3">
+                                            <div className="text-base font-black text-[#111]">{it.title}</div>
+                                            <div className={`text-[13px] font-bold py-1.5 px-3 rounded-full ${selectedUrl === it.url ? "bg-blue-500 text-white" : "text-[#666] bg-black/6"}`}>{t.kids.modelSelect.pick}</div>
                                         </div>
                                     </div>
                                 ))}
@@ -172,7 +171,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
 
                             {/* 이미지 업로드 영역 */}
                             <div
-                                className={`${styles.upload} ${dragOver ? styles.isDragOver : ""} ${file ? styles.hasFile : ""}`}
+                                className={`mx-5 mb-4 p-6 border-2 border-dashed rounded-2xl text-center cursor-pointer transition-[border-color,background] duration-200 hover:border-blue-500 hover:bg-blue-500/5 ${dragOver ? "border-blue-500 bg-blue-500/5" : "border-black/15"}`}
                                 onClick={handleUploadClick}
                                 onDragEnter={() => setDragOver(true)}
                                 onDragLeave={() => setDragOver(false)}
@@ -184,23 +183,23 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                     ref={inputRef}
                                     type="file"
                                     accept="image/png,image/jpeg,image/webp,image/avif"
-                                    className={styles.hiddenInput}
+                                    className="absolute w-0 h-0 p-0 overflow-hidden border-0"
                                     onChange={(e) => {
                                         const f = e.target.files?.[0];
                                         if (f) handleFile(f);
                                     }}
                                 />
                                 {previewUrl ? (
-                                    <div className={styles.uploadPreviewWrap}>
-                                        <Image src={previewUrl} alt="preview" width={120} height={120} className={styles.uploadPreview} />
-                                        <div className={styles.uploadFilename}>{file?.name}</div>
+                                    <div className="flex flex-col items-center gap-2">
+                                        <Image src={previewUrl} alt="preview" width={120} height={120} className="max-h-[120px] max-w-full object-contain rounded-lg" />
+                                        <div className="text-xs text-[#666]">{file?.name}</div>
                                     </div>
                                 ) : (
                                     <>
-                                        {items.length > 0 && <div className={styles.uploadTitle}>{t.kids.modelSelect.uploadTitle}</div>}
-                                        <div className={styles.uploadSub}>{t.kids.modelSelect.uploadSub}</div>
-                                        <div className={styles.uploadHint}>{t.kids.modelSelect.uploadHint}</div>
-                                        <div className={styles.uploadNotice} style={{ marginTop: '8px', fontSize: '13px', color: '#ff4444', fontWeight: 'bold' }}>
+                                        {items.length > 0 && <div className="text-base font-extrabold text-[#333]">{t.kids.modelSelect.uploadTitle}</div>}
+                                        <div className="mt-1 text-[13px] text-[#888]">{t.kids.modelSelect.uploadSub}</div>
+                                        <div className="mt-1.5 text-xs text-[#aaa]">{t.kids.modelSelect.uploadHint}</div>
+                                        <div style={{ marginTop: '8px', fontSize: '13px', color: '#ff4444', fontWeight: 'bold' }}>
                                             {t.kids.modelSelect?.freeUserNotice || '* Free users need to upgrade'}
                                         </div>
                                         {fileSizeError && (
@@ -279,9 +278,9 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                 </button>
                             </div>
 
-                            <div className={styles.actions} style={{ marginTop: '10px' }}>
+                            <div className="px-5 pb-5" style={{ marginTop: '10px' }}>
                                 <button
-                                    className={styles.confirmBtn}
+                                    className="w-full p-3.5 border-0 rounded-xl bg-[#111] text-white text-base font-black cursor-pointer transition-opacity duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                                     disabled={!canSubmit}
                                     onClick={handleConfirm}
                                 >
@@ -291,10 +290,10 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                         </>
                     ) : step === 'draw' ? (
                         <>
-                            <div className={styles.head}>
-                                <div className={styles.title}>{t.kids.modelSelect.drawTitle}</div>
-                                <div className={styles.sub}>{t.kids.modelSelect.drawSub}</div>
-                                <button className={styles.close} onClick={onClose} aria-label="close">
+                            <div className="relative px-5 pt-4 pb-2.5">
+                                <div className="text-2xl font-black text-[#111]">{t.kids.modelSelect.drawTitle}</div>
+                                <div className="mt-1 text-[13px] font-extrabold text-black/50">{t.kids.modelSelect.drawSub}</div>
+                                <button className="absolute right-4 top-4 w-11 h-11 border-none bg-transparent cursor-pointer text-2xl font-bold flex items-center justify-center transition-all duration-200 text-black hover:rotate-90 hover:scale-110" onClick={onClose} aria-label="close">
                                     ✕
                                 </button>
                             </div>
@@ -309,25 +308,25 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                         </>
                     ) : step === 'prompt' ? (
                         <>
-                            <div className={styles.head}>
-                                <div className={styles.title}>{t.kids.modelSelect.promptTitle}</div>
-                                <div className={styles.sub}>{t.kids.modelSelect.promptSub}</div>
-                                <button className={styles.close} onClick={onClose} aria-label="close">
+                            <div className="relative px-5 pt-4 pb-2.5">
+                                <div className="text-2xl font-black text-[#111]">{t.kids.modelSelect.promptTitle}</div>
+                                <div className="mt-1 text-[13px] font-extrabold text-black/50">{t.kids.modelSelect.promptSub}</div>
+                                <button className="absolute right-4 top-4 w-11 h-11 border-none bg-transparent cursor-pointer text-2xl font-bold flex items-center justify-center transition-all duration-200 text-black hover:rotate-90 hover:scale-110" onClick={onClose} aria-label="close">
                                     ✕
                                 </button>
                             </div>
-                            <div className={styles.promptInputArea}>
-                                <div className={styles.uploadTitle}>{t.kids.modelSelect.promptInputTitle}</div>
+                            <div className="p-6 flex flex-col gap-4">
+                                <div className="text-base font-extrabold text-[#333]">{t.kids.modelSelect.promptInputTitle}</div>
                                 <textarea
-                                    className={styles.promptInput}
+                                    className="w-full h-[120px] p-4 border-2 border-black/10 rounded-xl text-lg resize-none font-[inherit] transition-[border-color] duration-200 focus:outline-none focus:border-blue-500"
                                     placeholder={t.kids.modelSelect.promptInputPlaceholder}
                                     value={prompt}
                                     onChange={(e) => setPrompt(e.target.value)}
                                 />
-                                <div className={styles.uploadHint}>{t.kids.modelSelect.promptInputHint}</div>
-                                <div className={styles.actions}>
+                                <div className="mt-1.5 text-xs text-[#aaa]">{t.kids.modelSelect.promptInputHint}</div>
+                                <div className="px-5 pb-5">
                                     <button
-                                        className={styles.confirmBtn}
+                                        className="w-full p-3.5 border-0 rounded-xl bg-[#111] text-white text-base font-black cursor-pointer transition-opacity duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                                         disabled={!prompt.trim()}
                                         onClick={() => {
                                             gtag.trackUserFeedback({ action: 'search', search_term: prompt });
@@ -341,21 +340,21 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                         </>
                     ) : (
                         <>
-                            <div className={styles.head}>
-                                <div className={styles.title}>{t.kids.modelSelect.previewTitle}</div>
-                                <div className={styles.sub}>{t.kids.modelSelect.previewSub}</div>
-                                <button className={styles.close} onClick={onClose} aria-label="close">
+                            <div className="relative px-5 pt-4 pb-2.5">
+                                <div className="text-2xl font-black text-[#111]">{t.kids.modelSelect.previewTitle}</div>
+                                <div className="mt-1 text-[13px] font-extrabold text-black/50">{t.kids.modelSelect.previewSub}</div>
+                                <button className="absolute right-4 top-4 w-11 h-11 border-none bg-transparent cursor-pointer text-2xl font-bold flex items-center justify-center transition-all duration-200 text-black hover:rotate-90 hover:scale-110" onClick={onClose} aria-label="close">
                                     ✕
                                 </button>
                             </div>
 
-                            <div className={styles.previewViewer}>
+                            <div className="w-full h-[400px] max-[600px]:h-[300px] mx-5 max-w-[calc(100%-40px)] rounded-xl overflow-hidden bg-[#f8f9fa] relative">
                                 {selectedUrl && <KidsLdrPreview url={selectedUrl} />}
                             </div>
 
-                            <div className={styles.actions} style={{ marginTop: 16 }}>
+                            <div className="px-5 pb-5" style={{ marginTop: 16 }}>
                                 <button
-                                    className={styles.nextBtn}
+                                    className="w-full bg-black text-white py-3.5 px-8 rounded-full font-bold text-base cursor-pointer border-none"
                                     onClick={handleGoToSteps}
                                 >
                                     {t.kids.generate.next}

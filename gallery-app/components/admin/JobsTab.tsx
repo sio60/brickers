@@ -1,5 +1,6 @@
 import React from "react";
-import styles from "../../app/admin/AdminPage.module.css";
+import { useAdminJobs } from "@/hooks/admin/useAdminJobs";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export interface AdminJob {
     id: string;
@@ -24,46 +25,36 @@ export interface AdminJob {
 }
 
 interface JobsTabProps {
-    t: any;
-    jobs: AdminJob[];
-    userSearch: string;
-    setUserSearch: (search: string) => void;
-    filterStatus: string;
-    setFilterStatus: (status: string) => void;
-    reportedOnly: boolean;
-    setReportedOnly: (only: boolean) => void;
-    fetchJobs: () => void;
     setTraceJobId: (id: string | null) => void;
     setConclusionJobId: (id: string | null) => void;
     setTargetVerifyJobId: (id: string | null) => void;
     setActiveTab: (tab: "dashboard" | "users" | "jobs" | "gallery" | "inquiries" | "reports" | "refunds" | "comments" | "brick-judge") => void;
-    handleJobAction: (jobId: string, action: 'retry' | 'cancel') => void;
-    jobPage: number;
-    setJobPage: React.Dispatch<React.SetStateAction<number>>;
-    jobTotalPages: number;
 }
 
 export default function JobsTab({
-    t,
-    jobs,
-    userSearch,
-    setUserSearch,
-    filterStatus,
-    setFilterStatus,
-    reportedOnly,
-    setReportedOnly,
-    fetchJobs,
     setTraceJobId,
     setConclusionJobId,
     setTargetVerifyJobId,
     setActiveTab,
-    handleJobAction,
-    jobPage,
-    setJobPage,
-    jobTotalPages
 }: JobsTabProps) {
+    const { t } = useLanguage();
+    const {
+        jobs,
+        userSearch,
+        setUserSearch,
+        filterStatus,
+        setFilterStatus,
+        reportedOnly,
+        setReportedOnly,
+        fetchJobs,
+        handleJobAction,
+        jobPage,
+        setJobPage,
+        jobTotalPages,
+    } = useAdminJobs();
+
     return (
-        <div className={styles.list}>
+        <div className="flex flex-col border-t-2 border-black">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                 <h2 className="text-xl font-bold">{t.admin.jobs?.title || "All Jobs Management"}</h2>
                 <div className="flex flex-wrap gap-2">

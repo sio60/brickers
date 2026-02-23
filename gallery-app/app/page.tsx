@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import LandingPageClient from '@/components/LandingPageClient';
+import LandingPageClient from '@/components/gallery/LandingPageClient';
 import { GalleryItem } from '@/types/gallery';
 
 // Metadata for SEO

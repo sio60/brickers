@@ -59,45 +59,80 @@ export default function AgeSelectionModal({ isOpen, onClose, onSelect }: AgeSele
         onClose();
     };
 
+    const ageBtnBase =
+        "bg-white border-3 border-black rounded-[32px] p-6 w-[200px] h-[240px] cursor-pointer flex flex-col items-center justify-center gap-4 transition-all duration-200 hover:-translate-y-1 hover:bg-[#ffe135] hover:shadow-none hover:border-black active:bg-[#ffe135] active:text-black active:translate-y-0.5 active:shadow-none active:border-black max-sm:w-full max-sm:flex-row max-sm:px-6 max-sm:py-4 max-sm:h-auto";
+
+    const ageBtnActive =
+        "bg-[#ffe135]! text-black translate-y-0.5 shadow-none border-black";
+
     return (
         <>
             {isOpen && (
-                <div className={styles.overlay} onClick={onClose}>
-                    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-                        <button className={styles.closeBtn} onClick={onClose}>✕</button>
-                        <h1 className={styles.title}>{t.kids.title}</h1>
+                <div
+                    className={`fixed inset-0 bg-black/40 backdrop-blur-[8px] flex items-center justify-center z-[2000] ${styles.fadeIn}`}
+                    onClick={onClose}
+                >
+                    <div
+                        className="bg-white p-10 rounded-[40px] w-[90%] max-w-[950px] relative shadow-[0_20px_40px_rgba(0,0,0,0.2)] border-3 border-black text-center"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            className="absolute top-4 right-4 w-11 h-11 border-none bg-transparent cursor-pointer text-2xl font-bold flex items-center justify-center transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] text-black hover:rotate-90 hover:scale-110"
+                            onClick={onClose}
+                        >
+                            ✕
+                        </button>
+                        <h1 className="text-5xl font-black mb-10 text-black uppercase max-sm:text-[32px]">
+                            {t.kids.title}
+                        </h1>
 
-                        <div className={styles.buttons}>
+                        <div className="flex justify-center gap-[30px] max-sm:flex-col max-sm:items-center">
                             <button
-                                className={`${styles.ageBtn} ${selectedAge === "4-5" ? styles.active : ""}`}
+                                className={`${ageBtnBase} ${selectedAge === "4-5" ? ageBtnActive : ""}`}
                                 onClick={() => handleSelect("4-5")}
                             >
-                                <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "1")}</div>
-                                <div className={styles.brickCount}>100+ {t.kids.bricks}</div>
+                                <div className="text-[64px] font-black text-black">
+                                    {t.kids.level.replace("{lv}", "1")}
+                                </div>
+                                <div className="text-base font-bold text-[#666] -mt-2">
+                                    100+ {t.kids.bricks}
+                                </div>
                             </button>
 
                             <button
-                                className={`${styles.ageBtn} ${selectedAge === "6-7" ? styles.active : ""}`}
+                                className={`${ageBtnBase} ${selectedAge === "6-7" ? ageBtnActive : ""}`}
                                 onClick={() => handleSelect("6-7")}
                             >
-                                <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "2")}</div>
-                                <div className={styles.brickCount}>200+ {t.kids.bricks}</div>
+                                <div className="text-[64px] font-black text-black">
+                                    {t.kids.level.replace("{lv}", "2")}
+                                </div>
+                                <div className="text-base font-bold text-[#666] -mt-2">
+                                    200+ {t.kids.bricks}
+                                </div>
                             </button>
 
                             <button
-                                className={`${styles.ageBtn} ${selectedAge === "8-10" ? styles.active : ""}`}
+                                className={`${ageBtnBase} ${selectedAge === "8-10" ? ageBtnActive : ""}`}
                                 onClick={() => handleSelect("8-10")}
                             >
-                                <div className={styles.ageLabel}>{t.kids.level.replace("{lv}", "3")}</div>
-                                <div className={styles.brickCount}>300+ {t.kids.bricks}</div>
+                                <div className="text-[64px] font-black text-black">
+                                    {t.kids.level.replace("{lv}", "3")}
+                                </div>
+                                <div className="text-base font-bold text-[#666] -mt-2">
+                                    300+ {t.kids.bricks}
+                                </div>
                             </button>
 
                             <button
-                                className={`${styles.ageBtn} ${selectedAge === "PRO" ? styles.active : ""}`}
+                                className={`${ageBtnBase} ${selectedAge === "PRO" ? ageBtnActive : ""}`}
                                 onClick={() => handleSelect("PRO")}
                             >
-                                <div className={styles.ageLabel}>PRO</div>
-                                <div className={styles.brickCount}>1000+ {t.kids.bricks}</div>
+                                <div className="text-[64px] font-black text-black">
+                                    PRO
+                                </div>
+                                <div className="text-base font-bold text-[#666] -mt-2">
+                                    1000+ {t.kids.bricks}
+                                </div>
                             </button>
                         </div>
                     </div>

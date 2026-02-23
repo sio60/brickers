@@ -1,5 +1,6 @@
 import React, { ChangeEvent } from "react";
-import styles from "../../app/admin/AdminPage.module.css";
+import { useAdminUsers } from "@/hooks/admin/useAdminUsers";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export interface User {
     id: string;
@@ -15,30 +16,21 @@ export interface User {
     suspendedReason?: string;
 }
 
-interface UsersTabProps {
-    t: any;
-    users: User[];
-    searchTerm: string;
-    setSearchTerm: (term: string) => void;
-    fetchUsers: () => void;
-    handleUserSuspend: (userId: string) => void;
-    handleUserActivate: (userId: string) => void;
-    handleUserRoleChange: (userId: string, targetRole: 'USER' | 'ADMIN') => void;
-}
+export default function UsersTab() {
+    const { t } = useLanguage();
+    const {
+        users,
+        searchTerm,
+        setSearchTerm,
+        fetchUsers,
+        handleUserSuspend,
+        handleUserActivate,
+        handleUserRoleChange,
+    } = useAdminUsers();
 
-export default function UsersTab({
-    t,
-    users,
-    searchTerm,
-    setSearchTerm,
-    fetchUsers,
-    handleUserSuspend,
-    handleUserActivate,
-    handleUserRoleChange
-}: UsersTabProps) {
     return (
-        <div className={styles.list}>
-            <div className={styles.searchBar} style={{ marginBottom: "20px", display: "flex", gap: "10px" }}>
+        <div className="flex flex-col border-t-2 border-black">
+            <div className="mb-5 flex gap-2.5">
                 <input
                     type="text"
                     placeholder={t.admin.users?.searchPlaceholder || "Search by email or nickname..."}
@@ -71,31 +63,29 @@ export default function UsersTab({
                                 <div style={{ fontSize: "11px", color: "#999" }}>Joined: {new Date(user.createdAt).toLocaleDateString()}</div>
                             </td>
                             <td style={{ padding: "12px" }}>
-                                <span className={`${styles.statusBadge} ${user.membershipPlan === "PRO" ? styles.pro : styles.free}`}
-                                    style={{ background: user.membershipPlan === "PRO" ? "#e6f7ff" : "#f5f5f5", color: user.membershipPlan === "PRO" ? "#1890ff" : "#666", padding: "4px 8px", borderRadius: "4px", fontSize: "12px" }}>
+                                <span
+                                    className="px-2 py-1 rounded text-xs font-extrabold uppercase"
+                                    style={{ background: user.membershipPlan === "PRO" ? "#e6f7ff" : "#f5f5f5", color: user.membershipPlan === "PRO" ? "#1890ff" : "#666" }}>
                                     {user.membershipPlan}
                                 </span>
                             </td>
                             <td style={{ padding: "12px" }}>
                                 <span
-                                    className={styles.statusBadge}
+                                    className="px-2 py-1 rounded text-xs font-extrabold uppercase"
                                     style={{
                                         background: user.role === "ADMIN" ? "#f6ffed" : "#f0f5ff",
                                         color: user.role === "ADMIN" ? "#389e0d" : "#1d39c4",
-                                        padding: "4px 8px",
-                                        borderRadius: "4px",
-                                        fontSize: "12px"
                                     }}
                                 >
                                     {user.role || "USER"}
                                 </span>
                             </td>
                             <td style={{ padding: "12px" }}>
-                                <span className={`${styles.statusBadge}`}
+                                <span
+                                    className="px-2 py-1 rounded text-xs font-extrabold uppercase"
                                     style={{
                                         background: user.accountState === "ACTIVE" ? "#f6ffed" : user.accountState === "SUSPENDED" ? "#fff1f0" : "#fffbe6",
                                         color: user.accountState === "ACTIVE" ? "#52c41a" : user.accountState === "SUSPENDED" ? "#f5222d" : "#faad14",
-                                        padding: "4px 8px", borderRadius: "4px", fontSize: "12px"
                                     }}>
                                     {user.accountState}
                                     {user.suspendedReason && <div style={{ fontSize: "10px", marginTop: "2px" }}>({user.suspendedReason})</div>}
@@ -138,7 +128,7 @@ export default function UsersTab({
                     ))}
                 </tbody>
             </table>
-            {users.length === 0 && <p className={styles.emptyMsg} style={{ padding: "20px", textAlign: "center", color: "#999" }}>{t.admin.users?.empty || "No users found."}</p>}
+            {users.length === 0 && <p className="text-center text-[#999] py-5 text-sm">{t.admin.users?.empty || "No users found."}</p>}
         </div>
     );
 }

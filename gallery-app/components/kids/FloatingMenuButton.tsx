@@ -132,41 +132,41 @@ export default function FloatingMenuButton() {
             {/* 배경 오버레이 */}
             {isOpen && (
                 <div
-                    className={styles.overlay}
+                    className="fixed inset-0 z-[999] bg-transparent"
                     onClick={() => setIsOpen(false)}
                 />
             )}
 
-            <div className={styles.container}>
+            <div className="fixed bottom-6 right-6 z-[1000] flex flex-col items-end">
                 {showHint && (
-                    <div className={styles.hint}>
+                    <div className={`relative mb-2.5 bg-white border-2 border-black rounded-2xl py-2.5 pr-[38px] pl-4 text-[13px] font-bold text-black shadow-[0_6px_18px_rgba(0,0,0,0.15)] max-w-[320px] whitespace-nowrap ${styles.hint}`}>
                         <button
                             type="button"
-                            className={styles.hintClose}
+                            className="absolute top-1.5 right-1.5 w-[22px] h-[22px] rounded-full border-none bg-transparent text-xs font-[800] cursor-pointer leading-none transition-transform duration-200 ease-in-out hover:rotate-90"
                             onClick={() => setShowHint(false)}
                             aria-label="close"
                         >
                             ✕
                         </button>
-                        <span className={styles.hintText}>{t.floatingMenu?.hint || ''}</span>
+                        <span className="block leading-[1.3]">{t.floatingMenu?.hint || ''}</span>
                     </div>
                 )}
                 {/* 메뉴 모달 */}
-                <div className={`${styles.modal} ${isOpen ? styles.isOpen : ""}`}>
+                <div className={`absolute bottom-[72px] right-0 bg-white rounded-2xl border-2 border-black shadow-[0_8px_32px_rgba(0,0,0,0.18)] py-2 px-0 min-w-[180px] transition-all duration-[250ms] [transition-timing-function:cubic-bezier(0.4,0,0.2,1)] ${isOpen ? "opacity-100 visible translate-y-0 scale-100 pointer-events-auto" : "opacity-0 invisible translate-y-5 scale-95 pointer-events-none"}`}>
                     {menuItems.map((item) => (
                         <button
                             key={item.id}
-                            className={styles.item}
+                            className="flex items-center gap-3 w-full py-3.5 px-5 border-none bg-transparent cursor-pointer text-[15px] font-semibold text-[#333] transition-[background] duration-150 text-left hover:bg-transparent"
                             onClick={() => handleMenuClick(item.id)}
                         >
-                            <span className={styles.itemLabel}>{item.label}</span>
+                            <span className="flex-1">{item.label}</span>
                         </button>
                     ))}
                 </div>
 
                 {/* 플로팅 버튼 */}
                 <button
-                    className={`${styles.btn} ${isOpen ? styles.isOpen : ""}`}
+                    className={`w-15 h-15 rounded-full border-2 border-black bg-white cursor-pointer flex items-center justify-center p-0 overflow-hidden transition-all duration-[250ms] [transition-timing-function:cubic-bezier(0.4,0,0.2,1)] shadow-[0_4px_16px_rgba(0,0,0,0.15)] hover:bg-[#ffe135] hover:scale-[1.08] hover:shadow-[0_6px_20px_rgba(0,0,0,0.2)] ${isOpen ? "bg-[#ffe135]! rotate-45" : ""}`}
                     onClick={handleMainBtnClick}
                     aria-label={t.floatingMenu.open}
                 >
@@ -175,7 +175,7 @@ export default function FloatingMenuButton() {
                         alt={t.floatingMenu.iconAlt}
                         width={36}
                         height={36}
-                        className={styles.btnIcon}
+                        className={`w-9 h-9 object-contain transition-transform duration-[250ms] ${isOpen ? "-rotate-45" : ""}`}
                     />
                 </button>
             </div>
