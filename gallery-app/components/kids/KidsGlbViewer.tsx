@@ -1,43 +1,13 @@
 'use client';
 
-import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls, useGLTF } from "@react-three/drei";
-import { Suspense, useEffect, useRef } from "react";
-import * as THREE from "three";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
+import { Suspense } from "react";
+import GlbModel from "@/components/three/GlbModel";
 
 type Props = {
     url: string;
 };
-
-// GLB 모델 중심 정렬 컴포넌트 (모델 전체 높이 중앙 기준)
-function GlbModel({ url }: { url: string }) {
-    const { scene } = useGLTF(url);
-    const { invalidate, camera, controls } = useThree();
-    const centered = useRef(false);
-
-    useEffect(() => {
-        if (!scene || centered.current) return;
-
-        const box = new THREE.Box3().setFromObject(scene);
-        const center = box.getCenter(new THREE.Vector3());
-        const size = box.getSize(new THREE.Vector3());
-        // 모델 중심을 원점에 배치 (바닥이 아닌 전체 중심)
-        scene.position.set(-center.x, -center.y, -center.z);
-
-        if (controls && (controls as any).target) {
-            (controls as any).target.set(0, 0, 0);
-            (controls as any).update();
-        }
-        const maxDim = Math.max(size.x, size.y, size.z);
-        camera.position.set(0, maxDim * 0.3, maxDim * 2.5);
-        camera.lookAt(0, 0, 0);
-
-        centered.current = true;
-        invalidate();
-    }, [scene, camera, controls, invalidate]);
-
-    return <primitive object={scene} />;
-}
 
 // Main Viewer Component
 export default function KidsGlbViewer({ url }: Props) {

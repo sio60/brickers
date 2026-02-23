@@ -11,12 +11,9 @@ import { LDrawLoader } from "three/addons/loaders/LDrawLoader.js";
 import { LDrawConditionalLineMaterial } from "three/addons/materials/LDrawConditionalLineMaterial.js";
 import { CDN_BASE, createLDrawURLModifier } from "@/lib/ldrawUrlModifier";
 import { preloadPartsBundle } from "@/lib/ldrawBundleLoader";
+import { patchThreeNullChildren, removeNullChildren, disposeObject3D } from "@/lib/three/threeUtils";
 
-/* ── Monkey-patch: null children을 원천 차단 ── */
-const _origAdd = THREE.Object3D.prototype.add;
-THREE.Object3D.prototype.add = function (...objects: THREE.Object3D[]) {
-    return _origAdd.apply(this, objects.filter(o => o != null));
-};
+patchThreeNullChildren();
 
 type Props = {
     url: string;
@@ -28,26 +25,6 @@ type Props = {
     autoRotate?: boolean;
     cameraDistanceMultiplier?: number;
 };
-
-function removeNullChildren(obj: THREE.Object3D) {
-    if (!obj) return;
-    if (obj.children) {
-        obj.children = obj.children.filter(c => c !== null && c !== undefined);
-        obj.children.forEach(c => removeNullChildren(c));
-    }
-}
-
-function disposeObject3D(root: THREE.Object3D) {
-    if (!root) return;
-    removeNullChildren(root);
-    root.traverse((obj: any) => {
-        if (!obj) return;
-        if (obj.geometry) obj.geometry.dispose?.();
-        const mat = obj.material;
-        if (Array.isArray(mat)) mat.forEach((m) => m?.dispose?.());
-        else mat?.dispose?.();
-    });
-}
 
 function LdrModel({
     url,

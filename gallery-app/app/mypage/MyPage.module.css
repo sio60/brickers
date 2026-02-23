@@ -168,6 +168,11 @@
     position: relative;
 }
 
+/* 섹션 래퍼 */
+.mypage__section {
+    animation: slideUp 0.4s ease;
+}
+
 /* 섹션 타이틀 */
 .mypage__sectionTitle {
     font-size: 24px;

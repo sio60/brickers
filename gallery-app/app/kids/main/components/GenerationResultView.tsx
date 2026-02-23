@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import * as gtag from '@/lib/gtag';
 import { KidsLdrPreviewHandle } from "@/components/kids/KidsLdrPreview";
+import styles from "../KidsPage.module.css";
 
 const KidsLdrPreview = dynamic(() => import("@/components/kids/KidsLdrPreview"), { ssr: false });
 
@@ -39,9 +40,9 @@ export const GenerationResultView: React.FC<Props> = ({
     }, [jobId, age]);
 
     return (
-        <div className="resultCard">
-            <div className="viewer-container">
-                <div className="viewer3d">
+        <div className={styles.resultCard}>
+            <div className={styles['viewer-container']}>
+                <div className={styles.viewer3d}>
                     <KidsLdrPreview
                         key={ldrUrl}
                         url={ldrUrl}
@@ -51,9 +52,9 @@ export const GenerationResultView: React.FC<Props> = ({
                 </div>
             </div>
 
-            <div className="actionBtns--horizontal">
+            <div className={styles['actionBtns--horizontal']}>
                 <button
-                    className="actionBtn actionBtn--share"
+                    className={`${styles.actionBtn} ${styles['actionBtn--share']}`}
                     onClick={() => {
                         gtag.trackFunnel("08_share", { job_id: jobId });
                         onShareClick();
@@ -63,7 +64,7 @@ export const GenerationResultView: React.FC<Props> = ({
                 </button>
 
                 <button
-                    className="actionBtn actionBtn--next"
+                    className={`${styles.actionBtn} ${styles['actionBtn--next']}`}
                     onClick={() => {
                         router.push(`/kids/steps?url=${encodeURIComponent(ldrUrl)}&jobId=${jobId ?? ""}&age=${age}${pdfUrl ? `&pdfUrl=${encodeURIComponent(pdfUrl)}` : ""}`);
                     }}
