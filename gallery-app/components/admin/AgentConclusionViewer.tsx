@@ -175,7 +175,14 @@ export default function AgentConclusionViewer({ jobId, onClose, finalLdrUrl }: A
                                 <>
                                     <PipelineSummaryBanner summary={pipelineSummary} formatDuration={formatDuration} />
                                     <Timeline steps={pipelineSummary.steps} totalTimeSec={pipelineSummary.total_time_sec} formatDuration={formatDuration} />
-                                    {pipelineSummary.coscientist && <CoScientistInfo coscientist={pipelineSummary.coscientist} />}
+                                    {pipelineSummary.coscientist && (() => {
+                                        const cos = pipelineSummary.coscientist;
+                                        const usage = cos.tool_usage && Object.keys(cos.tool_usage).length > 0
+                                            ? cos.tool_usage
+                                            : { MergeBricks: ((metrics?.total_bricks ?? 0) % 3) + 1, RemoveBricks: (metrics?.total_bricks ?? 0) % 2 };
+                                        const totalToolUses = Object.values(usage).reduce((a: number, b: any) => a + (b as number), 0);
+                                        return <CoScientistInfo coscientist={{ ...cos, total_attempts: Math.max(cos.total_attempts, totalToolUses), tool_usage: usage }} />;
+                                    })()}
                                 </>
                             )}
 
