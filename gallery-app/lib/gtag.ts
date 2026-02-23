@@ -8,9 +8,8 @@ export const pageview = (url: string) => {
     if (typeof window !== "undefined" && window.gtag) {
         window.gtag("config", GA_TRACKING_ID, {
             page_path: url,
-            debug_mode: true, // GA4 실시간 DebugView 확인을 위해 활성화
+            debug_mode: false,
         });
-        // console.info(`🚩 [GA4] Pageview sent to: ${url}`);
     }
 };
 
@@ -39,7 +38,7 @@ export const setUserId = (userId: string | null) => {
     if (typeof window !== "undefined" && window.gtag) {
         window.gtag("config", GA_TRACKING_ID, {
             user_id: userId,
-            debug_mode: true,
+            debug_mode: false,
         });
     }
 };

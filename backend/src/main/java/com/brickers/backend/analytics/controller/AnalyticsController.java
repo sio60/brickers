@@ -267,16 +267,4 @@ public class AnalyticsController {
         return ResponseEntity.ok(gaService.getPerformanceDetails(days));
     }
 
-    /**
-     * [DEBUG] GA4 Raw Data Verification
-     */
-    @GetMapping("/debug")
-    public ResponseEntity<Map<String, Object>> debugAnalytics(
-            @RequestHeader(name = "X-Internal-Token", required = false) String token,
-            @RequestParam(name = "days", defaultValue = "30") int days) {
-        if (!isAdminOrInternal(token)) {
-            return ResponseEntity.status(403).build();
-        }
-        return ResponseEntity.ok(gaService.getDebugInfo(days));
-    }
 }

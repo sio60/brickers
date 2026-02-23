@@ -261,10 +261,11 @@ public class GoogleAnalyticsService {
         if (analyticsDataClient == null)
             return new ArrayList<>();
 
+        // Try nickname first (more likely to be registered based on logs)
         try {
             RunReportRequest request = RunReportRequest.newBuilder()
                     .setProperty("properties/" + propertyId)
-                    .addDimensions(Dimension.newBuilder().setName("customUser:userId"))
+                    .addDimensions(Dimension.newBuilder().setName("customUser:nickname"))
                     .addMetrics(Metric.newBuilder().setName("eventCount"))
                     .addDateRanges(DateRange.newBuilder()
                             .setStartDate(days + "daysAgo")
@@ -275,21 +276,20 @@ public class GoogleAnalyticsService {
             RunReportResponse response = analyticsDataClient.runReport(request);
             List<HeavyUserResponse> result = new ArrayList<>();
             for (Row row : response.getRowsList()) {
-                String uid = row.getDimensionValues(0).getValue();
-                if (uid.isEmpty() || uid.equals("(not set)"))
+                String name = row.getDimensionValues(0).getValue();
+                if (name.isEmpty() || name.equals("(not set)"))
                     continue;
 
-                result.add(new HeavyUserResponse(uid, Long.parseLong(row.getMetricValues(0).getValue())));
+                result.add(new HeavyUserResponse(name, Long.parseLong(row.getMetricValues(0).getValue())));
             }
             return result;
         } catch (Exception e) {
-            log.warn("Failed to get heavy users with customUser:userId. Retrying with customUser:nickname. Error: {}",
+            log.warn("Failed to get heavy users with customUser:nickname. Retrying with customUser:userId. Error: {}",
                     e.getMessage());
             try {
                 RunReportRequest fallbackRequest = RunReportRequest.newBuilder()
                         .setProperty("properties/" + propertyId)
-                        // Fallback to nickname if userId fails
-                        .addDimensions(Dimension.newBuilder().setName("customUser:nickname"))
+                        .addDimensions(Dimension.newBuilder().setName("customUser:userId"))
                         .addMetrics(Metric.newBuilder().setName("eventCount"))
                         .addDateRanges(DateRange.newBuilder()
                                 .setStartDate(days + "daysAgo")
@@ -552,12 +552,12 @@ public class GoogleAnalyticsService {
                     .addMetrics(Metric.newBuilder().setName("customEvent:lmm_latency"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:wait_time"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
                     .setDimensionFilter(FilterExpression.newBuilder()
                             .setFilter(Filter.newBuilder()
                                     .setFieldName("eventName") // Only successful generations
                                     .setStringFilter(Filter.StringFilter.newBuilder().setValue("generate_success"))
-                                    .build())
-                            .build())
+                                    .build()))
                     .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
                     .build();
 
@@ -565,12 +565,27 @@ public class GoogleAnalyticsService {
 
             if (qResp.getRowsCount() > 0) {
                 Row row = qResp.getRows(0);
-                quality = new ProductIntelligenceResponse.EngineQuality(
-                        Double.parseDouble(row.getMetricValues(0).getValue()),
-                        Double.parseDouble(row.getMetricValues(1).getValue()),
-                        Double.parseDouble(row.getMetricValues(2).getValue()),
-                        Double.parseDouble(row.getMetricValues(3).getValue()),
-                        Double.parseDouble(row.getMetricValues(4).getValue()));
+                double stability = Double.parseDouble(row.getMetricValues(0).getValue());
+                double bricks = Double.parseDouble(row.getMetricValues(1).getValue());
+                double latency = Double.parseDouble(row.getMetricValues(2).getValue());
+                double wait = Double.parseDouble(row.getMetricValues(3).getValue());
+                double cost = Double.parseDouble(row.getMetricValues(4).getValue());
+                long count = Long.parseLong(row.getMetricValues(5).getValue());
+
+                log.info("📊 [GA4 Quality Metrics] Count: {}, RawCost: {}", count, cost);
+
+                if (count > 0) {
+                    double avgCost = cost / count;
+                    if (avgCost > 10.0)
+                        avgCost = avgCost / 1_000_000.0;
+
+                    quality = new ProductIntelligenceResponse.EngineQuality(
+                            stability / count,
+                            bricks / count,
+                            latency / count,
+                            wait / count,
+                            avgCost);
+                }
             }
         } catch (Exception e) {
             log.warn("Failed to fetch Engine Quality (likely unregistered metric): {}", e.getMessage());
@@ -619,56 +634,52 @@ public class GoogleAnalyticsService {
         if (analyticsDataClient == null)
             return null;
 
+        log.info("📊 [GA4] Entering getDeepInsights ({} days)", days);
         List<DeepInsightResponse.CategoryStat> categoryStats = new ArrayList<>();
-        // QualityStat is placeholder for now as correlation is complex
         List<DeepInsightResponse.QualityStat> qualityStats = new ArrayList<>();
 
-        try { // Added try block
-              // 1. Category Success Rate (Independent Try-Catch)
-            try {
-                RunReportRequest categoryRequest = RunReportRequest.newBuilder()
-                        .setProperty("properties/" + propertyId)
-                        .addDimensions(Dimension.newBuilder().setName("customEvent:image_category"))
-                        .addDimensions(Dimension.newBuilder().setName("eventName"))
-                        .addMetrics(Metric.newBuilder().setName("eventCount"))
-                        .setDimensionFilter(FilterExpression.newBuilder()
-                                .setFilter(Filter.newBuilder()
-                                        .setFieldName("eventName")
-                                        .setInListFilter(Filter.InListFilter.newBuilder()
-                                                .addValues("generate_success")
-                                                .addValues("generate_fail")
-                                                .build())
-                                        .build())
-                                .build())
-                        .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
-                        .build();
+        // 1. Category Success Rate
+        try {
+            RunReportRequest categoryRequest = RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addDimensions(Dimension.newBuilder().setName("customEvent:image_category"))
+                    .addDimensions(Dimension.newBuilder().setName("eventName"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .setDimensionFilter(FilterExpression.newBuilder()
+                            .setFilter(Filter.newBuilder()
+                                    .setFieldName("eventName")
+                                    .setInListFilter(Filter.InListFilter.newBuilder()
+                                            .addValues("generate_success")
+                                            .addValues("generate_fail")
+                                            .build())
+                                    .build())
+                            .build())
+                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                    .build();
 
-                RunReportResponse catResp = analyticsDataClient.runReport(categoryRequest);
-                Map<String, long[]> catMap = new HashMap<>(); // [success, fail]
+            RunReportResponse catResp = analyticsDataClient.runReport(categoryRequest);
+            log.info("   [GA4 Deep] Category query success. Rows: {}", catResp.getRowsCount());
+            Map<String, long[]> catMap = new HashMap<>();
 
-                for (Row row : catResp.getRowsList()) {
-                    String category = row.getDimensionValues(0).getValue();
-                    String eventName = row.getDimensionValues(1).getValue();
-                    long count = Long.parseLong(row.getMetricValues(0).getValue());
-
-                    catMap.putIfAbsent(category, new long[] { 0, 0 });
-                    if (eventName.equals("generate_success")) {
-                        catMap.get(category)[0] += count; // index 0: success
-                    } else {
-                        catMap.get(category)[1] += count; // index 1: fail
-                    }
+            for (Row row : catResp.getRowsList()) {
+                String category = row.getDimensionValues(0).getValue();
+                String eventName = row.getDimensionValues(1).getValue();
+                long count = Long.parseLong(row.getMetricValues(0).getValue());
+                catMap.putIfAbsent(category, new long[] { 0, 0 });
+                if (eventName.equals("generate_success")) {
+                    catMap.get(category)[0] += count;
+                } else {
+                    catMap.get(category)[1] += count;
                 }
-
-                catMap.forEach((k, v) -> {
-                    if (!k.isEmpty() && !k.equals("(not set)")) {
-                        categoryStats.add(new DeepInsightResponse.CategoryStat(k, v[0], v[1]));
-                    }
-                });
-            } catch (Exception e) {
-                log.warn("Failed to fetch Category Stats (likely unregistered dimension): {}", e.getMessage());
             }
-        } catch (Exception e) { // Corrected general catch block
-            log.error("Failed to fetch Deep Insights (General): {}", e.getMessage());
+            catMap.forEach((k, v) -> {
+                if (!k.isEmpty() && !k.equals("(not set)")) {
+                    categoryStats.add(new DeepInsightResponse.CategoryStat(k, v[0], v[1]));
+                }
+            });
+        } catch (Exception e) {
+            log.warn("   [GA4 Deep] FAILED to fetch Category Stats (Custom dim 'image_category' might be missing): {}",
+                    e.getMessage());
         }
 
         return new DeepInsightResponse(categoryStats, qualityStats);
@@ -716,11 +727,12 @@ public class GoogleAnalyticsService {
         if (analyticsDataClient == null)
             return null;
 
+        log.info("📊 [GA4] Entering getPerformanceDetails ({} days)", days);
         List<FailureStat> failureStats = new ArrayList<>();
         PerformanceStat performance = new PerformanceResponse.PerformanceStat(0, 0, 0, 0);
 
+        // 1. Failure Analysis (By error_type)
         try {
-            // 1. Failure Analysis (By error_type)
             RunReportRequest failRequest = RunReportRequest.newBuilder()
                     .setProperty("properties/" + propertyId)
                     .addDimensions(Dimension.newBuilder().setName("customEvent:error_type"))
@@ -729,12 +741,12 @@ public class GoogleAnalyticsService {
                             .setFilter(Filter.newBuilder()
                                     .setFieldName("eventName")
                                     .setStringFilter(Filter.StringFilter.newBuilder().setValue("generate_fail"))
-                                    .build())
-                            .build())
+                                    .build()))
                     .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
                     .build();
 
             RunReportResponse failResp = analyticsDataClient.runReport(failRequest);
+            log.info("   [GA4 Performance] Failure query success. Rows: {}", failResp.getRowsCount());
             for (Row row : failResp.getRowsList()) {
                 String reason = row.getDimensionValues(0).getValue();
                 if (!reason.isEmpty() && !reason.equals("(not set)")) {
@@ -743,162 +755,99 @@ public class GoogleAnalyticsService {
                             Long.parseLong(row.getMetricValues(0).getValue())));
                 }
             }
+        } catch (Exception e) {
+            log.warn(
+                    "   [GA4 Performance] FAILED to fetch Failure Stats (Custom dim 'error_type' might be missing): {}",
+                    e.getMessage());
+        }
 
-            // 2. Performance Metrics (Avg Wait Time, Cost, Brick Count)
+        // 2. Performance Metrics - Attempt 1 (All metrics)
+        try {
             RunReportRequest perfRequest = RunReportRequest.newBuilder()
                     .setProperty("properties/" + propertyId)
                     .addMetrics(Metric.newBuilder().setName("customEvent:wait_time"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:brick_count"))
-                    .addMetrics(Metric.newBuilder().setName("customEvent:token_count")) // [New]
+                    .addMetrics(Metric.newBuilder().setName("customEvent:token_count"))
                     .addMetrics(Metric.newBuilder().setName("eventCount"))
                     .setDimensionFilter(FilterExpression.newBuilder()
                             .setFilter(Filter.newBuilder()
                                     .setFieldName("eventName")
                                     .setStringFilter(Filter.StringFilter.newBuilder().setValue("generate_success"))
-                                    .build())
-                            .build())
+                                    .build()))
                     .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
                     .build();
 
             RunReportResponse perfResp = analyticsDataClient.runReport(perfRequest);
             if (!perfResp.getRowsList().isEmpty()) {
                 Row row = perfResp.getRowsList().get(0);
-                double totalWait = Double.parseDouble(row.getMetricValues(0).getValue());
-                double totalCost = Double.parseDouble(row.getMetricValues(1).getValue());
-                double totalBricks = Double.parseDouble(row.getMetricValues(2).getValue());
-                double totalTokens = Double.parseDouble(row.getMetricValues(3).getValue()); // [New]
-                long count = Long.parseLong(row.getMetricValues(4).getValue()); // Index shifted
-
-                if (count > 0) {
-                    double avgCost = totalCost / count;
-                    // GA4 'Currency' custom metrics sometimes return micros (x1,000,000) depending
-                    // on config.
-                    // If avg is absurdly high (>$10 per run), scale it down by 1,000,000.
-                    if (avgCost > 10.0) {
-                        avgCost = avgCost / 1_000_000.0;
-                    }
-
-                    performance = new PerformanceResponse.PerformanceStat(
-                            totalWait / count,
-                            avgCost,
-                            totalBricks / count,
-                            totalTokens / count); // [New]
-                }
+                log.info("   [GA4 Performance] Success fetching Wait, Cost, Bricks, Tokens.");
+                performance = calculatePerformanceStat(row, 0, 1, 2, 3, 4);
             }
-
         } catch (Exception e) {
-            log.error(
-                    "Failed to fetch performance details with token_count. Retrying with safe metrics only. Error: {}",
+            log.warn("   [GA4 Performance] FAILED fetching all metrics together. Retrying with safe ones... Error: {}",
                     e.getMessage());
+            // Attempt 2 (Safe metrics only)
             try {
-                RunReportRequest fallbackRequest = RunReportRequest.newBuilder()
+                RunReportRequest safeRequest = RunReportRequest.newBuilder()
                         .setProperty("properties/" + propertyId)
                         .addMetrics(Metric.newBuilder().setName("customEvent:wait_time"))
-                        // customEvent:est_cost is also removed to prevent failure
+                        .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
                         .addMetrics(Metric.newBuilder().setName("customEvent:brick_count"))
                         .addMetrics(Metric.newBuilder().setName("eventCount"))
                         .setDimensionFilter(FilterExpression.newBuilder()
                                 .setFilter(Filter.newBuilder()
                                         .setFieldName("eventName")
                                         .setStringFilter(Filter.StringFilter.newBuilder().setValue("generate_success"))
-                                        .build())
-                                .build())
+                                        .build()))
                         .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
                         .build();
 
-                RunReportResponse fallbackResp = analyticsDataClient.runReport(fallbackRequest);
-                if (!fallbackResp.getRowsList().isEmpty()) {
-                    Row row = fallbackResp.getRowsList().get(0);
-                    double totalWait = Double.parseDouble(row.getMetricValues(0).getValue());
-                    double totalBricks = Double.parseDouble(row.getMetricValues(1).getValue());
-                    long count = Long.parseLong(row.getMetricValues(2).getValue());
-
-                    if (count > 0) {
-                        performance = new PerformanceResponse.PerformanceStat(
-                                totalWait / count,
-                                0, // estCost default 0
-                                totalBricks / count,
-                                0); // tokenCount default 0
-                    }
+                RunReportResponse safeResp = analyticsDataClient.runReport(safeRequest);
+                if (!safeResp.getRowsList().isEmpty()) {
+                    Row row = safeResp.getRowsList().get(0);
+                    performance = calculatePerformanceStat(row, 0, 1, 2, -1, 3);
+                    log.info("   [GA4 Performance] Safe metrics fetched successfully.");
                 }
-            } catch (Exception fallbackEx) {
-                log.error("Failed to fetch performance details (Retry failed): {}", fallbackEx.getMessage());
+            } catch (Exception ex2) {
+                log.error("   [GA4 Performance] CRITICAL FAILURE: Could not even fetch safe metrics. {}",
+                        ex2.getMessage());
             }
         }
 
         return new PerformanceResponse(failureStats, performance);
     }
 
-    /**
-     * [DEBUG] GA4 데이터 수집 상태 확인용
-     */
-    public Map<String, Object> getDebugInfo(int days) {
-        Map<String, Object> debugResult = new HashMap<>();
-
-        if (analyticsDataClient == null) {
-            debugResult.put("status", "ERROR");
-            debugResult.put("message", "Analytics Client is null");
-            return debugResult;
-        }
-
+    private PerformanceResponse.PerformanceStat calculatePerformanceStat(Row row, int waitIdx, int costIdx,
+            int brickIdx, int tokenIdx, int countIdx) {
         try {
-            debugResult.put("status", "OK");
-            debugResult.put("propertyId", propertyId);
+            int metricCount = row.getMetricValuesList().size();
+            double wait = (waitIdx >= 0 && waitIdx < metricCount)
+                    ? Double.parseDouble(row.getMetricValues(waitIdx).getValue())
+                    : 0;
+            double cost = (costIdx >= 0 && costIdx < metricCount)
+                    ? Double.parseDouble(row.getMetricValues(costIdx).getValue())
+                    : 0;
+            double bricks = (brickIdx >= 0 && brickIdx < metricCount)
+                    ? Double.parseDouble(row.getMetricValues(brickIdx).getValue())
+                    : 0;
+            double tokens = (tokenIdx >= 0 && tokenIdx < metricCount)
+                    ? Double.parseDouble(row.getMetricValues(tokenIdx).getValue())
+                    : 0;
+            long count = (countIdx >= 0 && countIdx < metricCount)
+                    ? Long.parseLong(row.getMetricValues(countIdx).getValue())
+                    : 0;
 
-            // 1. Check Custom Dimensions Availability
-            String[] dimensions = { "customEvent:image_category", "customEvent:error_type", "customEvent:search_term",
-                    "customEvent:suggested_tags" };
-
-            for (String dim : dimensions) {
-                try {
-                    RunReportRequest req = RunReportRequest.newBuilder()
-                            .setProperty("properties/" + propertyId)
-                            .addDimensions(Dimension.newBuilder().setName(dim))
-                            .addMetrics(Metric.newBuilder().setName("eventCount"))
-                            .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
-                            .setLimit(5)
-                            .build();
-
-                    RunReportResponse resp = analyticsDataClient.runReport(req);
-                    List<String> rows = new ArrayList<>();
-                    for (Row row : resp.getRowsList()) {
-                        rows.add(row.getDimensionValues(0).getValue() + ": " + row.getMetricValues(0).getValue());
-                    }
-                    debugResult.put(dim, rows.isEmpty() ? "NO_DATA (Empty Rows)" : rows);
-                } catch (Exception e) {
-                    debugResult.put(dim, "ERROR: " + e.getMessage());
-                }
+            if (count > 0) {
+                double avgCost = cost / count;
+                if (avgCost > 10.0)
+                    avgCost = avgCost / 1_000_000.0;
+                return new PerformanceResponse.PerformanceStat(wait / count, avgCost, bricks / count, tokens / count);
             }
-
-            // 2. Check Custom Metrics Availability
-            try {
-                RunReportRequest metricReq = RunReportRequest.newBuilder()
-                        .setProperty("properties/" + propertyId)
-                        .addMetrics(Metric.newBuilder().setName("customEvent:lmm_latency"))
-                        .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
-                        .addMetrics(Metric.newBuilder().setName("eventCount"))
-                        .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
-                        .build();
-
-                RunReportResponse metricResp = analyticsDataClient.runReport(metricReq);
-                if (!metricResp.getRowsList().isEmpty()) {
-                    Row row = metricResp.getRowsList().get(0);
-                    debugResult.put("metrics_check", Map.of(
-                            "lmm_latency_sum", row.getMetricValues(0).getValue(),
-                            "est_cost_sum", row.getMetricValues(1).getValue(),
-                            "total_events", row.getMetricValues(2).getValue()));
-                } else {
-                    debugResult.put("metrics_check", "NO_DATA");
-                }
-            } catch (Exception e) {
-                debugResult.put("metrics_check", "ERROR: " + e.getMessage());
-            }
-
         } catch (Exception e) {
-            debugResult.put("error", e.getMessage());
+            log.error("Error calculating performance stat: {}", e.getMessage());
         }
-
-        return debugResult;
+        return new PerformanceResponse.PerformanceStat(0, 0, 0, 0);
     }
+
 }
