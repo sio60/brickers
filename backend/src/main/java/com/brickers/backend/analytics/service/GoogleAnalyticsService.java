@@ -585,7 +585,8 @@ public class GoogleAnalyticsService {
                             bricks / count,
                             latency / count,
                             wait / count,
-                            totalCost / count); // Use Average Cost
+                            totalCost / count,
+                            totalCost);
                 }
             }
         } catch (Exception e) {
@@ -730,7 +731,7 @@ public class GoogleAnalyticsService {
 
         log.info("📊 [GA4] Entering getPerformanceDetails ({} days)", days);
         List<FailureStat> failureStats = new ArrayList<>();
-        PerformanceStat performance = new PerformanceResponse.PerformanceStat(0, 0, 0, 0);
+        PerformanceStat performance = new PerformanceResponse.PerformanceStat(0.0, 0.0, 0.0, 0.0, 0.0);
 
         // 1. Failure Analysis (By error_type)
         try {
@@ -849,16 +850,23 @@ public class GoogleAnalyticsService {
                     totalCostDollars = totalCostDollars / 1_000_000.0;
                 }
 
+                // [DEBUG LOG] Print all indices and values
+                for (int i = 0; i < metricCount; i++) {
+                    log.info("🔍 [GA4 RAW] Index {}: {} = {}", i, row.getMetricValues(i).getValue(),
+                            (i < 5) ? (new String[] { "wait", "cost", "bricks", "tokens", "count" })[i] : "unknown");
+                }
+
                 log.info("📈 [GA4 Performance Calc] Count: {}, SumCost: {}, SumTokens: {}, AvgWait: {}",
                         count, totalCostDollars, tokens, wait / count);
 
-                return new PerformanceResponse.PerformanceStat(wait / count, totalCostDollars / count, bricks / count,
+                return new PerformanceResponse.PerformanceStat(wait / count, totalCostDollars / count, totalCostDollars,
+                        bricks / count,
                         tokens / count);
             }
         } catch (Exception e) {
             log.error("Error calculating performance stat: {}", e.getMessage());
         }
-        return new PerformanceResponse.PerformanceStat(0, 0, 0, 0);
+        return new PerformanceResponse.PerformanceStat(0.0, 0.0, 0.0, 0.0, 0.0);
     }
 
     public Map<String, Object> getDiagnosticInfo(int days) {

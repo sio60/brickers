@@ -3,16 +3,16 @@ package com.brickers.backend.analytics.dto;
 import java.util.List;
 
 public record ProductIntelligenceResponse(
-        List<FunnelStage> funnel,
-        EngineQuality quality,
-        List<ExitPoint> exits) {
-    public record FunnelStage(String stage, long count) {
-    }
+                List<FunnelStage> funnel,
+                EngineQuality quality,
+                List<ExitPoint> exits) {
+        public record FunnelStage(String stage, long count) {
+        }
 
-    public record EngineQuality(double avgStability, double avgBrickCount, double avgLatency, double avgWaitTime,
-            double totalCost) {
-    }
+        public record EngineQuality(double avgStability, double avgBrickCount, double avgLatency, double avgWaitTime,
+                        double avgCost, double totalCost) {
+        }
 
-    public record ExitPoint(String step, long count) {
-    }
+        public record ExitPoint(String step, long count) {
+        }
 }
