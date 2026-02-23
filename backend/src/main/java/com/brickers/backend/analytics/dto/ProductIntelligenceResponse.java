@@ -10,7 +10,7 @@ public record ProductIntelligenceResponse(
         }
 
         public record EngineQuality(double avgStability, double avgBrickCount, double avgLatency, double avgWaitTime,
-                        double avgCost, double totalCost) {
+                        double avgCost, double totalCost, double avgCostToday, double avgTokenToday) {
         }
 
         public record ExitPoint(String step, long count) {

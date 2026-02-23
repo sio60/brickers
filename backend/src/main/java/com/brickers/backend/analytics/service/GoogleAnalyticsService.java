@@ -563,6 +563,17 @@ public class GoogleAnalyticsService {
 
             RunReportResponse qResp = analyticsDataClient.runReport(qRequest);
 
+            // [NEW] Get Metric Types for Auto-Scaling (e.g., Currency is in Micros)
+            java.util.Map<Integer, Boolean> isMicrosMetric = new java.util.HashMap<>();
+            for (int i = 0; i < qResp.getMetricHeadersCount(); i++) {
+                com.google.analytics.data.v1beta.MetricType type = qResp.getMetricHeaders(i).getType();
+                if (type == com.google.analytics.data.v1beta.MetricType.TYPE_CURRENCY
+                        || type == com.google.analytics.data.v1beta.MetricType.TYPE_FEET
+                        || type == com.google.analytics.data.v1beta.MetricType.TYPE_MILES) {
+                    isMicrosMetric.put(i, true);
+                }
+            }
+
             if (qResp.getRowsCount() > 0) {
                 Row row = qResp.getRows(0);
                 double stability = Double.parseDouble(row.getMetricValues(0).getValue());
@@ -572,19 +583,65 @@ public class GoogleAnalyticsService {
                 double cost = Double.parseDouble(row.getMetricValues(4).getValue());
                 long count = Long.parseLong(row.getMetricValues(5).getValue());
 
-                log.info("📊 [GA4 Quality Metrics] Count: {}, RawCost: {}", count, cost);
+                // [FIX] Auto-Scale if the metric is in Micros (GA4 standard for Currency)
+                if (isMicrosMetric.getOrDefault(4, false)) {
+                    log.info("💰 [GA4] est_cost is Currency (Micros). Scaling down by 1,000,000.");
+                    cost = cost / 1_000_000.0;
+                }
+
+                log.info("📊 [GA4 Quality Metrics] Count: {}, Processed Cost: {}", count, cost);
 
                 if (count > 0) {
-                    double totalCost = cost;
-                    // Note: Costs are in USD. Scaling removed.
+                    double avgCost = cost / count;
+                    double avgTokenToday = 0;
+                    double avgCostToday = 0;
+
+                    // [NEW] Fetch Today's Specific Metrics (to solve dilution by old LLM-only data)
+                    try {
+                        RunReportResponse todayResp = analyticsDataClient.runReport(RunReportRequest.newBuilder()
+                                .setProperty("properties/" + propertyId)
+                                .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
+                                .addMetrics(Metric.newBuilder().setName("customEvent:token_count"))
+                                .addMetrics(Metric.newBuilder().setName("eventCount"))
+                                .setDimensionFilter(FilterExpression.newBuilder()
+                                        .setFilter(Filter.newBuilder()
+                                                .setFieldName("eventName")
+                                                .setStringFilter(
+                                                        Filter.StringFilter.newBuilder().setValue("generate_success"))
+                                                .build()))
+                                .addDateRanges(DateRange.newBuilder().setStartDate("today").setEndDate("today"))
+                                .build());
+
+                        if (todayResp.getRowsCount() > 0) {
+                            Row tRow = todayResp.getRows(0);
+                            double tCost = Double.parseDouble(tRow.getMetricValues(0).getValue());
+                            double tToken = Double.parseDouble(tRow.getMetricValues(1).getValue());
+                            long tCount = Long.parseLong(tRow.getMetricValues(2).getValue());
+
+                            if (tCount > 0) {
+                                // Scaling for today's cost too
+                                if (todayResp.getMetricHeaders(0)
+                                        .getType() == com.google.analytics.data.v1beta.MetricType.TYPE_CURRENCY) {
+                                    tCost = tCost / 1_000_000.0;
+                                }
+                                avgCostToday = tCost / tCount;
+                                avgTokenToday = tToken / tCount;
+                                log.info("📅 [GA4 Today] AvgCost: ${}, AvgToken: {}", avgCostToday, avgTokenToday);
+                            }
+                        }
+                    } catch (Exception te) {
+                        log.warn("Failed to fetch Today's metrics: {}", te.getMessage());
+                    }
 
                     quality = new ProductIntelligenceResponse.EngineQuality(
                             stability / count,
                             bricks / count,
                             latency / count,
                             wait / count,
-                            totalCost / count,
-                            totalCost);
+                            avgCost,
+                            cost,
+                            avgCostToday,
+                            avgTokenToday);
                 }
             }
         } catch (Exception e) {
