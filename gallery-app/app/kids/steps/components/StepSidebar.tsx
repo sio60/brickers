@@ -90,7 +90,7 @@ export default function StepSidebar({
     return (
         <div className={styles.kidsStep__sidebar}>
             <button onClick={() => router.back()} className={styles.kidsStep__backBtn}>
-                \u2190 {t.kids.steps.back}
+                ← {t.kids.steps.back}
             </button>
 
 
@@ -115,10 +115,10 @@ export default function StepSidebar({
                 {colorChangedLdrBase64 && (
                     <>
                         <button onClick={downloadColorChangedLdr} className={styles.kidsStep__downloadColorBtn}>
-                            \u2B07 {t.kids.steps.downloadLdr}
+                            ⬇ {t.kids.steps.downloadLdr}
                         </button>
                         <button onClick={restoreOriginalColor} className={styles.kidsStep__restoreBtn}>
-                            \u21BA {t.kids.steps?.restoreOriginal || '\uC6D0\uBCF8 \uBCF5\uC6D0'}
+                            ↺ {t.kids.steps?.restoreOriginal || '원본 복원'}
                         </button>
                     </>
                 )}

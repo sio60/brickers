@@ -93,7 +93,7 @@ export default function AssemblyStepView({
 
             <div className={styles.kidsStep__navOverlay}>
                 <button className={styles.kidsStep__navBtn} disabled={!canPrev} onClick={() => { setLoading(true); setStepIdx(v => v - 1); }}>
-                    \u2190 {t.kids.steps.prev}
+                    ← {t.kids.steps.prev}
                 </button>
                 <div className={styles.kidsStep__stepInfo}>
                     Step {stepIdx + 1} <span style={{ color: "#aaa" }}>/ {total}</span>
@@ -112,12 +112,12 @@ export default function AssemblyStepView({
                             return next;
                         });
                     }}>
-                        {t.kids.steps.next} \u2192
+                        {t.kids.steps.next} →
                     </button>
                 )}
             </div>
             <div style={{ textAlign: "center", fontSize: "0.7rem", color: "#aaa", marginTop: 4 }}>
-                Shift + Scroll / \u2190 \u2192 {t.kids.steps?.stepNavHint || '\uD0A4\uB85C \uB2E8\uACC4 \uC774\uB3D9'}
+                Shift + Scroll / ← → {t.kids.steps?.stepNavHint || '키로 단계 이동'}
             </div>
         </div>
     );
