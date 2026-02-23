@@ -683,6 +683,7 @@ function KidsStepPageContent() {
     const [isApplyingColor, setIsApplyingColor] = useState(false);
     const [colorChangedLdrBase64, setColorChangedLdrBase64] = useState<string | null>(null);
     const [customThemeInput, setCustomThemeInput] = useState("");
+    const [colorPreviewUrl, setColorPreviewUrl] = useState<string | null>(null);
 
     // 공유하기 관련
     const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -694,6 +695,14 @@ function KidsStepPageContent() {
 
     const revokeAll = (arr: string[]) => {
         arr.forEach((u) => { try { URL.revokeObjectURL(u); } catch { } });
+    };
+
+    const closeColorModal = () => {
+        setIsColorModalOpen(false);
+        if (colorPreviewUrl) {
+            URL.revokeObjectURL(colorPreviewUrl);
+            setColorPreviewUrl(null);
+        }
     };
 
     // 테마 로드
@@ -710,8 +719,14 @@ function KidsStepPageContent() {
             const result = await applyColorVariant(ldrUrl, selectedTheme, authFetch);
             if (result.ok && result.ldrData) {
                 setColorChangedLdrBase64(result.ldrData);
-                // step blob들 재생성 (Worker 사용)
                 const text = atob(result.ldrData);
+                // 미리보기 URL 즉시 생성
+                const previewBlob = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
+                setColorPreviewUrl(prev => {
+                    if (prev) URL.revokeObjectURL(prev);
+                    return previewBlob;
+                });
+                // step blob들 재생성 (Worker 사용)
                 const worker = new Worker(new URL('@/lib/ldrWorker.ts', import.meta.url));
                 worker.postMessage({ type: 'PROCESS_LDR', text });
                 worker.onmessage = (e) => {
@@ -735,8 +750,6 @@ function KidsStepPageContent() {
                         setSortedBlobUrl(sortedBlob);
                         setStepBricks(bricks || []);
                         setStepIdx(prev => prev < stepTexts.length ? prev : 0);
-                        setIsColorModalOpen(false);
-                        alert(`${result.themeApplied} ${t.kids.steps.colorThemeApplied}`);
                     } else {
                         alert(t.kids.steps?.colorChangeModelError);
                     }
@@ -1035,7 +1048,7 @@ function KidsStepPageContent() {
                     setShareModalOpen(false);
                 }}
                 backgroundUrl={shareBackgroundUrl}
-                ldrUrl={ldrUrl}
+                ldrUrl={sortedBlobUrl || ldrUrl}
                 loading={!shareBackgroundUrl || !ldrUrl}
             />
 
@@ -1396,44 +1409,64 @@ function KidsStepPageContent() {
                     </div>
                 )}
 
-                {/* Color Modal */}
+                {/* Color Modal - Split Layout */}
                 {isColorModalOpen && (
-                    <div className="galleryModalOverlay" onClick={() => setIsColorModalOpen(false)}>
-                        <div className="galleryModal colorModal" onClick={(e) => e.stopPropagation()}>
-                            <button className="modalCloseBtn" onClick={() => setIsColorModalOpen(false)}>✕</button>
-                            <h3 className="galleryModal__title">{t.kids.steps.colorThemeTitle || "색상 테마 선택"}</h3>
-                            <div className="colorModal__themes">
-                                {colorThemes.length === 0 ? <div className="colorModal__loading">{t.kids.steps?.themeLoading || t.common.loading}</div> : (
-                                    colorThemes.map((theme: ThemeInfo) => (
-                                        <button key={theme.name} className={`colorModal__themeBtn ${selectedTheme === theme.name && !customThemeInput ? "selected" : ""}`} onClick={() => { setSelectedTheme(theme.name); setCustomThemeInput(""); }}>
-                                            <span className="colorModal__themeName">{theme.name}</span>
-                                            <span className="colorModal__themeDesc">{theme.description}</span>
-                                        </button>
-                                    ))
-                                )}
+                    <div className="galleryModalOverlay" onClick={closeColorModal}>
+                        <div className="colorModal__splitContainer" onClick={(e) => e.stopPropagation()}>
+                            <div className="colorModal__leftPanel">
+                                <button className="modalCloseBtn" onClick={closeColorModal}>✕</button>
+                                <h3 className="galleryModal__title">{t.kids.steps.colorThemeTitle || "색상 테마 선택"}</h3>
+                                <div className="colorModal__themes">
+                                    {colorThemes.length === 0 ? <div className="colorModal__loading">{t.kids.steps?.themeLoading || t.common.loading}</div> : (
+                                        colorThemes.map((theme: ThemeInfo) => (
+                                            <button key={theme.name} className={`colorModal__themeBtn ${selectedTheme === theme.name && !customThemeInput ? "selected" : ""}`} onClick={() => { setSelectedTheme(theme.name); setCustomThemeInput(""); }}>
+                                                <span className="colorModal__themeName">{theme.name}</span>
+                                                <span className="colorModal__themeDesc">{theme.description}</span>
+                                            </button>
+                                        ))
+                                    )}
+                                </div>
+                                <div className="colorModal__divider">직접 입력</div>
+                                <div className="colorModal__customSection">
+                                    <input
+                                        type="text"
+                                        className="colorModal__customInput"
+                                        placeholder="크리스마스, 사이버펑크, 파스텔..."
+                                        value={customThemeInput}
+                                        onChange={(e) => {
+                                            setCustomThemeInput(e.target.value);
+                                            setSelectedTheme(e.target.value);
+                                        }}
+                                        onFocus={() => setSelectedTheme(customThemeInput)}
+                                    />
+                                </div>
+                                <div className="galleryModal__actions">
+                                    <button className="galleryModal__btn galleryModal__btn--cancel" onClick={() => {
+                                        gtag.trackExit("color_theme_modal", "modal_close");
+                                        closeColorModal();
+                                    }}>닫기</button>
+                                    <button className="galleryModal__btn galleryModal__btn--confirm" onClick={handleApplyColor} disabled={!selectedTheme || isApplyingColor}>
+                                        {isApplyingColor ? "적용 중..." : "적용하기"}
+                                    </button>
+                                </div>
                             </div>
-                            <div className="colorModal__divider">직접 입력</div>
-                            <div className="colorModal__customSection">
-                                <input
-                                    type="text"
-                                    className="colorModal__customInput"
-                                    placeholder="크리스마스, 사이버펑크, 파스텔..."
-                                    value={customThemeInput}
-                                    onChange={(e) => {
-                                        setCustomThemeInput(e.target.value);
-                                        setSelectedTheme(e.target.value);
-                                    }}
-                                    onFocus={() => setSelectedTheme(customThemeInput)}
-                                />
-                            </div>
-                            <div className="galleryModal__actions">
-                                <button className="galleryModal__btn galleryModal__btn--cancel" onClick={() => {
-                                    gtag.trackExit("color_theme_modal", "modal_close");
-                                    setIsColorModalOpen(false);
-                                }}>{t.kids.steps.galleryModal.cancel}</button>
-                                <button className="galleryModal__btn galleryModal__btn--confirm" onClick={handleApplyColor} disabled={!selectedTheme || isApplyingColor}>
-                                    {isApplyingColor ? "..." : t.common?.apply}
-                                </button>
+                            <div className="colorModal__rightPanel">
+                                <div className="colorModal__previewLabel">브릭 미리보기</div>
+                                <Canvas
+                                    camera={{ position: [200, -200, 200], fov: 45, near: 0.1, far: 100000 }}
+                                    dpr={[1, 1.5]}
+                                    frameloop="demand"
+                                >
+                                    <ThrottledDriver />
+                                    <ambientLight intensity={0.9} />
+                                    <directionalLight position={[3, 5, 2]} intensity={1} />
+                                    <LdrModel
+                                        url={colorPreviewUrl || sortedBlobUrl || ldrUrl}
+                                        stepMode={false}
+                                        onLoaded={() => {}}
+                                    />
+                                    <OrbitControls makeDefault enablePan={false} enableZoom />
+                                </Canvas>
                             </div>
                         </div>
                     </div>
