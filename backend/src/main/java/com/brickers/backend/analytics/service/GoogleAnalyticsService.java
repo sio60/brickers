@@ -575,16 +575,17 @@ public class GoogleAnalyticsService {
                 log.info("📊 [GA4 Quality Metrics] Count: {}, RawCost: {}", count, cost);
 
                 if (count > 0) {
-                    double avgCost = cost / count;
-                    if (avgCost > 10.0)
-                        avgCost = avgCost / 1_000_000.0;
+                    double totalCost = cost;
+                    // If total sum is large, scale it to dollars first
+                    if (totalCost > 100.0)
+                        totalCost = totalCost / 1_000_000.0;
 
                     quality = new ProductIntelligenceResponse.EngineQuality(
                             stability / count,
                             bricks / count,
                             latency / count,
                             wait / count,
-                            avgCost);
+                            totalCost / count); // Use Average Cost
                 }
             }
         } catch (Exception e) {
@@ -839,10 +840,20 @@ public class GoogleAnalyticsService {
                     : 0;
 
             if (count > 0) {
-                double avgCost = cost / count;
-                if (avgCost > 10.0)
-                    avgCost = avgCost / 1_000_000.0;
-                return new PerformanceResponse.PerformanceStat(wait / count, avgCost, bricks / count, tokens / count);
+                // Scaling: If total cost is high (e.g. > 1.0) and tokens exist, check if it's
+                // Micros
+                double totalCostDollars = cost;
+                // If sum is very large (e.g. > 100), assume Micros.
+                // $100 is a safe threshold for total cost of many generations in small period.
+                if (totalCostDollars > 100.0) {
+                    totalCostDollars = totalCostDollars / 1_000_000.0;
+                }
+
+                log.info("📈 [GA4 Performance Calc] Count: {}, SumCost: {}, SumTokens: {}, AvgWait: {}",
+                        count, totalCostDollars, tokens, wait / count);
+
+                return new PerformanceResponse.PerformanceStat(wait / count, totalCostDollars / count, bricks / count,
+                        tokens / count);
             }
         } catch (Exception e) {
             log.error("Error calculating performance stat: {}", e.getMessage());
@@ -850,4 +861,24 @@ public class GoogleAnalyticsService {
         return new PerformanceResponse.PerformanceStat(0, 0, 0, 0);
     }
 
+    public Map<String, Object> getDiagnosticInfo(int days) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            RunReportRequest req = RunReportRequest.newBuilder()
+                    .setProperty("properties/" + propertyId)
+                    .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .addDateRanges(DateRange.newBuilder().setStartDate(days + "daysAgo").setEndDate("today"))
+                    .build();
+            RunReportResponse resp = analyticsDataClient.runReport(req);
+            if (resp.getRowsCount() > 0) {
+                Row row = resp.getRows(0);
+                result.put("raw_cost_sum", row.getMetricValues(0).getValue());
+                result.put("event_count", row.getMetricValues(1).getValue());
+            }
+        } catch (Exception e) {
+            result.put("error", e.getMessage());
+        }
+        return result;
+    }
 }
