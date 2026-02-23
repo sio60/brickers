@@ -156,6 +156,7 @@ export default function BrickJudgeViewer({ initialSelectedId }: BrickJudgeViewer
                 {/* 3D Viewer */}
                 <div className="flex-1 bg-white rounded-xl border border-gray-200 overflow-hidden relative flex flex-col">
 
+
                     {judging && (
                         <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
                             <div className="text-center">
@@ -224,10 +225,9 @@ export default function BrickJudgeViewer({ initialSelectedId }: BrickJudgeViewer
                     ) : null}
                 </div>
 
-                {/* Results Panel */}
+                {/* Summary & Detailed Issues */}
                 {judgeResult && (
                     <div className="bg-white rounded-xl border border-gray-200 p-4 shrink-0 overflow-y-auto max-h-[400px]">
-
                         {/* Summary Metrics */}
                         <div className="grid grid-cols-4 gap-4 mb-6 border-b pb-4">
                             <div className="text-center p-3 rounded-lg bg-indigo-50/50 border border-indigo-100 shadow-sm">
@@ -252,59 +252,57 @@ export default function BrickJudgeViewer({ initialSelectedId }: BrickJudgeViewer
                         </div>
 
                         {/* Current View Detailed Issues */}
-                        {judgeResult && (
-                            <div className="mt-4">
-                                <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 px-1">
-                                    Model Issues ({(judgeResult.issues ?? []).length})
-                                </h4>
+                        <div className="mt-4">
+                            <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 px-1">
+                                Model Issues ({(judgeResult.issues ?? []).length})
+                            </h4>
 
-                                {(judgeResult.issues ?? []).length > 0 ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                        {(judgeResult.issues ?? [])
-                                            .sort((a, b) => (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9))
-                                            .map((issue, idx) => (
-                                                <button
-                                                    key={idx}
-                                                    onClick={() =>
-                                                        setFocusBrickId(
-                                                            focusBrickId === issue.brick_id ? null : issue.brick_id
-                                                        )
-                                                    }
-                                                    className={`text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors border ${focusBrickId === issue.brick_id
-                                                        ? "bg-gray-100 border-gray-400 shadow-sm"
-                                                        : "bg-white border-gray-100 hover:border-gray-300"
+                            {(judgeResult.issues ?? []).length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    {(judgeResult.issues ?? [])
+                                        .sort((a, b) => (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9))
+                                        .map((issue, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() =>
+                                                    setFocusBrickId(
+                                                        focusBrickId === issue.brick_id ? null : issue.brick_id
+                                                    )
+                                                }
+                                                className={`text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors border ${focusBrickId === issue.brick_id
+                                                    ? "bg-gray-100 border-gray-400 shadow-sm"
+                                                    : "bg-white border-gray-100 hover:border-gray-300"
+                                                    }`}
+                                            >
+                                                <div
+                                                    className="w-3 h-3 rounded-sm shrink-0"
+                                                    style={{ backgroundColor: issue.color }}
+                                                />
+                                                <span className="flex-1 text-xs text-gray-700 truncate">{issue.message}</span>
+                                                <span
+                                                    className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${issue.severity === "critical"
+                                                        ? "bg-red-100 text-red-700"
+                                                        : issue.severity === "high"
+                                                            ? "bg-orange-100 text-orange-700"
+                                                            : "bg-yellow-100 text-yellow-700"
                                                         }`}
                                                 >
-                                                    <div
-                                                        className="w-3 h-3 rounded-sm shrink-0"
-                                                        style={{ backgroundColor: issue.color }}
-                                                    />
-                                                    <span className="flex-1 text-xs text-gray-700 truncate">{issue.message}</span>
-                                                    <span
-                                                        className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${issue.severity === "critical"
-                                                            ? "bg-red-100 text-red-700"
-                                                            : issue.severity === "high"
-                                                                ? "bg-orange-100 text-orange-700"
-                                                                : "bg-yellow-100 text-yellow-700"
-                                                            }`}
-                                                    >
-                                                        {issue.severity[0]}
-                                                    </span>
-                                                </button>
-                                            ))}
-                                    </div>
-                                ) : (
-                                    <div className="p-4 bg-green-50 rounded-lg text-center">
-                                        <p className="text-green-600 text-sm font-bold">✨ {bj.noIssues}</p>
-                                    </div>
-                                )}
-
-                                <ColorLegend t={bj} />
-                                <div className="mt-4 text-[10px] text-gray-300 italic">
-                                    {bj.elapsed}: {(judgeResult.elapsed_ms ?? 0).toFixed(1)}ms
+                                                    {issue.severity[0]}
+                                                </span>
+                                            </button>
+                                        ))}
                                 </div>
+                            ) : (
+                                <div className="p-4 bg-green-50 rounded-lg text-center">
+                                    <p className="text-green-600 text-sm font-bold">✨ {bj.noIssues}</p>
+                                </div>
+                            )}
+
+                            <ColorLegend t={bj} />
+                            <div className="mt-4 text-[10px] text-gray-300 italic">
+                                {bj.elapsed}: {(judgeResult.elapsed_ms ?? 0).toFixed(1)}ms
                             </div>
-                        )}
+                        </div>
                     </div>
                 )}
             </div>
