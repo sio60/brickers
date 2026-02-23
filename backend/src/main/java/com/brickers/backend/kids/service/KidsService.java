@@ -5,6 +5,8 @@ import com.brickers.backend.job.entity.JobStage;
 import com.brickers.backend.job.entity.JobStatus;
 import com.brickers.backend.job.entity.KidsLevel;
 import com.brickers.backend.job.repository.GenerateJobRepository;
+import com.brickers.backend.kids.dto.AgentLogRequest;
+import com.brickers.backend.kids.entity.AgentTrace;
 import com.brickers.backend.upload_s3.service.StorageService;
 import com.brickers.backend.user.entity.MembershipPlan;
 import com.brickers.backend.user.entity.User;
@@ -14,17 +16,23 @@ import com.brickers.backend.sqs.service.SqsProducerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.client.WebClient.Builder;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -53,7 +61,7 @@ public class KidsService {
     @Value("${aws.sqs.enabled:false}")
     private boolean sqsEnabled;
 
-    private final org.springframework.web.reactive.function.client.WebClient.Builder webClientBuilder;
+    private final Builder webClientBuilder;
 
     public Map<String, Object> startGeneration(String userId, String sourceImageUrl, String age, int budget,
             String title, String prompt, String language) { // prompt 추가
@@ -150,16 +158,20 @@ public class KidsService {
                 "size", "1024x1024",
                 "response_format", "b64_json");
 
-        Map response = webClientBuilder
+        Map<String, Object> response = webClientBuilder
+                .build()
+                .mutate() // 전역 Builder 오염 방지를 위해 복제 후 설정
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024)) // 10MB
-                .build().post()
+                .build()
+                .post()
                 .uri("https://api.openai.com/v1/images/generations")
                 .header("Authorization", "Bearer " + openaiApiKey)
-                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestBody)
                 .retrieve()
-                .bodyToMono(Map.class)
-                .block(java.time.Duration.ofSeconds(60)); // 타임아웃 60초
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+                })
+                .block(Duration.ofSeconds(60)); // 타임아웃 60초
 
         if (response == null || !response.containsKey("data")) {
             throw new RuntimeException("OpenAI 응답 없음");
@@ -232,7 +244,7 @@ public class KidsService {
         log.info("[Brickers] Job Stage 업데이트 | jobId={} | stage={}", jobId, stageName);
 
         GenerateJobEntity job = generateJobRepository.findById(jobId)
-                .orElseThrow(() -> new java.util.NoSuchElementException("Job not found: " + jobId));
+                .orElseThrow(() -> new NoSuchElementException("Job not found: " + jobId));
 
         // String → JobStage enum 변환
         JobStage stage;
@@ -261,7 +273,7 @@ public class KidsService {
         log.info("[Brickers] PDF URL 업데이트 | jobId={} | pdfUrl={}", jobId, pdfUrl);
 
         GenerateJobEntity job = generateJobRepository.findById(jobId)
-                .orElseThrow(() -> new java.util.NoSuchElementException("Job not found: " + jobId));
+                .orElseThrow(() -> new NoSuchElementException("Job not found: " + jobId));
 
         job.setPdfUrl(pdfUrl);
         job.setUpdatedAt(LocalDateTime.now());
@@ -279,7 +291,7 @@ public class KidsService {
                 backgroundUrl);
 
         GenerateJobEntity job = generateJobRepository.findById(jobId)
-                .orElseThrow(() -> new java.util.NoSuchElementException("Job not found: " + jobId));
+                .orElseThrow(() -> new NoSuchElementException("Job not found: " + jobId));
 
         job.setBackgroundUrl(backgroundUrl);
         job.setUpdatedAt(LocalDateTime.now());
@@ -295,7 +307,7 @@ public class KidsService {
         log.info("[Brickers] Screenshot URLs 업데이트 | jobId={} | views={}", jobId, screenshotUrls.keySet());
 
         GenerateJobEntity job = generateJobRepository.findById(jobId)
-                .orElseThrow(() -> new java.util.NoSuchElementException("Job not found: " + jobId));
+                .orElseThrow(() -> new NoSuchElementException("Job not found: " + jobId));
 
         job.setScreenshotUrls(screenshotUrls);
         job.setUpdatedAt(LocalDateTime.now());
@@ -311,7 +323,7 @@ public class KidsService {
         log.info("[Brickers] Suggested Tags 업데이트 | jobId={} | tags={}", jobId, tags);
 
         GenerateJobEntity job = generateJobRepository.findById(jobId)
-                .orElseThrow(() -> new java.util.NoSuchElementException("Job not found: " + jobId));
+                .orElseThrow(() -> new NoSuchElementException("Job not found: " + jobId));
 
         job.setSuggestedTags(tags);
         job.setUpdatedAt(LocalDateTime.now());
@@ -327,7 +339,7 @@ public class KidsService {
         log.info("[Brickers] Job Category 업데이트 | jobId={} | category={}", jobId, category);
 
         GenerateJobEntity job = generateJobRepository.findById(jobId)
-                .orElseThrow(() -> new java.util.NoSuchElementException("Job not found: " + jobId));
+                .orElseThrow(() -> new NoSuchElementException("Job not found: " + jobId));
 
         job.setImageCategory(category);
         job.setUpdatedAt(LocalDateTime.now());
@@ -355,9 +367,9 @@ public class KidsService {
     /**
      * Agent Trace 저장 및 SSE 전송
      */
-    public void saveAgentTrace(String jobId, com.brickers.backend.kids.dto.AgentLogRequest request) {
+    public void saveAgentTrace(String jobId, AgentLogRequest request) {
         // 1. DB 저장 (AgentTrace)
-        com.brickers.backend.kids.entity.AgentTrace trace = com.brickers.backend.kids.entity.AgentTrace.builder()
+        AgentTrace trace = AgentTrace.builder()
                 .jobId(jobId)
                 .step(request.getStep())
                 .nodeName(request.getNodeName())
@@ -407,7 +419,8 @@ public class KidsService {
                 try {
                     emitter.send(SseEmitter.event()
                             .name("agent-log")
-                            .data(logEntry, new org.springframework.http.MediaType("text", "plain", StandardCharsets.UTF_8)));
+                            .data(logEntry,
+                                    new MediaType("text", "plain", StandardCharsets.UTF_8)));
                 } catch (IOException e) {
                     dead.add(emitter);
                 }
@@ -434,7 +447,8 @@ public class KidsService {
                     try {
                         emitter.send(SseEmitter.event()
                                 .name("agent-log")
-                                .data(logEntry, new org.springframework.http.MediaType("text", "plain", StandardCharsets.UTF_8)));
+                                .data(logEntry, new MediaType("text", "plain",
+                                        StandardCharsets.UTF_8)));
                     } catch (IOException e) {
                         break;
                     }
@@ -487,7 +501,7 @@ public class KidsService {
     /**
      * ✅ 배경 합성 생성 (AI Server Proxy)
      */
-    public Map<String, Object> createBackgroundComposition(org.springframework.web.multipart.MultipartFile file,
+    public Map<String, Object> createBackgroundComposition(MultipartFile file,
             String subject) {
         try {
             return aiRenderClient.generateBackgroundComposite(file, subject);
@@ -500,7 +514,7 @@ public class KidsService {
     /**
      * Agent Trace 조회
      */
-    public List<com.brickers.backend.kids.entity.AgentTrace> getAgentTraces(String jobId) {
+    public List<AgentTrace> getAgentTraces(String jobId) {
         return agentTraceRepository.findByJobIdOrderByCreatedAtAsc(jobId);
     }
 }

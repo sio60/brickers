@@ -85,9 +85,7 @@ public class SecurityConfig {
                                                 .permitAll()
                                                 // 토큰 상태 확인 (공개 - 토큰 없어도 확인 가능)
                                                 .requestMatchers(HttpMethod.GET, "/api/auth/status").permitAll()
-                                                // 모든 세션 로그아웃 (인증 필요)
-                                                .requestMatchers(HttpMethod.POST, "/api/auth/logout-all")
-                                                .authenticated()
+
                                                 // 로그인 이력 (인증 필요)
                                                 .requestMatchers(HttpMethod.GET, "/api/auth/logins").authenticated()
                                                 // ✅ [보안 강화] Actuator는 관리자만 접근 가능

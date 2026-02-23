@@ -11,7 +11,7 @@ import com.brickers.backend.auth.dto.TokenStatusResponse;
 import com.brickers.backend.auth.dto.UserMeResponse;
 import com.brickers.backend.auth.service.MobileAuthService;
 import com.brickers.backend.auth.service.JwtProvider;
-import com.brickers.backend.auth.entity.RefreshToken;
+
 import com.brickers.backend.auth.repository.RefreshTokenRepository;
 import com.brickers.backend.auth.service.AuthTokenService;
 import com.brickers.backend.user.entity.User;
@@ -28,7 +28,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -134,20 +133,6 @@ public class AuthController {
         return null;
     }
 
-    /*
-     * ✅ 보안을 위해 debug-auth 엔드포인트 제거 또는 필드 제한
-     * 
-     * @GetMapping("/debug-auth")
-     * public ResponseEntity<?> debugAuth(Authentication authentication) {
-     * if (authentication == null)
-     * return ResponseEntity.ok(Map.of("auth", null));
-     * 
-     * return ResponseEntity.ok(Map.of(
-     * "principal", authentication.getPrincipal(),
-     * "authorities", authentication.getAuthorities()));
-     * }
-     */
-
     /**
      * 내 로그인 히스토리 (Page 형태)
      */
@@ -202,45 +187,6 @@ public class AuthController {
     }
 
     /**
-     * 93. 모든 세션 로그아웃
-     * POST /api/auth/logout-all
-     */
-    @PostMapping("/logout-all")
-    public ResponseEntity<?> logoutAll(Authentication authentication, HttpServletRequest request) {
-        if (authentication == null || authentication.getPrincipal() == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "인증이 필요합니다."));
-        }
-
-        String userId = (String) authentication.getPrincipal();
-
-        // 모든 활성 refresh 토큰 폐기
-        List<RefreshToken> activeTokens = refreshTokenRepository.findByUserIdAndRevokedAtIsNull(userId);
-        int revokedCount = 0;
-        for (RefreshToken token : activeTokens) {
-            token.setRevokedAt(Instant.now());
-            refreshTokenRepository.save(token);
-            revokedCount++;
-        }
-
-        // 감사 로그
-        auditLogService.log(
-                AuditEventType.LOGOUT_ALL,
-                userId,
-                userId,
-                request,
-                Map.of("revokedCount", revokedCount));
-
-        // 현재 쿠키 제거
-        var clear = tokenService.clearRefreshCookie();
-
-        log.info("[Logout-All] userId={}, revokedCount={}", userId, revokedCount);
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, clear.toString())
-                .body(Map.of("ok", true, "revokedSessions", revokedCount));
-    }
-
-    /**
      * 94. 최근 로그인 기록 (AuditLog 기반)
      * GET /api/auth/logins
      */
@@ -257,7 +203,7 @@ public class AuthController {
 
         List<AuditLog> logs = auditLogRepository.findByTargetUserIdAndEventTypeInOrderByCreatedAtDesc(
                 userId,
-                List.of(AuditEventType.LOGIN, AuditEventType.LOGOUT, AuditEventType.LOGOUT_ALL),
+                List.of(AuditEventType.LOGIN, AuditEventType.LOGOUT),
                 PageRequest.of(0, Math.min(limit, 50)));
 
         List<LoginHistoryResponse> history = logs.stream()
@@ -265,35 +211,6 @@ public class AuthController {
                 .toList();
 
         return ResponseEntity.ok(Map.of("logins", history));
-    }
-
-    /**
-     * 95. 비정상 로그인 알림 (내부용)
-     * POST /api/auth/alert (관리자 전용 권한 필요)
-     */
-    @PostMapping("/alert")
-    public ResponseEntity<?> suspiciousLoginAlert(
-            @RequestBody Map<String, Object> alertData,
-            HttpServletRequest request) {
-
-        String userId = (String) alertData.get("userId");
-        String reason = (String) alertData.getOrDefault("reason", "unknown");
-
-        if (userId == null || userId.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "userId는 필수입니다."));
-        }
-
-        // 감사 로그에 비정상 로그인 기록
-        auditLogService.log(
-                AuditEventType.SUSPICIOUS_LOGIN,
-                userId,
-                "system",
-                request,
-                Map.of("reason", reason, "alertData", alertData));
-
-        log.warn("[Suspicious Login Alert] userId={}, reason={}", userId, reason);
-
-        return ResponseEntity.ok(Map.of("ok", true, "recorded", true));
     }
 
     /**

@@ -26,7 +26,7 @@ export default function ProductIntelligenceDashboard() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await authFetch("/api/admin/analytics/product-intelligence?days=14");
+                const res = await authFetch("/api/admin/analytics/deep/product-intelligence?days=14");
                 if (res.ok) {
                     const json = await res.json();
                     setData(json);
