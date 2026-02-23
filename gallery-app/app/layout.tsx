@@ -107,58 +107,6 @@ export default function RootLayout({
                         `}
                     </Script>
                 )}
-                <Script id="next-chunk-recovery" strategy="afterInteractive">
-                    {`
-                        (function () {
-                            var KEY = 'brickers:chunk-reload-ts';
-                            var WINDOW_MS = 30000;
-
-                            function canReload() {
-                                try {
-                                    var last = Number(sessionStorage.getItem(KEY) || '0');
-                                    return !last || (Date.now() - last) > WINDOW_MS;
-                                } catch (_) {
-                                    return true;
-                                }
-                            }
-
-                            function markReload() {
-                                try {
-                                    sessionStorage.setItem(KEY, String(Date.now()));
-                                } catch (_) {}
-                            }
-
-                            function looksLikeNextAssetUrl(url) {
-                                return typeof url === 'string' && url.indexOf('/_next/static/') !== -1;
-                            }
-
-                            function recover(reason) {
-                                if (!canReload()) return;
-                                console.warn('[ChunkRecovery] reloading page due to stale Next asset:', reason);
-                                markReload();
-                                window.location.reload();
-                            }
-
-                            window.addEventListener('error', function (event) {
-                                var target = event && event.target;
-                                if (!target || target === window) return;
-                                var tag = target.tagName || '';
-                                var url = target.src || target.href || '';
-                                if ((tag === 'SCRIPT' || tag === 'LINK') && looksLikeNextAssetUrl(url)) {
-                                    recover(url);
-                                }
-                            }, true);
-
-                            window.addEventListener('unhandledrejection', function (event) {
-                                var reason = event && event.reason;
-                                var msg = String((reason && (reason.message || reason.stack)) || reason || '');
-                                if (/ChunkLoadError|Loading chunk [0-9]+ failed|Failed to fetch dynamically imported module/i.test(msg)) {
-                                    recover(msg);
-                                }
-                            });
-                        })();
-                    `}
-                </Script>
                 {/* Google Pay */}
                 <Script src="https://pay.google.com/gp/p/js/pay.js" strategy="afterInteractive" />
             </body>
