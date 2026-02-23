@@ -18,11 +18,13 @@ interface PerformanceData {
         tokenCount: number;
         avgCostToday?: number;
         avgTokenToday?: number;
+        avgWaitTimeToday?: number;
     };
 }
 interface DeepInsightData {
     categoryStats: { category: string; successCount: number; failCount: number; }[];
     qualityStats: any[];
+    ageStats: { ageGroup: string; count: number; }[];
 }
 
 export interface ProductIntelligenceResponse {
@@ -36,6 +38,7 @@ export interface ProductIntelligenceResponse {
         totalCost: number;
         avgCostToday: number;
         avgTokenToday: number;
+        avgWaitTimeToday: number;
     };
     exits: Array<{ step: string; count: number }>;
 }
