@@ -28,27 +28,24 @@ public class GalleryLevelResolver {
     }
 
     public static final int LEVEL1_MIN_PARTS = 100;
-    public static final int LEVEL2_MIN_PARTS = 200;
-    public static final int LEVEL3_MIN_PARTS = 300;
-    public static final int PRO_MIN_PARTS = 1000;
+    private static final int LEVEL2_MIN_PARTS = 200;
+    private static final int LEVEL3_MIN_PARTS = 300;
+    private static final int PRO_MIN_PARTS = 1000;
 
     /**
      * 브릭 수(parts)를 기반으로 난이도(KidsLevel)를 추론합니다.
      */
     public KidsLevel inferLevelFromParts(Integer parts) {
-        if (parts == null)
-            return null;
-
-        if (parts >= PRO_MIN_PARTS) {
-            return KidsLevel.PRO;
-        } else if (parts >= LEVEL3_MIN_PARTS) {
-            return KidsLevel.LEVEL_3;
-        } else if (parts >= LEVEL2_MIN_PARTS) {
-            return KidsLevel.LEVEL_2;
-        } else if (parts >= LEVEL1_MIN_PARTS) {
+        if (parts == null || parts < LEVEL2_MIN_PARTS) {
             return KidsLevel.LEVEL_1;
         }
-        return null;
+        if (parts < LEVEL3_MIN_PARTS) {
+            return KidsLevel.LEVEL_2;
+        }
+        if (parts < PRO_MIN_PARTS) {
+            return KidsLevel.LEVEL_3;
+        }
+        return KidsLevel.PRO;
     }
 
     /**

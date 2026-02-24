@@ -54,6 +54,9 @@ public class GaEngineAnalyticsService extends GaBaseService {
 
             for (Row row : getClient().runReport(request).getRowsList()) {
                 String stage = row.getDimensionValues(0).getValue();
+                if (stage == null || stage.isEmpty() || stage.equals("(not set)")) {
+                    continue;
+                }
                 funnel.add(new ProductIntelligenceResponse.FunnelStage(stage,
                         Long.parseLong(row.getMetricValues(0).getValue())));
             }
