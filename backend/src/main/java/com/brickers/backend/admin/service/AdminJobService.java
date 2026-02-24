@@ -80,28 +80,6 @@ public class AdminJobService {
         return result.map(job -> AdminJobDto.from(job, userMap.get(job.getUserId())));
     }
 
-    @Transactional(readOnly = true)
-    public AdminJobDto getJob(String jobId) {
-        GenerateJobEntity job = jobRepository.findById(jobId)
-                .orElseThrow(() -> new IllegalArgumentException("Job not found"));
-        return AdminJobDto.from(job);
-    }
-
-    @Transactional(readOnly = true)
-    public Map<String, Object> getJobLogs(String jobId) {
-        GenerateJobEntity job = jobRepository.findById(jobId)
-                .orElseThrow(() -> new IllegalArgumentException("Job not found"));
-
-        return Map.of(
-                "jobId", job.getId(),
-                "status", job.getStatus(),
-                "stage", job.getStage(),
-                "errorMessage", job.getErrorMessage() == null ? "None" : job.getErrorMessage(),
-                "createdAt", job.getCreatedAt(),
-                "updatedAt", job.getUpdatedAt(),
-                "history", "Detailed logs not persisted yet");
-    }
-
     @Transactional
     public AdminJobDto retryJob(String jobId, JobStage fromStage) {
         GenerateJobEntity job = jobRepository.findById(jobId)
