@@ -44,23 +44,14 @@ export const ja = {
     },
     upgradeModal: {
         title: "UPGRADE",
-        message: "アップグレードして、より多くの図面と高度な機能を使用してみてください。",
-        kidsPlan: {
-            title: "キッズモード",
-            badge: "Easy",
-            features: [
-                "写真/画像を直接アップロード",
-                "自動図面生成"
-            ]
-        },
-        proPlan: {
-            title: "プロモード",
-            badge: "Pro",
-            features: [
-                "おすすめ図面 TOP 3 プレビュー",
-                "最大3回再生成(リロール)可能"
-            ]
-        },
+        message: "レベルに応じて、より精密なブリック図面を生成できます。",
+        levels: [
+            { name: "Level 1", age: "4-5歳", bricks: "~400個", desc: "大きなブリック中心のシンプルな図面生成" },
+            { name: "Level 2", age: "6-7歳", bricks: "~800個", desc: "中級難易度のブリック図面生成" },
+            { name: "Level 3", age: "8-10歳", bricks: "~1,200個", desc: "ディテールなブリック図面生成" },
+            { name: "PRO", age: "エキスパート", bricks: "~5,000個", desc: "高解像度の大量ブリック図面生成" },
+        ],
+        bricksCaption: "ブリック図面生成可能",
         payBtn: "Google Payで決済する",
         hint: "テスト決済環境(TEST)基準",
         alertSuccess: "プロメンバーシップにアップグレードされました！",
