@@ -174,9 +174,6 @@ export default function AdminPage() {
             </div>
 
 
-            {/* AI Report / Global Overlay */}
-            <AdminAIReport aiState={aiState} activeTab={activeTab} />
-
             {traceJobId && (
                 <AgentTraceViewer jobId={traceJobId} onClose={() => setTraceJobId(null)} />
             )}
