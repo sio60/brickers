@@ -48,14 +48,12 @@ public class GaEngineAnalyticsService extends GaBaseService {
         List<ProductIntelligenceResponse.FunnelStage> funnel = new ArrayList<>();
         try {
             RunReportRequest request = buildBasicRequest(days)
-                    .addDimensions(Dimension.newBuilder().setName("eventName"))
+                    .addDimensions(Dimension.newBuilder().setName("customEvent:funnel_stage"))
                     .addMetrics(Metric.newBuilder().setName("eventCount"))
-                    .setDimensionFilter(createDimensionFilter("eventName", "funnel_", true))
                     .build();
 
             for (Row row : getClient().runReport(request).getRowsList()) {
-                String fullEventName = row.getDimensionValues(0).getValue();
-                String stage = fullEventName.startsWith("funnel_") ? fullEventName.substring(7) : fullEventName;
+                String stage = row.getDimensionValues(0).getValue();
                 funnel.add(new ProductIntelligenceResponse.FunnelStage(stage,
                         Long.parseLong(row.getMetricValues(0).getValue())));
             }
@@ -108,14 +106,12 @@ public class GaEngineAnalyticsService extends GaBaseService {
         List<ProductIntelligenceResponse.ExitPoint> exits = new ArrayList<>();
         try {
             RunReportRequest request = buildBasicRequest(days)
-                    .addDimensions(Dimension.newBuilder().setName("eventName"))
+                    .addDimensions(Dimension.newBuilder().setName("customEvent:exit_step"))
                     .addMetrics(Metric.newBuilder().setName("eventCount"))
-                    .setDimensionFilter(createDimensionFilter("eventName", "exit_", true))
                     .build();
 
             for (Row row : getClient().runReport(request).getRowsList()) {
-                String fullEventName = row.getDimensionValues(0).getValue();
-                String step = fullEventName.startsWith("exit_") ? fullEventName.substring(5) : fullEventName;
+                String step = row.getDimensionValues(0).getValue();
                 exits.add(new ProductIntelligenceResponse.ExitPoint(step,
                         Long.parseLong(row.getMetricValues(0).getValue())));
             }
@@ -129,7 +125,7 @@ public class GaEngineAnalyticsService extends GaBaseService {
         List<PerformanceResponse.FailureStat> stats = new ArrayList<>();
         try {
             RunReportRequest request = buildBasicRequest(days)
-                    .addDimensions(Dimension.newBuilder().setName("customEvent:failure_reason"))
+                    .addDimensions(Dimension.newBuilder().setName("customEvent:error_type"))
                     .addMetrics(Metric.newBuilder().setName("eventCount"))
                     .setDimensionFilter(createDimensionFilter("eventName", "generate_fail", false))
                     .build();
@@ -150,7 +146,7 @@ public class GaEngineAnalyticsService extends GaBaseService {
     public PerformanceResponse.PerformanceStat fetchPerformanceStats(int days) {
         try {
             RunReportRequest request = buildBasicRequest(days)
-                    .addMetrics(Metric.newBuilder().setName("customEvent:wait_time"))
+                    .addMetrics(Metric.newBuilder().setName("customEvent:wait_time_at_moment"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:token_count"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:brick_count"))
