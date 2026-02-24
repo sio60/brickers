@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { getAiAnalyticsReport } from "@/lib/api/adminApi";
 
 export interface AdminAIState {
     deepAnalyzing: boolean;
@@ -28,6 +29,25 @@ export function useAdminAI(activeTab: string) {
     });
 
     const [autoAnalyzeDone, setAutoAnalyzeDone] = useState(false);
+
+    // [NEW] 기존 리포트 가져오기
+    const handleFetchReport = useCallback(async (days: number = 7) => {
+        setState(prev => ({ ...prev, deepAnalyzing: true, deepError: null }));
+        try {
+            const data = await getAiAnalyticsReport(days);
+            if (data && data.report) {
+                setState(prev => ({
+                    ...prev,
+                    deepReport: data.report,
+                    lastDeepAnalysisTime: "최근 저장됨",
+                }));
+            }
+        } catch (e: any) {
+            console.error("Failed to fetch existing report", e);
+        } finally {
+            setState(prev => ({ ...prev, deepAnalyzing: false }));
+        }
+    }, []);
 
     const handleDeepAnalyze = useCallback(async () => {
         setState(prev => ({
@@ -134,7 +154,11 @@ export function useAdminAI(activeTab: string) {
 
     useEffect(() => {
         if (activeTab === "dashboard" && !autoAnalyzeDone && !state.deepAnalyzing) {
-            handleDeepAnalyzeRef.current();
+            // 우선 기존 리포트가 있는지 확인하고 가져옴
+            handleFetchReport(7).then(() => {
+                // 기존 리포트가 없거나 필요하다면 딥 분석 트리거 (선택 사항)
+                // handleDeepAnalyzeRef.current();
+            });
             setAutoAnalyzeDone(true);
         }
 
