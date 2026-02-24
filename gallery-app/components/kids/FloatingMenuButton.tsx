@@ -101,7 +101,7 @@ export default function FloatingMenuButton() {
         });
     };
 
-    const handleLevelSelect = async (url: string | null, file: File | null, age: string, prompt?: string, sourceType?: "image" | "drawing") => {
+    const handleLevelSelect = async (url: string | null, file: File | null, age: string, prompt?: string) => {
         if (prompt) {
             router.push(`/kids/main?age=${age}&prompt=${encodeURIComponent(prompt)}`);
             return;
@@ -113,8 +113,7 @@ export default function FloatingMenuButton() {
                 sessionStorage.setItem('pendingUpload', JSON.stringify({
                     name: file.name,
                     type: file.type,
-                    dataUrl,
-                    sourceType: sourceType || "image"
+                    dataUrl
                 }));
             } catch {
                 console.error('Failed to store upload');
