@@ -44,23 +44,14 @@ export const en = {
     },
     upgradeModal: {
         title: "UPGRADE",
-        message: "Upgrade now to access more designs and advanced features.",
-        kidsPlan: {
-            title: "KIDS MODE",
-            badge: "Easy",
-            features: [
-                "Direct photo/image upload",
-                "Automatic design generation"
-            ]
-        },
-        proPlan: {
-            title: "PRO MODE",
-            badge: "Pro",
-            features: [
-                "Preview TOP 3 recommended designs",
-                "Up to 3 regenerations (rerolls)"
-            ]
-        },
+        message: "Generate more detailed brick designs as you level up.",
+        levels: [
+            { name: "Level 1", age: "Ages 4-5", bricks: "~400", desc: "Simple designs with large bricks" },
+            { name: "Level 2", age: "Ages 6-7", bricks: "~800", desc: "Medium complexity brick designs" },
+            { name: "Level 3", age: "Ages 8-10", bricks: "~1,200", desc: "Detailed brick designs" },
+            { name: "PRO", age: "Expert", bricks: "~5,000", desc: "High-resolution large-scale brick designs" },
+        ],
+        bricksCaption: "brick designs available",
         payBtn: "Pay with Google Pay",
         hint: "Based on TEST payment environment",
         alertSuccess: "Successfully upgraded to Pro membership!",
