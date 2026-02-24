@@ -50,10 +50,18 @@ public class GaDemographicService extends GaBaseService {
     }
 
     public List<DeepInsightResponse.CategoryStat> fetchCategoryStats(int days) {
+        List<DeepInsightResponse.CategoryStat> stats = fetchCategoryStatsWithPrefix("customUser", days);
+        if (stats.isEmpty()) {
+            stats = fetchCategoryStatsWithPrefix("customEvent", days);
+        }
+        return stats;
+    }
+
+    private List<DeepInsightResponse.CategoryStat> fetchCategoryStatsWithPrefix(String prefix, int days) {
         List<DeepInsightResponse.CategoryStat> stats = new ArrayList<>();
         try {
             RunReportRequest request = buildBasicRequest(days)
-                    .addDimensions(Dimension.newBuilder().setName("customUser:image_category"))
+                    .addDimensions(Dimension.newBuilder().setName(prefix + ":image_category"))
                     .addDimensions(Dimension.newBuilder().setName("eventName"))
                     .addMetrics(Metric.newBuilder().setName("eventCount"))
                     .setDimensionFilter(FilterExpression.newBuilder()
@@ -63,7 +71,6 @@ public class GaDemographicService extends GaBaseService {
                             .build())
                     .build();
 
-            // 가공 로직: record는 불변이므로 Map을 통해 누적 후 변환
             java.util.Map<String, long[]> map = new java.util.HashMap<>();
             for (Row row : getClient().runReport(request).getRowsList()) {
                 String cat = row.getDimensionValues(0).getValue();
@@ -80,16 +87,24 @@ public class GaDemographicService extends GaBaseService {
             }
             map.forEach((k, v) -> stats.add(new DeepInsightResponse.CategoryStat(k, v[0], v[1])));
         } catch (Exception e) {
-            log.warn("Failed to fetch Category Stats: {}", e.getMessage());
+            log.warn("Failed to fetch Category Stats with {}: {}", prefix, e.getMessage());
         }
         return stats;
     }
 
     public List<DeepInsightResponse.AgeStat> fetchAgeStats(int days) {
+        List<DeepInsightResponse.AgeStat> stats = fetchAgeStatsWithPrefix("customUser", days);
+        if (stats.isEmpty()) {
+            stats = fetchAgeStatsWithPrefix("customEvent", days);
+        }
+        return stats;
+    }
+
+    private List<DeepInsightResponse.AgeStat> fetchAgeStatsWithPrefix(String prefix, int days) {
         List<DeepInsightResponse.AgeStat> stats = new ArrayList<>();
         try {
             RunReportRequest request = buildBasicRequest(days)
-                    .addDimensions(Dimension.newBuilder().setName("customUser:age"))
+                    .addDimensions(Dimension.newBuilder().setName(prefix + ":age"))
                     .addMetrics(Metric.newBuilder().setName("eventCount"))
                     .setDimensionFilter(createDimensionFilter("eventName", "generate_success", false))
                     .build();
@@ -102,7 +117,7 @@ public class GaDemographicService extends GaBaseService {
                         new DeepInsightResponse.AgeStat(age, (int) Long.parseLong(row.getMetricValues(0).getValue())));
             }
         } catch (Exception e) {
-            log.warn("Failed to fetch Age Stats: {}", e.getMessage());
+            log.warn("Failed to fetch Age Stats with {}: {}", prefix, e.getMessage());
         }
         return stats;
     }
