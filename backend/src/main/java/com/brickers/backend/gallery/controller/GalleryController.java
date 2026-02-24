@@ -1,8 +1,10 @@
 package com.brickers.backend.gallery.controller;
 
+import com.brickers.backend.auth.service.InternalAuthService;
+import com.brickers.backend.gallery.dto.*;
+import com.brickers.backend.gallery.service.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -23,9 +25,7 @@ public class GalleryController {
     private final GalleryService galleryService;
     private final GalleryReactionService galleryReactionService;
     private final GalleryViewService galleryViewService;
-
-    @Value("${INTERNAL_API_TOKEN:}")
-    private String internalApiToken;
+    private final InternalAuthService authService;
 
     /** 게시글 생성 (로그인 필요) */
     @PostMapping
@@ -109,12 +109,13 @@ public class GalleryController {
     @PatchMapping("/{id}/screenshots")
     public ResponseEntity<Void> updateScreenshots(
             @PathVariable("id") String id,
-            @RequestHeader("X-Internal-Token") String token,
+            @RequestHeader(name = "X-Internal-Token", required = false) String token,
             @RequestBody Map<String, Object> body) {
-        if (internalApiToken == null || internalApiToken.isBlank() || !internalApiToken.equals(token)) {
-            log.warn("[GalleryController] 스크린샷 업데이트 토큰 불일치");
+
+        if (!authService.isAdminOrInternal(token)) {
             return ResponseEntity.status(403).build();
         }
+
         @SuppressWarnings("unchecked")
         Map<String, String> urls = (Map<String, String>) body.get("screenshotUrls");
         if (urls == null || urls.isEmpty()) {

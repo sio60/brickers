@@ -42,7 +42,7 @@ export function useAdminAI(activeTab: string) {
         }));
 
         try {
-            const res = await authFetch("/api/admin/analytics/deep-analyze", { method: "POST" });
+            const res = await authFetch("/api/admin/analytics/ai/deep-analyze", { method: "POST" });
             if (res.ok) {
                 const data = await res.json();
                 setState(prev => ({
@@ -107,7 +107,7 @@ export function useAdminAI(activeTab: string) {
         if (!query.trim()) return;
         setIsQuerying(true);
         try {
-            const res = await authFetch("/api/admin/analytics/query", {
+            const res = await authFetch("/api/admin/analytics/ai/query", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ query }),

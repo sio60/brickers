@@ -3,6 +3,7 @@ package com.brickers.backend.billing.controller;
 import com.brickers.backend.billing.dto.*;
 import com.brickers.backend.billing.scheduler.SubscriptionScheduler;
 import com.brickers.backend.billing.service.BillingService;
+import com.brickers.backend.user.service.MembershipService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import java.util.Map;
 public class BillingController {
 
     private final BillingService billingService;
+    private final MembershipService membershipService;
     private final SubscriptionScheduler subscriptionScheduler;
 
     /**
@@ -54,7 +56,7 @@ public class BillingController {
     @PostMapping("/activate")
     public ResponseEntity<?> activate(Authentication auth) {
         String userId = (String) auth.getPrincipal();
-        billingService.activateMembership(userId);
+        membershipService.upgradeToPro(userId);
         return ResponseEntity.ok(Map.of("message", "멤버십이 활성화되었습니다."));
     }
 

@@ -41,15 +41,6 @@ public class AdminDashboardController {
                 .build();
     }
 
-    @GetMapping("/metrics")
-    public Map<String, Object> getMetrics() {
-        // 간단한 헬스/메트릭 정보 (실제 모니터링 연동 전 mock/simple data)
-        Map<String, Object> metrics = new HashMap<>();
-        metrics.put("status", "UP");
-        metrics.put("systemTime", System.currentTimeMillis());
-        return metrics;
-    }
-
     @Data
     @Builder
     public static class AdminDashboardStats {

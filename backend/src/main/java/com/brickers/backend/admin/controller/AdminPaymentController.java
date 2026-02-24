@@ -26,17 +26,6 @@ public class AdminPaymentController {
         return adminPaymentService.getAllPayments(page, size);
     }
 
-    /** 결제 상세 */
-    @GetMapping("/orders/{orderId}")
-    public AdminPaymentDto getOrder(@PathVariable("orderId") String orderId) {
-        return adminPaymentService.getOrder(orderId);
-    }
-
-    @GetMapping("/orders/by-orderNo/{orderNo}")
-    public AdminPaymentDto getOrderByOrderNo(@PathVariable("orderNo") String orderNo) {
-        return adminPaymentService.getOrderByOrderNo(orderNo);
-    }
-
     /** 결제 취소 (Admin 기능) */
     @PostMapping("/orders/{orderId}/cancel")
     public AdminPaymentDto cancelOrder(
