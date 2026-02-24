@@ -294,6 +294,45 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget, sourceT
         };
     }, [rawFile, targetPrompt, age, budget]);
 
+    // Background image often arrives after job status becomes DONE (screenshot worker callback).
+    // Keep polling a bit longer so share modal can show the generated background.
+    useEffect(() => {
+        if (!jobId || status !== "done" || shareBackgroundUrl) return;
+
+        let cancelled = false;
+        const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+        const MAX_ATTEMPTS = 60; // ~2 minutes
+
+        (async () => {
+            for (let i = 0; i < MAX_ATTEMPTS; i++) {
+                if (cancelled || shareBackgroundUrl) return;
+                await sleep(2000);
+                if (cancelled) return;
+
+                try {
+                    const res = await authFetchRef.current(`/api/kids/jobs/${jobId}`);
+                    if (!res.ok) continue;
+                    const data = await res.json();
+                    if (cancelled) return;
+
+                    if (data.backgroundUrl) {
+                        setShareBackgroundUrl(data.backgroundUrl);
+                    }
+                    if (data.pdfUrl) setPdfUrl(data.pdfUrl);
+                    if (data.screenshotUrls) setScreenshotUrls(data.screenshotUrls);
+
+                    if (data.backgroundUrl) return;
+                } catch {
+                    // keep retrying quietly
+                }
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [jobId, status, shareBackgroundUrl]);
+
     // SSE Logs
     useEffect(() => {
         if (!jobId || status !== "loading") return;

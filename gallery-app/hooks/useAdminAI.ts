@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { getAiAnalyticsReport } from "@/lib/api/adminApi";
 
 export interface AdminAIState {
     deepAnalyzing: boolean;
@@ -29,6 +30,24 @@ export function useAdminAI(activeTab: string) {
 
     const [autoAnalyzeDone, setAutoAnalyzeDone] = useState(false);
 
+    // [NEW] 기존 리포트 가져오기 (보다 안전한 버전)
+    const handleFetchReport = useCallback(async (days: number = 7) => {
+        try {
+            const data = await getAiAnalyticsReport(days);
+            if (data && data.report) {
+                setState(prev => ({
+                    ...prev,
+                    deepReport: data.report,
+                    lastDeepAnalysisTime: "Saved Report",
+                }));
+                return true;
+            }
+        } catch (e: any) {
+            console.error("[useAdminAI] Failed to fetch existing report:", e);
+        }
+        return false;
+    }, []);
+
     const handleDeepAnalyze = useCallback(async () => {
         setState(prev => ({
             ...prev,
@@ -42,7 +61,7 @@ export function useAdminAI(activeTab: string) {
         }));
 
         try {
-            const res = await authFetch("/api/admin/analytics/deep-analyze", { method: "POST" });
+            const res = await authFetch("/api/admin/analytics/ai/deep-analyze", { method: "POST" });
             if (res.ok) {
                 const data = await res.json();
                 setState(prev => ({
@@ -107,7 +126,7 @@ export function useAdminAI(activeTab: string) {
         if (!query.trim()) return;
         setIsQuerying(true);
         try {
-            const res = await authFetch("/api/admin/analytics/query", {
+            const res = await authFetch("/api/admin/analytics/ai/query", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ query }),
@@ -134,12 +153,12 @@ export function useAdminAI(activeTab: string) {
 
     useEffect(() => {
         if (activeTab === "dashboard" && !autoAnalyzeDone && !state.deepAnalyzing) {
-            handleDeepAnalyzeRef.current();
+            // [REMOVED] 자동 조회 로직 제거 - 분석 시작 버튼으로만 동작하게 함
             setAutoAnalyzeDone(true);
         }
 
         let interval: NodeJS.Timeout | null = null;
-        if (activeTab === "dashboard") {
+        if (activeTab === "dashboard" && state.deepReport) { // [FIX] 리포트가 있을 때만 주기적 갱신 시작
             interval = setInterval(() => {
                 if (!state.deepAnalyzing) {
                     console.log("[AI Analyst] Periodic auto-refreshing...");

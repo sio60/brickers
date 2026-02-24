@@ -123,44 +123,22 @@ export default function UpgradeModal({ isOpen, onClose }: Props) {
                     {t.upgradeModal.message}
                 </p>
 
-                <div className="w-full grid grid-cols-1 gap-[14px] mb-[22px] text-left">
-                    {/* Kids */}
-                    <div className="border border-black/12 rounded-2xl p-4">
-                        <div className="flex items-center justify-between mb-[10px]">
-                            <p className="text-base font-[800] text-black m-0">{t.upgradeModal.kidsPlan.title}</p>
-                            <span className="text-xs font-[800] px-[10px] py-1.5 rounded-full bg-black/6 text-[#111]">
-                                {t.upgradeModal.kidsPlan.badge}
-                            </span>
+                <div className="w-full grid grid-cols-1 gap-3 mb-[22px] text-left">
+                    {t.upgradeModal.levels.map((level: any, idx: number) => (
+                        <div
+                            key={idx}
+                            className={`border rounded-2xl p-4 ${idx === 3 ? "border-black bg-black/[0.03]" : "border-black/12"}`}
+                        >
+                            <div className="flex items-center justify-between mb-1.5">
+                                <p className="text-base font-[800] text-black m-0">{level.name}</p>
+                                <span className="text-xs font-[700] px-[10px] py-1 rounded-full bg-black/6 text-[#111]">
+                                    {level.age}
+                                </span>
+                            </div>
+                            <p className="text-sm text-[#444] m-0 leading-[1.45]">{level.desc}</p>
+                            <p className="text-xs text-[#888] m-0 mt-1">{level.bricks} {t.upgradeModal.bricksCaption}</p>
                         </div>
-
-                        <ul className="list-none p-0 m-0 grid gap-1.5">
-                            {t.upgradeModal.kidsPlan.features.map((feature: string, idx: number) => (
-                                <li key={idx} className="flex gap-2 items-start text-sm text-[#444] leading-[1.45]">
-                                    <span className="w-2 h-2 mt-1.5 rounded-full bg-black shrink-0" />
-                                    {feature}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Pro */}
-                    <div className="border border-black/12 rounded-2xl p-4">
-                        <div className="flex items-center justify-between mb-[10px]">
-                            <p className="text-base font-[800] text-black m-0">{t.upgradeModal.proPlan.title}</p>
-                            <span className="text-xs font-[800] px-[10px] py-1.5 rounded-full bg-black/6 text-[#111]">
-                                {t.upgradeModal.proPlan.badge}
-                            </span>
-                        </div>
-
-                        <ul className="list-none p-0 m-0 grid gap-1.5">
-                            {t.upgradeModal.proPlan.features.map((feature: string, idx: number) => (
-                                <li key={idx} className="flex gap-2 items-start text-sm text-[#444] leading-[1.45]">
-                                    <span className="w-2 h-2 mt-1.5 rounded-full bg-black shrink-0" />
-                                    {feature}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                    ))}
                 </div>
 
                 <button

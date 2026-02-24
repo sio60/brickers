@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { useAdminAI } from "@/hooks/useAdminAI";
 import { AdminDetailDataProvider } from "@/contexts/AdminDetailDataContext";
 
 // SSR 제외 및 동적 임포트
@@ -14,8 +13,6 @@ export default function AdminDetailPage() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<"dashboard" | "propensity">("dashboard");
 
-    // [NEW] Use shared hook
-    const aiState = useAdminAI(activeTab);
 
     const sidebarItemBase = "py-4 px-8 border-none bg-transparent text-left text-base font-bold cursor-pointer transition-all duration-200 text-[#888] hover:text-white hover:bg-[#222] max-md:py-3 max-md:px-4 max-md:whitespace-nowrap max-md:text-sm";
     const sidebarItemActive = "!text-black !bg-[#ffe135]";
@@ -47,7 +44,9 @@ export default function AdminDetailPage() {
                             <div className="text-[#444]">
                                 {/* display:none 패턴 — 컴포넌트를 언마운트하지 않아 훅 순서 유지 + 데이터 보존 */}
                                 <div style={{ display: activeTab === "dashboard" ? "block" : "none" }}>
-                                    <DetailedAnalytics />
+                                    <div className="mt-8">
+                                        <DetailedAnalytics />
+                                    </div>
                                 </div>
                                 <div style={{ display: activeTab === "propensity" ? "block" : "none" }}>
                                     <DeepInsights />

@@ -84,16 +84,15 @@ export function AdminDetailDataProvider({ children }: { children: React.ReactNod
 
         try {
             const results = await Promise.allSettled([
-                authFetch("/api/admin/analytics/daily-users?days=30"),
-                authFetch("/api/admin/analytics/generation-trend?days=7"),
-                authFetch("/api/admin/analytics/performance?days=30"),
-                authFetch("/api/admin/analytics/top-tags?days=30&limit=10"),
-                authFetch("/api/admin/analytics/heavy-users?days=30"),
-                authFetch("/api/admin/analytics/deep-insights?days=30"),
-                authFetch("/api/admin/analytics/product-intelligence?days=30"),
+                authFetch("/api/admin/analytics/basic/summary-package?days=30"), // Batch API
+                authFetch("/api/admin/analytics/deep/generation-trend?days=7"),
+                authFetch("/api/admin/analytics/deep/performance?days=30"),
+                authFetch("/api/admin/analytics/basic/heavy-users?days=30"),
+                authFetch("/api/admin/analytics/deep/deep-insights?days=30"),
+                authFetch("/api/admin/analytics/deep/product-intelligence?days=30"),
             ]);
 
-            const [usersRes, genRes, perfRes, tagsRes, heavyRes, deepRes, prodIntelRes] = results;
+            const [pkgRes, genRes, perfRes, heavyRes, deepRes, prodIntelRes] = results;
 
             // Helper: 안전하게 JSON 파싱
             const safeJson = async (res: PromiseSettledResult<Response>) => {
@@ -103,8 +102,12 @@ export function AdminDetailDataProvider({ children }: { children: React.ReactNod
                 return null;
             };
 
-            const usersData = await safeJson(usersRes);
-            if (Array.isArray(usersData)) setDailyUsers(usersData);
+            const summaryPkg = await safeJson(pkgRes);
+            if (summaryPkg) {
+                if (summaryPkg.summary) setDailyUsers([{ date: 'Summary', count: 0 }]); // Placeholder or actual mapping if needed
+                if (Array.isArray(summaryPkg.dailyUsers)) setDailyUsers(summaryPkg.dailyUsers);
+                if (Array.isArray(summaryPkg.topTags)) setTopTags(summaryPkg.topTags);
+            }
 
             const genData = await safeJson(genRes);
             if (Array.isArray(genData)) {
@@ -115,9 +118,6 @@ export function AdminDetailDataProvider({ children }: { children: React.ReactNod
             if (perfData && typeof perfData === 'object' && Array.isArray(perfData.failureStats)) {
                 setPerformance(perfData);
             }
-
-            const tagsData = await safeJson(tagsRes);
-            if (Array.isArray(tagsData)) setTopTags(tagsData);
 
             const heavyData = await safeJson(heavyRes);
             if (Array.isArray(heavyData)) setHeavyUsers(heavyData);

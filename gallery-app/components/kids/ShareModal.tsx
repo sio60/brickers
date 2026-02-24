@@ -157,7 +157,7 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
                         {backgroundUrl && (
                             <div
                                 className="absolute inset-0 bg-cover bg-center"
-                                style={{ backgroundImage: `url(${encodeURI(backgroundUrl)})` }}
+                                style={{ backgroundImage: `url(${backgroundUrl})` }}
                             />
                         )}
                         {ldrUrl ? (

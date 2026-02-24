@@ -168,6 +168,7 @@ function KidsPageContent() {
                         jobId={generation.jobId}
                         age={age}
                         pdfUrl={generation.pdfUrl}
+                        shareEnabled={!!generation.shareBackgroundUrl}
                         shareModalOpen={shareModalOpen}
                         previewRef={previewRef}
                         onShareClick={handleShareImage}

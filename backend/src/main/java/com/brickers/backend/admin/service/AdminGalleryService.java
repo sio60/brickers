@@ -45,13 +45,6 @@ public class AdminGalleryService {
         }
     }
 
-    @Transactional(readOnly = true)
-    public AdminGalleryPostDto getPost(String id) {
-        GalleryPostEntity post = galleryPostRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Post not found"));
-        return AdminGalleryPostDto.from(post);
-    }
-
     @Transactional
     public void deletePost(String id) {
         GalleryPostEntity post = galleryPostRepository.findById(id)

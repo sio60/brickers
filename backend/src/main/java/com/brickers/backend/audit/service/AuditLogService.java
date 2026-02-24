@@ -7,9 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.Base64;
+
 import java.util.Map;
 
 @Service
@@ -47,59 +46,6 @@ public class AuditLogService {
                 .build();
 
         auditLogRepository.save(doc);
-    }
-
-    /**
-     * Authorization 헤더에서 JWT jti 추출
-     * - 서명검증까지는 여기서 하지 않음(감사 로그 목적)
-     * - payload를 base64url 디코드해서 "jti"만 뽑음
-     */
-    private String extractJwtJti(HttpServletRequest request) {
-        String auth = request.getHeader("Authorization");
-        if (auth == null || auth.isBlank())
-            return null;
-
-        if (!auth.startsWith("Bearer "))
-            return null;
-        String token = auth.substring("Bearer ".length()).trim();
-        if (token.isBlank())
-            return null;
-
-        // JWT: header.payload.signature
-        String[] parts = token.split("\\.");
-        if (parts.length < 2)
-            return null;
-
-        try {
-            String payloadJson = new String(
-                    Base64.getUrlDecoder().decode(parts[1]),
-                    StandardCharsets.UTF_8);
-
-            // ✅ 아주 단순하게 "jti":"..." 만 뽑기 (외부 lib 없이)
-            // payloadJson 예: {"sub":"...","jti":"abc","exp":...}
-            String key = "\"jti\"";
-            int idx = payloadJson.indexOf(key);
-            if (idx < 0)
-                return null;
-
-            int colon = payloadJson.indexOf(":", idx);
-            if (colon < 0)
-                return null;
-
-            int firstQuote = payloadJson.indexOf("\"", colon);
-            if (firstQuote < 0)
-                return null;
-
-            int secondQuote = payloadJson.indexOf("\"", firstQuote + 1);
-            if (secondQuote < 0)
-                return null;
-
-            String jti = payloadJson.substring(firstQuote + 1, secondQuote).trim();
-            return jti.isBlank() ? null : jti;
-
-        } catch (Exception e) {
-            return null;
-        }
     }
 
     /**

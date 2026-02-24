@@ -30,12 +30,6 @@ public class AdminGalleryController {
         return adminGalleryService.getAllPosts(keyword, visibility, deleted, page, size);
     }
 
-    /** 게시글 상세 */
-    @GetMapping("/{id}")
-    public AdminGalleryPostDto getPost(@PathVariable("id") String id) {
-        return adminGalleryService.getPost(id);
-    }
-
     /** 게시글 삭제 (Soft Delete) */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deletePost(@PathVariable("id") String id) {
