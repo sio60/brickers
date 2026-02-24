@@ -79,40 +79,6 @@ export default function useJobData({
         return () => { alive = false; };
     }, [jobId, ldrUrl]);
 
-    // Background/screenshot callbacks can arrive after the first job fetch completes.
-    useEffect(() => {
-        if (!jobId || !jobLoaded || shareBackgroundUrl) return;
-
-        let alive = true;
-        const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-        const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-        const MAX_ATTEMPTS = 60; // ~2 minutes
-
-        (async () => {
-            for (let i = 0; i < MAX_ATTEMPTS && alive; i++) {
-                await sleep(2000);
-                if (!alive) return;
-
-                try {
-                    const res = await fetch(`${API_BASE}/api/kids/jobs/${jobId}`, { credentials: 'include' });
-                    if (!res.ok) continue;
-                    const data = await res.json();
-                    if (!alive) return;
-
-                    if (data.screenshotUrls) setJobScreenshotUrls(data.screenshotUrls);
-                    if (data.backgroundUrl) {
-                        setShareBackgroundUrl(data.backgroundUrl);
-                        return;
-                    }
-                } catch {
-                    // ignore transient polling errors
-                }
-            }
-        })();
-
-        return () => { alive = false; };
-    }, [jobId, jobLoaded, shareBackgroundUrl]);
-
     return {
         ldrUrl,
         setLdrUrl,

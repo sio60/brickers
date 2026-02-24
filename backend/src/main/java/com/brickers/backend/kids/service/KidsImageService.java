@@ -97,7 +97,7 @@ public class KidsImageService {
         };
 
         StringBuilder builder = new StringBuilder();
-        builder.append("Create one single concept image for brick model generation. ");
+        builder.append("Create one single LEGO-style concept image for brick model generation. ");
         builder.append("User request: \"").append(userPrompt).append("\". ");
 
         if (title != null && !title.isBlank()) {
@@ -109,7 +109,7 @@ public class KidsImageService {
 
         builder.append(complexityGuide).append(" ");
         builder.append("Hard requirements: single subject, centered composition, full object visible, ");
-        builder.append("clean light background, natural material cues, clear silhouette, ");
+        builder.append("clean light background, toy-like but realistic LEGO brick texture, clear silhouette, ");
         builder.append("physically buildable and stable structure, no floating impossible parts, ");
         builder.append("prefer simple color blocks over noisy micro details, ");
         builder.append("no text, letters, logos, watermark, UI elements, collage, split layout, ");
