@@ -44,23 +44,14 @@ export const ko = {
     },
     upgradeModal: {
         title: "UPGRADE",
-        message: "업그레이드하고 더 많은 도면과 고급 기능을 사용해보세요.",
-        kidsPlan: {
-            title: "키즈 모드",
-            badge: "Easy",
-            features: [
-                "사진/이미지를 직접 업로드",
-                "자동 도면 생성"
-            ]
-        },
-        proPlan: {
-            title: "프로 모드",
-            badge: "Pro",
-            features: [
-                "추천 도면 TOP 3 미리보기",
-                "최대 3회 재생성(리롤) 가능"
-            ]
-        },
+        message: "레벨에 따라 더 정밀한 브릭 도면을 생성할 수 있어요.",
+        levels: [
+            { name: "Level 1", age: "4-5세", bricks: "~400개", desc: "큰 브릭 위주의 간단한 도면 생성" },
+            { name: "Level 2", age: "6-7세", bricks: "~800개", desc: "중간 난이도의 브릭 도면 생성" },
+            { name: "Level 3", age: "8-10세", bricks: "~1,200개", desc: "디테일한 브릭 도면 생성" },
+            { name: "PRO", age: "전문가", bricks: "~5,000개", desc: "고해상도 대량 브릭 도면 생성" },
+        ],
+        bricksCaption: "브릭 도면 생성 가능",
         payBtn: "Google Pay로 결제하기",
         hint: "테스트 결제 환경(TEST) 기준",
         alertSuccess: "프로 멤버십으로 업그레이드되었습니다!",
