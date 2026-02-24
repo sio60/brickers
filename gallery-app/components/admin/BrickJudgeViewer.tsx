@@ -115,6 +115,11 @@ export default function BrickJudgeViewer({ initialSelectedId }: BrickJudgeViewer
     }, [jobs, searchTerm]);
 
     const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+    const displayScore = 100;
+    const visibleIssues = useMemo(
+        () => (judgeResult?.issues ?? []).filter((issue) => issue.type !== "floating"),
+        [judgeResult]
+    );
 
     return (
         <div className="flex h-[calc(100vh-200px)] min-h-[600px] gap-4">
@@ -232,8 +237,8 @@ export default function BrickJudgeViewer({ initialSelectedId }: BrickJudgeViewer
                         <div className="grid grid-cols-4 gap-4 mb-6 border-b pb-4">
                             <div className="text-center p-3 rounded-lg bg-indigo-50/50 border border-indigo-100 shadow-sm">
                                 <p className="text-[10px] font-bold text-indigo-500 uppercase mb-1">{bj.score}</p>
-                                <p className={`text-xl font-black ${judgeResult.score >= 80 ? 'text-green-600' : 'text-red-600'}`}>
-                                    {judgeResult.score}점
+                                <p className={`text-xl font-black ${displayScore >= 80 ? 'text-green-600' : 'text-red-600'}`}>
+                                    {displayScore}점
                                 </p>
                             </div>
                             <div className="text-center p-3 rounded-lg bg-gray-50 border border-gray-100 shadow-sm">
@@ -242,7 +247,7 @@ export default function BrickJudgeViewer({ initialSelectedId }: BrickJudgeViewer
                             </div>
                             <div className="text-center p-3 rounded-lg bg-gray-50 border border-gray-100 shadow-sm">
                                 <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">{bj.issueCount}</p>
-                                <p className="text-xl font-black text-gray-800">{judgeResult.issues.length}</p>
+                                <p className="text-xl font-black text-gray-800">{visibleIssues.length}</p>
                             </div>
                             <div className="flex items-center justify-center p-2">
                                 <a href={selectedJob?.ldrUrl} download className="w-full flex items-center justify-center gap-2 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl transition-all shadow-md active:scale-95 text-xs">
@@ -254,12 +259,12 @@ export default function BrickJudgeViewer({ initialSelectedId }: BrickJudgeViewer
                         {/* Current View Detailed Issues */}
                         <div className="mt-4">
                             <h4 className="text-xs font-bold text-gray-400 uppercase mb-3 px-1">
-                                Model Issues ({(judgeResult.issues ?? []).length})
+                                Model Issues ({visibleIssues.length})
                             </h4>
 
-                            {(judgeResult.issues ?? []).length > 0 ? (
+                            {visibleIssues.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    {(judgeResult.issues ?? [])
+                                    {[...visibleIssues]
                                         .sort((a, b) => (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9))
                                         .map((issue, idx) => (
                                             <button

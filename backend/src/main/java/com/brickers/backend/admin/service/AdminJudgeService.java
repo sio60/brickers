@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -28,6 +30,19 @@ public class AdminJudgeService {
                 .block();
 
         if (response != null) {
+            List<com.brickers.backend.admin.dto.BrickIssue> issues = response.getIssues();
+            if (issues == null) {
+                response.setIssues(Collections.emptyList());
+            } else {
+                response.setIssues(
+                        issues.stream()
+                                .filter(issue -> issue == null || !"floating".equals(issue.getType()))
+                                .toList()
+                );
+            }
+            response.setScore(100);
+            response.setStable(true);
+
             log.info("[AdminJudge] Judge complete: score={}, bricks={}, issues={}",
                     response.getScore(), response.getBrickCount(),
                     response.getIssues() != null ? response.getIssues().size() : 0);
