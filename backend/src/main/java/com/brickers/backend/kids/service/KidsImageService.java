@@ -87,7 +87,7 @@ public class KidsImageService {
 
     private String buildEnhancedImagePrompt(String rawPrompt, String age, String title, String language) {
         String userPrompt = normalizePrompt(rawPrompt);
-        KidsLevel level = ageToKidsLevel(age);
+        KidsLevel level = KidsLevel.fromAge(age);
 
         String complexityGuide = switch (level) {
             case LEVEL_1 -> "Complexity target: very simple, big chunky shapes, minimal details.";
@@ -123,17 +123,5 @@ public class KidsImageService {
             return "";
         String normalized = text.replaceAll("\\s+", " ").trim();
         return normalized.length() > 300 ? normalized.substring(0, 300) : normalized;
-    }
-
-    private KidsLevel ageToKidsLevel(String age) {
-        if (age == null)
-            return KidsLevel.LEVEL_1;
-        return switch (age.toLowerCase()) {
-            case "3-5", "35" -> KidsLevel.LEVEL_1;
-            case "6-7", "67" -> KidsLevel.LEVEL_2;
-            case "8-10", "810" -> KidsLevel.LEVEL_3;
-            case "pro" -> KidsLevel.PRO;
-            default -> KidsLevel.LEVEL_1;
-        };
     }
 }
