@@ -1,7 +1,5 @@
 package com.brickers.backend.sqs.service;
 
-import com.brickers.backend.job.entity.GenerateJobEntity;
-import com.brickers.backend.job.repository.GenerateJobRepository;
 import com.brickers.backend.sqs.dto.SqsMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -32,12 +30,12 @@ import java.util.Set;
 public class SqsConsumerService {
 
     private final SqsClient sqsClient;
-    private final GenerateJobRepository jobRepository;
+    private final SqsResultHandler sqsResultHandler;
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
 
     @Value("${aws.sqs.queue.result-url}")
-    private String resultQueueUrl; // AI → Backend (RESULT 수신용)
+    private String resultQueueUrl;
 
     @Value("${aws.sqs.polling.max-messages:10}")
     private int maxMessages;
@@ -106,13 +104,11 @@ public class SqsConsumerService {
             log.info("📌 [SQS Consumer] RESULT 메시지 처리 시작 | jobId={} | success={}",
                     sqsMessage.getJobId(), sqsMessage.getSuccess());
 
-            // Job 업데이트
-            updateJob(sqsMessage);
+            // 비즈니스 로직 위임 (Job 업데이트)
+            sqsResultHandler.handleResult(sqsMessage);
 
             // 처리 완료 - 메시지 삭제
             deleteMessage(receiptHandle);
-
-            // 캐시 추가
             addToCache(messageId);
 
             log.info("✅ [SQS Consumer] RESULT 메시지 처리 완료 | jobId={}", sqsMessage.getJobId());
@@ -130,85 +126,7 @@ public class SqsConsumerService {
         } catch (Exception e) {
             log.error("❌ [SQS Consumer] 메시지 처리 실패 | messageId={} | error={}",
                     messageId, e.getMessage(), e);
-            // DB 업데이트 실패 등은 메시지 삭제 안 함 → Visibility Timeout 후 재처리
         }
-    }
-
-    /**
-     * Job 업데이트
-     */
-    private void updateJob(SqsMessage result) {
-        GenerateJobEntity job = jobRepository.findById(result.getJobId())
-                .orElseThrow(() -> new java.util.NoSuchElementException("Job not found: " + result.getJobId()));
-
-        // ✅ 유저가 이미 취소한 작업인 경우 업데이트 무시
-        if (job.getStatus() == com.brickers.backend.job.entity.JobStatus.CANCELED) {
-            log.info("   🚫 [CANCELED] 유저가 취소한 작업이므로 업데이트를 무시합니다. | jobId={}", job.getId());
-            return;
-        }
-
-        if (result.getSuccess()) {
-            // 성공 - URL 필드 업데이트
-            job.setCorrectedImageUrl(result.getCorrectedUrl());
-            job.setGlbUrl(result.getGlbUrl());
-            job.setLdrUrl(result.getLdrUrl());
-            // [New] Initial LDR URL (for comparison)
-            if (result.getInitialLdrUrl() != null && !result.getInitialLdrUrl().isBlank()) {
-                job.setInitialLdrUrl(result.getInitialLdrUrl());
-            }
-            job.setBomUrl(result.getBomUrl());
-            // pdfUrl: 빈 문자열이면 null 유지 (Blueprint 서버가 나중에 업데이트)
-            if (result.getPdfUrl() != null && !result.getPdfUrl().isBlank()) {
-                job.setPdfUrl(result.getPdfUrl());
-            }
-            if (result.getParts() != null) {
-                job.setParts(result.getParts());
-            }
-            if (result.getFinalTarget() != null) {
-                job.setFinalTarget(result.getFinalTarget());
-            }
-            if (result.getTags() != null && !result.getTags().isEmpty()) {
-                job.setSuggestedTags(result.getTags());
-            }
-            if (result.getBackgroundUrl() != null && !result.getBackgroundUrl().isBlank()) {
-                job.setBackgroundUrl(result.getBackgroundUrl());
-            }
-
-            // [New] Cost & Token Usage
-            if (result.getTokenCount() != null) {
-                job.setTokenCount(result.getTokenCount());
-            }
-            if (result.getEstCost() != null) {
-                job.setEstCost(result.getEstCost());
-            }
-            if (result.getStabilityScore() != null) {
-                job.setStabilityScore(result.getStabilityScore());
-            }
-            // Fallback for Cost (Optional: SQS message should ideally have it)
-            if (job.getEstCost() == null) {
-                if (job.getTokenCount() != null) {
-                    double baseCost = 0.30;
-                    double tokenCost = job.getTokenCount() * 0.00000015;
-                    job.setEstCost(Math.round((baseCost + tokenCost) * 10000.0) / 10000.0);
-                } else {
-                    job.setEstCost(0.35); // Default fallback
-                }
-            }
-
-            job.markDone();
-
-            jobRepository.save(job);
-
-            log.info("   ✅ Job 완료 처리 | jobId={} | estCost=${}", job.getId(), job.getEstCost());
-
-        } else {
-            // 실패 - 에러 메시지 저장
-            job.markFailed(result.getErrorMessage());
-
-            log.warn("   ⚠️ Job 실패 처리 | jobId={} | error={}", job.getId(), result.getErrorMessage());
-        }
-
-        jobRepository.save(job);
     }
 
     /**

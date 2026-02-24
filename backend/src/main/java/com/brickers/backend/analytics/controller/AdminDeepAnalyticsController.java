@@ -2,12 +2,10 @@ package com.brickers.backend.analytics.controller;
 
 import com.brickers.backend.analytics.dto.*;
 import com.brickers.backend.analytics.service.GoogleAnalyticsService;
+import com.brickers.backend.auth.service.InternalAuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,24 +17,7 @@ import java.util.List;
 public class AdminDeepAnalyticsController {
 
     private final GoogleAnalyticsService gaService;
-
-    @Value("${INTERNAL_API_TOKEN:}")
-    private String internalApiToken;
-
-    private boolean isInternalAuthorized(String token) {
-        return internalApiToken != null && !internalApiToken.isBlank() && internalApiToken.equals(token);
-    }
-
-    private boolean isAdmin() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated())
-            return false;
-        return auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-    }
-
-    private boolean isAdminOrInternal(String token) {
-        return isInternalAuthorized(token) || isAdmin();
-    }
+    private final InternalAuthService authService;
 
     /**
      * [GET] 사용자의 가입/탐색 퍼널(Funnel) 이탈률 분석과 함께 AI 엔진의 퀄리티(비용, 지연시간, 안정성) 등 핵심 비즈니스
@@ -46,8 +27,10 @@ public class AdminDeepAnalyticsController {
     public ResponseEntity<ProductIntelligenceResponse> getProductIntelligence(
             @RequestHeader(name = "X-Internal-Token", required = false) String token,
             @RequestParam(name = "days", defaultValue = "7") int days) {
-        if (!isAdminOrInternal(token))
+
+        if (!authService.isAdminOrInternal(token)) {
             return ResponseEntity.status(403).build();
+        }
         return ResponseEntity.ok(gaService.getProductIntelligence(days));
     }
 
@@ -58,8 +41,10 @@ public class AdminDeepAnalyticsController {
     public ResponseEntity<DeepInsightResponse> getDeepInsights(
             @RequestHeader(name = "X-Internal-Token", required = false) String token,
             @RequestParam(name = "days", defaultValue = "30") int days) {
-        if (!isAdminOrInternal(token))
+
+        if (!authService.isAdminOrInternal(token)) {
             return ResponseEntity.status(403).build();
+        }
         return ResponseEntity.ok(gaService.getDeepInsights(days));
     }
 
@@ -70,8 +55,10 @@ public class AdminDeepAnalyticsController {
     public ResponseEntity<List<DailyTrendResponse>> getGenerationTrend(
             @RequestHeader(name = "X-Internal-Token", required = false) String token,
             @RequestParam(name = "days", defaultValue = "7") int days) {
-        if (!isAdminOrInternal(token))
+
+        if (!authService.isAdminOrInternal(token)) {
             return ResponseEntity.status(403).build();
+        }
         return ResponseEntity.ok(gaService.getGenerationTrend(days));
     }
 
@@ -83,21 +70,10 @@ public class AdminDeepAnalyticsController {
     public ResponseEntity<PerformanceResponse> getPerformanceDetails(
             @RequestHeader(name = "X-Internal-Token", required = false) String token,
             @RequestParam(name = "days", defaultValue = "30") int days) {
-        if (!isAdminOrInternal(token))
-            return ResponseEntity.status(403).build();
-        return ResponseEntity.ok(gaService.getPerformanceDetails(days));
-    }
 
-    /**
-     * [GET] 개발자/관리자 전용. GA4 API 연동이 정상적인지, 비용 로그가 수집되고 있는지 raw 데이터 차원에서 검증해주는
-     * 엔드포인트입니다.
-     */
-    @GetMapping("/diagnostic")
-    public ResponseEntity<?> getDiagnostic(
-            @RequestHeader(name = "X-Internal-Token", required = false) String token,
-            @RequestParam(defaultValue = "30") int days) {
-        if (!isAdminOrInternal(token))
+        if (!authService.isAdminOrInternal(token)) {
             return ResponseEntity.status(403).build();
-        return ResponseEntity.ok(gaService.getDiagnosticInfo(days));
+        }
+        return ResponseEntity.ok(gaService.getPerformanceDetails(days));
     }
 }

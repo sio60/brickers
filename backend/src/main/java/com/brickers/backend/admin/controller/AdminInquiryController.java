@@ -52,12 +52,4 @@ public class AdminInquiryController {
             @RequestBody InquiryAnswerRequest req) {
         return inquiryService.updateAnswer(auth, inquiryId, req);
     }
-
-    /** 상태 변경 */
-    @PostMapping("/{inquiryId}/status")
-    public InquiryResponse changeStatus(
-            @PathVariable("inquiryId") String inquiryId,
-            @RequestBody InquiryStatusRequest req) {
-        return inquiryService.changeStatus(inquiryId, req);
-    }
 }

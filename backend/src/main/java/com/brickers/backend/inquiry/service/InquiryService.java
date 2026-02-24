@@ -12,7 +12,6 @@ import com.brickers.backend.user.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
@@ -31,178 +30,103 @@ public class InquiryService {
     private final CurrentUserService currentUserService;
     private final UserNotificationService userNotificationService;
 
+    private final InquiryMapper inquiryMapper;
+    private final InquiryHelper inquiryHelper;
+
     // ========== User Side ==========
 
     public InquiryResponse createInquiry(Authentication auth, InquiryCreateRequest req) {
         User user = currentUserService.get(auth);
-
         Inquiry inquiry = Inquiry.builder()
-                .userId(user.getId())
-                .title(req.getTitle())
-                .content(req.getContent())
+                .userId(user.getId()).title(req.getTitle()).content(req.getContent())
                 .attachments(req.getAttachments() != null ? req.getAttachments() : new ArrayList<>())
-                .status(InquiryStatus.OPEN)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-
-        InquiryResponse resp = InquiryResponse.from(inquiryRepository.save(inquiry));
-        resp.setUserEmail(user.getEmail());
-        return resp;
+                .status(InquiryStatus.OPEN).createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build();
+        return inquiryMapper.toResponse(inquiryRepository.save(inquiry), user.getEmail());
     }
 
     public Page<InquiryResponse> getMyInquiries(Authentication auth, int page, int size) {
         User user = currentUserService.get(auth);
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return inquiryRepository.findByUserId(user.getId(), pageable).map(it -> {
-            InquiryResponse resp = InquiryResponse.from(it);
-            resp.setUserEmail(user.getEmail());
-            return resp;
-        });
+        Pageable pageable = inquiryHelper.createPageRequest(page, size, Sort.by("createdAt").descending());
+        return inquiryRepository.findByUserId(user.getId(), pageable)
+                .map(it -> inquiryMapper.toResponse(it, user.getEmail()));
     }
 
-    public InquiryResponse getMyInquiry(Authentication auth, String inquiryId) {
-        User user = currentUserService.get(auth);
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
-                .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다."));
-
-        if (!inquiry.getUserId().equals(user.getId())) {
-            throw new IllegalArgumentException("본인의 문의만 조회 가능합니다.");
-        }
-        InquiryResponse resp = InquiryResponse.from(inquiry);
-        resp.setUserEmail(user.getEmail());
-        return resp;
+    public InquiryResponse getMyInquiry(Authentication auth, String id) {
+        User me = currentUserService.get(auth);
+        return inquiryMapper.toResponse(inquiryHelper.findAndValidateOwner(id, me.getId()), me.getEmail());
     }
 
-    public InquiryResponse updateMyInquiry(Authentication auth, String inquiryId, InquiryUpdateRequest req) {
-        User user = currentUserService.get(auth);
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
-                .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다."));
+    public InquiryResponse updateMyInquiry(Authentication auth, String id, InquiryUpdateRequest req) {
+        User me = currentUserService.get(auth);
+        Inquiry inquiry = inquiryHelper.findAndValidateOwner(id, me.getId());
+        inquiryHelper.validateEditable(inquiry);
 
-        if (!inquiry.getUserId().equals(user.getId())) {
-            throw new IllegalArgumentException("권한이 없습니다.");
-        }
-        if (!inquiry.canEdit()) {
-            throw new IllegalArgumentException("답변이 등록된 문의는 수정할 수 없습니다.");
-        }
-
-        if (req.getTitle() != null) {
+        if (req.getTitle() != null)
             inquiry.setTitle(req.getTitle());
-        }
-        if (req.getContent() != null) {
+        if (req.getContent() != null)
             inquiry.setContent(req.getContent());
-        }
         inquiry.setUpdatedAt(LocalDateTime.now());
-
-        InquiryResponse resp = InquiryResponse.from(inquiryRepository.save(inquiry));
-        resp.setUserEmail(user.getEmail());
-        return resp;
+        return inquiryMapper.toResponse(inquiryRepository.save(inquiry), me.getEmail());
     }
 
-    public void deleteMyInquiry(Authentication auth, String inquiryId) {
-        User user = currentUserService.get(auth);
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
-                .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다."));
-
-        if (!inquiry.getUserId().equals(user.getId())) {
-            throw new IllegalArgumentException("권한이 없습니다.");
-        }
-        if (!inquiry.canDelete()) {
-            throw new IllegalArgumentException("답변이 등록된 문의는 삭제할 수 없습니다.");
-        }
-
+    public void deleteMyInquiry(Authentication auth, String id) {
+        User me = currentUserService.get(auth);
+        Inquiry inquiry = inquiryHelper.findAndValidateOwner(id, me.getId());
+        inquiryHelper.validateDeletable(inquiry);
         inquiryRepository.delete(inquiry);
     }
 
-    public InquiryResponse addAttachment(Authentication auth, String inquiryId, String attachmentUrl) {
-        User user = currentUserService.get(auth);
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
-                .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다."));
-
-        if (!inquiry.getUserId().equals(user.getId())) {
-            throw new IllegalArgumentException("권한이 없습니다.");
-        }
-        if (!inquiry.canEdit()) {
-            throw new IllegalArgumentException("답변이 등록된 문의에는 첨부파일을 추가할 수 없습니다.");
-        }
-
-        inquiry.addAttachment(attachmentUrl);
+    public InquiryResponse addAttachment(Authentication auth, String id, String url) {
+        User me = currentUserService.get(auth);
+        Inquiry inquiry = inquiryHelper.findAndValidateOwner(id, me.getId());
+        inquiryHelper.validateEditable(inquiry);
+        inquiry.addAttachment(url);
         inquiry.setUpdatedAt(LocalDateTime.now());
-
-        InquiryResponse resp = InquiryResponse.from(inquiryRepository.save(inquiry));
-        resp.setUserEmail(user.getEmail());
-        return resp;
+        return inquiryMapper.toResponse(inquiryRepository.save(inquiry), me.getEmail());
     }
 
     // ========== Admin Side ==========
 
     public Page<InquiryResponse> getAllInquiries(InquiryStatus status, int page, int size) {
-        // 답변이 없는 문의(answer.answeredAt == null)를 먼저 보여주고, 같은 그룹 내에서는 오래된순 정렬
-        Sort sort = Sort.by(
-                Sort.Order.asc("answer.answeredAt"),
-                Sort.Order.asc("createdAt"));
-        Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Inquiry> inquiries = (status != null)
-                ? inquiryRepository.findByStatus(status, pageable)
+        Pageable pageable = inquiryHelper.createPageRequest(page, size,
+                Sort.by(Sort.Order.asc("answer.answeredAt"), Sort.Order.asc("createdAt")));
+        Page<Inquiry> result = (status != null) ? inquiryRepository.findByStatus(status, pageable)
                 : inquiryRepository.findAll(pageable);
-
-        return inquiries.map(it -> {
-            InquiryResponse resp = InquiryResponse.from(it);
-            userRepository.findById(it.getUserId()).ifPresent(user -> resp.setUserEmail(user.getEmail()));
-            return resp;
-        });
+        return result.map(it -> inquiryMapper.toResponse(it,
+                userRepository.findById(it.getUserId()).map(User::getEmail).orElse(null)));
     }
 
-    public InquiryResponse getInquiryDetail(String inquiryId) {
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
-                .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다."));
-        InquiryResponse resp = InquiryResponse.from(inquiry);
-        userRepository.findById(inquiry.getUserId()).ifPresent(user -> resp.setUserEmail(user.getEmail()));
-        return resp;
+    public InquiryResponse getInquiryDetail(String id) {
+        Inquiry inquiry = inquiryHelper.findInquiry(id);
+        String email = userRepository.findById(inquiry.getUserId()).map(User::getEmail).orElse(null);
+        return inquiryMapper.toResponse(inquiry, email);
     }
 
-    public InquiryResponse createAnswer(Authentication auth, String inquiryId, InquiryAnswerRequest req) {
-        String adminId = currentUserService.get(auth).getId();
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
-                .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다."));
-
-        InquiryAnswer answer = InquiryAnswer.builder()
-                .content(req.getContent())
-                .answeredBy(adminId)
-                .answeredAt(LocalDateTime.now())
-                .build();
-
-        inquiry.setAnswer(answer);
+    public InquiryResponse createAnswer(Authentication auth, String id, InquiryAnswerRequest req) {
+        Inquiry inquiry = inquiryHelper.findInquiry(id);
+        inquiry.setAnswer(InquiryAnswer.builder().content(req.getContent())
+                .answeredBy(currentUserService.get(auth).getId()).answeredAt(LocalDateTime.now()).build());
         inquiry.setStatus(InquiryStatus.ANSWERED);
         inquiry.setUpdatedAt(LocalDateTime.now());
         Inquiry saved = inquiryRepository.save(inquiry);
         userNotificationService.notifyInquiryAnswered(saved.getUserId(), saved.getTitle());
-        return InquiryResponse.from(saved);
+        return inquiryMapper.toResponse(saved, null);
     }
 
-    public InquiryResponse updateAnswer(Authentication auth, String inquiryId, InquiryAnswerRequest req) {
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
-                .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다."));
-
-        if (inquiry.getAnswer() == null) {
+    public InquiryResponse updateAnswer(Authentication auth, String id, InquiryAnswerRequest req) {
+        Inquiry inquiry = inquiryHelper.findInquiry(id);
+        if (inquiry.getAnswer() == null)
             throw new IllegalArgumentException("등록된 답변이 없습니다.");
-        }
-
-        InquiryAnswer answer = inquiry.getAnswer();
-        answer.setContent(req.getContent());
-        answer.setUpdatedAt(LocalDateTime.now());
+        inquiry.getAnswer().setContent(req.getContent());
+        inquiry.getAnswer().setUpdatedAt(LocalDateTime.now());
         inquiry.setUpdatedAt(LocalDateTime.now());
-
-        return InquiryResponse.from(inquiryRepository.save(inquiry));
+        return inquiryMapper.toResponse(inquiryRepository.save(inquiry), null);
     }
 
-    public InquiryResponse changeStatus(String inquiryId, InquiryStatusRequest req) {
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
-                .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다."));
-
+    public InquiryResponse changeStatus(String id, InquiryStatusRequest req) {
+        Inquiry inquiry = inquiryHelper.findInquiry(id);
         inquiry.setStatus(req.getStatus());
         inquiry.setUpdatedAt(LocalDateTime.now());
-
-        return InquiryResponse.from(inquiryRepository.save(inquiry));
+        return inquiryMapper.toResponse(inquiryRepository.save(inquiry), null);
     }
 }

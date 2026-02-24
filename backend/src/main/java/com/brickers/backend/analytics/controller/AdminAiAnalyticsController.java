@@ -1,12 +1,10 @@
 package com.brickers.backend.analytics.controller;
 
 import com.brickers.backend.analytics.dto.AnalyticsQueryRequest;
+import com.brickers.backend.auth.service.InternalAuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -19,33 +17,19 @@ import java.util.Map;
 public class AdminAiAnalyticsController {
 
     private final WebClient aiWebClient;
-
-    @Value("${INTERNAL_API_TOKEN:}")
-    private String internalApiToken;
-
-    private boolean isInternalAuthorized(String token) {
-        return internalApiToken != null && !internalApiToken.isBlank() && internalApiToken.equals(token);
-    }
-
-    private boolean isAdmin() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated())
-            return false;
-        return auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-    }
-
-    private boolean isAdminOrInternal(String token) {
-        return isInternalAuthorized(token) || isAdmin();
-    }
+    private final InternalAuthService authService;
 
     /**
      * [GET] 파이썬 AI 서버 쪽에 '이번 주(혹은 한 달) 요약 리포트를 작성해줘'라고 명령을 내리고 그 결과를 받아옵니다.
      */
     @GetMapping("/ai-report")
     public ResponseEntity<?> getAiReport(
+            @RequestHeader(name = "X-Internal-Token", required = false) String token,
             @RequestParam(name = "days", defaultValue = "7") int days) {
-        if (!isAdminOrInternal(null))
+
+        if (!authService.isAdminOrInternal(token)) {
             return ResponseEntity.status(403).build();
+        }
         log.info("[AnalyticsBridge] Requesting AI analysis report for last {} days", days);
         try {
             return aiWebClient.get()
@@ -68,9 +52,12 @@ public class AdminAiAnalyticsController {
      * 실행)합니다.
      */
     @PostMapping("/deep-analyze")
-    public ResponseEntity<?> deepAnalyze() {
-        if (!isAdminOrInternal(null))
+    public ResponseEntity<?> deepAnalyze(
+            @RequestHeader(name = "X-Internal-Token", required = false) String token) {
+
+        if (!authService.isAdminOrInternal(token)) {
             return ResponseEntity.status(403).build();
+        }
         log.info("[AnalyticsBridge] 🧠 Requesting LangGraph Deep Analysis...");
         try {
             return aiWebClient.post()
@@ -91,9 +78,13 @@ public class AdminAiAnalyticsController {
      * 인터페이스입니다.
      */
     @PostMapping("/query")
-    public ResponseEntity<?> queryAnalytics(@RequestBody AnalyticsQueryRequest request) {
-        if (!isAdminOrInternal(null))
+    public ResponseEntity<?> queryAnalytics(
+            @RequestHeader(name = "X-Internal-Token", required = false) String token,
+            @RequestBody AnalyticsQueryRequest request) {
+
+        if (!authService.isAdminOrInternal(token)) {
             return ResponseEntity.status(403).build();
+        }
         log.info("[AnalyticsBridge] 💬 Processing custom analytics query...");
         try {
             return aiWebClient.post()

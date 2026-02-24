@@ -1,8 +1,8 @@
 package com.brickers.backend.admin.controller;
 
 import com.brickers.backend.admin.service.AdminModerationService;
+import com.brickers.backend.auth.service.InternalAuthService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
@@ -14,13 +14,7 @@ import java.util.Map;
 public class AdminModerationController {
 
     private final AdminModerationService moderationService;
-
-    @Value("${INTERNAL_API_TOKEN:}")
-    private String internalApiToken;
-
-    private boolean isInternalAuthorized(String token) {
-        return internalApiToken != null && !internalApiToken.isBlank() && internalApiToken.equals(token);
-    }
+    private final InternalAuthService authService;
 
     /**
      * AI Agent 전용 엔드포인트: 최근 미검열 콘텐츠 조회
@@ -33,9 +27,9 @@ public class AdminModerationController {
 
         log.info("🔍 [AdminModeration] Recent Content Request (days={}, limit={})", days, limit);
 
-        if (!isInternalAuthorized(token)) {
-            log.warn("🚨 [AdminModeration] Unauthorized Access Attempt - Token Mismatch");
-            return ResponseEntity.status(401).body("Unauthorized internal access");
+        if (!authService.isAdminOrInternal(token)) {
+            log.warn("🚨 [AdminModeration] Unauthorized Access Attempt");
+            return ResponseEntity.status(403).build();
         }
 
         return ResponseEntity.ok(moderationService.getRecentContents(days, limit));
@@ -49,9 +43,9 @@ public class AdminModerationController {
             @RequestHeader(name = "X-Internal-Token", required = false) String token,
             @RequestBody Map<String, String> request) {
 
-        if (!isInternalAuthorized(token)) {
+        if (!authService.isAdminOrInternal(token)) {
             log.warn("🚨 [AdminModeration] Unauthorized Hide Attempt");
-            return ResponseEntity.status(401).body("Unauthorized internal access");
+            return ResponseEntity.status(403).build();
         }
 
         String type = request.get("type");

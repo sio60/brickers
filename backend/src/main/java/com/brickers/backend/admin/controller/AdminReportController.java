@@ -30,12 +30,6 @@ public class AdminReportController {
         return reportService.getAllReports(page, size);
     }
 
-    /** 신고 상세 (관리자) */
-    @GetMapping("/{reportId}")
-    public ReportResponse getReportDetail(@PathVariable("reportId") String reportId) {
-        return reportService.getReportDetail(reportId);
-    }
-
     /** 신고 처리(승인/반려) */
     @PostMapping("/{reportId}/resolve")
     public ReportResponse resolveReport(
