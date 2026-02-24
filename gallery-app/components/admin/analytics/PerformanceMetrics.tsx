@@ -16,7 +16,8 @@ interface PerformanceMetricsProps {
 }
 
 export default function PerformanceMetrics({ performance }: PerformanceMetricsProps) {
-    if (!performance) return null;
+    const stats = performance?.performance || { avgWaitTime: 0, avgCostToday: 0, avgBrickCount: 0, avgTokenToday: 0 };
+    const failureStats = performance?.failureStats || [];
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -52,22 +53,22 @@ export default function PerformanceMetrics({ performance }: PerformanceMetricsPr
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center flex flex-col justify-center">
                         <p className="text-gray-500 font-bold mb-2 text-sm">⏳ 생성 시간</p>
-                        <p className="text-2xl lg:text-3xl font-black text-blue-600 truncate">{Math.round(Number(performance.performance.avgWaitTime) || 0)}s</p>
+                        <p className="text-2xl lg:text-3xl font-black text-blue-600 truncate">{Math.round(Number(stats.avgWaitTime) || 0)}s</p>
                     </div>
                     <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center flex flex-col justify-center">
                         <p className="text-gray-500 font-bold mb-2 text-sm">💸 소모 비용 (Avg)</p>
                         <p className="text-2xl lg:text-3xl font-black text-green-600 truncate">
-                            ${(Number(performance.performance.avgCostToday) || 0).toFixed(4)}
+                            ${(Number(stats.avgCostToday) || 0).toFixed(4)}
                         </p>
                     </div>
                     <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center flex flex-col justify-center">
                         <p className="text-gray-500 font-bold mb-2 text-sm">🧱 사용 브릭</p>
-                        <p className="text-2xl lg:text-3xl font-black text-purple-600 truncate">{Math.round(Number(performance.performance.avgBrickCount) || 0)}</p>
+                        <p className="text-2xl lg:text-3xl font-black text-purple-600 truncate">{Math.round(Number(stats.avgBrickCount) || 0)}</p>
                     </div>
                     <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 text-center flex flex-col justify-center">
                         <p className="text-gray-500 font-bold mb-2 text-sm">🤖 토큰 소모 (Avg)</p>
                         <p className="text-2xl lg:text-3xl font-black text-red-500 truncate">
-                            {Math.round(Number(performance.performance.avgTokenToday) || 0).toLocaleString()}
+                            {Math.round(Number(stats.avgTokenToday) || 0).toLocaleString()}
                         </p>
                     </div>
                 </div>
