@@ -144,47 +144,40 @@ public class GaEngineAnalyticsService extends GaBaseService {
     }
 
     public PerformanceResponse.PerformanceStat fetchPerformanceStats(int days) {
-        String[] waitTimeMetrics = { "customEvent:wait_time", "customEvent:wait_time_at_moment" };
+        try {
+            RunReportRequest request = buildBasicRequest(days)
+                    .addMetrics(Metric.newBuilder().setName("customEvent:wait_time_at_moment"))
+                    .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
+                    .addMetrics(Metric.newBuilder().setName("customEvent:token_count"))
+                    .addMetrics(Metric.newBuilder().setName("customEvent:brick_count"))
+                    .addMetrics(Metric.newBuilder().setName("eventCount"))
+                    .setDimensionFilter(createDimensionFilter("eventName", "generate_success", false))
+                    .build();
 
-        for (String waitTimeMetric : waitTimeMetrics) {
-            try {
-                RunReportRequest request = buildBasicRequest(days)
-                        .addMetrics(Metric.newBuilder().setName(waitTimeMetric))
-                        .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
-                        .addMetrics(Metric.newBuilder().setName("customEvent:token_count"))
-                        .addMetrics(Metric.newBuilder().setName("customEvent:brick_count"))
-                        .addMetrics(Metric.newBuilder().setName("eventCount"))
-                        .setDimensionFilter(createDimensionFilter("eventName", "generate_success", false))
-                        .build();
+            RunReportResponse response = getClient().runReport(request);
+            if (response.getRowsCount() > 0) {
+                Row row = response.getRows(0);
+                long count = Long.parseLong(row.getMetricValues(4).getValue());
+                if (count == 0)
+                    return null;
 
-                RunReportResponse response = getClient().runReport(request);
-                if (response.getRowsCount() > 0) {
-                    Row row = response.getRows(0);
-                    long count = Long.parseLong(row.getMetricValues(4).getValue());
-                    if (count == 0)
-                        continue;
+                TodayMetrics today = calculateTodayMetrics();
 
-                    double waitVal = Double.parseDouble(row.getMetricValues(0).getValue());
-                    if (waitVal == 0 && waitTimeMetric.equals("customEvent:wait_time"))
-                        continue;
-
-                    TodayMetrics today = calculateTodayMetrics();
-
-                    return new PerformanceResponse.PerformanceStat(
-                            waitVal / count,
-                            Double.parseDouble(row.getMetricValues(1).getValue()) / count,
-                            Double.parseDouble(row.getMetricValues(1).getValue()),
-                            Double.parseDouble(row.getMetricValues(3).getValue()) / count,
-                            Double.parseDouble(row.getMetricValues(2).getValue()),
-                            today.avgCost,
-                            today.avgToken,
-                            today.avgWaitTime);
-                }
-            } catch (Exception e) {
-                log.warn("Failed to fetch Performance Stats with {}: {}", waitTimeMetric, e.getMessage());
+                return new PerformanceResponse.PerformanceStat(
+                        Double.parseDouble(row.getMetricValues(0).getValue()) / count,
+                        Double.parseDouble(row.getMetricValues(1).getValue()) / count,
+                        Double.parseDouble(row.getMetricValues(1).getValue()),
+                        Double.parseDouble(row.getMetricValues(3).getValue()) / count,
+                        Double.parseDouble(row.getMetricValues(2).getValue()),
+                        today.avgCost,
+                        today.avgToken,
+                        today.avgWaitTime);
             }
+        } catch (Exception e) {
+            log.warn("Failed to fetch Performance Stats : {}", e.getMessage());
         }
         return null;
+
     }
 
     private TodayMetrics calculateTodayMetrics() {
