@@ -2,9 +2,12 @@ import React from 'react';
 import { useAdminDetailData } from '@/contexts/AdminDetailDataContext';
 import CategoryInsightChart from './analytics/CategoryInsightChart';
 import AgeDistributionChart from './analytics/AgeDistributionChart';
+import { PieChart, Pie, Tooltip, Legend, Cell, ResponsiveContainer } from 'recharts';
+
+const COLORS = ['#ffe135', '#ff9f43', '#ee5253', '#10ac84', '#5f27cd', '#48dbfb'];
 
 export default function DeepInsights() {
-    const { deepInsight, loading } = useAdminDetailData();
+    const { deepInsight, productIntelligence, loading } = useAdminDetailData();
 
     if (loading) return (
         <div className="flex justify-center p-12">
@@ -12,7 +15,7 @@ export default function DeepInsights() {
         </div>
     );
 
-    if (!deepInsight) return (
+    if (!deepInsight && !productIntelligence) return (
         <div className="text-center text-gray-400 font-bold p-12">
             유저 성향 데이터를 불러올 수 없습니다.
         </div>
@@ -34,14 +37,33 @@ export default function DeepInsights() {
                 {/* 2. 연령대 분포 */}
                 <AgeDistributionChart ageStats={deepInsight?.ageStats || []} />
 
-                {/* 3. 기타 분석 메시지 (Place holder) */}
-                <section className="bg-yellow-50 p-8 rounded-[32px] border-2 border-black border-dashed flex flex-col justify-center items-center text-center">
-                    <p className="text-4xl mb-4">💡</p>
-                    <h4 className="text-xl font-black mb-2">데이터 통찰</h4>
-                    <p className="font-bold text-gray-600">
-                        현재 {deepInsight?.categoryStats?.length || 0}개의 카테고리에서<br />
-                        활발한 생성이 이루어지고 있습니다.
-                    </p>
+                {/* 3. 주요 이탈 지점 분석 (Friction Points) */}
+                <section className="bg-white p-8 rounded-[32px] border-2 border-black shadow-sm flex flex-col">
+                    <h3 className="text-xl font-black mb-6 text-center">📉 주요 이탈 지점 (Friction Points)</h3>
+                    <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={productIntelligence?.exits || []}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={100}
+                                    paddingAngle={5}
+                                    dataKey="count"
+                                    nameKey="step"
+                                >
+                                    {productIntelligence?.exits?.map((_entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip
+                                    contentStyle={{ borderRadius: '16px', border: '2px solid black', fontWeight: 'bold' }}
+                                />
+                                <Legend verticalAlign="bottom" height={36} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
                 </section>
             </div>
         </div>
