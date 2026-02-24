@@ -41,6 +41,7 @@ function KidsPageContent() {
 
     const [rawFile, setRawFile] = useState<File | null>(null);
     const [targetPrompt, setTargetPrompt] = useState<string | null>(null);
+    const [sourceType, setSourceType] = useState<"image" | "drawing" | "prompt" | null>(null);
     const [isFileLoaded, setIsFileLoaded] = useState(false);
 
     // Initial load logic
@@ -50,11 +51,12 @@ function KidsPageContent() {
 
         if (storedUpload) {
             try {
-                const { name, type, dataUrl } = JSON.parse(storedUpload);
+                const { name, type, dataUrl, sourceType: storedSourceType } = JSON.parse(storedUpload);
                 fetch(dataUrl)
                     .then(res => res.blob())
                     .then(blob => {
                         setRawFile(new File([blob], name, { type }));
+                        setSourceType(storedSourceType === "drawing" ? "drawing" : "image");
                         setIsFileLoaded(true);
                         sessionStorage.removeItem('pendingUpload');
                     })
@@ -68,6 +70,7 @@ function KidsPageContent() {
             }
         } else if (storedPrompt || searchParams.get("prompt")) {
             setTargetPrompt(storedPrompt || searchParams.get("prompt"));
+            setSourceType("prompt");
             setIsFileLoaded(true);
             sessionStorage.removeItem('pendingPrompt');
         } else {
@@ -82,7 +85,7 @@ function KidsPageContent() {
     }, [rawFile, targetPrompt, isFileLoaded, router]);
 
     // 2. Business Logic Hooks
-    const generation = useBrickGeneration({ rawFile, targetPrompt, age, budget });
+    const generation = useBrickGeneration({ rawFile, targetPrompt, age, budget, sourceType });
 
     const previewRef = useRef<KidsLdrPreviewHandle>(null);
 
@@ -165,6 +168,7 @@ function KidsPageContent() {
                         jobId={generation.jobId}
                         age={age}
                         pdfUrl={generation.pdfUrl}
+                        shareEnabled={!!generation.shareBackgroundUrl}
                         shareModalOpen={shareModalOpen}
                         previewRef={previewRef}
                         onShareClick={handleShareImage}

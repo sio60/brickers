@@ -10,4 +10,5 @@ public class KidsGenerateRequest {
     private String title; // 작업 제목 (파일명)
     private String prompt; // 텍스트 프롬프트 (Optional)
     private String language; // [New] 언어 설정 (ko, en, ja)
+    private String sourceType; // "image" | "drawing" | "prompt"
 }
