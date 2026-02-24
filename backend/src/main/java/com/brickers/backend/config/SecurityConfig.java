@@ -121,6 +121,9 @@ public class SecurityConfig {
                                                                 "/api/gallery/*/reaction")
                                                 .authenticated()
 
+                                                // ✅ 내부 API (Screenshot/Background 서버 → Backend 알림, 토큰 검증은 컨트롤러에서 수행)
+                                                .requestMatchers(HttpMethod.PATCH, "/api/gallery/*/screenshots").permitAll()
+
                                                 // ✅ 게시글 생성/수정/삭제(인증 필요)
                                                 .requestMatchers(HttpMethod.POST, "/api/gallery").authenticated()
                                                 .requestMatchers(HttpMethod.PATCH, "/api/gallery/*").authenticated()
