@@ -120,6 +120,7 @@ export const trackUserFeedback = (params: {
 export const trackFunnel = (stage: "01_visit_landing" | "02_click_start" | "03_upload_image" | "04_generate_request" | "05_generate_success" | "06_view_result" | "07_download_pdf" | "08_share", params?: any) => {
     if (typeof window !== "undefined" && window.gtag) {
         window.gtag("event", `funnel_${stage}`, {
+            funnel_stage: stage, // [Important] Explicitly send stage as a parameter for GA4 Custom Dimension
             ...params,
         });
     }

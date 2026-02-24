@@ -12,6 +12,7 @@ export type GalleryPost = {
     commentCount: number;
     visibility: "PUBLIC" | "PRIVATE";
     deleted: boolean;
+    level: string | null;
     createdAt: string;
 };
 
@@ -40,6 +41,7 @@ export const GalleryList = ({
                         <th className="px-6 py-4 w-20">{t.admin.gallery.table.thumbnail}</th>
                         <th className="px-6 py-4">{t.admin.gallery.table.info}</th>
                         <th className="px-6 py-4 text-center">{t.admin.gallery.table.stats}</th>
+                        <th className="px-6 py-4 text-center">Level</th>
                         <th className="px-6 py-4 text-center">{t.admin.gallery.table.status}</th>
                         <th className="px-6 py-4 w-32">{t.admin.gallery.table.date}</th>
                         <th className="px-6 py-4 text-right">{t.admin.gallery.table.actions}</th>
@@ -64,6 +66,11 @@ export const GalleryList = ({
                             <td className="px-6 py-4 text-center text-xs text-gray-500">
                                 <div>Views: {post.viewCount}</div>
                                 <div>Likes: {post.likeCount}</div>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-bold uppercase">
+                                    {post.level || "N/A"}
+                                </span>
                             </td>
                             <td className="px-6 py-4 text-center">
                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 

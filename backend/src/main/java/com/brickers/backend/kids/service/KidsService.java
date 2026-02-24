@@ -1,6 +1,7 @@
 package com.brickers.backend.kids.service;
 
 import com.brickers.backend.job.entity.GenerateJobEntity;
+import com.brickers.backend.job.entity.KidsLevel;
 import com.brickers.backend.job.entity.JobStage;
 import com.brickers.backend.job.entity.JobStatus;
 import com.brickers.backend.job.repository.GenerateJobRepository;
@@ -52,8 +53,10 @@ public class KidsService {
         }
 
         // 2. Job 엔티티 생성 및 기본값 설정
+        KidsLevel kidsLevel = KidsLevel.fromAge(age);
         GenerateJobEntity job = GenerateJobEntity.builder()
                 .userId(userId)
+                .level(kidsLevel)
                 .status(JobStatus.QUEUED).stage(JobStage.THREE_D_PREVIEW)
                 .sourceImageUrl(finalImageUrl).title(title).language(language)
                 .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
