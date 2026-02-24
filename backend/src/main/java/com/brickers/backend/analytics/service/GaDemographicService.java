@@ -53,7 +53,7 @@ public class GaDemographicService extends GaBaseService {
         List<DeepInsightResponse.CategoryStat> stats = new ArrayList<>();
         try {
             RunReportRequest request = buildBasicRequest(days)
-                    .addDimensions(Dimension.newBuilder().setName("customEvent:image_category"))
+                    .addDimensions(Dimension.newBuilder().setName("customUser:image_category"))
                     .addDimensions(Dimension.newBuilder().setName("eventName"))
                     .addMetrics(Metric.newBuilder().setName("eventCount"))
                     .setDimensionFilter(FilterExpression.newBuilder()
@@ -89,7 +89,7 @@ public class GaDemographicService extends GaBaseService {
         List<DeepInsightResponse.AgeStat> stats = new ArrayList<>();
         try {
             RunReportRequest request = buildBasicRequest(days)
-                    .addDimensions(Dimension.newBuilder().setName("customEvent:age"))
+                    .addDimensions(Dimension.newBuilder().setName("customUser:age"))
                     .addMetrics(Metric.newBuilder().setName("eventCount"))
                     .setDimensionFilter(createDimensionFilter("eventName", "generate_success", false))
                     .build();

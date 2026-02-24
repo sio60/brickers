@@ -23,10 +23,10 @@ public class GaActivityService extends GaBaseService {
     }
 
     public List<HeavyUserResponse> getHeavyUsers(int days, int limit) throws IOException {
-        List<HeavyUserResponse> byNickname = fetchHeavyUsersWithDimension("userAttribute:nickname", days, limit);
+        List<HeavyUserResponse> byNickname = fetchHeavyUsersWithDimension("customUser:nickname", days, limit);
         if (!byNickname.isEmpty())
             return byNickname;
-        return fetchHeavyUsersWithDimension("userAttribute:user_id", days, limit);
+        return fetchHeavyUsersWithDimension("customUser:user_id", days, limit);
     }
 
     private List<HeavyUserResponse> fetchHeavyUsersWithDimension(String dimensionName, int days, int limit)
