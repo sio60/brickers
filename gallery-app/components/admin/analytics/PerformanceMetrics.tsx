@@ -28,7 +28,7 @@ export default function PerformanceMetrics({ performance }: PerformanceMetricsPr
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
-                                data={performance.failureStats}
+                                data={failureStats.length > 0 ? failureStats : [{ reason: 'No Data', count: 1 }]}
                                 dataKey="count"
                                 nameKey="reason"
                                 cx="50%"
@@ -36,9 +36,13 @@ export default function PerformanceMetrics({ performance }: PerformanceMetricsPr
                                 outerRadius={80}
                                 label={(props: any) => String(props.name || '')}
                             >
-                                {performance.failureStats.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
+                                {failureStats.length > 0 ? (
+                                    failureStats.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))
+                                ) : (
+                                    <Cell fill="#eee" />
+                                )}
                             </Pie>
                             <Tooltip contentStyle={{ borderRadius: '12px', border: '2px solid black', fontWeight: 'bold' }} />
                             <Legend />
