@@ -51,7 +51,8 @@ public class KidsAsyncWorker {
             String sourceImageUrl,
             String age,
             int budget,
-            String language) {
+            String language,
+            String sourceType) {
         long totalStart = System.currentTimeMillis();
         log.info("═══════════════════════════════════════════════════════════════");
         log.info("🚀 [KIDS-WORKER] 작업 시작 | jobId={} | userId={} | age={} | budget={}",
@@ -84,7 +85,8 @@ public class KidsAsyncWorker {
                             "sourceImageUrl", sourceImageUrl,
                             "age", age,
                             "budget", budget,
-                            "language", (language == null ? "en" : language))))
+                            "language", (language == null ? "en" : language),
+                            "sourceType", (sourceType == null || sourceType.isBlank() ? "image" : sourceType)))))
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
                     })

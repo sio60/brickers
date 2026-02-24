@@ -45,6 +45,7 @@ public class KidsController {
         log.info("[KidsController] /api/kids/generate 요청 수신");
         log.info("   - sourceImageUrl: {}", request.getSourceImageUrl());
         log.info("   - age: {}, budget: {}, title: {}", request.getAge(), request.getBudget(), request.getTitle());
+        log.info("   - sourceType: {}", request.getSourceType());
 
         String userId = (authentication != null && authentication.getPrincipal() != null)
                 ? String.valueOf(authentication.getPrincipal())
@@ -58,7 +59,8 @@ public class KidsController {
                 request.getBudget(),
                 request.getTitle(),
                 request.getPrompt(),
-                request.getLanguage());
+                request.getLanguage(),
+                request.getSourceType());
         log.info("[KidsController] 응답: {}", result);
         return ResponseEntity.ok(result);
     }

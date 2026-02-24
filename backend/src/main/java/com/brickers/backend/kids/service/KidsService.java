@@ -56,9 +56,9 @@ public class KidsService {
     private final org.springframework.web.reactive.function.client.WebClient.Builder webClientBuilder;
 
     public Map<String, Object> startGeneration(String userId, String sourceImageUrl, String age, int budget,
-            String title, String prompt, String language) { // prompt 추가
-        log.info("AI 생성 요청 접수: userId={}, sourceImageUrl={}, age={}, budget={}, title={}, prompt={}, language={}",
-                safe(userId), sourceImageUrl, safe(age), budget, safe(title), safe(prompt), safe(language));
+            String title, String prompt, String language, String sourceType) { // prompt 추가
+        log.info("AI 생성 요청 접수: userId={}, sourceImageUrl={}, age={}, budget={}, title={}, prompt={}, language={}, sourceType={}",
+                safe(userId), sourceImageUrl, safe(age), budget, safe(title), safe(prompt), safe(language), safe(sourceType));
 
         String finalImageUrl = sourceImageUrl;
 
@@ -114,7 +114,8 @@ public class KidsService {
                     finalImageUrl,
                     age,
                     budget,
-                    language);
+                    language,
+                    sourceType);
         } else {
             // ⚠️ 기존 방식 (직접 호출) - 개발/테스트용 (SQS 비활성 시 fallback)
             log.info("[Brickers] 직접 호출 모드 (SQS 비활성화) | jobId={}", job.getId());
@@ -125,7 +126,8 @@ public class KidsService {
                     finalImageUrl,
                     age,
                     budget,
-                    language);
+                    language,
+                    sourceType);
         }
 
         // 3) 즉시 응답
@@ -135,7 +137,7 @@ public class KidsService {
     // 기존 메서드 오버로딩 유지 (하위 호환)
     public Map<String, Object> startGeneration(String userId, String sourceImageUrl, String age, int budget,
             String title) {
-        return startGeneration(userId, sourceImageUrl, age, budget, title, null, null);
+        return startGeneration(userId, sourceImageUrl, age, budget, title, null, null, null);
     }
 
     private byte[] generateImageFromPrompt(String prompt, String age, String title, String language) {
@@ -186,7 +188,7 @@ public class KidsService {
         };
 
         StringBuilder builder = new StringBuilder();
-        builder.append("Create one single LEGO-style concept image for brick model generation. ");
+        builder.append("Create one single concept image for brick model generation. ");
         builder.append("User request: \"").append(userPrompt).append("\". ");
 
         if (title != null && !title.isBlank()) {
@@ -198,7 +200,7 @@ public class KidsService {
 
         builder.append(complexityGuide).append(" ");
         builder.append("Hard requirements: single subject, centered composition, full object visible, ");
-        builder.append("clean light background, toy-like but realistic LEGO brick texture, clear silhouette, ");
+        builder.append("clean light background, clear silhouette, natural material cues, ");
         builder.append("physically buildable and stable structure, no floating impossible parts, ");
         builder.append("prefer simple color blocks over noisy micro details, ");
         builder.append("no text, letters, logos, watermark, UI elements, collage, split layout, ");

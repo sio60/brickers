@@ -14,9 +14,10 @@ interface GenerationParams {
     targetPrompt: string | null;
     age: '4-5' | '6-7' | '8-10' | 'PRO';
     budget: number;
+    sourceType?: "image" | "drawing" | "prompt" | null;
 }
 
-export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: GenerationParams) {
+export function useBrickGeneration({ rawFile, targetPrompt, age, budget, sourceType }: GenerationParams) {
     const { t, language } = useLanguage();
     const { authFetch } = useAuth();
 
@@ -118,6 +119,7 @@ export function useBrickGeneration({ rawFile, targetPrompt, age, budget }: Gener
                     budget,
                     title: fileTitle,
                     language,
+                    sourceType: sourceType || (promptText ? "prompt" : (rawFile ? "image" : undefined)),
                 };
 
                 // [GA4] 04_generate_request 트래킹
