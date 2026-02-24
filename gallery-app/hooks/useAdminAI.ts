@@ -153,19 +153,12 @@ export function useAdminAI(activeTab: string) {
 
     useEffect(() => {
         if (activeTab === "dashboard" && !autoAnalyzeDone && !state.deepAnalyzing) {
-            const initReport = async () => {
-                const existed = await handleFetchReport(7);
-                // 기존 리포트가 없으면 수동 분석 트리거 (필요시)
-                if (!existed) {
-                    // handleDeepAnalyzeRef.current(); 
-                }
-            };
-            initReport();
+            // [REMOVED] 자동 조회 로직 제거 - 분석 시작 버튼으로만 동작하게 함
             setAutoAnalyzeDone(true);
         }
 
         let interval: NodeJS.Timeout | null = null;
-        if (activeTab === "dashboard") {
+        if (activeTab === "dashboard" && state.deepReport) { // [FIX] 리포트가 있을 때만 주기적 갱신 시작
             interval = setInterval(() => {
                 if (!state.deepAnalyzing) {
                     console.log("[AI Analyst] Periodic auto-refreshing...");
