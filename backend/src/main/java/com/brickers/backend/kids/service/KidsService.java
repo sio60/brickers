@@ -38,8 +38,8 @@ public class KidsService {
      * 🚀 브릭 생성 시작 (Facade)
      */
     public Map<String, Object> startGeneration(String userId, String sourceImageUrl, String age, int budget,
-            String title, String prompt, String language) {
-        log.info("AI 생성 요청 접수: userId={}, title={}", userId, title);
+            String title, String prompt, String language, String sourceType) {
+        log.info("AI 생성 요청 접수: userId={}, title={}, sourceType={}", userId, title, sourceType);
 
         // 1. 이미지 확보 (프롬프트가 있으면 DALL-E 생성 및 S3 업로드)
         String finalImageUrl = sourceImageUrl;
@@ -66,9 +66,9 @@ public class KidsService {
 
         // 4. 작업 위임 (SQS 또는 AsyncWorker)
         if (sqsEnabled) {
-            sqsProducerService.sendJobRequest(job.getId(), userId, finalImageUrl, age, budget, language);
+            sqsProducerService.sendJobRequest(job.getId(), userId, finalImageUrl, age, budget, language, sourceType);
         } else {
-            kidsAsyncWorker.processGenerationAsync(job.getId(), userId, finalImageUrl, age, budget, language);
+            kidsAsyncWorker.processGenerationAsync(job.getId(), userId, finalImageUrl, age, budget, language, sourceType);
         }
 
         return Map.of("jobId", job.getId(), "status", JobStatus.QUEUED);
@@ -77,7 +77,7 @@ public class KidsService {
     // --- 하위 호환 오버로딩 ---
     public Map<String, Object> startGeneration(String userId, String sourceImageUrl, String age, int budget,
             String title) {
-        return startGeneration(userId, sourceImageUrl, age, budget, title, null, null);
+        return startGeneration(userId, sourceImageUrl, age, budget, title, null, null, null);
     }
 
     // --- 비즈니스 로직 전문 서비스 위임 ---

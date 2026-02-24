@@ -17,7 +17,7 @@ const KidsLdrPreview = dynamic(() => import("./KidsLdrPreview"), { ssr: false })
 type Props = {
     open: boolean;
     onClose: () => void;
-    onSelect: (url: string | null, file: File | null, prompt?: string) => void;
+    onSelect: (url: string | null, file: File | null, prompt?: string, sourceType?: "image" | "drawing") => void;
     items: { title: string; url: string; thumbnail?: string }[];
 };
 
@@ -115,7 +115,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
         }
 
         if (file || selectedUrl) {
-            onSelect(selectedUrl, file);
+            onSelect(selectedUrl, file, undefined, file ? "image" : undefined);
         }
     };
 
@@ -301,7 +301,7 @@ export default function KidsModelSelectModal({ open, onClose, onSelect, items }:
                                 <KidsDrawingCanvas
                                     onCancel={() => setStep('select')}
                                     onDone={(f) => {
-                                        onSelect(null, f);
+                                        onSelect(null, f, undefined, "drawing");
                                     }}
                                 />
                             </div>
