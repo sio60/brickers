@@ -46,6 +46,7 @@ interface PipelineSummary {
         bom_unique_parts: number;
         est_cost?: number; // [NEW]
         token_count?: number; // [NEW]
+        stability_score?: number; // [NEW]
     };
     coscientist?: {
         success: boolean;
@@ -155,11 +156,11 @@ export default function AgentConclusionViewer({ jobId, onClose, initialLdrUrl, f
     }, [jobId]);
 
     const extractMetrics = (output: any, isInitial = false): Metrics | null => {
-        const metrics = output?.current_metrics || output?.final_report?.final_metrics;
+        const metrics = output?.current_metrics || output?.final_report?.final_metrics || (output?.parts !== undefined ? output : null);
         if (!metrics) return null;
 
-        const score = metrics.stability_score ?? 0;
-        const bricks = metrics.total_bricks ?? 0;
+        const score = metrics.stability_score ?? 100;
+        const bricks = metrics.total_bricks ?? metrics.parts ?? 0;
         const floating = metrics.floating_count ?? 0;
         const isolated = metrics.isolated_count ?? 0;
 
