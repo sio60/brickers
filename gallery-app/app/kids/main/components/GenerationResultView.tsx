@@ -15,7 +15,6 @@ interface Props {
     jobId: string | null;
     age: string;
     pdfUrl: string | null;
-    shareEnabled: boolean;
     shareModalOpen: boolean;
     previewRef: RefObject<KidsLdrPreviewHandle | null>;
     onShareClick: () => void;
@@ -26,7 +25,6 @@ export const GenerationResultView: React.FC<Props> = ({
     jobId,
     age,
     pdfUrl,
-    shareEnabled,
     shareModalOpen,
     previewRef,
     onShareClick
@@ -57,15 +55,12 @@ export const GenerationResultView: React.FC<Props> = ({
             <div className={styles['actionBtns--horizontal']}>
                 <button
                     className={`${styles.actionBtn} ${styles['actionBtn--share']}`}
-                    disabled={!shareEnabled}
-                    style={!shareEnabled ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
                     onClick={() => {
-                        if (!shareEnabled) return;
                         gtag.trackFunnel("08_share", { job_id: jobId });
                         onShareClick();
                     }}
                 >
-                    {shareEnabled ? (t.detail?.share || 'Share') : (t.kids?.share?.generatingBg || 'Generating...')}
+                    {t.detail?.share || 'Share'}
                 </button>
 
                 <button

@@ -30,7 +30,7 @@ public class KidsAsyncWorker {
 
     @Async("kidsExecutor")
     public void processGenerationAsync(String jobId, String userId, String sourceImageUrl, String age, int budget,
-            String language, String sourceType) {
+            String language) {
         long totalStart = System.currentTimeMillis();
         log.info("🚀 [KIDS-WORKER] 작업 시작 | jobId={} | userId={} | age={} | budget={}", jobId, userId, age, budget);
 
@@ -54,8 +54,7 @@ public class KidsAsyncWorker {
                             "sourceImageUrl", sourceImageUrl,
                             "age", age,
                             "budget", budget,
-                            "language", (language == null ? "en" : language),
-                            "sourceType", (sourceType == null || sourceType.isBlank() ? "image" : sourceType)))))
+                            "language", (language == null ? "en" : language))))
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
                     })
