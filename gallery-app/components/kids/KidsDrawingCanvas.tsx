@@ -152,19 +152,19 @@ export default function KidsDrawingCanvas({ onCancel, onDone }: Props) {
                         className={`px-4 py-2 rounded-lg border cursor-pointer font-bold text-sm ${tool === 'brush' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white border-[#dee2e6]'}`}
                         onClick={() => setTool('brush')}
                     >
-                        🎨 {t.kids.modelSelect.drawTool.brush}
+                        {t.kids.modelSelect.drawTool.brush}
                     </button>
                     <button
                         className={`px-4 py-2 rounded-lg border cursor-pointer font-bold text-sm ${tool === 'eraser' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white border-[#dee2e6]'}`}
                         onClick={() => setTool('eraser')}
                     >
-                        🧽 {t.kids.modelSelect.drawTool.eraser}
+                        {t.kids.modelSelect.drawTool.eraser}
                     </button>
                     <button
                         className="px-4 py-2 rounded-lg border border-[#dee2e6] bg-white cursor-pointer font-bold text-sm"
                         onClick={handleClear}
                     >
-                        🧹 {t.kids.modelSelect.drawTool.clear}
+                        {t.kids.modelSelect.drawTool.clear}
                     </button>
                 </div>
 
