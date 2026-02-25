@@ -3,7 +3,6 @@ import { ISSUE_COLORS, NORMAL_COLOR } from "./constants";
 
 export const ColorLegend = ({ t }: { t: any }) => {
     const items = [
-        { color: ISSUE_COLORS.floating, label: t.legend.floating },
         { color: ISSUE_COLORS.isolated, label: t.legend.isolated },
         { color: ISSUE_COLORS.top_only, label: t.legend.topOnly },
         { color: NORMAL_COLOR, label: t.legend.normal },
