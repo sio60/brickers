@@ -91,7 +91,7 @@ export function useAdminAI(activeTab: string) {
         }
     }, [authFetch]);
 
-    // [NEW] 복구 기능 핸들러
+
     const handleRestore = useCallback(async (targetType: string, targetId: string) => {
         if (!confirm(`Are you sure you want to restore this ${targetType}?`)) return;
 
