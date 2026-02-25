@@ -177,15 +177,10 @@ export default function StepSidebar({
                 {/* 공유하기 버튼 추가 */}
                 <button
                     className={styles.kidsStep__sidebarBtn}
-                    style={{
-                        marginTop: 8,
-                        backgroundColor: '#000',
-                        color: '#fff',
-                        cursor: 'pointer'
-                    }}
+                    style={{ marginTop: 8 }}
                     onClick={() => setShareModalOpen(true)}
                 >
-                    {"\uACF5\uC720\uD558\uAE30"}
+                    공유하기
                 </button>
             </div>
         </div>
