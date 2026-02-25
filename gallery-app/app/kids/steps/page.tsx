@@ -199,7 +199,7 @@ function KidsStepPageContent() {
                 onClose={() => { gtag.trackExit("share_modal", "modal_close"); setShareModalOpen(false); }}
                 backgroundUrl={jobData.shareBackgroundUrl}
                 ldrUrl={ldrSteps.sortedBlobUrl || jobData.ldrUrl}
-                loading={!jobData.shareBackgroundUrl || !jobData.ldrUrl}
+                loading={!jobData.ldrUrl}
             />
 
             <div className={styles.kidsStep__mainContainer}>
