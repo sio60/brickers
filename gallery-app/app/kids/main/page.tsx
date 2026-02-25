@@ -97,7 +97,7 @@ function KidsPageContent() {
 
     // 4. Handlers
     const handleShareImage = () => {
-        if (!generation.shareBackgroundUrl || !generation.ldrUrl) return;
+        if (!generation.ldrUrl) return;
         setShareModalOpen(true);
     };
 
@@ -144,7 +144,7 @@ function KidsPageContent() {
                 onClose={() => setShareModalOpen(false)}
                 backgroundUrl={generation.shareBackgroundUrl}
                 ldrUrl={generation.ldrUrl || ""}
-                loading={!generation.shareBackgroundUrl || !generation.ldrUrl}
+                loading={!generation.ldrUrl}
             />
 
             <Background3D entryDirection="float" />
