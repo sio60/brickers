@@ -1,6 +1,5 @@
 package com.brickers.backend.analytics.controller;
 
-import com.brickers.backend.analytics.dto.AnalyticsQueryRequest;
 import com.brickers.backend.auth.service.InternalAuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -70,33 +69,6 @@ public class AdminAiAnalyticsController {
             log.error("[AnalyticsBridge] Deep Analysis failed: {}", e.getMessage());
             return ResponseEntity.status(502)
                     .body(Map.of("error", "AI Deep Analysis failed", "details", e.getMessage()));
-        }
-    }
-
-    /**
-     * [POST] 관리자가 '요즘 10대들이 어떤 로그인 방식을 선호해?'와 같은 자연어 질문(query)을 던지면 AI가 분석해주는 대화형
-     * 인터페이스입니다.
-     */
-    @PostMapping("/query")
-    public ResponseEntity<?> queryAnalytics(
-            @RequestHeader(name = "X-Internal-Token", required = false) String token,
-            @RequestBody AnalyticsQueryRequest request) {
-
-        if (!authService.isAdminOrInternal(token)) {
-            return ResponseEntity.status(403).build();
-        }
-        log.info("[AnalyticsBridge] 💬 Processing custom analytics query...");
-        try {
-            return aiWebClient.post()
-                    .uri("/ai-admin/analytics/query")
-                    .bodyValue(request)
-                    .retrieve()
-                    .toEntity(Object.class)
-                    .block();
-        } catch (Exception e) {
-            log.error("[AnalyticsBridge] Query Analysis failed: {}", e.getMessage());
-            return ResponseEntity.status(502)
-                    .body(Map.of("error", "AI Query Analysis failed", "details", e.getMessage()));
         }
     }
 }

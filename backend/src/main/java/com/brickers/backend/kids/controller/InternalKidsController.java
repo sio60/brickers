@@ -97,6 +97,7 @@ public class InternalKidsController {
         if (url == null || url.isBlank())
             return ResponseEntity.badRequest().build();
 
+        log.info("🖼️ [Internal-Controller] 배경 이미지 업데이트 수신 | jobId={} | url={}", jobId, url);
         kidsService.updateBackgroundUrl(jobId, url);
         return ResponseEntity.ok().build();
     }

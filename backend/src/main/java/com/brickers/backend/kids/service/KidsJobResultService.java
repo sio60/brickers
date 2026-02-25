@@ -106,7 +106,7 @@ public class KidsJobResultService {
                 job.setFinalTarget(result.getFinalTarget());
             if (result.getTags() != null)
                 job.setSuggestedTags(result.getTags());
-            if (result.getBackgroundUrl() != null)
+            if (result.getBackgroundUrl() != null && !result.getBackgroundUrl().isBlank())
                 job.setBackgroundUrl(result.getBackgroundUrl());
 
             job.setTokenCount(result.getTokenCount());
@@ -141,7 +141,7 @@ public class KidsJobResultService {
         if (bomUrl != null)
             job.setBomUrl(bomUrl);
         String bgUrl = asString(response.get("backgroundUrl"));
-        if (bgUrl != null)
+        if (bgUrl != null && !bgUrl.isBlank())
             job.setBackgroundUrl(bgUrl);
     }
 

@@ -13,38 +13,39 @@ import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 
 import org.springframework.beans.factory.annotation.Value;
 import java.time.Duration;
+import java.util.Map;
 
 @Component
 public class AiRenderClient {
 
-    private final WebClient webClient;
+        private final WebClient webClient;
 
-    public AiRenderClient(@Value("${ai.server.url}") String aiServerUrl) {
-        int maxBytes = 10 * 1024 * 1024;
-        ExchangeStrategies strategies = ExchangeStrategies.builder()
-                .codecs(cfg -> cfg.defaultCodecs().maxInMemorySize(maxBytes))
-                .build();
+        public AiRenderClient(@Value("${ai.server.url}") String aiServerUrl) {
+                int maxBytes = 10 * 1024 * 1024;
+                ExchangeStrategies strategies = ExchangeStrategies.builder()
+                                .codecs(cfg -> cfg.defaultCodecs().maxInMemorySize(maxBytes))
+                                .build();
 
-        System.out.println("[AiRenderClient] Initializing with AI server URL: " + aiServerUrl);
+                System.out.println("[AiRenderClient] Initializing with AI server URL: " + aiServerUrl);
 
-        this.webClient = WebClient.builder()
-                .baseUrl(aiServerUrl)
-                .exchangeStrategies(strategies)
-                .clientConnector(new ReactorClientHttpConnector(
-                        HttpClient.create().responseTimeout(Duration.ofSeconds(120))))
-                .build();
-    }
+                this.webClient = WebClient.builder()
+                                .baseUrl(aiServerUrl)
+                                .exchangeStrategies(strategies)
+                                .clientConnector(new ReactorClientHttpConnector(
+                                                HttpClient.create().responseTimeout(Duration.ofSeconds(120))))
+                                .build();
+        }
 
-    public java.util.Map<String, Object> generateBackgroundComposite(
-            MultipartFile file, String subject) {
-        return webClient.post()
-                .uri("/api/v1/kids/bg-composite")
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(BodyInserters.fromMultipartData("file", file.getResource())
-                        .with("subject", subject))
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<java.util.Map<String, Object>>() {
-                })
-                .block();
-    }
+        public java.util.Map<String, Object> generateBackgroundComposite(
+                        MultipartFile file, String subject) {
+                return webClient.post()
+                                .uri("/api/v1/kids/bg-composite")
+                                .contentType(MediaType.MULTIPART_FORM_DATA)
+                                .body(BodyInserters.fromMultipartData("file", file.getResource())
+                                                .with("subject", subject))
+                                .retrieve()
+                                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+                                })
+                                .block();
+        }
 }
