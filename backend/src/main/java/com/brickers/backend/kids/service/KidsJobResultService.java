@@ -106,8 +106,12 @@ public class KidsJobResultService {
                 job.setFinalTarget(result.getFinalTarget());
             if (result.getTags() != null)
                 job.setSuggestedTags(result.getTags());
-            if (result.getBackgroundUrl() != null && !result.getBackgroundUrl().isBlank())
+            // [FIX] backgroundUrl 보존: SQS RESULT에 비어있으면 기존 값(Screenshot Server PATCH로 저장됨)
+            // 유지
+            if (result.getBackgroundUrl() != null && !result.getBackgroundUrl().isBlank()) {
                 job.setBackgroundUrl(result.getBackgroundUrl());
+            }
+            // else: 기존 job.getBackgroundUrl() 그대로 유지
 
             job.setTokenCount(result.getTokenCount());
             job.setEstCost(result.getEstCost());
