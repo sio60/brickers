@@ -101,72 +101,7 @@ export default function AdminAIReport({ activeTab, aiState }: AdminAIReportProps
                         </div>
                     </div>
 
-                    {/* [NEW] 자율 콘텐츠 검열 리뷰 섹션 */}
-                    {moderationResults && moderationResults.length > 0 && (
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                            <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex items-center justify-between">
-                                <span className="text-indigo-600 italic font-medium flex items-center gap-2">
-                                    🛡️ Content Moderation Review
-                                </span>
-                                <span className="text-xs text-gray-400 whitespace-nowrap">AI가 자동으로 숨긴 항목입니다.</span>
-                            </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-700/50">
-                                        <tr>
-                                            <th className="px-6 py-3">Type</th>
-                                            <th className="px-6 py-3">Reason</th>
-                                            <th className="px-6 py-3">Confidence</th>
-                                            <th className="px-6 py-3">Status</th>
-                                            <th className="px-6 py-3 text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                        {moderationResults.map((res: any, idx: number) => (
-                                            <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                                                <td className="px-6 py-4">
-                                                    <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${res.type === 'POST' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'}`}>
-                                                        {res.type}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 max-w-[200px] truncate" title={res.reason}>
-                                                    {res.reason}
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="w-24 bg-gray-200 rounded-full h-1.5 dark:bg-gray-700">
-                                                        <div className="bg-indigo-600 h-1.5 rounded-full" style={{ width: `${res.confidence * 100}%` }}></div>
-                                                    </div>
-                                                    <span className="text-[10px] text-gray-400 mt-1">{(res.confidence * 100).toFixed(0)}%</span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className={`text-xs font-medium ${res.action_taken === 'HIDDEN' ? 'text-red-500' : 'text-green-500'}`}>
-                                                        {res.action_taken}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap font-medium">
-                                                    <a
-                                                        href={res.type === 'POST' ? `/gallery/${res.target_id}` : `/gallery/${res.post_id || res.target_id}`}
-                                                        target="_blank"
-                                                        className="text-indigo-600 hover:text-indigo-800"
-                                                    >
-                                                        View
-                                                    </a>
-                                                    {res.action_taken === 'HIDDEN' && (
-                                                        <button
-                                                            onClick={() => handleRestore(res.type, res.target_id)}
-                                                            className="text-indigo-600 hover:text-white px-2 py-1 bg-indigo-50 hover:bg-indigo-600 rounded transition-colors"
-                                                        >
-                                                            Restore
-                                                        </button>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
+                    {/* [REMOVED] 자율 콘텐츠 검열 리뷰 섹션 */}
                 </div>
 
                 {/* 사이드바 사이드 섹션 (Risk Score 등) */}
