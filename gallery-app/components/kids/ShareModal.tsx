@@ -166,7 +166,7 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
                             </div>
                         ) : null}
 
-                        {(loading || !backgroundUrl || !ldrUrl) && (
+                        {(loading || !ldrUrl) && (
                             <div className="flex flex-col items-center gap-3 z-10 bg-white/70 w-full h-full justify-center">
                                 <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" />
                                 <span className="text-xs font-bold text-gray-400 animate-pulse">{t.kids?.share?.processing || "Processing..."}</span>
@@ -174,7 +174,7 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
                         )}
                     </div>
 
-                    {!loading && backgroundUrl && ldrUrl && (
+                    {!loading && ldrUrl && (
                         <div className="flex gap-3">
                             <Button onClick={handleDownload} variant="secondary" disabled={working || !previewLoaded}>
                                 {working ? (t.kids?.share?.saving || "Saving...") : (t.kids?.share?.save || "Save")}
