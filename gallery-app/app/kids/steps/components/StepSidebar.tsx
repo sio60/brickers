@@ -179,14 +179,13 @@ export default function StepSidebar({
                     className={styles.kidsStep__sidebarBtn}
                     style={{
                         marginTop: 8,
-                        backgroundColor: shareBackgroundUrl ? '#000' : '#e0e0e0',
-                        color: shareBackgroundUrl ? '#fff' : '#000',
-                        cursor: shareBackgroundUrl ? 'pointer' : 'not-allowed'
+                        backgroundColor: '#000',
+                        color: '#fff',
+                        cursor: 'pointer'
                     }}
                     onClick={() => setShareModalOpen(true)}
-                    disabled={!shareBackgroundUrl}
                 >
-                    {shareBackgroundUrl ? "\uACF5\uC720\uD558\uAE30" : "\uBC30\uACBD \uC0DD\uC131\uC911..."}
+                    {"\uACF5\uC720\uD558\uAE30"}
                 </button>
             </div>
         </div>
