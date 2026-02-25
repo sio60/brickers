@@ -74,7 +74,6 @@ export default function DashboardTab({ aiState, activeTab }: DashboardTabProps) 
                     AI가 실시간 데이터를 분석하여 보고서 하단에 답변을 작성 중입니다...
                 </div>
             )}
-
         </div>
     );
 }
