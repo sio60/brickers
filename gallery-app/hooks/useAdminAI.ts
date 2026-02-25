@@ -118,6 +118,35 @@ export function useAdminAI(activeTab: string) {
         }
     }, [authFetch]);
 
+    // [NEW] Query Analytics State
+    const [appendedContent, setAppendedContent] = useState<string>("");
+    const [isQuerying, setIsQuerying] = useState(false);
+
+    const handleQuerySubmit = useCallback(async (query: string) => {
+        if (!query.trim()) return;
+        setIsQuerying(true);
+        try {
+            const res = await authFetch("/api/admin/analytics/ai/query", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query }),
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                const timestamp = new Date().toLocaleTimeString();
+                const newAppend = `\n\n---\n\n### 💬 질의응답 (${timestamp})\n**질문: ${query}**\n\n${data.answer}`;
+                setAppendedContent(prev => prev + newAppend);
+            } else {
+                alert("AI 응답을 받아오지 못했습니다.");
+            }
+        } catch (error) {
+            console.error("Query failed:", error);
+            alert("분석 요청 중 오류가 발생했습니다.");
+        } finally {
+            setIsQuerying(false);
+        }
+    }, [authFetch]);
+
     // 대시보드 진입 시 자동 분석 & 5분 주기 폴링
     const handleDeepAnalyzeRef = useRef(handleDeepAnalyze);
     handleDeepAnalyzeRef.current = handleDeepAnalyze;
@@ -145,7 +174,10 @@ export function useAdminAI(activeTab: string) {
 
     return {
         ...state,
+        deepReport: state.deepReport ? state.deepReport + appendedContent : null, // ✅ 덧붙여서 반환
+        isQuerying,
         handleDeepAnalyze,
-        handleRestore
+        handleRestore,
+        handleQuerySubmit
     };
 }
