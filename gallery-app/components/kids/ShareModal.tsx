@@ -101,30 +101,55 @@ export default function ShareModal({ isOpen, onClose, backgroundUrl, ldrUrl, loa
         try {
             const blob = await captureComposite();
             const file = new File([blob], "brick-model.png", { type: "image/png" });
-            if (navigator.share && navigator.canShare?.({ files: [file] })) {
-                await navigator.share({
-                    title: t.kids?.share?.shareTitle || "Check out my Brickers model!",
-                    text: t.kids?.share?.shareText || "I made this with Brickers AI!",
-                    files: [file],
-                });
-            } else if (navigator.clipboard?.write) {
-                await navigator.clipboard.write([
-                    new ClipboardItem({ [blob.type]: blob })
-                ]);
-                alert(t.kids?.share?.clipboardCopy || "Image copied to clipboard!");
-            } else {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `brickers-share-${Date.now()}.png`;
-                a.click();
-                URL.revokeObjectURL(url);
+
+            // 모바일 판별 (터치 지원 + 작은 화면)
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+                || (navigator.maxTouchPoints > 0 && window.innerWidth < 768);
+
+            // 1) 모바일: Web Share API 시도
+            if (isMobile && navigator.share && navigator.canShare?.({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: t.kids?.share?.shareTitle || "Check out my Brickers model!",
+                        text: t.kids?.share?.shareText || "I made this with Brickers AI!",
+                        files: [file],
+                    });
+                    return; // 공유 성공
+                } catch (shareErr: any) {
+                    if (shareErr?.name === 'AbortError') return; // 사용자가 취소
+                    console.warn("Web Share failed, falling back:", shareErr);
+                }
             }
+
+            // 2) 데스크톱: 클립보드 복사 시도 (5초 타임아웃)
+            if (navigator.clipboard?.write) {
+                try {
+                    const clipboardPromise = navigator.clipboard.write([
+                        new ClipboardItem({ [blob.type]: blob })
+                    ]);
+                    const timeoutPromise = new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error("clipboard_timeout")), 5000)
+                    );
+                    await Promise.race([clipboardPromise, timeoutPromise]);
+                    alert(t.kids?.share?.clipboardCopy || "Image copied to clipboard!");
+                    return; // 클립보드 복사 성공
+                } catch (clipErr: any) {
+                    console.warn("Clipboard write failed, falling back to download:", clipErr);
+                }
+            }
+
+            // 3) 최종 폴백: 다운로드
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `brickers-share-${Date.now()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(url);
+            document.body.removeChild(a);
         } catch (e: any) {
-            if (e?.name !== 'AbortError') {
-                console.error("Share failed", e);
-                alert(t.kids?.share?.shareFail || "Share failed. Please try again.");
-            }
+            console.error("Share failed", e);
+            alert(t.kids?.share?.shareFail || "Share failed. Please try again.");
         } finally {
             setWorking(false);
         }
