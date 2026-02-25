@@ -109,14 +109,20 @@ public class GaEngineAnalyticsService extends GaBaseService {
         List<ProductIntelligenceResponse.ExitPoint> exits = new ArrayList<>();
         try {
             RunReportRequest request = buildBasicRequest(days)
-                    .addDimensions(Dimension.newBuilder().setName("customEvent:exit_step"))
+                    .addDimensions(Dimension.newBuilder().setName("eventName"))
                     .addMetrics(Metric.newBuilder().setName("eventCount"))
                     .build();
 
             for (Row row : getClient().runReport(request).getRowsList()) {
-                String step = row.getDimensionValues(0).getValue();
-                exits.add(new ProductIntelligenceResponse.ExitPoint(step,
-                        Long.parseLong(row.getMetricValues(0).getValue())));
+                String eventName = row.getDimensionValues(0).getValue();
+                if (eventName != null && eventName.startsWith("exit_")) {
+                    String step = eventName.substring(5); // "exit_" 뒷부분 추출
+                    if (step.isEmpty() || step.equals("(not set)")) {
+                        continue;
+                    }
+                    exits.add(new ProductIntelligenceResponse.ExitPoint(step,
+                            Long.parseLong(row.getMetricValues(0).getValue())));
+                }
             }
         } catch (Exception e) {
             log.warn("Failed to fetch Exit Points: {}", e.getMessage());
@@ -149,7 +155,7 @@ public class GaEngineAnalyticsService extends GaBaseService {
     public PerformanceResponse.PerformanceStat fetchPerformanceStats(int days) {
         try {
             RunReportRequest request = buildBasicRequest(days)
-                    .addMetrics(Metric.newBuilder().setName("customEvent:wait_time_at_moment"))
+                    .addMetrics(Metric.newBuilder().setName("customEvent:wait_time"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:est_cost"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:token_count"))
                     .addMetrics(Metric.newBuilder().setName("customEvent:brick_count"))
