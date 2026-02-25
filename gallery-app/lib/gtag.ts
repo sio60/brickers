@@ -133,6 +133,7 @@ export const trackFunnel = (stage: "01_visit_landing" | "02_click_start" | "03_u
 export const trackExit = (step: string, reason?: string, params?: Record<string, any>) => {
     if (typeof window !== "undefined" && window.gtag) {
         window.gtag("event", `exit_${step}`, {
+            exit_step: step,
             exit_reason: reason,
             ...params,
         });

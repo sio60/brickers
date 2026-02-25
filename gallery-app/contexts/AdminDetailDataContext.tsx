@@ -83,13 +83,15 @@ export function AdminDetailDataProvider({ children }: { children: React.ReactNod
         setError(null);
 
         try {
+            // 캐시 우회를 위한 타임스탬프 추가
+            const t = Date.now();
             const results = await Promise.allSettled([
-                authFetch("/api/admin/analytics/basic/summary-package?days=30"), // Batch API
-                authFetch("/api/admin/analytics/deep/generation-trend?days=7"),
-                authFetch("/api/admin/analytics/deep/performance?days=30"),
-                authFetch("/api/admin/analytics/basic/heavy-users?days=30"),
-                authFetch("/api/admin/analytics/deep/deep-insights?days=30"),
-                authFetch("/api/admin/analytics/deep/product-intelligence?days=30"),
+                authFetch(`/api/admin/analytics/basic/summary-package?days=30&t=${t}`),
+                authFetch(`/api/admin/analytics/deep/generation-trend?days=7&t=${t}`),
+                authFetch(`/api/admin/analytics/deep/performance?days=30&t=${t}`),
+                authFetch(`/api/admin/analytics/basic/heavy-users?days=30&t=${t}`),
+                authFetch(`/api/admin/analytics/deep/deep-insights?days=30&t=${t}`),
+                authFetch(`/api/admin/analytics/deep/product-intelligence?days=30&t=${t}`),
             ]);
 
             const [pkgRes, genRes, perfRes, heavyRes, deepRes, prodIntelRes] = results;
