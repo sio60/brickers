@@ -22,36 +22,39 @@ export function renderMarkdown(md: string): string {
         // newline
         .replace(/\n/g, '<br/>');
 
-    // 마크다운 테이블 → HTML 테이블
+    // 마크다운 테이블 → HTML 테이블 (향상된 버전)
     html = html.replace(
-        /(<br\/?>)?\|(.+?)\|(<br\/?>)\|[-|\s]+\|(<br\/?>)((?:\|.+?\|(?:<br\/?>)?)+)/g,
-        (_m, _b1, header, _b2, _sep, body) => {
+        /(?:<br\/?>|^)\|(.+?)\|(?:<br\/?>)\|[-|\s:|]+\|(?:<br\/?>)((?:\|.+?\|(?:<br\/?>)?)+)/gm,
+        (_m, header, body) => {
             const ths = header
                 .split('|')
-                .filter(Boolean)
+                .map((h: string) => h.trim())
+                .filter((v: string, i: number, arr: string[]) => !(i === 0 && v === "") && !(i === arr.length - 1 && v === ""))
                 .map(
                     (h: string) =>
-                        `<th style="padding:8px 12px;text-align:left;border-bottom:2px solid #000;font-weight:800;font-size:12px;background:#f8f9fa">${h.trim()}</th>`
+                        `<th style="padding:10px 14px;text-align:left;border-bottom:2px solid #e5e7eb;font-weight:800;font-size:13px;background:#f9fafb;color:#374151">${h || '&nbsp;'}</th>`
                 )
                 .join('');
+
             const rows = body
-                .replace(/<br\/?>/g, '\n')
-                .trim()
-                .split('\n')
+                .split(/<br\/?>/)
+                .map((r: string) => r.trim())
                 .filter(Boolean)
                 .map((row: string) => {
                     const tds = row
                         .split('|')
-                        .filter(Boolean)
+                        .map((c: string) => c.trim())
+                        .filter((v: string, i: number, arr: string[]) => !(i === 0 && v === "") && !(i === arr.length - 1 && v === ""))
                         .map(
                             (c: string) =>
-                                `<td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px">${c.trim()}</td>`
+                                `<td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:13px;color:#4b5563;white-space:pre-wrap">${c || '&nbsp;'}</td>`
                         )
                         .join('');
-                    return `<tr>${tds}</tr>`;
+                    return `<tr style="background:white hover:bg-gray-50 transition-colors">${tds}</tr>`;
                 })
                 .join('');
-            return `<table style="width:100%;border-collapse:collapse;margin:12px 0;border:1px solid #eee;border-radius:8px;overflow:hidden"><thead><tr>${ths}</tr></thead><tbody>${rows}</tbody></table>`;
+
+            return `<div style="overflow-x:auto;margin:20px 0;border:1px solid #e5e7eb;border-radius:12px shadow-sm"><table style="width:100%;border-collapse:collapse;background:white"><thead><tr>${ths}</tr></thead><tbody style="border-top:1px solid #e5e7eb">${rows}</tbody></table></div>`;
         }
     );
 
