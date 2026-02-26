@@ -45,7 +45,7 @@ export default function DashboardTab({ aiState, activeTab }: DashboardTabProps) 
                         className="flex-1 px-6 py-4 rounded-2xl border-2 border-[#eee] font-medium focus:outline-none focus:border-[#ffe135] focus:ring-4 focus:ring-[#ffe135]/10 transition-all bg-white"
                         id="adminQueryInputMain"
                         onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
+                            if (e.key === 'Enter' && !(!aiState.deepReport || aiState.isQuerying)) {
                                 aiState.handleQuerySubmit((e.target as HTMLInputElement).value);
                             }
                         }}
@@ -55,12 +55,15 @@ export default function DashboardTab({ aiState, activeTab }: DashboardTabProps) 
                             const input = document.getElementById('adminQueryInputMain') as HTMLInputElement;
                             if (input) aiState.handleQuerySubmit(input.value);
                         }}
-                        disabled={aiState.isQuerying}
+                        disabled={aiState.isQuerying || !aiState.deepReport}
                         className="px-8 py-4 bg-black text-[#ffe135] rounded-2xl font-black hover:bg-[#222] active:scale-95 transition-all disabled:opacity-50"
                     >
                         {aiState.isQuerying ? "분석 중..." : "질문하기"}
                     </button>
                 </div>
+                {!aiState.deepReport && (
+                    <p className="mt-4 text-red-500 font-bold ml-2">분석 시작을 먼저 시작해주세요</p>
+                )}
             </div>
 
             {aiState.isQuerying && (
