@@ -132,7 +132,7 @@ export const JudgeLdrModel = ({
                 if (issueColor) {
                     mat.color = new THREE.Color(issueColor);
                     mat.emissive = new THREE.Color(issueColor);
-                    mat.emissiveIntensity = 0.4;
+                    mat.emissiveIntensity = 0.15;
                 } else {
                     mat.color = new THREE.Color(NORMAL_COLOR);
                     mat.emissive = new THREE.Color(NORMAL_COLOR);
